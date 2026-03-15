@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Governance — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Platform Governance</h1>
+        <p class="welcome">Proposals, voting, and owner veto control</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ governance_stats.total_proposals }}</div>
+            <div class="stat-label">Total Proposals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ governance_stats.pending }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ governance_stats.approved }}</div>
+            <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ governance_stats.vetoed }}</div>
+            <div class="stat-label">Vetoed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ governance_stats.total_votes_cast }}</div>
+            <div class="stat-label">Votes Cast</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ governance_stats.approval_rate }}%</div>
+            <div class="stat-label">Approval Rate</div>
+        </div>
+    </div>
+
+    <div class="dashboard-panels">
+        <div class="panel">
+            <h2>Pending Proposals</h2>
+            <div class="proposals-list">
+                {% for prop in pending_proposals %}
+                <div class="proposal-card">
+                    <div class="proposal-header">
+                        <h3>{{ prop.title }}</h3>
+                        <span class="vote-count">&#9650; {{ prop.upvotes }} / &#9660; {{ prop.downvotes }}</span>
+                    </div>
+                    <p>{{ prop.description[:200] }}</p>
+                    <div class="proposal-actions">
+                        <span class="badge badge-{{ prop.category }}">{{ prop.category }}</span>
+                        {% if prop.is_material_change %}
+                        <span class="badge badge-warning">Requires Veto Review</span>
+                        {% endif %}
+                        <form method="POST" action="/governance/approve/{{ prop.id }}" class="inline-form">
+                            <button class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="/governance/veto/{{ prop.id }}" class="inline-form">
+                            <input type="text" name="reason" placeholder="Veto reason" required>
+                            <button class="btn btn-sm btn-danger">Veto</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not pending_proposals %}
+                <p class="empty">No pending proposals</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Priority Queue</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Rank</th><th>Title</th><th>Category</th><th>Votes</th><th>Material</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in priority_queue %}
+                        <tr>
+                            <td>{{ item.rank }}</td>
+                            <td>{{ item.title }}</td>
+                            <td><span class="badge badge-{{ item.category }}">{{ item.category }}</span></td>
+                            <td>+{{ item.upvotes }} / -{{ item.downvotes }}</td>
+                            <td>{% if item.is_material %}<span class="badge badge-warning">Yes</span>{% else %}No{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not priority_queue %}
+                        <tr><td colspan="5" class="empty">No proposals in queue</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Recent Governance Activity</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Action</th><th>Actor</th><th>Details</th><th>Time</th></tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_log %}
+                    <tr>
+                        <td><span class="badge badge-{{ log.action }}">{{ log.action }}</span></td>
+                        <td>{{ log.actor_id[:12] if log.actor_id else "—" }}</td>
+                        <td>{{ log.details[:80] }}</td>
+                        <td>{{ log.timestamp[:19] }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not audit_log %}
+                    <tr><td colspan="4" class="empty">No governance activity yet</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

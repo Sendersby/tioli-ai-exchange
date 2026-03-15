@@ -2135,6 +2135,26 @@ async def lending_page(request: Request):
     })
 
 
+@app.get("/dashboard/governance", response_class=HTMLResponse)
+async def governance_page(request: Request):
+    """Governance proposals and voting dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    async with async_session() as db:
+        proposals = await governance_service.get_proposals(db, status="pending")
+        queue = await governance_service.get_priority_queue(db)
+        stats = await governance_service.get_governance_stats(db)
+        audit = await governance_service.get_audit_log(db, limit=20)
+
+    return templates.TemplateResponse("governance.html", {
+        "request": request, "authenticated": True, "active": "governance",
+        "pending_proposals": proposals, "priority_queue": queue,
+        "governance_stats": stats, "audit_log": audit,
+    })
+
+
 @app.get("/dashboard/reports", response_class=HTMLResponse)
 async def reports_page(request: Request):
     """Financial reports, health monitoring, and growth metrics."""
