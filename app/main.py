@@ -49,6 +49,9 @@ from app.infrastructure.disaster_recovery import BackupService, IncidentResponse
 from app.infrastructure.notifications import NotificationService
 from app.exchange.liquidity import LiquidityService, CreditScoringService
 from app.legal.documents import PlatformLegalDocuments
+from app.agentbroker.routes import router as agentbroker_router, engagement_service as _ab_engagement_svc
+from app.agentbroker.services import EngagementService as ABEngagementService
+from app.agentbroker.taxonomy import seed_taxonomy
 from app.dashboard.routes import router as dashboard_router, get_current_owner
 
 # ── Globals ──────────────────────────────────────────────────────────
@@ -79,6 +82,10 @@ notification_service = NotificationService()
 liquidity_service = LiquidityService()
 credit_scoring = CreditScoringService()
 legal_docs = PlatformLegalDocuments()
+
+# AgentBroker — initialize engagement service with blockchain/fee_engine
+import app.agentbroker.routes as ab_routes
+ab_routes.engagement_service = ABEngagementService(blockchain=blockchain, fee_engine=fee_engine)
 trading_engine = TradingEngine(blockchain=blockchain, fee_engine=fee_engine)
 pricing_engine = PricingEngine(currency_service=currency_service)
 lending_marketplace = LendingMarketplace()
@@ -94,6 +101,8 @@ async def lifespan(app: FastAPI):
     # Seed default currencies and exchange rates
     async with async_session() as db:
         await currency_service.initialize_currencies(db)
+        if settings.agentbroker_enabled:
+            await seed_taxonomy(db)
         await db.commit()
     print(f"\n{'='*60}")
     print(f"  TiOLi AI Transact Exchange v{settings.version}")
@@ -119,6 +128,7 @@ app = FastAPI(
 # Mount static files and dashboard routes
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(dashboard_router)
+app.include_router(agentbroker_router)
 
 
 # ── Helper: Agent Auth Dependency ────────────────────────────────────

@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     expense_profitability_multiplier: float = 10.0  # 10x rule
     security_expense_multiplier: float = 3.0  # 3x exception for security
 
+    # AgentBroker feature flag (Phase 1: false, Phase 2: true)
+    agentbroker_enabled: bool = False
+
     # Debug
     debug: bool = False
 
