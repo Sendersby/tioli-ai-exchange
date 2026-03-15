@@ -49,6 +49,7 @@ from app.infrastructure.disaster_recovery import BackupService, IncidentResponse
 from app.infrastructure.notifications import NotificationService
 from app.exchange.liquidity import LiquidityService, CreditScoringService
 from app.legal.documents import PlatformLegalDocuments
+from app.payout.service import PayOutEngineService
 from app.agentbroker.routes import router as agentbroker_router, engagement_service as _ab_engagement_svc
 from app.agentbroker.services import EngagementService as ABEngagementService
 from app.agentbroker.taxonomy import seed_taxonomy
@@ -86,6 +87,7 @@ notification_service = NotificationService()
 liquidity_service = LiquidityService()
 credit_scoring = CreditScoringService()
 legal_docs = PlatformLegalDocuments()
+payout_engine = PayOutEngineService(blockchain=blockchain)
 
 # AgentBroker — initialize engagement service with blockchain/fee_engine
 import app.agentbroker.routes as ab_routes
@@ -1506,6 +1508,188 @@ async def api_sla():
 async def api_versioning_policy():
     """API Versioning & Deprecation Policy."""
     return legal_docs.get_api_versioning_policy()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  PAYOUT ENGINE™ (additive — zero changes to existing code)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/owner/wallet/balance")
+async def api_owner_wallet_balance(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Owner Revenue Wallet balance."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_owner_wallet_balance(db)
+
+
+@app.get("/api/v1/owner/payout/destination")
+async def api_get_payout_destination(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Current payment destination (addresses masked)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_current_destination(db)
+
+
+@app.post("/api/v1/owner/payout/destination")
+async def api_set_payout_destination(
+    request: Request, db: AsyncSession = Depends(get_db),
+    btc_address: str = None, btc_label: str = None,
+    eth_address: str = None, bank_name: str = None,
+    bank_account_number: str = None, bank_account_type: str = None,
+    preferred_exchange: str = "VALR", change_reason: str = "",
+):
+    """Set payment destination (requires owner auth)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    dest = await payout_engine.set_destination(
+        db, btc_address=btc_address, btc_label=btc_label,
+        eth_address=eth_address, bank_name=bank_name,
+        bank_account_number=bank_account_number,
+        bank_account_type=bank_account_type,
+        preferred_exchange=preferred_exchange,
+        change_reason=change_reason,
+    )
+    return {"destination_id": dest.destination_id, "version": dest.destination_version}
+
+
+@app.get("/api/v1/owner/payout/destination/history")
+async def api_destination_history(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Destination version history."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_destination_history(db)
+
+
+@app.get("/api/v1/owner/payout/split")
+async def api_get_payout_split(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Current currency split."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_current_split(db)
+
+
+@app.post("/api/v1/owner/payout/split")
+async def api_set_payout_split(
+    request: Request, db: AsyncSession = Depends(get_db),
+    pct_btc: float = 0, pct_eth: float = 0,
+    pct_custom: float = 0, pct_zar: float = 0,
+    pct_retained: float = 100, min_disbursement: float = 1000,
+):
+    """Set currency split (must sum to 100%)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    split = await payout_engine.set_currency_split(
+        db, pct_btc, pct_eth, pct_custom, pct_zar, pct_retained, min_disbursement,
+    )
+    return {"split_id": split.split_id, "version": split.split_version}
+
+
+@app.get("/api/v1/owner/payout/schedule")
+async def api_get_schedule(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Current disbursement schedule."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_current_schedule(db)
+
+
+@app.post("/api/v1/owner/payout/schedule")
+async def api_set_schedule(
+    request: Request, db: AsyncSession = Depends(get_db),
+    schedule_type: str = "MONTHLY", day_of_month: int = 1,
+    threshold_enabled: bool = True, threshold_credits: float = 50000,
+):
+    """Set disbursement schedule."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    schedule = await payout_engine.set_schedule(
+        db, schedule_type, day_of_month, threshold_enabled, threshold_credits,
+    )
+    return {"schedule_id": schedule.schedule_id}
+
+
+@app.post("/api/v1/owner/payout/disburse-now")
+async def api_disburse_now(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Trigger an immediate manual disbursement."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.execute_disbursement(db, "MANUAL")
+
+
+@app.get("/api/v1/owner/payout/disbursements")
+async def api_disbursement_history(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Disbursement history."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_disbursement_history(db)
+
+
+@app.get("/api/v1/owner/payout/summary")
+async def api_ytd_summary(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """YTD earnings summary."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_ytd_summary(db)
+
+
+@app.post("/api/v1/owner/payout/preview")
+async def api_disbursement_preview(
+    request: Request, db: AsyncSession = Depends(get_db),
+    amount: float = None,
+):
+    """Preview a disbursement at current rates."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.preview_disbursement(db, amount)
+
+
+@app.get("/api/v1/owner/payout/sarb-status")
+async def api_sarb_status(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """SARB offshore transfer status."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_sarb_status(db)
+
+
+@app.get("/api/v1/owner/payout/audit-log")
+async def api_payout_audit_log(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Destination/config change audit log."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await payout_engine.get_audit_log(db)
 
 
 # ══════════════════════════════════════════════════════════════════════
