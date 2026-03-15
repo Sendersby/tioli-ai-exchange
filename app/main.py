@@ -51,6 +51,8 @@ from app.exchange.liquidity import LiquidityService, CreditScoringService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
+from app.paypal.adapter import PayPalAdapter
+from app.paypal.service import PayPalService
 from app.payout.service import PayOutEngineService
 from app.agentbroker.routes import router as agentbroker_router, engagement_service as _ab_engagement_svc
 from app.agentbroker.services import EngagementService as ABEngagementService
@@ -93,6 +95,8 @@ payout_engine = PayOutEngineService(blockchain=blockchain)
 cost_control = CostControlService()
 alert_service = AlertService()
 cost_control.set_alert_service(alert_service)
+paypal_adapter = PayPalAdapter()
+paypal_service = PayPalService(adapter=paypal_adapter)
 
 # AgentBroker — initialize engagement service with blockchain/fee_engine
 import app.agentbroker.routes as ab_routes
@@ -1728,6 +1732,180 @@ async def api_payout_audit_log(
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
     return await payout_engine.get_audit_log(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  PAYPAL INTEGRATION (additive — zero breaking changes)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/owner/paypal/accounts")
+async def api_paypal_register(
+    request: Request, db: AsyncSession = Depends(get_db),
+    paypal_email: str = "", account_label: str = "",
+    can_receive: bool = True, can_pay: bool = False,
+    receive_pct: float = 100.0,
+    x_3fa_token: str = Header(None, alias="X-3FA-Token"),
+):
+    """Register a PayPal account. Requires owner auth + 3FA."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    if not x_3fa_token:
+        raise HTTPException(status_code=403, detail="3FA token required")
+    acct = await paypal_service.register_account(
+        db, paypal_email, account_label, can_receive, can_pay,
+        receive_pct, verification_ref=x_3fa_token,
+    )
+    return {"account_id": acct.account_id, "label": acct.account_label}
+
+
+@app.get("/api/v1/owner/paypal/accounts")
+async def api_paypal_list(request: Request, db: AsyncSession = Depends(get_db)):
+    """List PayPal accounts (emails masked)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.list_accounts(db)
+
+
+@app.post("/api/v1/owner/paypal/accounts/{account_id}/deactivate")
+async def api_paypal_deactivate(
+    account_id: str, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Deactivate a PayPal account."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.deactivate_account(db, account_id)
+
+
+@app.get("/api/v1/owner/paypal/receive/preview")
+async def api_paypal_preview(
+    request: Request, credits: float = 0, db: AsyncSession = Depends(get_db),
+):
+    """Preview PayPal disbursement at current rates."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.preview_disbursement(db, credits)
+
+
+@app.post("/api/v1/owner/paypal/receive/disburse")
+async def api_paypal_disburse(
+    request: Request, credits: float = 0, db: AsyncSession = Depends(get_db),
+    x_3fa_token: str = Header(None, alias="X-3FA-Token"),
+):
+    """Trigger PayPal disbursement. Requires 3FA."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    if not x_3fa_token:
+        raise HTTPException(status_code=403, detail="3FA token required")
+    import secrets as _s
+    return await paypal_service.execute_disbursement(db, credits, f"manual_{_s.token_hex(8)}")
+
+
+@app.get("/api/v1/owner/paypal/receive/history")
+async def api_paypal_receive_history(request: Request, db: AsyncSession = Depends(get_db)):
+    """PayPal disbursement history."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.get_disbursement_history(db)
+
+
+@app.post("/api/v1/owner/paypal/billing-agreement/initiate")
+async def api_paypal_ba_initiate(
+    request: Request, account_id: str = "", max_monthly: float = 500,
+    db: AsyncSession = Depends(get_db),
+    x_3fa_token: str = Header(None, alias="X-3FA-Token"),
+):
+    """Initiate billing agreement for outbound payments."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    if not x_3fa_token:
+        raise HTTPException(status_code=403, detail="3FA token required")
+    return await paypal_service.initiate_billing_agreement(db, account_id, max_monthly)
+
+
+@app.post("/api/v1/owner/paypal/billing-agreement/complete")
+async def api_paypal_ba_complete(
+    request: Request, token: str = "", db: AsyncSession = Depends(get_db),
+):
+    """Complete billing agreement after owner approval at PayPal."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.complete_billing_agreement(db, token)
+
+
+@app.get("/api/v1/owner/paypal/billing-agreements")
+async def api_paypal_ba_list(request: Request, db: AsyncSession = Depends(get_db)):
+    """List billing agreements."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.list_billing_agreements(db)
+
+
+@app.post("/api/v1/owner/paypal/pay/one-time")
+async def api_paypal_pay(
+    request: Request, account_id: str = "", expense_category: str = "operational",
+    payee_name: str = "", usd_amount: float = 0,
+    db: AsyncSession = Depends(get_db),
+    x_3fa_token: str = Header(None, alias="X-3FA-Token"),
+):
+    """One-time PayPal payment for platform expense."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    if not x_3fa_token:
+        raise HTTPException(status_code=403, detail="3FA token required")
+    return await paypal_service.initiate_one_time_payment(
+        db, account_id, expense_category, payee_name, usd_amount, three_fa_ref=x_3fa_token,
+    )
+
+
+@app.get("/api/v1/owner/paypal/pay/history")
+async def api_paypal_pay_history(request: Request, db: AsyncSession = Depends(get_db)):
+    """Outbound payment history."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.get_outbound_history(db)
+
+
+@app.post("/api/v1/webhooks/paypal")
+async def api_paypal_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    """Receive PayPal webhook events."""
+    body = await request.json()
+    event_id = body.get("id", "")
+    event_type = body.get("event_type", "")
+    resource = body.get("resource", {})
+    return await paypal_service.process_webhook(
+        db, event_id, event_type,
+        resource.get("resource_type"), resource.get("id"),
+        body, signature_verified=False,  # Production: verify signature
+    )
+
+
+@app.get("/api/v1/owner/paypal/webhooks")
+async def api_paypal_webhooks(request: Request, db: AsyncSession = Depends(get_db)):
+    """Recent webhook events."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_service.get_webhook_events(db)
+
+
+@app.get("/api/v1/owner/paypal/health")
+async def api_paypal_health(request: Request):
+    """PayPal API health check."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await paypal_adapter.health_check()
 
 
 # ══════════════════════════════════════════════════════════════════════
