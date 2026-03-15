@@ -50,6 +50,7 @@ from app.infrastructure.notifications import NotificationService
 from app.exchange.liquidity import LiquidityService, CreditScoringService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
+from app.infrastructure.alerts import AlertService
 from app.payout.service import PayOutEngineService
 from app.agentbroker.routes import router as agentbroker_router, engagement_service as _ab_engagement_svc
 from app.agentbroker.services import EngagementService as ABEngagementService
@@ -90,6 +91,8 @@ credit_scoring = CreditScoringService()
 legal_docs = PlatformLegalDocuments()
 payout_engine = PayOutEngineService(blockchain=blockchain)
 cost_control = CostControlService()
+alert_service = AlertService()
+cost_control.set_alert_service(alert_service)
 
 # AgentBroker — initialize engagement service with blockchain/fee_engine
 import app.agentbroker.routes as ab_routes
@@ -1805,6 +1808,15 @@ async def api_reset_budget(
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
     return await cost_control.reset_monthly_spend(db)
+
+
+@app.post("/api/infra/test-alerts")
+async def api_test_alerts(request: Request):
+    """Send a test alert to verify email and WhatsApp are working."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await alert_service.test_alerts()
 
 
 @app.get("/api/infra/digitalocean")

@@ -64,6 +64,13 @@ class CostEvent(Base):
 class CostControlService:
     """Master cost control with kill switch functionality."""
 
+    def __init__(self):
+        self._alert_service = None
+
+    def set_alert_service(self, alert_service):
+        """Wire the alert notification service."""
+        self._alert_service = alert_service
+
     # ── POWER STATE (Master Switch) ──────────────────────────────
 
     async def get_power_state(self, db: AsyncSession) -> dict:
@@ -260,6 +267,12 @@ class CostControlService:
                 spend_at_event=spend, limit_at_event=limit,
             )
             db.add(event)
+            # Send email + WhatsApp alert
+            if self._alert_service:
+                try:
+                    await self._alert_service.send_budget_alert("WARNING", spend, limit, pct)
+                except Exception:
+                    pass  # Alerts are non-blocking
 
         # Check critical threshold
         if pct >= budget.critical_threshold_pct and pct < 100:
@@ -270,10 +283,22 @@ class CostControlService:
                 spend_at_event=spend, limit_at_event=limit,
             )
             db.add(event)
+            # Send email + WhatsApp alert
+            if self._alert_service:
+                try:
+                    await self._alert_service.send_budget_alert("CRITICAL", spend, limit, pct)
+                except Exception:
+                    pass
 
         # Check auto-shutdown
         if pct >= 100 and budget.auto_shutdown_enabled:
             alerts.append("AUTO_SHUTDOWN")
+            # Send email + WhatsApp BEFORE shutdown
+            if self._alert_service:
+                try:
+                    await self._alert_service.send_budget_alert("AUTO_SHUTDOWN", spend, limit, pct)
+                except Exception:
+                    pass
             await self.emergency_shutdown(
                 db, f"Auto-shutdown: budget exceeded (${spend:.2f} / ${limit:.2f})",
                 shutdown_by="auto_budget"
