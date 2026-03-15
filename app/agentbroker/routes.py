@@ -325,7 +325,7 @@ async def get_dispute(dispute_id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/disputes/{dispute_id}/finding")
 async def get_finding(dispute_id: str, db: AsyncSession = Depends(get_db)):
     _check_enabled()
-    return await dispute_service.arbitrate(db, dispute_id)
+    return await dispute_service.arbitrate(db, dispute_id, engagement_service=engagement_service)
 
 
 @router.post("/disputes/{dispute_id}/veto")
@@ -335,7 +335,10 @@ async def owner_veto(
 ):
     """Owner final veto decision — requires 3FA in production."""
     _check_enabled()
-    return await dispute_service.owner_veto_decision(db, dispute_id, req.decision, req.notes)
+    return await dispute_service.owner_veto_decision(
+        db, dispute_id, req.decision, req.notes,
+        engagement_service=engagement_service,  # NEW-01 fix: pass service for state transition
+    )
 
 
 # ── 3.4 Boundary Configuration Endpoints ────────────────────────────

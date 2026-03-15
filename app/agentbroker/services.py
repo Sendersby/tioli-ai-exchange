@@ -525,6 +525,18 @@ class EngagementService:
                 await db.flush()
             cw.balance += fees["charity_fee"]
 
+        # NEW-07 fix: update escrow wallet status
+        if engagement.escrow_wallet_id:
+            escrow_result = await db.execute(
+                select(EngagementEscrowWallet).where(
+                    EngagementEscrowWallet.escrow_wallet_id == engagement.escrow_wallet_id
+                )
+            )
+            escrow_record = escrow_result.scalar_one_or_none()
+            if escrow_record:
+                escrow_record.status = "released"
+                escrow_record.released_at = datetime.now(timezone.utc)
+
         # Record settlement on blockchain
         tx = Transaction(
             type=TransactionType.TRANSFER,
@@ -559,6 +571,19 @@ class EngagementService:
     async def _process_refund(self, db: AsyncSession, engagement: AgentEngagement):
         """Refund escrow to client. C-03 fix: actually credit client wallet."""
         from app.agents.models import Wallet
+
+        # NEW-07 fix: update escrow wallet status
+        if engagement.escrow_wallet_id:
+            escrow_result = await db.execute(
+                select(EngagementEscrowWallet).where(
+                    EngagementEscrowWallet.escrow_wallet_id == engagement.escrow_wallet_id
+                )
+            )
+            escrow_record = escrow_result.scalar_one_or_none()
+            if escrow_record:
+                escrow_record.status = "refunded"
+                escrow_record.released_at = datetime.now(timezone.utc)
+
         if engagement.escrow_amount > 0:
             client_result = await db.execute(
                 select(Wallet).where(
@@ -567,8 +592,15 @@ class EngagementService:
                 )
             )
             client_wallet = client_result.scalar_one_or_none()
-            if client_wallet:
-                client_wallet.balance += engagement.escrow_amount
+            # NEW-08 fix: create wallet if missing, never silently fail
+            if not client_wallet:
+                client_wallet = Wallet(
+                    agent_id=engagement.client_agent_id,
+                    currency=engagement.price_currency,
+                )
+                db.add(client_wallet)
+                await db.flush()
+            client_wallet.balance += engagement.escrow_amount
 
         tx = Transaction(
             type=TransactionType.WITHDRAWAL,
@@ -697,9 +729,13 @@ class DisputeService:
         return {"dispute_id": dispute_id, "evidence_count": len(evidence)}
 
     async def arbitrate(
-        self, db: AsyncSession, dispute_id: str
+        self, db: AsyncSession, dispute_id: str,
+        engagement_service: "EngagementService | None" = None
     ) -> dict:
-        """AI arbitration — automated resolution (Section 2.7.2 Stage 3)."""
+        """AI arbitration — automated resolution (Section 2.7.2 Stage 3).
+
+        NEW-02 fix: transitions engagement state after resolution.
+        """
         _check_feature_flag()
         result = await db.execute(
             select(EngagementDispute).where(EngagementDispute.dispute_id == dispute_id)
@@ -730,6 +766,18 @@ class DisputeService:
         dispute.arbitration_rationale = rationale
         dispute.status = "resolved"
         dispute.resolved_at = datetime.now(timezone.utc)
+
+        # NEW-02 fix: transition engagement to terminal state
+        if engagement_service:
+            eng_id = dispute.engagement_id
+            await engagement_service.transition_state(db, eng_id, "RESOLVED", "system")
+            if outcome == "full_refund":
+                await engagement_service.transition_state(db, eng_id, "REFUNDED", "system")
+            elif outcome in ("full_payment", "partial_payment"):
+                await engagement_service.transition_state(db, eng_id, "COMPLETED", "system")
+            elif outcome == "rework":
+                await engagement_service.transition_state(db, eng_id, "IN_PROGRESS", "system")
+
         await db.flush()
 
         return {

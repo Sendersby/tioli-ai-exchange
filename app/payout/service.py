@@ -303,6 +303,28 @@ class PayOutEngineService:
                 "reason": f"Disbursement R{zar_amount:.2f} exceeds ceiling R{MAX_SINGLE_DISBURSEMENT_ZAR}",
             }
 
+        # NEW-09 fix: check SARB limit BEFORE execution
+        offshore_pct = (split["pct_btc"] + split["pct_eth"] + split.get("pct_custom", 0)) / 100
+        if offshore_pct > 0:
+            sarb_status = await self.get_sarb_status(db)
+            projected_offshore = zar_amount * offshore_pct
+            if sarb_status["blocked"]:
+                return {
+                    "status": "BLOCKED_SARB",
+                    "reason": (
+                        f"SARB annual offshore limit reached (R{sarb_status['total_offshore_zar']:,.2f} "
+                        f"of R{SARB_ANNUAL_LIMIT_ZAR:,.2f}). Domestic ZAR disbursement still available."
+                    ),
+                }
+            if sarb_status["total_offshore_zar"] + projected_offshore > SARB_ANNUAL_LIMIT_ZAR:
+                return {
+                    "status": "BLOCKED_SARB",
+                    "reason": (
+                        f"This disbursement (R{projected_offshore:,.2f} offshore) would exceed "
+                        f"the SARB annual limit. Remaining: R{sarb_status['remaining_zar']:,.2f}"
+                    ),
+                }
+
         gross = balance["balance_credits"]
 
         # Create disbursement record

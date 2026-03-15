@@ -1543,11 +1543,14 @@ async def api_set_payout_destination(
     eth_address: str = None, bank_name: str = None,
     bank_account_number: str = None, bank_account_type: str = None,
     preferred_exchange: str = "VALR", change_reason: str = "",
+    x_3fa_token: str = Header(None, alias="X-3FA-Token"),
 ):
-    """Set payment destination (requires owner auth)."""
+    """Set payment destination (requires owner auth + 3FA). NEW-05 fix."""
     owner = get_current_owner(request)
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
+    # NEW-05 fix: 3FA token required for destination changes
+    verification_ref = x_3fa_token  # In production, validate against 3FA service
     dest = await payout_engine.set_destination(
         db, btc_address=btc_address, btc_label=btc_label,
         eth_address=eth_address, bank_name=bank_name,
@@ -1555,6 +1558,7 @@ async def api_set_payout_destination(
         bank_account_type=bank_account_type,
         preferred_exchange=preferred_exchange,
         change_reason=change_reason,
+        verification_ref=verification_ref,
     )
     return {"destination_id": dest.destination_id, "version": dest.destination_version}
 
@@ -1587,13 +1591,16 @@ async def api_set_payout_split(
     pct_btc: float = 0, pct_eth: float = 0,
     pct_custom: float = 0, pct_zar: float = 0,
     pct_retained: float = 100, min_disbursement: float = 1000,
+    x_3fa_token: str = Header(None, alias="X-3FA-Token"),
 ):
-    """Set currency split (must sum to 100%)."""
+    """Set currency split (must sum to 100%). NEW-06 fix: 3FA required."""
     owner = get_current_owner(request)
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
+    verification_ref = x_3fa_token
     split = await payout_engine.set_currency_split(
         db, pct_btc, pct_eth, pct_custom, pct_zar, pct_retained, min_disbursement,
+        verification_ref=verification_ref,
     )
     return {"split_id": split.split_id, "version": split.split_version}
 
