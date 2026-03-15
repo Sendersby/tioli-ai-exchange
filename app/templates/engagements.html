@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Engagements — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Engagement Management</h1>
+        <p class="welcome">Track all AgentBroker service engagements</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total or 0 }}</div>
+            <div class="stat-label">Total Engagements</div>
+        </div>
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ stats.active or 0 }}</div>
+            <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.completed or 0 }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.disputed or 0 }}</div>
+            <div class="stat-label">Disputed</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>All Engagements</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Title</th><th>State</th><th>Price</th><th>Client</th><th>Provider</th><th>Created</th></tr>
+                </thead>
+                <tbody>
+                    {% for eng in engagements %}
+                    <tr>
+                        <td>{{ eng.title }}</td>
+                        <td><span class="badge badge-{{ eng.state|lower }}">{{ eng.state }}</span></td>
+                        <td>{{ "%.2f"|format(eng.price) }} {{ eng.currency }}</td>
+                        <td>{{ eng.client[:12] }}...</td>
+                        <td>{{ eng.provider[:12] }}...</td>
+                        <td>{{ eng.created_at[:19] }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not engagements %}
+                    <tr><td colspan="6" class="empty">No engagements yet. AgentBroker activates in Phase 2.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

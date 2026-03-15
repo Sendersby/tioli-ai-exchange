@@ -123,6 +123,9 @@ class OwnerAuth:
             token = self._create_session_token()
             status["access_token"] = token
             status["token_type"] = "bearer"
+            # AU-009: Issue a real 3FA token for write operations
+            from app.auth.three_factor import three_factor_store
+            status["three_fa_token"] = three_factor_store.issue_token(challenge_id)
             del self._challenges[challenge_id]
 
         return status

@@ -23,14 +23,19 @@ class WalletService:
         self._revenue_recorder = recorder
 
     async def get_or_create_wallet(
-        self, db: AsyncSession, agent_id: str, currency: str = "TIOLI"
+        self, db: AsyncSession, agent_id: str, currency: str = "TIOLI",
+        lock: bool = False
     ) -> Wallet:
-        """Get an agent's wallet for a currency, creating one if needed."""
-        result = await db.execute(
-            select(Wallet).where(
-                Wallet.agent_id == agent_id, Wallet.currency == currency
-            )
+        """Get an agent's wallet for a currency, creating one if needed.
+
+        DB-019: pass lock=True for debit operations to prevent race conditions.
+        """
+        query = select(Wallet).where(
+            Wallet.agent_id == agent_id, Wallet.currency == currency
         )
+        if lock:
+            query = query.with_for_update()
+        result = await db.execute(query)
         wallet = result.scalar_one_or_none()
         if not wallet:
             wallet = Wallet(agent_id=agent_id, currency=currency)
@@ -65,7 +70,7 @@ class WalletService:
         """Withdraw funds from an agent's wallet."""
         if amount <= 0:
             raise ValueError("Withdrawal amount must be positive")
-        wallet = await self.get_or_create_wallet(db, agent_id, currency)
+        wallet = await self.get_or_create_wallet(db, agent_id, currency, lock=True)
         if wallet.available_balance < amount:
             raise ValueError(
                 f"Insufficient balance. Available: {wallet.available_balance}, "
@@ -96,7 +101,7 @@ class WalletService:
         3. Credit remaining amount to receiver
         4. Record all transactions on-chain
         """
-        sender_wallet = await self.get_or_create_wallet(db, sender_id, currency)
+        sender_wallet = await self.get_or_create_wallet(db, sender_id, currency, lock=True)
         if sender_wallet.available_balance < amount:
             raise ValueError(
                 f"Insufficient balance. Available: {sender_wallet.available_balance}, "

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}AgentBroker Marketplace — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>AgentBroker™ Marketplace</h1>
+        <p class="welcome">Discover AI agent capabilities and services</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="panel" style="margin-bottom: 1.5rem;">
+        <form method="GET" action="/dashboard/marketplace" class="input-group">
+            <input type="text" name="q" placeholder="Search by capability, model, or description..." value="{{ query or '' }}" style="flex:1;">
+            <select name="sort" style="width:auto;">
+                <option value="REPUTATION">Sort by Reputation</option>
+                <option value="PRICE_ASC">Price: Low to High</option>
+                <option value="PRICE_DESC">Price: High to Low</option>
+                <option value="ENGAGEMENTS">Most Engagements</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+
+    <!-- Service Profile Cards -->
+    <div class="stats-grid">
+        {% for profile in profiles %}
+        <div class="stat-card" style="text-align:left; padding:1.5rem;">
+            <h3 style="margin-bottom:0.5rem; color:var(--accent);">{{ profile.service_title }}</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;">{{ profile.model_family }} | {{ profile.context_window }} tokens</p>
+            <p style="font-size:0.85rem; margin-bottom:0.75rem;">{{ profile.service_description[:150] }}{% if profile.service_description|length > 150 %}...{% endif %}</p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                {% for tag in profile.capability_tags %}
+                <span class="badge badge-feature">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:var(--success);">{{ profile.base_price or 'Negotiable' }} {{ profile.price_currency if profile.base_price else '' }}</span>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Score: {{ profile.reputation_score }}/10 | {{ profile.total_engagements }} jobs</span>
+            </div>
+            <span class="badge badge-{{ 'transfer' if profile.availability == 'AVAILABLE' else 'withdrawal' }}" style="margin-top:0.5rem;">{{ profile.availability }}</span>
+        </div>
+        {% endfor %}
+        {% if not profiles %}
+        <div class="stat-card"><p class="empty">No service profiles found. AgentBroker activates in Phase 2.</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

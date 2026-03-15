@@ -51,6 +51,7 @@ from app.exchange.liquidity import LiquidityService, CreditScoringService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
+from app.exchange.loan_defaults import LoanDefaultService
 from app.paypal.adapter import PayPalAdapter
 from app.paypal.service import PayPalService
 from app.payout.service import PayOutEngineService
@@ -95,6 +96,7 @@ payout_engine = PayOutEngineService(blockchain=blockchain)
 cost_control = CostControlService()
 alert_service = AlertService()
 cost_control.set_alert_service(alert_service)
+loan_default_service = LoanDefaultService()
 paypal_adapter = PayPalAdapter()
 paypal_service = PayPalService(adapter=paypal_adapter)
 
@@ -1909,6 +1911,27 @@ async def api_paypal_health(request: Request):
 
 
 # ══════════════════════════════════════════════════════════════════════
+#  LOAN DEFAULT MANAGEMENT (CE-008)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/loans/check-defaults")
+async def api_check_loan_defaults(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Check for overdue loans and default them."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await loan_default_service.check_and_default_overdue_loans(db)
+
+
+@app.get("/api/loans/overdue-summary")
+async def api_overdue_summary(db: AsyncSession = Depends(get_db)):
+    """Get summary of overdue and defaulted loans."""
+    return await loan_default_service.get_overdue_summary(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
 #  INFRASTRUCTURE COST CONTROL — Master Kill Switch
 # ══════════════════════════════════════════════════════════════════════
 
@@ -2153,6 +2176,65 @@ async def governance_page(request: Request):
         "pending_proposals": proposals, "priority_queue": queue,
         "governance_stats": stats, "audit_log": audit,
     })
+
+
+@app.get("/dashboard/payout", response_class=HTMLResponse)
+async def payout_dashboard_page(request: Request):
+    """PayOut Engine dashboard tab."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    async with async_session() as db:
+        balance = await payout_engine.get_owner_wallet_balance(db)
+        split = await payout_engine.get_current_split(db)
+        destination = await payout_engine.get_current_destination(db)
+        sarb = await payout_engine.get_sarb_status(db)
+        disbursements = await payout_engine.get_disbursement_history(db)
+
+    return templates.TemplateResponse("payout.html", {
+        "request": request, "authenticated": True, "active": "payout",
+        "balance": balance, "split": split, "destination": destination,
+        "sarb": sarb, "disbursements": disbursements,
+    })
+
+
+@app.get("/api/v1/owner/payout/tax-report")
+async def api_tax_report_csv(request: Request, db: AsyncSession = Depends(get_db)):
+    """Download SARS-compatible annual tax report as CSV."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+
+    summary = await payout_engine.get_ytd_summary(db)
+    disbursements = await payout_engine.get_disbursement_history(db)
+
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["TiOLi AI Investments — Annual Earnings Report"])
+    writer.writerow(["Year", summary["year"]])
+    writer.writerow(["Total Disbursed (Credits)", summary["total_disbursed_credits"]])
+    writer.writerow(["Total Disbursed (ZAR)", summary["total_disbursed_zar"]])
+    writer.writerow(["Current Balance (Credits)", summary["current_balance_credits"]])
+    writer.writerow(["Credit/ZAR Rate", summary["credit_zar_rate"]])
+    writer.writerow([])
+    writer.writerow(["Date", "Trigger", "Credits", "BTC", "ETH", "ZAR", "Retained", "Status"])
+    for d in disbursements:
+        writer.writerow([
+            d.get("completed_at", ""), d.get("triggered_by", ""),
+            d.get("gross_credits", 0), d.get("btc", 0), d.get("eth", 0),
+            d.get("zar", 0), d.get("retained", 0), d.get("status", ""),
+        ])
+
+    from fastapi.responses import StreamingResponse
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=tioli_tax_report_{summary['year']}.csv"},
+    )
 
 
 @app.get("/dashboard/reports", response_class=HTMLResponse)
