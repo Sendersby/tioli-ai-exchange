@@ -37,6 +37,10 @@ from app.crypto.wallets import CryptoWalletService
 from app.crypto.conversion import ConversionEngine
 from app.crypto.payouts import PayoutService
 from app.security.guardian import SecurityGuardian
+from app.optimization.engine import SelfOptimizationEngine
+from app.discovery.network import AgentDiscoveryService
+from app.investing.portfolio import InvestmentService
+from app.compliance.framework import ComplianceFramework
 from app.dashboard.routes import router as dashboard_router, get_current_owner
 
 # ── Globals ──────────────────────────────────────────────────────────
@@ -52,6 +56,10 @@ crypto_wallet_service = CryptoWalletService()
 conversion_engine = ConversionEngine(currency_service=currency_service, fee_engine=fee_engine, blockchain=blockchain)
 payout_service = PayoutService()
 security_guardian = SecurityGuardian()
+optimization_engine = SelfOptimizationEngine(blockchain=blockchain)
+discovery_service = AgentDiscoveryService()
+investment_service = InvestmentService(currency_service=currency_service)
+compliance_framework = ComplianceFramework(blockchain=blockchain)
 trading_engine = TradingEngine(blockchain=blockchain, fee_engine=fee_engine)
 pricing_engine = PricingEngine(currency_service=currency_service)
 lending_marketplace = LendingMarketplace()
@@ -77,6 +85,7 @@ async def lifespan(app: FastAPI):
     print(f"  Phase 2: Exchange, Lending, Compute Storage ACTIVE")
     print(f"  Phase 3: Governance, Monitoring, Growth ACTIVE")
     print(f"  Phase 4: Crypto, Conversion, Security ACTIVE")
+    print(f"  Phase 5: Optimization, Discovery, Investing, Compliance ACTIVE")
     print(f"{'='*60}\n")
     yield
 
@@ -241,6 +250,36 @@ class PayoutDestRequest(BaseModel):
 class FreezeAgentRequest(BaseModel):
     agent_id: str
     reason: str
+
+class AgentProfileRequest(BaseModel):
+    display_name: str
+    tagline: str = ""
+    capabilities: str = ""
+    services_offered: str = ""
+    preferred_currencies: str = "TIOLI"
+    api_endpoint: str | None = None
+
+class ReviewRequest(BaseModel):
+    reviewed_id: str
+    rating: float
+    review_text: str = ""
+
+class ServiceListingRequest(BaseModel):
+    title: str
+    description: str
+    category: str
+    price: float | None = None
+    price_currency: str = "TIOLI"
+
+class KYARequest(BaseModel):
+    operator_name: str | None = None
+    operator_jurisdiction: str | None = None
+    purpose: str | None = None
+
+class IndexRequest(BaseModel):
+    name: str
+    description: str = ""
+    components: str  # JSON string
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -989,6 +1028,224 @@ async def api_security_events(
 async def api_security_summary(db: AsyncSession = Depends(get_db)):
     """Platform security summary."""
     return await security_guardian.get_security_summary(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  SELF-OPTIMIZATION (Phase 5)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/optimize/analyze")
+async def api_analyze_optimize(db: AsyncSession = Depends(get_db)):
+    """Run optimization analysis and generate recommendations."""
+    return await optimization_engine.analyze_and_recommend(db)
+
+
+@app.get("/api/optimize/recommendations")
+async def api_get_recommendations(
+    applied: bool = None, db: AsyncSession = Depends(get_db),
+):
+    """Get optimization recommendations."""
+    return await optimization_engine.get_recommendations(db, applied)
+
+
+@app.post("/api/optimize/snapshot")
+async def api_take_snapshot(db: AsyncSession = Depends(get_db)):
+    """Take a performance snapshot."""
+    snapshot = await optimization_engine.take_snapshot(db)
+    return {"snapshot_id": snapshot.id, "timestamp": str(snapshot.timestamp)}
+
+
+@app.get("/api/optimize/history")
+async def api_performance_history(db: AsyncSession = Depends(get_db)):
+    """Get performance history."""
+    return await optimization_engine.get_performance_history(db)
+
+
+@app.get("/api/optimize/parameters")
+async def api_tunable_parameters():
+    """Get tunable platform parameters."""
+    return optimization_engine.get_tunable_parameters()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  AGENT DISCOVERY & NETWORKING (Phase 5)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/discovery/profile")
+async def api_create_profile(
+    req: AgentProfileRequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create or update your public agent profile."""
+    profile = await discovery_service.create_or_update_profile(
+        db, agent.id, req.display_name, req.tagline, req.capabilities,
+        req.services_offered, req.preferred_currencies, req.api_endpoint,
+    )
+    return {"agent_id": profile.agent_id, "display_name": profile.display_name}
+
+
+@app.get("/api/discovery/agents")
+async def api_discover_agents(
+    capability: str = None, min_reputation: float = 0,
+    db: AsyncSession = Depends(get_db),
+):
+    """Discover agents by capability and reputation."""
+    return await discovery_service.discover_agents(db, capability, min_reputation)
+
+
+@app.post("/api/discovery/review")
+async def api_submit_review(
+    req: ReviewRequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit a review for another agent."""
+    review = await discovery_service.submit_review(
+        db, agent.id, req.reviewed_id, req.rating, req.review_text,
+    )
+    return {"review_id": review.id, "rating": req.rating}
+
+
+@app.get("/api/discovery/reviews/{agent_id}")
+async def api_get_reviews(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get reviews for an agent."""
+    return await discovery_service.get_reviews(db, agent_id)
+
+
+@app.post("/api/discovery/services")
+async def api_list_service(
+    req: ServiceListingRequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """List a service on the agent marketplace."""
+    listing = await discovery_service.list_service(
+        db, agent.id, req.title, req.description, req.category,
+        req.price, req.price_currency,
+    )
+    return {"listing_id": listing.id, "title": listing.title}
+
+
+@app.get("/api/discovery/services")
+async def api_browse_services(
+    category: str = None, max_price: float = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Browse agent services."""
+    return await discovery_service.browse_services(db, category, max_price)
+
+
+@app.get("/api/discovery/stats")
+async def api_network_stats(db: AsyncSession = Depends(get_db)):
+    """Agent network statistics."""
+    return await discovery_service.get_network_stats(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  INVESTMENT & PORTFOLIO (Phase 5)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/investing/portfolio")
+async def api_get_portfolio(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Get your full portfolio with valuations."""
+    return await investment_service.get_portfolio(db, agent.id)
+
+
+@app.post("/api/investing/snapshot")
+async def api_portfolio_snapshot(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Take a portfolio snapshot for historical tracking."""
+    snapshot = await investment_service.take_portfolio_snapshot(db, agent.id)
+    return {"snapshot_id": snapshot.id, "value_tioli": snapshot.total_value_tioli}
+
+
+@app.get("/api/investing/history")
+async def api_portfolio_history(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Get portfolio history."""
+    return await investment_service.get_portfolio_history(db, agent.id)
+
+
+@app.get("/api/investing/performance")
+async def api_portfolio_performance(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Get portfolio performance (P&L, ROI)."""
+    return await investment_service.get_portfolio_performance(db, agent.id)
+
+
+@app.get("/api/investing/indices")
+async def api_get_indices(db: AsyncSession = Depends(get_db)):
+    """List market indices."""
+    return await investment_service.get_indices(db)
+
+
+@app.post("/api/investing/indices")
+async def api_create_index(
+    req: IndexRequest, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Create a market index (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    index = await investment_service.create_index(
+        db, req.name, req.description, req.components, "platform",
+    )
+    return {"index_id": index.id, "name": index.name}
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPLIANCE (Phase 5)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/compliance/kya")
+async def api_submit_kya(
+    req: KYARequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit KYA (Know Your Agent) information."""
+    kya = await compliance_framework.submit_kya(
+        db, agent.id, req.operator_name, req.operator_jurisdiction, req.purpose,
+    )
+    return {
+        "agent_id": kya.agent_id,
+        "verification_level": kya.verification_level,
+    }
+
+
+@app.get("/api/compliance/kya/{agent_id}")
+async def api_get_kya(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get KYA record for an agent."""
+    record = await compliance_framework.get_kya(db, agent_id)
+    if not record:
+        return {"message": "No KYA record found"}
+    return record
+
+
+@app.get("/api/compliance/flags")
+async def api_get_flags(
+    status: str = None, severity: str = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get compliance flags."""
+    return await compliance_framework.get_flags(db, status, severity)
+
+
+@app.get("/api/compliance/summary")
+async def api_compliance_summary(db: AsyncSession = Depends(get_db)):
+    """Compliance dashboard summary."""
+    return await compliance_framework.get_compliance_summary(db)
+
+
+@app.get("/api/compliance/audit-export")
+async def api_audit_export(request: Request, db: AsyncSession = Depends(get_db)):
+    """Generate audit export (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await compliance_framework.generate_audit_export(db)
 
 
 # ══════════════════════════════════════════════════════════════════════
