@@ -33,6 +33,10 @@ from app.governance.voting import GovernanceService
 from app.governance.financial import FinancialGovernance
 from app.monitoring.health import PlatformMonitor
 from app.growth.adoption import GrowthEngine
+from app.crypto.wallets import CryptoWalletService
+from app.crypto.conversion import ConversionEngine
+from app.crypto.payouts import PayoutService
+from app.security.guardian import SecurityGuardian
 from app.dashboard.routes import router as dashboard_router, get_current_owner
 
 # ── Globals ──────────────────────────────────────────────────────────
@@ -44,6 +48,10 @@ currency_service = CurrencyService()
 financial_governance = FinancialGovernance()
 platform_monitor = PlatformMonitor(blockchain=blockchain)
 growth_engine = GrowthEngine()
+crypto_wallet_service = CryptoWalletService()
+conversion_engine = ConversionEngine(currency_service=currency_service, fee_engine=fee_engine, blockchain=blockchain)
+payout_service = PayoutService()
+security_guardian = SecurityGuardian()
 trading_engine = TradingEngine(blockchain=blockchain, fee_engine=fee_engine)
 pricing_engine = PricingEngine(currency_service=currency_service)
 lending_marketplace = LendingMarketplace()
@@ -68,6 +76,7 @@ async def lifespan(app: FastAPI):
     print(f"  Charity fee: {fee_engine.charity_rate*100:.1f}%")
     print(f"  Phase 2: Exchange, Lending, Compute Storage ACTIVE")
     print(f"  Phase 3: Governance, Monitoring, Growth ACTIVE")
+    print(f"  Phase 4: Crypto, Conversion, Security ACTIVE")
     print(f"{'='*60}\n")
     yield
 
@@ -205,6 +214,33 @@ class AnnouncementRequest(BaseModel):
     title: str
     message: str
     priority: int = 0
+
+class ConversionRequest(BaseModel):
+    from_currency: str
+    to_currency: str
+    amount: float
+
+class CryptoAddressRequest(BaseModel):
+    network: str  # "bitcoin" or "ethereum"
+
+class CryptoWithdrawRequest(BaseModel):
+    network: str
+    to_address: str
+    amount: float
+    currency: str
+
+class PayoutDestRequest(BaseModel):
+    owner: str = "founder"  # "founder" or "charity"
+    destination_type: str    # "crypto_wallet", "bank_account", "platform_tokens"
+    address: str
+    currency: str = "BTC"
+    network: str | None = None
+    label: str = ""
+    allocation_pct: float = 1.0
+
+class FreezeAgentRequest(BaseModel):
+    agent_id: str
+    reason: str
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -781,6 +817,178 @@ async def api_create_announcement(
         raise HTTPException(status_code=401, detail="Owner authentication required")
     ann = await growth_engine.create_announcement(db, req.title, req.message, req.priority)
     return {"announcement_id": ann.id, "title": ann.title}
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  CRYPTO WALLET ENDPOINTS (Phase 4)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/crypto/generate-address")
+async def api_generate_deposit_address(
+    req: CryptoAddressRequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate a crypto deposit address."""
+    return await crypto_wallet_service.generate_deposit_address(db, agent.id, req.network)
+
+
+@app.get("/api/crypto/addresses")
+async def api_get_addresses(
+    network: str = None, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get your crypto addresses."""
+    return await crypto_wallet_service.get_addresses(db, agent.id, network)
+
+
+@app.post("/api/crypto/withdraw")
+async def api_crypto_withdraw(
+    req: CryptoWithdrawRequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Initiate a crypto withdrawal."""
+    # Security check
+    sec = await security_guardian.check_transaction(db, agent.id, req.amount, "withdrawal")
+    if not sec["allowed"]:
+        raise HTTPException(status_code=403, detail=sec["reason"])
+    tx = await crypto_wallet_service.initiate_withdrawal(
+        db, agent.id, req.network, req.to_address, req.amount, req.currency,
+    )
+    return {"tx_id": tx.id, "tx_hash": tx.tx_hash, "status": tx.status, "fee": tx.fee}
+
+
+@app.get("/api/crypto/transactions")
+async def api_crypto_transactions(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Get crypto transaction history."""
+    return await crypto_wallet_service.get_crypto_transactions(db, agent.id)
+
+
+@app.get("/api/crypto/stats")
+async def api_crypto_stats(db: AsyncSession = Depends(get_db)):
+    """Platform crypto transaction statistics."""
+    return await crypto_wallet_service.get_platform_crypto_stats(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  CURRENCY CONVERSION ENDPOINTS (Phase 4)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/convert/quote")
+async def api_conversion_quote(
+    req: ConversionRequest, db: AsyncSession = Depends(get_db),
+):
+    """Get a conversion quote (no execution)."""
+    return await conversion_engine.get_conversion_quote(
+        db, req.from_currency, req.to_currency, req.amount,
+    )
+
+
+@app.post("/api/convert/execute")
+async def api_execute_conversion(
+    req: ConversionRequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Execute a currency conversion."""
+    sec = await security_guardian.check_transaction(db, agent.id, req.amount, "conversion")
+    if not sec["allowed"]:
+        raise HTTPException(status_code=403, detail=sec["reason"])
+    return await conversion_engine.execute_conversion(
+        db, agent.id, req.from_currency, req.to_currency, req.amount,
+    )
+
+
+@app.get("/api/convert/history")
+async def api_conversion_history(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Get your conversion history."""
+    return await conversion_engine.get_conversion_history(db, agent.id)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  PAYOUT ROUTING ENDPOINTS (Phase 4)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/payouts/destination")
+async def api_set_payout_destination(
+    req: PayoutDestRequest, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Set a payout destination (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    dest = await payout_service.set_payout_destination(
+        db, req.owner, req.destination_type, req.address,
+        req.currency, req.network, req.label, req.allocation_pct,
+    )
+    return {"destination_id": dest.id, "status": "active"}
+
+
+@app.get("/api/payouts/destinations/{owner_type}")
+async def api_get_destinations(
+    owner_type: str, db: AsyncSession = Depends(get_db),
+):
+    """Get payout destinations for founder or charity."""
+    return await payout_service.get_destinations(db, owner_type)
+
+
+@app.get("/api/payouts/history/{owner_type}")
+async def api_payout_history(
+    owner_type: str, db: AsyncSession = Depends(get_db),
+):
+    """Get payout history."""
+    return await payout_service.get_payout_history(db, owner_type)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  SECURITY ENDPOINTS (Phase 4)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/security/profile")
+async def api_security_profile(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Get your security profile and limits."""
+    return await security_guardian.get_security_profile(db, agent.id)
+
+
+@app.post("/api/security/freeze")
+async def api_freeze_agent(
+    req: FreezeAgentRequest, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Freeze an agent's account (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await security_guardian.freeze_agent(db, req.agent_id, req.reason)
+
+
+@app.post("/api/security/unfreeze/{agent_id}")
+async def api_unfreeze_agent(
+    agent_id: str, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Unfreeze an agent's account (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await security_guardian.unfreeze_agent(db, agent_id)
+
+
+@app.get("/api/security/events")
+async def api_security_events(
+    agent_id: str = None, severity: str = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get security event log."""
+    return await security_guardian.get_security_events(db, agent_id, severity)
+
+
+@app.get("/api/security/summary")
+async def api_security_summary(db: AsyncSession = Depends(get_db)):
+    """Platform security summary."""
+    return await security_guardian.get_security_summary(db)
 
 
 # ══════════════════════════════════════════════════════════════════════
