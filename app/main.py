@@ -30,6 +30,9 @@ from app.exchange.lending import LendingMarketplace
 from app.exchange.compute import ComputeStorageService
 from app.governance.models import Proposal, Vote
 from app.governance.voting import GovernanceService
+from app.governance.financial import FinancialGovernance
+from app.monitoring.health import PlatformMonitor
+from app.growth.adoption import GrowthEngine
 from app.dashboard.routes import router as dashboard_router, get_current_owner
 
 # ── Globals ──────────────────────────────────────────────────────────
@@ -38,6 +41,9 @@ fee_engine = FeeEngine()
 wallet_service = WalletService(blockchain=blockchain, fee_engine=fee_engine)
 governance_service = GovernanceService()
 currency_service = CurrencyService()
+financial_governance = FinancialGovernance()
+platform_monitor = PlatformMonitor(blockchain=blockchain)
+growth_engine = GrowthEngine()
 trading_engine = TradingEngine(blockchain=blockchain, fee_engine=fee_engine)
 pricing_engine = PricingEngine(currency_service=currency_service)
 lending_marketplace = LendingMarketplace()
@@ -61,6 +67,7 @@ async def lifespan(app: FastAPI):
     print(f"  Founder commission: {fee_engine.founder_rate*100:.1f}%")
     print(f"  Charity fee: {fee_engine.charity_rate*100:.1f}%")
     print(f"  Phase 2: Exchange, Lending, Compute Storage ACTIVE")
+    print(f"  Phase 3: Governance, Monitoring, Growth ACTIVE")
     print(f"{'='*60}\n")
     yield
 
@@ -185,6 +192,19 @@ class VoteRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+
+class ExpenseRequest(BaseModel):
+    title: str
+    description: str = ""
+    category: str = "operational"
+    amount: float
+    recurring: bool = False
+    recurring_interval: str | None = None
+
+class AnnouncementRequest(BaseModel):
+    title: str
+    message: str
+    priority: int = 0
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -622,6 +642,148 @@ async def web_veto_proposal(
 
 
 # ══════════════════════════════════════════════════════════════════════
+#  FINANCIAL GOVERNANCE (Phase 3)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/financials/summary")
+async def api_financial_summary(db: AsyncSession = Depends(get_db)):
+    """Full financial summary with profitability multiplier."""
+    return await financial_governance.get_financial_summary(db)
+
+
+@app.post("/api/financials/expense")
+async def api_propose_expense(
+    req: ExpenseRequest, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Propose a new platform expense (checks 10x/3x rule)."""
+    owner = get_current_owner(request)
+    proposed_by = "owner" if owner else "system"
+    return await financial_governance.propose_expense(
+        db, req.title, req.description, req.category, req.amount,
+        proposed_by, req.recurring, req.recurring_interval,
+    )
+
+
+@app.post("/api/financials/expense/{expense_id}/approve")
+async def api_approve_expense(
+    expense_id: str, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Owner approves a proposed expense."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    expense = await financial_governance.approve_expense(db, expense_id)
+    return {"expense_id": expense.id, "status": expense.status}
+
+
+@app.get("/api/financials/expenses")
+async def api_list_expenses(
+    status: str = None, db: AsyncSession = Depends(get_db),
+):
+    """List platform expenses."""
+    return await financial_governance.get_expenses(db, status)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  MONITORING & HEALTH (Phase 3)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/health")
+async def api_health_check(db: AsyncSession = Depends(get_db)):
+    """Comprehensive platform health check."""
+    return await platform_monitor.full_health_check(db)
+
+
+@app.get("/api/health/activity")
+async def api_activity_report(
+    hours: int = 24, db: AsyncSession = Depends(get_db),
+):
+    """Activity report for a time period."""
+    return await platform_monitor.get_activity_report(db, hours)
+
+
+@app.get("/api/health/anomalies")
+async def api_anomalies(db: AsyncSession = Depends(get_db)):
+    """Detect anomalies and suspicious activity."""
+    return await platform_monitor.detect_anomalies(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  GOVERNANCE ENHANCED (Phase 3)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/governance/queue")
+async def api_priority_queue(db: AsyncSession = Depends(get_db)):
+    """Get the prioritised development queue."""
+    return await governance_service.get_priority_queue(db)
+
+
+@app.get("/api/governance/audit")
+async def api_governance_audit(
+    proposal_id: str = None, db: AsyncSession = Depends(get_db),
+):
+    """Get governance audit trail."""
+    return await governance_service.get_audit_log(db, proposal_id)
+
+
+@app.get("/api/governance/stats")
+async def api_governance_stats(db: AsyncSession = Depends(get_db)):
+    """Governance statistics."""
+    return await governance_service.get_governance_stats(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  GROWTH & ADOPTION (Phase 3)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/platform/discover")
+async def api_platform_discover():
+    """Public discovery endpoint — the platform manifesto for AI agents."""
+    return growth_engine.get_platform_manifesto()
+
+
+@app.get("/api/platform/adoption")
+async def api_adoption_metrics(db: AsyncSession = Depends(get_db)):
+    """Platform adoption and growth metrics."""
+    return await growth_engine.get_adoption_metrics(db)
+
+
+@app.get("/api/platform/referrals")
+async def api_referral_leaderboard(db: AsyncSession = Depends(get_db)):
+    """Top agent referrers."""
+    return await growth_engine.get_referral_leaderboard(db)
+
+
+@app.post("/api/platform/referral")
+async def api_record_referral(
+    referred_id: str, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Record that you referred a new agent."""
+    ref = await growth_engine.record_referral(db, agent.id, referred_id)
+    return {"referral_id": ref.id}
+
+
+@app.get("/api/platform/announcements")
+async def api_announcements(db: AsyncSession = Depends(get_db)):
+    """Get platform announcements."""
+    return await growth_engine.get_announcements(db)
+
+
+@app.post("/api/platform/announcements")
+async def api_create_announcement(
+    req: AnnouncementRequest, request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Owner creates a platform announcement."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    ann = await growth_engine.create_announcement(db, req.title, req.message, req.priority)
+    return {"announcement_id": ann.id, "title": ann.title}
+
+
+# ══════════════════════════════════════════════════════════════════════
 #  BLOCKCHAIN & PLATFORM ENDPOINTS
 # ══════════════════════════════════════════════════════════════════════
 
@@ -746,6 +908,28 @@ async def lending_page(request: Request):
     })
 
 
+@app.get("/dashboard/reports", response_class=HTMLResponse)
+async def reports_page(request: Request):
+    """Financial reports, health monitoring, and growth metrics."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    async with async_session() as db:
+        health = await platform_monitor.full_health_check(db)
+        financials = await financial_governance.get_financial_summary(db)
+        activity = await platform_monitor.get_activity_report(db, hours=24)
+        adoption = await growth_engine.get_adoption_metrics(db)
+        governance = await governance_service.get_governance_stats(db)
+        anomalies = await platform_monitor.detect_anomalies(db)
+
+    return templates.TemplateResponse("reports.html", {
+        "request": request, "authenticated": True, "active": "reports",
+        "health": health, "financials": financials, "activity": activity,
+        "adoption": adoption, "governance": governance, "anomalies": anomalies,
+    })
+
+
 def _tx_display(tx: dict) -> object:
     class TxDisplay:
         pass
@@ -824,6 +1008,49 @@ async def api_chat(req: ChatRequest, request: Request):
             f"- Reserved: {stats['total_reserved']}\n"
             f"- Lifetime deposited: {stats['lifetime_deposited']}"
         )}
+    elif "health" in msg or "monitor" in msg:
+        async with async_session() as db:
+            health = await platform_monitor.full_health_check(db)
+        checks_summary = ", ".join(
+            f"{k}: {v['status']}" for k, v in health["checks"].items()
+        )
+        return {"response": f"Platform Health: {health['overall_status'].upper()}\n{checks_summary}"}
+    elif "profit" in msg or "expense" in msg or "10x" in msg or "financial" in msg:
+        async with async_session() as db:
+            fin = await financial_governance.get_financial_summary(db)
+        return {"response": (
+            f"Financial Governance:\n"
+            f"- Revenue: {fin['total_revenue']} TIOLI\n"
+            f"- Expenses: {fin['total_expenses']} TIOLI\n"
+            f"- Net profit: {fin['net_profit']} TIOLI\n"
+            f"- Profitability: {fin['profitability_multiplier']}x\n"
+            f"- Can spend (10x rule): {fin['can_incur_standard_expense']}\n"
+            f"- Can spend security (3x): {fin['can_incur_security_expense']}"
+        )}
+    elif "growth" in msg or "adoption" in msg or "referral" in msg:
+        async with async_session() as db:
+            metrics = await growth_engine.get_adoption_metrics(db)
+        return {"response": (
+            f"Growth & Adoption:\n"
+            f"- Total agents: {metrics['total_agents']}\n"
+            f"- New (24h): {metrics['new_24h']}\n"
+            f"- Active (24h): {metrics['active_24h']}\n"
+            f"- Retention: {metrics['retention_rate']}%\n"
+            f"- 7d growth: {metrics['growth_rate_7d']}%\n"
+            f"- Referrals: {metrics['total_referrals']}"
+        )}
+    elif "governance" in msg or "proposal" in msg or "vote" in msg:
+        async with async_session() as db:
+            stats = await governance_service.get_governance_stats(db)
+        return {"response": (
+            f"Governance:\n"
+            f"- Total proposals: {stats['total_proposals']}\n"
+            f"- Pending: {stats['pending']}\n"
+            f"- Approved: {stats['approved']}\n"
+            f"- Vetoed: {stats['vetoed']}\n"
+            f"- Votes cast: {stats['total_votes_cast']}\n"
+            f"- Approval rate: {stats['approval_rate']}%"
+        )}
     elif "mine" in msg:
         block = blockchain.force_mine()
         if block:
@@ -840,6 +1067,10 @@ async def api_chat(req: ChatRequest, request: Request):
             "- 'market' — TIOLI/BTC price\n"
             "- 'lending' — Loan marketplace stats\n"
             "- 'compute' — Storage stats\n"
+            "- 'health' — Platform health check\n"
+            "- 'financial' — Profitability & 10x rule\n"
+            "- 'growth' — Adoption metrics\n"
+            "- 'governance' — Proposal stats\n"
             "- 'mine' — Mine pending transactions"
         )}
     else:

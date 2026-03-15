@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Reports — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Financial Reports & Monitoring</h1>
+        <p class="welcome">TiOLi AI Investments — Owner View</p>
+    </div>
+
+    <!-- Health Status -->
+    <div class="panel" style="margin-bottom: 1.5rem;">
+        <h2>Platform Health</h2>
+        <div class="health-banner health-{{ health.overall_status }}">
+            Overall: {{ health.overall_status | upper }}
+        </div>
+        <div class="stats-grid" style="margin-top: 1rem;">
+            {% for name, check in health.checks.items() %}
+            <div class="stat-card {% if check.status == 'healthy' %}valid{% elif check.status == 'warning' %}{% else %}invalid{% endif %}">
+                <div class="stat-value">{{ check.status | upper }}</div>
+                <div class="stat-label">{{ name | replace('_', ' ') | title }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="stats-grid">
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ "%.4f"|format(financials.total_revenue) }}</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.4f"|format(financials.total_expenses) }}</div>
+            <div class="stat-label">Total Expenses</div>
+        </div>
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ "%.4f"|format(financials.net_profit) }}</div>
+            <div class="stat-label">Net Profit</div>
+        </div>
+        <div class="stat-card {% if financials.can_incur_standard_expense %}valid{% else %}invalid{% endif %}">
+            <div class="stat-value">{{ financials.profitability_multiplier }}x</div>
+            <div class="stat-label">Profitability (need {{ financials.standard_threshold }})</div>
+        </div>
+    </div>
+
+    <div class="dashboard-panels">
+        <!-- Revenue Breakdown -->
+        <div class="panel">
+            <h2>Revenue by Source</h2>
+            {% if financials.revenue_by_source %}
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Source</th><th>Amount (TIOLI)</th></tr></thead>
+                    <tbody>
+                        {% for source, amount in financials.revenue_by_source.items() %}
+                        <tr><td>{{ source | replace('_', ' ') | title }}</td><td>{{ "%.4f"|format(amount) }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty">No revenue recorded yet</p>
+            {% endif %}
+        </div>
+
+        <!-- Activity Report -->
+        <div class="panel">
+            <h2>Last 24h Activity</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tbody>
+                        <tr><td>New Agents</td><td>{{ activity.new_agents }}</td></tr>
+                        <tr><td>Trades Executed</td><td>{{ activity.trades }}</td></tr>
+                        <tr><td>Trade Volume</td><td>{{ "%.4f"|format(activity.trade_volume) }}</td></tr>
+                        <tr><td>Commission Earned</td><td>{{ "%.4f"|format(activity.commission_earned) }}</td></tr>
+                        <tr><td>Charity Collected</td><td>{{ "%.4f"|format(activity.charity_collected) }}</td></tr>
+                        <tr><td>New Proposals</td><td>{{ activity.new_proposals }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adoption Metrics -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Growth & Adoption</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ adoption.total_agents }}</div>
+                <div class="stat-label">Total Agents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ adoption.new_24h }}</div>
+                <div class="stat-label">New (24h)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ adoption.active_24h }}</div>
+                <div class="stat-label">Active (24h)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ adoption.retention_rate }}%</div>
+                <div class="stat-label">Retention Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ adoption.total_referrals }}</div>
+                <div class="stat-label">Referrals</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ adoption.growth_rate_7d }}%</div>
+                <div class="stat-label">7d Growth</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Governance Stats -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Governance Overview</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ governance.total_proposals }}</div>
+                <div class="stat-label">Total Proposals</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ governance.pending }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card highlight">
+                <div class="stat-value">{{ governance.approved }}</div>
+                <div class="stat-label">Approved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ governance.vetoed }}</div>
+                <div class="stat-label">Vetoed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ governance.approval_rate }}%</div>
+                <div class="stat-label">Approval Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ governance.total_votes_cast }}</div>
+                <div class="stat-label">Votes Cast</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anomalies -->
+    {% if anomalies %}
+    <div class="panel" style="margin-top: 1.5rem; border-color: var(--danger);">
+        <h2 style="color: var(--danger);">Anomalies Detected</h2>
+        {% for a in anomalies %}
+        <div class="alert alert-{{ 'error' if a.severity == 'critical' else 'info' }}">
+            <strong>{{ a.type | replace('_', ' ') | title }}</strong>: {{ a.get('message', '') }}
+            {% if a.agent_id %}Agent: {{ a.agent_id }}{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
