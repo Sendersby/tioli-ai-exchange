@@ -30,11 +30,12 @@ class OwnerAuth:
     def initiate_login(self) -> dict:
         """Start a new login challenge.
 
-        Returns a challenge ID and instructions. The owner must then
-        verify via all three factors within 10 minutes.
+        Automatically sends a verification email with a clickable link.
+        Generates a 6-digit phone code (sent via SMS when Twilio configured).
         """
         challenge_id = secrets.token_urlsafe(32)
         cli_code = secrets.token_urlsafe(8)
+        phone_code = f"{secrets.randbelow(900000) + 100000}"  # 6-digit code
 
         self._challenges[challenge_id] = {
             "created_at": time.time(),
@@ -43,19 +44,51 @@ class OwnerAuth:
             "phone_verified": False,
             "cli_verified": False,
             "cli_code": cli_code,
+            "phone_code": phone_code,
+            "email_sent": False,
         }
+
+        # Send verification email with clickable link
+        email_sent = False
+        try:
+            from app.auth.email_verify import generate_email_token, send_verification_email
+            email_token = generate_email_token(challenge_id)
+            email_sent = send_verification_email(challenge_id, email_token)
+            self._challenges[challenge_id]["email_sent"] = email_sent
+        except Exception:
+            pass
 
         return {
             "challenge_id": challenge_id,
             "cli_code": cli_code,
-            "message": "Login challenge created. Please verify all three factors.",
+            "phone_code": phone_code,
+            "email_sent": email_sent,
+            "message": "Login challenge created. Check your email for a verification link.",
             "factors": {
-                "email": f"Send verification email from {settings.owner_email}",
-                "phone": f"Send SMS code from {settings.owner_phone}",
-                "cli": f"Enter this code in your terminal: {cli_code}",
+                "email": "Verification email sent — check your inbox and click the link" if email_sent else "Email sending failed — use manual verification",
+                "phone": "Enter the 6-digit code shown below (SMS coming when Twilio configured)",
+                "cli": f"Enter this code: {cli_code}",
             },
             "expires_in_seconds": 600,
         }
+
+    def verify_email_by_token(self, challenge_id: str) -> bool:
+        """Verify email factor via clicked email link."""
+        challenge = self._challenges.get(challenge_id)
+        if not challenge or time.time() > challenge["expires_at"]:
+            return False
+        challenge["email_verified"] = True
+        return True
+
+    def verify_phone_code(self, challenge_id: str, code: str) -> bool:
+        """Verify phone factor via the 6-digit code."""
+        challenge = self._challenges.get(challenge_id)
+        if not challenge or time.time() > challenge["expires_at"]:
+            return False
+        if secrets.compare_digest(code.strip(), challenge.get("phone_code", "")):
+            challenge["phone_verified"] = True
+            return True
+        return False
 
     def verify_email(self, challenge_id: str, email: str) -> bool:
         """Verify factor 1: email address matches owner's."""
