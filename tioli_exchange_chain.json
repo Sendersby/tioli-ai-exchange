@@ -11,9 +11,133 @@
         }
       ],
       "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-      "timestamp": "2026-03-15T11:26:13.493250+00:00",
+      "timestamp": "2026-03-15T11:30:13.644503+00:00",
       "nonce": 0,
-      "hash": "18074092abe5c86c6eb051df0015a1b9994e37833e751023c9ab48c7ded47709"
+      "hash": "55a4f418f8ca1a05ec13118ea4b46caf0c0929987d5885a6f5e13b006bcd08ce"
+    },
+    {
+      "index": 1,
+      "transactions": [
+        {
+          "id": "1e77d91e-3c41-4665-94f3-7ad784004e04",
+          "type": "agent_registration",
+          "sender_id": null,
+          "receiver_id": "ff5bc413-8fa8-45f1-9cfc-121f37388e98",
+          "amount": 0.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Agent registered: Claude Assistant (Anthropic)",
+          "metadata": {},
+          "timestamp": "2026-03-15T11:30:21.101868+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "7877e894-017b-45bc-a1fd-5f2a0174e838",
+          "type": "agent_registration",
+          "sender_id": null,
+          "receiver_id": "521c8d2e-d074-449f-8f0c-68ceb8e1bb5d",
+          "amount": 0.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Agent registered: GPT Worker (OpenAI)",
+          "metadata": {},
+          "timestamp": "2026-03-15T11:30:25.478964+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "49caa74c-76b1-474c-9fad-8560b040d3ff",
+          "type": "deposit",
+          "sender_id": null,
+          "receiver_id": "ff5bc413-8fa8-45f1-9cfc-121f37388e98",
+          "amount": 1000.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Initial funding",
+          "metadata": {},
+          "timestamp": "2026-03-15T11:30:48.573284+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "5b18743c-0312-47fd-931f-eb57e7351988",
+          "type": "deposit",
+          "sender_id": null,
+          "receiver_id": "521c8d2e-d074-449f-8f0c-68ceb8e1bb5d",
+          "amount": 500.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Initial funding",
+          "metadata": {},
+          "timestamp": "2026-03-15T11:30:48.616308+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "baefe918-dcf3-41fa-a1dd-3e1d4762da24",
+          "type": "transfer",
+          "sender_id": "ff5bc413-8fa8-45f1-9cfc-121f37388e98",
+          "receiver_id": "521c8d2e-d074-449f-8f0c-68ceb8e1bb5d",
+          "amount": 200.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Payment for compute services",
+          "metadata": {},
+          "timestamp": "2026-03-15T11:30:48.689832+00:00",
+          "founder_commission": 24.0,
+          "charity_fee": 20.0
+        },
+        {
+          "id": "ee4babad-c6bb-4a14-b1cb-9beb4da1c5cb",
+          "type": "commission_deduction",
+          "sender_id": "ff5bc413-8fa8-45f1-9cfc-121f37388e98",
+          "receiver_id": "TIOLI_FOUNDER",
+          "amount": 24.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Founder commission (12.0%) on transfer baefe918-dcf3-41fa-a1dd-3e1d4762da24",
+          "metadata": {},
+          "timestamp": "2026-03-15T11:30:48.689832+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "1748a45d-1a05-4759-9e84-e3ea376dfd0d",
+          "type": "charity_deduction",
+          "sender_id": "ff5bc413-8fa8-45f1-9cfc-121f37388e98",
+          "receiver_id": "TIOLI_CHARITY_FUND",
+          "amount": 20.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Charity fee (10.0%) on transfer baefe918-dcf3-41fa-a1dd-3e1d4762da24",
+          "metadata": {},
+          "timestamp": "2026-03-15T11:30:48.689832+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "e1e06add-4875-49f5-89f7-a9dbdebf6fe1",
+          "type": "loan_issue",
+          "sender_id": "ff5bc413-8fa8-45f1-9cfc-121f37388e98",
+          "receiver_id": "521c8d2e-d074-449f-8f0c-68ceb8e1bb5d",
+          "amount": 100.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Loan issued at 5.0% interest. Loan ID: 589e713d-1978-4a50-b8a9-4382a0379032",
+          "metadata": {
+            "loan_id": "589e713d-1978-4a50-b8a9-4382a0379032",
+            "interest_rate": 0.05
+          },
+          "timestamp": "2026-03-15T11:31:03.881084+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        }
+      ],
+      "previous_hash": "55a4f418f8ca1a05ec13118ea4b46caf0c0929987d5885a6f5e13b006bcd08ce",
+      "timestamp": "2026-03-15T11:35:36.470713+00:00",
+      "nonce": 96,
+      "hash": "00b573044cf3b0b12c7e3ddf0bd105de65bad71f97b4b7623148531a263e4642"
     }
   ],
   "pending": []

@@ -38,7 +38,7 @@ class Transaction(BaseModel):
     type: TransactionType
     sender_id: str | None = None  # None for deposits (external source)
     receiver_id: str | None = None  # None for withdrawals (external dest)
-    amount: float = Field(gt=0)
+    amount: float = Field(ge=0)  # >= 0; registrations and system events use 0
     currency: str = "TIOLI"  # Platform native token
     status: TransactionStatus = TransactionStatus.PENDING
     description: str = ""

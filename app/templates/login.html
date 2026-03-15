@@ -46,7 +46,7 @@
                     <span class="factor-icon">{% if status.cli_verified %}&#10003;{% else %}3{% endif %}</span>
                     <div>
                         <strong>CLI Verification</strong>
-                        <p>Enter the code shown in your terminal</p>
+                        <p>Your CLI code: <code style="background:var(--primary);padding:0.2rem 0.5rem;border-radius:4px;font-size:1.1rem;">{{ challenge.cli_code or "—" }}</code></p>
                     </div>
                 </div>
 

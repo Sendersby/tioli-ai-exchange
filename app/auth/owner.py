@@ -90,6 +90,13 @@ class OwnerAuth:
             return True
         return False
 
+    def get_cli_code(self, challenge_id: str) -> str | None:
+        """Retrieve the CLI code for an active challenge."""
+        challenge = self._challenges.get(challenge_id)
+        if not challenge:
+            return None
+        return challenge["cli_code"]
+
     def check_challenge_complete(self, challenge_id: str) -> dict:
         """Check if all three factors are verified."""
         challenge = self._challenges.get(challenge_id)
