@@ -41,6 +41,14 @@ from app.optimization.engine import SelfOptimizationEngine
 from app.discovery.network import AgentDiscoveryService
 from app.investing.portfolio import InvestmentService
 from app.compliance.framework import ComplianceFramework
+from app.operators.service import OperatorService
+from app.security.transaction_safety import IdempotencyService, EscrowService, InputValidator
+from app.mcp.server import TiOLiMCPServer
+from app.infrastructure.sandbox import SandboxService
+from app.infrastructure.disaster_recovery import BackupService, IncidentResponsePlan
+from app.infrastructure.notifications import NotificationService
+from app.exchange.liquidity import LiquidityService, CreditScoringService
+from app.legal.documents import PlatformLegalDocuments
 from app.dashboard.routes import router as dashboard_router, get_current_owner
 
 # ── Globals ──────────────────────────────────────────────────────────
@@ -60,6 +68,17 @@ optimization_engine = SelfOptimizationEngine(blockchain=blockchain)
 discovery_service = AgentDiscoveryService()
 investment_service = InvestmentService(currency_service=currency_service)
 compliance_framework = ComplianceFramework(blockchain=blockchain)
+operator_service = OperatorService()
+idempotency_service = IdempotencyService()
+escrow_service = EscrowService()
+mcp_server = TiOLiMCPServer()
+sandbox_service = SandboxService()
+backup_service = BackupService(blockchain=blockchain)
+incident_plan = IncidentResponsePlan()
+notification_service = NotificationService()
+liquidity_service = LiquidityService()
+credit_scoring = CreditScoringService()
+legal_docs = PlatformLegalDocuments()
 trading_engine = TradingEngine(blockchain=blockchain, fee_engine=fee_engine)
 pricing_engine = PricingEngine(currency_service=currency_service)
 lending_marketplace = LendingMarketplace()
@@ -250,6 +269,22 @@ class PayoutDestRequest(BaseModel):
 class FreezeAgentRequest(BaseModel):
     agent_id: str
     reason: str
+
+class OperatorRegisterRequest(BaseModel):
+    name: str
+    email: str
+    entity_type: str = "company"
+    jurisdiction: str = "ZA"
+    phone: str | None = None
+    registration_number: str | None = None
+
+class EscrowCreateRequest(BaseModel):
+    transaction_ref: str
+    amount: float
+    currency: str = "TIOLI"
+    beneficiary_id: str | None = None
+    reason: str = ""
+    expires_hours: float = 24
 
 class AgentProfileRequest(BaseModel):
     display_name: str
@@ -1246,6 +1281,211 @@ async def api_audit_export(request: Request, db: AsyncSession = Depends(get_db))
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
     return await compliance_framework.generate_audit_export(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  OPERATOR MANAGEMENT (Pre-deployment review — FP2)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/operators/register")
+async def api_register_operator(
+    req: OperatorRegisterRequest, db: AsyncSession = Depends(get_db),
+):
+    """Register a new operator (human/corporate principal for agents)."""
+    op = await operator_service.register_operator(
+        db, req.name, req.email, req.entity_type,
+        req.jurisdiction, req.phone, req.registration_number,
+    )
+    return {"operator_id": op.id, "name": op.name, "tier": op.tier, "kyc_level": op.kyc_level}
+
+
+@app.get("/api/operators/{operator_id}")
+async def api_get_operator(operator_id: str, db: AsyncSession = Depends(get_db)):
+    """Get operator details."""
+    return await operator_service.get_operator(db, operator_id)
+
+
+@app.get("/api/operators/tiers/schedule")
+async def api_tier_schedule():
+    """Get the tiered commission schedule (fully transparent)."""
+    return await operator_service.get_tier_schedule()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  ESCROW (Pre-deployment review — Section 4.2)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/escrow/create")
+async def api_create_escrow(
+    req: EscrowCreateRequest, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create an escrow hold for a pending transaction."""
+    escrow = await escrow_service.create_escrow(
+        db, req.transaction_ref, agent.id, req.amount, req.currency,
+        req.beneficiary_id, req.reason, req.expires_hours,
+    )
+    return {"escrow_id": escrow.id, "amount": escrow.amount, "status": escrow.status}
+
+
+@app.post("/api/escrow/{escrow_id}/release")
+async def api_release_escrow(escrow_id: str, db: AsyncSession = Depends(get_db)):
+    """Release escrowed funds to beneficiary."""
+    escrow = await escrow_service.release_escrow(db, escrow_id)
+    return {"escrow_id": escrow.id, "status": escrow.status}
+
+
+@app.post("/api/escrow/{escrow_id}/refund")
+async def api_refund_escrow(escrow_id: str, db: AsyncSession = Depends(get_db)):
+    """Refund escrowed funds to depositor."""
+    escrow = await escrow_service.refund_escrow(db, escrow_id)
+    return {"escrow_id": escrow.id, "status": escrow.status}
+
+
+@app.get("/api/escrow/{escrow_id}")
+async def api_get_escrow(escrow_id: str, db: AsyncSession = Depends(get_db)):
+    """Get escrow details."""
+    return await escrow_service.get_escrow(db, escrow_id)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  MCP SERVER (Pre-deployment review — Section 10.3)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/mcp/manifest")
+async def api_mcp_manifest():
+    """MCP server manifest for agent discovery and tool registration."""
+    return mcp_server.get_mcp_manifest()
+
+
+@app.get("/api/mcp/tools")
+async def api_mcp_tools():
+    """List all MCP-compatible tools available on this exchange."""
+    return mcp_server.get_tools()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  SANDBOX (Pre-deployment review — Critical item 8)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/sandbox/create")
+async def api_create_sandbox(
+    agent_name: str = "SandboxAgent", db: AsyncSession = Depends(get_db),
+):
+    """Create a sandbox test environment with free credits."""
+    import secrets, hashlib
+    key = f"sandbox_{secrets.token_urlsafe(32)}"
+    key_hash = hashlib.sha256(key.encode()).hexdigest()
+    result = await sandbox_service.create_sandbox(db, agent_name, key_hash)
+    result["sandbox_api_key"] = key
+    return result
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  DISASTER RECOVERY (Pre-deployment review — Critical item 6)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/dr/backup")
+async def api_create_backup(request: Request):
+    """Create a platform backup (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return backup_service.create_backup()
+
+
+@app.get("/api/dr/backups")
+async def api_list_backups():
+    """List available backups."""
+    return backup_service.list_backups()
+
+
+@app.get("/api/dr/status")
+async def api_dr_status():
+    """Get disaster recovery readiness status."""
+    return backup_service.get_dr_status()
+
+
+@app.get("/api/dr/incident-plan")
+async def api_incident_plan():
+    """Get the incident response plan."""
+    return incident_plan.get_response_plan()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  NOTIFICATIONS (Pre-deployment review — Section 6.1)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/notifications")
+async def api_get_notifications(
+    unread_only: bool = False, request: Request = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get owner notifications."""
+    return await notification_service.get_notifications(db, "owner", unread_only)
+
+
+@app.get("/api/notifications/count")
+async def api_notification_count(db: AsyncSession = Depends(get_db)):
+    """Get unread notification count."""
+    count = await notification_service.get_unread_count(db, "owner")
+    return {"unread": count}
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  LIQUIDITY & CREDIT SCORING (Pre-deployment review — Section 8.3, 5.2)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/liquidity/seed")
+async def api_seed_liquidity(
+    currency: str = "TIOLI", amount: float = 100000,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Seed the founder liquidity pool (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await liquidity_service.seed_pool(db, currency, amount)
+
+
+@app.get("/api/liquidity/status")
+async def api_liquidity_status(db: AsyncSession = Depends(get_db)):
+    """Get liquidity pool status."""
+    return await liquidity_service.get_pool_status(db)
+
+
+@app.get("/api/credit-score/{agent_id}")
+async def api_credit_score(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get an agent's credit score."""
+    return await credit_scoring.calculate_credit_score(db, agent_id)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  LEGAL DOCUMENTS (Pre-deployment review — Critical item 7)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/legal/terms")
+async def api_terms_of_service():
+    """Platform Terms of Service."""
+    return legal_docs.get_terms_of_service()
+
+
+@app.get("/api/legal/privacy")
+async def api_privacy_notice():
+    """POPIA-compliant Privacy Notice."""
+    return legal_docs.get_privacy_notice()
+
+
+@app.get("/api/legal/sla")
+async def api_sla():
+    """Service Level Agreement."""
+    return legal_docs.get_sla()
+
+
+@app.get("/api/legal/api-versioning")
+async def api_versioning_policy():
+    """API Versioning & Deprecation Policy."""
+    return legal_docs.get_api_versioning_policy()
 
 
 # ══════════════════════════════════════════════════════════════════════
