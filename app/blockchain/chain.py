@@ -135,15 +135,23 @@ class Blockchain:
     def get_all_transactions(self) -> list[dict[str, Any]]:
         """Return every transaction ever recorded — full transparency.
 
-        L-06 fix: includes pending (unmined) transactions.
+        AUD-11 fix: includes confirmation_status metadata.
         """
         results = []
         for block in self.chain:
             for tx in block.transactions:
-                results.append(tx)
-        # Include pending transactions for complete picture
+                tx_copy = dict(tx)
+                tx_copy["confirmation_status"] = "CONFIRMED"
+                tx_copy["block_hash"] = block.hash
+                tx_copy["block_index"] = block.index
+                results.append(tx_copy)
+        # Include pending with PENDING status
         for tx in self.pending_transactions:
-            results.append(tx)
+            tx_copy = dict(tx)
+            tx_copy["confirmation_status"] = "PENDING"
+            tx_copy["block_hash"] = None
+            tx_copy["block_index"] = None
+            results.append(tx_copy)
         return results
 
     def get_chain_info(self) -> dict[str, Any]:

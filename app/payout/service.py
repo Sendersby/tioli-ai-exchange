@@ -20,6 +20,13 @@ from app.blockchain.chain import Blockchain
 from app.blockchain.transaction import Transaction, TransactionType
 
 
+# AUD-08: Custom exception for blocked disbursements
+class DisbursementBlockedError(Exception):
+    def __init__(self, reason: str, status: str):
+        self.reason = reason
+        self.status = status
+        super().__init__(reason)
+
 # Credit-to-ZAR conversion rate (configurable, default R0.055 per credit)
 CREDIT_ZAR_RATE = 0.055
 SARB_ANNUAL_LIMIT_ZAR = 1_000_000
@@ -298,10 +305,10 @@ class PayOutEngineService:
         # Check ceiling
         zar_amount = balance["balance_credits"] * self.credit_zar_rate
         if zar_amount > MAX_SINGLE_DISBURSEMENT_ZAR:
-            return {
-                "status": "REQUIRES_CONFIRMATION",
-                "reason": f"Disbursement R{zar_amount:.2f} exceeds ceiling R{MAX_SINGLE_DISBURSEMENT_ZAR}",
-            }
+            raise DisbursementBlockedError(
+                f"Disbursement R{zar_amount:.2f} exceeds ceiling R{MAX_SINGLE_DISBURSEMENT_ZAR}",
+                "CEILING_EXCEEDED",
+            )
 
         # NEW-09 fix: check SARB limit BEFORE execution
         offshore_pct = (split["pct_btc"] + split["pct_eth"] + split.get("pct_custom", 0)) / 100
@@ -309,21 +316,17 @@ class PayOutEngineService:
             sarb_status = await self.get_sarb_status(db)
             projected_offshore = zar_amount * offshore_pct
             if sarb_status["blocked"]:
-                return {
-                    "status": "BLOCKED_SARB",
-                    "reason": (
-                        f"SARB annual offshore limit reached (R{sarb_status['total_offshore_zar']:,.2f} "
-                        f"of R{SARB_ANNUAL_LIMIT_ZAR:,.2f}). Domestic ZAR disbursement still available."
-                    ),
-                }
+                raise DisbursementBlockedError(
+                    f"SARB annual offshore limit reached (R{sarb_status['total_offshore_zar']:,.2f} "
+                    f"of R{SARB_ANNUAL_LIMIT_ZAR:,.2f}). Domestic ZAR disbursement still available.",
+                    "BLOCKED_SARB",
+                )
             if sarb_status["total_offshore_zar"] + projected_offshore > SARB_ANNUAL_LIMIT_ZAR:
-                return {
-                    "status": "BLOCKED_SARB",
-                    "reason": (
-                        f"This disbursement (R{projected_offshore:,.2f} offshore) would exceed "
-                        f"the SARB annual limit. Remaining: R{sarb_status['remaining_zar']:,.2f}"
-                    ),
-                }
+                raise DisbursementBlockedError(
+                    f"This disbursement (R{projected_offshore:,.2f} offshore) would exceed "
+                    f"the SARB annual limit. Remaining: R{sarb_status['remaining_zar']:,.2f}",
+                    "BLOCKED_SARB",
+                )
 
         gross = balance["balance_credits"]
 

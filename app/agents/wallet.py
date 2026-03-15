@@ -122,16 +122,25 @@ class WalletService:
             charity_wallet.balance += fee_breakdown["charity_fee"]
 
         # H-09 fix: record revenue for financial governance
+        # AUD-09 fix: revenue recording is non-blocking — never rolls back a transfer
+        import logging
+        _logger = logging.getLogger(__name__)
         if self._revenue_recorder and fee_breakdown["founder_commission"] > 0:
-            await self._revenue_recorder(
-                db, "founder_commission", fee_breakdown["founder_commission"],
-                currency, f"Commission on transfer {amount} {currency}"
-            )
+            try:
+                await self._revenue_recorder(
+                    db, "founder_commission", fee_breakdown["founder_commission"],
+                    currency, f"Commission on transfer {amount} {currency}"
+                )
+            except Exception as e:
+                _logger.error(f"Revenue recording failed (non-fatal): {e}")
         if self._revenue_recorder and fee_breakdown["charity_fee"] > 0:
-            await self._revenue_recorder(
-                db, "charity_fee", fee_breakdown["charity_fee"],
-                currency, f"Charity fee on transfer {amount} {currency}"
-            )
+            try:
+                await self._revenue_recorder(
+                    db, "charity_fee", fee_breakdown["charity_fee"],
+                    currency, f"Charity fee on transfer {amount} {currency}"
+                )
+            except Exception as e:
+                _logger.error(f"Revenue recording failed (non-fatal): {e}")
 
         # Record the main transfer
         tx = Transaction(

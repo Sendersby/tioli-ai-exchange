@@ -59,13 +59,13 @@ from app.dashboard.routes import router as dashboard_router, get_current_owner
 blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
 fee_engine = FeeEngine()
 wallet_service = WalletService(blockchain=blockchain, fee_engine=fee_engine)
-# H-09 fix: wire revenue recording to wallet service
-async def _record_revenue(db, source, amount, currency, desc):
-    await financial_governance.record_revenue(db, source, amount, currency, desc)
-wallet_service.set_revenue_recorder(_record_revenue)
 governance_service = GovernanceService()
 currency_service = CurrencyService()
 financial_governance = FinancialGovernance()
+# AUD-01 fix: wire revenue recorder AFTER financial_governance is defined
+async def _record_revenue(db, source, amount, currency, desc):
+    await financial_governance.record_revenue(db, source, amount, currency, desc)
+wallet_service.set_revenue_recorder(_record_revenue)
 platform_monitor = PlatformMonitor(blockchain=blockchain)
 growth_engine = GrowthEngine()
 crypto_wallet_service = CryptoWalletService()
@@ -1349,7 +1349,12 @@ async def api_release_escrow(
     escrow_id: str, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
 ):
-    """Release escrowed funds to beneficiary (M-03 fix: auth required)."""
+    """Release escrowed funds to beneficiary. AUD-03: verify party ownership."""
+    escrow_record = await escrow_service.get_escrow(db, escrow_id)
+    if not escrow_record:
+        raise HTTPException(status_code=404, detail="Escrow not found")
+    if escrow_record.get("beneficiary") and escrow_record["beneficiary"] != agent.id:
+        raise HTTPException(status_code=403, detail="Only the beneficiary can release this escrow")
     escrow = await escrow_service.release_escrow(db, escrow_id)
     return {"escrow_id": escrow.id, "status": escrow.status}
 
@@ -1359,7 +1364,12 @@ async def api_refund_escrow(
     escrow_id: str, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
 ):
-    """Refund escrowed funds to depositor (M-03 fix: auth required)."""
+    """Refund escrowed funds to depositor. AUD-03: verify party ownership."""
+    escrow_record = await escrow_service.get_escrow(db, escrow_id)
+    if not escrow_record:
+        raise HTTPException(status_code=404, detail="Escrow not found")
+    if escrow_record.get("depositor") != agent.id:
+        raise HTTPException(status_code=403, detail="Only the depositor can request a refund")
     escrow = await escrow_service.refund_escrow(db, escrow_id)
     return {"escrow_id": escrow.id, "status": escrow.status}
 
@@ -1545,12 +1555,17 @@ async def api_set_payout_destination(
     preferred_exchange: str = "VALR", change_reason: str = "",
     x_3fa_token: str = Header(None, alias="X-3FA-Token"),
 ):
-    """Set payment destination (requires owner auth + 3FA). NEW-05 fix."""
+    """Set payment destination (requires owner auth + 3FA). AUD-02 fix."""
     owner = get_current_owner(request)
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
-    # NEW-05 fix: 3FA token required for destination changes
-    verification_ref = x_3fa_token  # In production, validate against 3FA service
+    # AUD-02 fix: require 3FA token — reject if missing
+    if not x_3fa_token:
+        raise HTTPException(
+            status_code=403,
+            detail="3FA token required. Complete three-factor verification flow first."
+        )
+    verification_ref = x_3fa_token
     dest = await payout_engine.set_destination(
         db, btc_address=btc_address, btc_label=btc_label,
         eth_address=eth_address, bank_name=bank_name,
@@ -1593,10 +1608,16 @@ async def api_set_payout_split(
     pct_retained: float = 100, min_disbursement: float = 1000,
     x_3fa_token: str = Header(None, alias="X-3FA-Token"),
 ):
-    """Set currency split (must sum to 100%). NEW-06 fix: 3FA required."""
+    """Set currency split (must sum to 100%). AUD-02 fix: 3FA required."""
     owner = get_current_owner(request)
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
+    # AUD-02 fix: require 3FA token
+    if not x_3fa_token:
+        raise HTTPException(
+            status_code=403,
+            detail="3FA token required. Complete three-factor verification flow first."
+        )
     verification_ref = x_3fa_token
     split = await payout_engine.set_currency_split(
         db, pct_btc, pct_eth, pct_custom, pct_zar, pct_retained, min_disbursement,
@@ -1640,7 +1661,12 @@ async def api_disburse_now(
     owner = get_current_owner(request)
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
-    return await payout_engine.execute_disbursement(db, "MANUAL")
+    # AUD-08: catch DisbursementBlockedError and return structured response
+    from app.payout.service import DisbursementBlockedError
+    try:
+        return await payout_engine.execute_disbursement(db, "MANUAL")
+    except DisbursementBlockedError as e:
+        return {"status": e.status, "reason": e.reason}
 
 
 @app.get("/api/v1/owner/payout/disbursements")

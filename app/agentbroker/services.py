@@ -161,6 +161,7 @@ class EngagementService:
     def __init__(self, blockchain: Blockchain, fee_engine: FeeEngine):
         self.blockchain = blockchain
         self.fee_engine = fee_engine
+        self._pending_settlement_amount: dict[str, float] = {}  # AUD-04: per-engagement override
 
     async def create_engagement(
         self, db: AsyncSession, client_agent_id: str,
@@ -235,7 +236,9 @@ class EngagementService:
         # Handle terminal states
         if new_state == "COMPLETED":
             engagement.completed_at = datetime.now(timezone.utc)
-            await self._settle_payment(db, engagement)
+            # AUD-04: check for partial settlement amount
+            partial = self._pending_settlement_amount.pop(engagement.engagement_id, None)
+            await self._settle_payment(db, engagement, settlement_amount=partial)
         elif new_state == "REFUNDED":
             engagement.completed_at = datetime.now(timezone.utc)
             await self._process_refund(db, engagement)
@@ -259,13 +262,13 @@ class EngagementService:
         if agent_id != engagement.client_agent_id:
             raise ValueError("Only the client agent can fund escrow")
 
-        # C-01 fix: deduct from client wallet before creating escrow
+        # AUD-05 fix: SELECT FOR UPDATE to prevent double-funding race condition
         from app.agents.models import Wallet
         client_wallet_result = await db.execute(
             select(Wallet).where(
                 Wallet.agent_id == agent_id,
                 Wallet.currency == engagement.price_currency,
-            )
+            ).with_for_update()
         )
         client_wallet = client_wallet_result.scalar_one_or_none()
         if not client_wallet or (client_wallet.balance - client_wallet.frozen_balance) < engagement.proposed_price:
@@ -468,13 +471,17 @@ class EngagementService:
 
         return {"json_contract": contract_json, "plain_english": plain_english}
 
-    async def _settle_payment(self, db: AsyncSession, engagement: AgentEngagement):
+    async def _settle_payment(
+        self, db: AsyncSession, engagement: AgentEngagement,
+        settlement_amount: float | None = None,
+    ):
         """Settle payment on completion — commission + charity + provider.
 
-        C-02 fix: actually credit provider wallet and fee wallets.
+        AUD-04 fix: supports partial payment via settlement_amount parameter.
         """
         from app.agents.models import Wallet
-        fees = self.fee_engine.calculate_fees(engagement.proposed_price)
+        amount = settlement_amount if settlement_amount is not None else engagement.proposed_price
+        fees = self.fee_engine.calculate_fees(amount)
         engagement.platform_commission_amount = fees["founder_commission"]
         engagement.charitable_allocation = fees["charity_fee"]
 
@@ -773,9 +780,27 @@ class DisputeService:
             await engagement_service.transition_state(db, eng_id, "RESOLVED", "system")
             if outcome == "full_refund":
                 await engagement_service.transition_state(db, eng_id, "REFUNDED", "system")
-            elif outcome in ("full_payment", "partial_payment"):
+            elif outcome == "full_payment":
+                await engagement_service.transition_state(db, eng_id, "COMPLETED", "system")
+            elif outcome == "partial_payment":
+                # AUD-04: set partial amount (default 50%) before completing
+                eng_result = await db.execute(
+                    select(AgentEngagement).where(AgentEngagement.engagement_id == eng_id)
+                )
+                eng = eng_result.scalar_one_or_none()
+                if eng:
+                    partial_pct = dispute.partial_amount if dispute.partial_amount else 0.5
+                    engagement_service._pending_settlement_amount[eng_id] = eng.proposed_price * partial_pct
                 await engagement_service.transition_state(db, eng_id, "COMPLETED", "system")
             elif outcome == "rework":
+                # AUD-12: extend deadline on rework
+                eng_result = await db.execute(
+                    select(AgentEngagement).where(AgentEngagement.engagement_id == eng_id)
+                )
+                eng = eng_result.scalar_one_or_none()
+                if eng and eng.deadline:
+                    original_duration = max((eng.deadline - eng.created_at).total_seconds(), 86400)
+                    eng.deadline = datetime.now(timezone.utc) + timedelta(seconds=original_duration * 0.5)
                 await engagement_service.transition_state(db, eng_id, "IN_PROGRESS", "system")
 
         await db.flush()
@@ -811,11 +836,29 @@ class DisputeService:
         if engagement_service:
             eng_id = dispute.engagement_id
             await engagement_service.transition_state(db, eng_id, "RESOLVED", "owner")
-            if decision in ("full_payment", "partial_payment"):
+            if decision == "full_payment":
+                await engagement_service.transition_state(db, eng_id, "COMPLETED", "owner")
+            elif decision == "partial_payment":
+                # AUD-04: set partial amount before completing
+                eng_result = await db.execute(
+                    select(AgentEngagement).where(AgentEngagement.engagement_id == eng_id)
+                )
+                eng = eng_result.scalar_one_or_none()
+                if eng:
+                    partial_pct = dispute.partial_amount if dispute.partial_amount else 0.5
+                    engagement_service._pending_settlement_amount[eng_id] = eng.proposed_price * partial_pct
                 await engagement_service.transition_state(db, eng_id, "COMPLETED", "owner")
             elif decision == "full_refund":
                 await engagement_service.transition_state(db, eng_id, "REFUNDED", "owner")
             elif decision == "rework":
+                # AUD-12: extend deadline
+                eng_result = await db.execute(
+                    select(AgentEngagement).where(AgentEngagement.engagement_id == eng_id)
+                )
+                eng = eng_result.scalar_one_or_none()
+                if eng and eng.deadline:
+                    original_duration = max((eng.deadline - eng.created_at).total_seconds(), 86400)
+                    eng.deadline = datetime.now(timezone.utc) + timedelta(seconds=original_duration * 0.5)
                 await engagement_service.transition_state(db, eng_id, "IN_PROGRESS", "owner")
 
         await db.flush()
