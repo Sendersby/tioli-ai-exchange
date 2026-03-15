@@ -49,6 +49,7 @@ from app.infrastructure.disaster_recovery import BackupService, IncidentResponse
 from app.infrastructure.notifications import NotificationService
 from app.exchange.liquidity import LiquidityService, CreditScoringService
 from app.legal.documents import PlatformLegalDocuments
+from app.infrastructure.cost_control import CostControlService
 from app.payout.service import PayOutEngineService
 from app.agentbroker.routes import router as agentbroker_router, engagement_service as _ab_engagement_svc
 from app.agentbroker.services import EngagementService as ABEngagementService
@@ -88,6 +89,7 @@ liquidity_service = LiquidityService()
 credit_scoring = CreditScoringService()
 legal_docs = PlatformLegalDocuments()
 payout_engine = PayOutEngineService(blockchain=blockchain)
+cost_control = CostControlService()
 
 # AgentBroker — initialize engagement service with blockchain/fee_engine
 import app.agentbroker.routes as ab_routes
@@ -1723,6 +1725,79 @@ async def api_payout_audit_log(
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
     return await payout_engine.get_audit_log(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  INFRASTRUCTURE COST CONTROL — Master Kill Switch
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/infra/status")
+async def api_infra_status(db: AsyncSession = Depends(get_db)):
+    """Get platform power state and budget status."""
+    power = await cost_control.get_power_state(db)
+    budget = await cost_control.get_budget_status(db)
+    return {"power": power, "budget": budget}
+
+
+@app.post("/api/infra/shutdown")
+async def api_emergency_shutdown(
+    request: Request, reason: str = "Manual shutdown",
+    db: AsyncSession = Depends(get_db),
+):
+    """MASTER KILL SWITCH — shuts down all services immediately."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await cost_control.emergency_shutdown(db, reason, "owner")
+
+
+@app.post("/api/infra/activate")
+async def api_activate_platform(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """ACTIVATE — brings the platform back online."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await cost_control.activate(db)
+
+
+@app.post("/api/infra/budget")
+async def api_set_budget(
+    request: Request, monthly_limit_usd: float = 20.0,
+    warning_pct: float = 70.0, critical_pct: float = 90.0,
+    auto_shutdown: bool = True, db: AsyncSession = Depends(get_db),
+):
+    """Set monthly infrastructure budget with alert thresholds."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await cost_control.set_budget(db, monthly_limit_usd, warning_pct, critical_pct, auto_shutdown)
+
+
+@app.get("/api/infra/budget")
+async def api_get_budget(db: AsyncSession = Depends(get_db)):
+    """Get current budget status with alerts."""
+    return await cost_control.get_budget_status(db)
+
+
+@app.get("/api/infra/events")
+async def api_cost_events(db: AsyncSession = Depends(get_db)):
+    """Get cost event history."""
+    return await cost_control.get_cost_events(db)
+
+
+@app.get("/api/infra/digitalocean")
+async def api_do_status(request: Request):
+    """Fetch live DigitalOcean account balance and droplets."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    import os
+    token = os.environ.get("DIGITALOCEAN_API_TOKEN")
+    balance = await cost_control.fetch_digitalocean_balance(token)
+    droplets = await cost_control.fetch_digitalocean_droplets(token)
+    return {"balance": balance, "droplets": droplets}
 
 
 # ══════════════════════════════════════════════════════════════════════
