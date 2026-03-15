@@ -48,13 +48,24 @@ class OwnerAuth:
             "email_sent": False,
         }
 
-        # Send verification email with clickable link
+        # Send verification email in background thread (never blocks login)
         email_sent = False
         try:
             from app.auth.email_verify import generate_email_token, send_verification_email
+            import threading
             email_token = generate_email_token(challenge_id)
-            email_sent = send_verification_email(challenge_id, email_token)
-            self._challenges[challenge_id]["email_sent"] = email_sent
+
+            def _send_in_background():
+                try:
+                    result = send_verification_email(challenge_id, email_token)
+                    self._challenges[challenge_id]["email_sent"] = result
+                except Exception:
+                    pass
+
+            thread = threading.Thread(target=_send_in_background, daemon=True)
+            thread.start()
+            email_sent = True  # Optimistic — thread is running
+            self._challenges[challenge_id]["email_sent"] = True
         except Exception:
             pass
 
