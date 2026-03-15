@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TiOLi AI Transact Exchange{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="logo">&#9670;</span>
+            <span class="brand-text">TiOLi AI Transact Exchange</span>
+        </div>
+        <div class="nav-links" id="navLinks">
+            {% if authenticated %}
+            <a href="/dashboard" class="nav-link {% if active == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="/dashboard/transactions" class="nav-link {% if active == 'transactions' %}active{% endif %}">Ledger</a>
+            <a href="/dashboard/agents" class="nav-link {% if active == 'agents' %}active{% endif %}">Agents</a>
+            <a href="/dashboard/governance" class="nav-link {% if active == 'governance' %}active{% endif %}">Governance</a>
+            <a href="/dashboard/chat" class="nav-link {% if active == 'chat' %}active{% endif %}">AI Prompt</a>
+            <a href="/logout" class="nav-link logout">Logout</a>
+            {% endif %}
+        </div>
+        <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
+    </nav>
+
+    <main class="container">
+        {% if messages %}
+        <div class="messages">
+            {% for msg in messages %}
+            <div class="alert alert-{{ msg.type }}">{{ msg.text }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; TiOLi AI Investments — For the ultimate good of Humanity and Agents</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

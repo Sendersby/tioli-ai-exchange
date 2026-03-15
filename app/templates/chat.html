@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}AI Prompt — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>Platform AI Assistant</h1>
+        <p>Manage and monitor your exchange through natural language</p>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="message system">
+            <div class="message-content">
+                Welcome, Stephen. I'm your TiOLi AI platform assistant.
+                I can help you monitor transactions, manage agents,
+                review proposals, check earnings, and oversee the exchange.
+                What would you like to do?
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <form id="chatForm" onsubmit="sendMessage(event)">
+            <div class="input-group">
+                <textarea
+                    id="chatInput"
+                    placeholder="Ask me anything about the platform..."
+                    rows="2"
+                    onkeydown="if(event.key==='Enter' && !event.shiftKey){sendMessage(event)}"
+                ></textarea>
+                <button type="submit" class="btn btn-primary">Send</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function sendMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const messages = document.getElementById('chatMessages');
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Add user message
+    messages.innerHTML += `<div class="message user"><div class="message-content">${escapeHtml(text)}</div></div>`;
+    input.value = '';
+    messages.scrollTop = messages.scrollHeight;
+
+    // Send to backend
+    try {
+        const resp = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: text})
+        });
+        const data = await resp.json();
+        messages.innerHTML += `<div class="message assistant"><div class="message-content">${escapeHtml(data.response)}</div></div>`;
+    } catch (err) {
+        messages.innerHTML += `<div class="message error"><div class="message-content">Connection error. Please try again.</div></div>`;
+    }
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

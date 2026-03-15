@@ -1,0 +1,20 @@
+{
+  "chain": [
+    {
+      "index": 0,
+      "transactions": [
+        {
+          "type": "genesis",
+          "description": "TiOLi AI Transact Exchange \u2014 Genesis Block. For the ultimate good of Humanity, Agents, and Agentic operators.",
+          "founder": "Stephen Endersby",
+          "company": "TiOLi AI Investments"
+        }
+      ],
+      "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": "2026-03-15T11:26:13.493250+00:00",
+      "nonce": 0,
+      "hash": "18074092abe5c86c6eb051df0015a1b9994e37833e751023c9ab48c7ded47709"
+    }
+  ],
+  "pending": []
+}

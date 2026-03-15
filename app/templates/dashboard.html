@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Platform Dashboard</h1>
+        <p class="welcome">Welcome, Stephen — TiOLi AI Investments</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ chain_info.chain_length }}</div>
+            <div class="stat-label">Blocks Mined</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ chain_info.total_transactions }}</div>
+            <div class="stat-label">Total Transactions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ agent_count }}</div>
+            <div class="stat-label">Registered Agents</div>
+        </div>
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ "%.4f"|format(founder_earnings) }}</div>
+            <div class="stat-label">Your Earnings (TIOLI)</div>
+        </div>
+        <div class="stat-card charity">
+            <div class="stat-value">{{ "%.4f"|format(charity_total) }}</div>
+            <div class="stat-label">Charity Fund (TIOLI)</div>
+        </div>
+        <div class="stat-card {% if chain_info.is_valid %}valid{% else %}invalid{% endif %}">
+            <div class="stat-value">{% if chain_info.is_valid %}&#10003; Valid{% else %}&#10007; Invalid{% endif %}</div>
+            <div class="stat-label">Chain Integrity</div>
+        </div>
+    </div>
+
+    <div class="dashboard-panels">
+        <div class="panel">
+            <h2>Recent Transactions</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Amount</th>
+                            <th>Currency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in recent_transactions %}
+                        <tr>
+                            <td>{{ tx.timestamp[:19] }}</td>
+                            <td><span class="badge badge-{{ tx.type }}">{{ tx.type }}</span></td>
+                            <td>{{ (tx.sender_id or "—")[:12] }}</td>
+                            <td>{{ (tx.receiver_id or "—")[:12] }}</td>
+                            <td>{{ "%.4f"|format(tx.amount) }}</td>
+                            <td>{{ tx.currency }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_transactions %}
+                        <tr><td colspan="6" class="empty">No transactions yet</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Pending Proposals</h2>
+            <div class="proposals-list">
+                {% for prop in pending_proposals %}
+                <div class="proposal-card">
+                    <div class="proposal-header">
+                        <h3>{{ prop.title }}</h3>
+                        <span class="vote-count">&#9650; {{ prop.upvotes }} / &#9660; {{ prop.downvotes }}</span>
+                    </div>
+                    <p>{{ prop.description[:200] }}</p>
+                    <div class="proposal-actions">
+                        <span class="badge badge-{{ prop.category }}">{{ prop.category }}</span>
+                        {% if prop.is_material_change %}
+                        <span class="badge badge-warning">Requires Veto Review</span>
+                        {% endif %}
+                        <form method="POST" action="/governance/approve/{{ prop.id }}" class="inline-form">
+                            <button class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="/governance/veto/{{ prop.id }}" class="inline-form">
+                            <input type="text" name="reason" placeholder="Veto reason" required>
+                            <button class="btn btn-sm btn-danger">Veto</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not pending_proposals %}
+                <p class="empty">No pending proposals</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

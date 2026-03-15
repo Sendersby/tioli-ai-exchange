@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Login — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h1>Owner Access</h1>
+        <p class="subtitle">TiOLi AI Transact Exchange</p>
+        <p class="login-info">Three-factor authentication required.</p>
+
+        {% if challenge %}
+        <div class="challenge-panel">
+            <h2>Verification Challenge Active</h2>
+            <p class="challenge-id">Challenge: {{ challenge.challenge_id[:12] }}...</p>
+
+            <div class="factor-list">
+                <div class="factor {% if status.email_verified %}verified{% endif %}">
+                    <span class="factor-icon">{% if status.email_verified %}&#10003;{% else %}1{% endif %}</span>
+                    <div>
+                        <strong>Email Verification</strong>
+                        <p>Send confirmation from your registered email</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="/auth/verify-email">
+                    <input type="hidden" name="challenge_id" value="{{ challenge.challenge_id }}">
+                    <input type="email" name="email" placeholder="Enter your email address" required>
+                    <button type="submit" class="btn btn-primary">Verify Email</button>
+                </form>
+
+                <div class="factor {% if status.phone_verified %}verified{% endif %}">
+                    <span class="factor-icon">{% if status.phone_verified %}&#10003;{% else %}2{% endif %}</span>
+                    <div>
+                        <strong>Phone Verification</strong>
+                        <p>Confirm from your registered number</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="/auth/verify-phone">
+                    <input type="hidden" name="challenge_id" value="{{ challenge.challenge_id }}">
+                    <input type="tel" name="phone" placeholder="Enter your phone number" required>
+                    <button type="submit" class="btn btn-primary">Verify Phone</button>
+                </form>
+
+                <div class="factor {% if status.cli_verified %}verified{% endif %}">
+                    <span class="factor-icon">{% if status.cli_verified %}&#10003;{% else %}3{% endif %}</span>
+                    <div>
+                        <strong>CLI Verification</strong>
+                        <p>Enter the code shown in your terminal</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="/auth/verify-cli">
+                    <input type="hidden" name="challenge_id" value="{{ challenge.challenge_id }}">
+                    <input type="text" name="code" placeholder="Enter CLI code" required>
+                    <button type="submit" class="btn btn-primary">Verify CLI</button>
+                </form>
+            </div>
+
+            <form method="POST" action="/auth/complete">
+                <input type="hidden" name="challenge_id" value="{{ challenge.challenge_id }}">
+                <button type="submit" class="btn btn-success btn-full">Complete Login</button>
+            </form>
+        </div>
+
+        {% else %}
+        <form method="POST" action="/auth/login">
+            <button type="submit" class="btn btn-primary btn-full">Initiate Login Challenge</button>
+        </form>
+        {% endif %}
+
+        <div class="security-notice">
+            <p>This platform is private and restricted. Unauthorised access is prohibited.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
