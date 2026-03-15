@@ -133,11 +133,17 @@ class Blockchain:
         return results
 
     def get_all_transactions(self) -> list[dict[str, Any]]:
-        """Return every transaction ever recorded — full transparency."""
+        """Return every transaction ever recorded — full transparency.
+
+        L-06 fix: includes pending (unmined) transactions.
+        """
         results = []
         for block in self.chain:
             for tx in block.transactions:
                 results.append(tx)
+        # Include pending transactions for complete picture
+        for tx in self.pending_transactions:
+            results.append(tx)
         return results
 
     def get_chain_info(self) -> dict[str, Any]:

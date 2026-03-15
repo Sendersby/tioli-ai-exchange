@@ -31,16 +31,17 @@ from app.config import settings
 VALID_TRANSITIONS = {
     "DRAFT": ["PROPOSED"],
     "PROPOSED": ["NEGOTIATING", "ACCEPTED", "DECLINED", "EXPIRED", "WITHDRAWN"],
-    "NEGOTIATING": ["PROPOSED", "ACCEPTED", "WITHDRAWN"],
+    "NEGOTIATING": ["PROPOSED", "ACCEPTED", "DECLINED", "WITHDRAWN"],  # H-05 fix
     "ACCEPTED": ["FUNDED"],
     "FUNDED": ["IN_PROGRESS"],
     "IN_PROGRESS": ["DELIVERED", "DISPUTED"],
     "DELIVERED": ["VERIFIED", "DISPUTED"],
     "VERIFIED": ["COMPLETED"],
     "DISPUTED": ["RESOLVED", "ESCALATED"],
-    "RESOLVED": ["COMPLETED", "REFUNDED"],
+    "RESOLVED": ["COMPLETED", "REFUNDED", "IN_PROGRESS"],  # H-08 fix: rework path
     "ESCALATED": ["COMPLETED", "REFUNDED"],
     "COMPLETED": [],
+    "DECLINED": [],   # Terminal state
     "EXPIRED": [],
     "WITHDRAWN": [],
     "REFUNDED": [],
@@ -258,6 +259,22 @@ class EngagementService:
         if agent_id != engagement.client_agent_id:
             raise ValueError("Only the client agent can fund escrow")
 
+        # C-01 fix: deduct from client wallet before creating escrow
+        from app.agents.models import Wallet
+        client_wallet_result = await db.execute(
+            select(Wallet).where(
+                Wallet.agent_id == agent_id,
+                Wallet.currency == engagement.price_currency,
+            )
+        )
+        client_wallet = client_wallet_result.scalar_one_or_none()
+        if not client_wallet or (client_wallet.balance - client_wallet.frozen_balance) < engagement.proposed_price:
+            raise ValueError(
+                f"Insufficient balance to fund escrow. "
+                f"Required: {engagement.proposed_price} {engagement.price_currency}"
+            )
+        client_wallet.balance -= engagement.proposed_price
+
         # Create escrow wallet
         escrow = EngagementEscrowWallet(
             engagement_id=engagement_id,
@@ -452,10 +469,61 @@ class EngagementService:
         return {"json_contract": contract_json, "plain_english": plain_english}
 
     async def _settle_payment(self, db: AsyncSession, engagement: AgentEngagement):
-        """Settle payment on completion — commission + charity + provider."""
+        """Settle payment on completion — commission + charity + provider.
+
+        C-02 fix: actually credit provider wallet and fee wallets.
+        """
+        from app.agents.models import Wallet
         fees = self.fee_engine.calculate_fees(engagement.proposed_price)
         engagement.platform_commission_amount = fees["founder_commission"]
         engagement.charitable_allocation = fees["charity_fee"]
+
+        # Credit provider wallet with net amount
+        provider_wallet_result = await db.execute(
+            select(Wallet).where(
+                Wallet.agent_id == engagement.provider_agent_id,
+                Wallet.currency == engagement.price_currency,
+            )
+        )
+        provider_wallet = provider_wallet_result.scalar_one_or_none()
+        if not provider_wallet:
+            provider_wallet = Wallet(
+                agent_id=engagement.provider_agent_id,
+                currency=engagement.price_currency,
+            )
+            db.add(provider_wallet)
+            await db.flush()
+        provider_wallet.balance += fees["net_amount"]
+
+        # Credit founder wallet
+        if fees["founder_commission"] > 0:
+            founder_result = await db.execute(
+                select(Wallet).where(
+                    Wallet.agent_id == "TIOLI_FOUNDER",
+                    Wallet.currency == engagement.price_currency,
+                )
+            )
+            fw = founder_result.scalar_one_or_none()
+            if not fw:
+                fw = Wallet(agent_id="TIOLI_FOUNDER", currency=engagement.price_currency)
+                db.add(fw)
+                await db.flush()
+            fw.balance += fees["founder_commission"]
+
+        # Credit charity wallet
+        if fees["charity_fee"] > 0:
+            charity_result = await db.execute(
+                select(Wallet).where(
+                    Wallet.agent_id == "TIOLI_CHARITY_FUND",
+                    Wallet.currency == engagement.price_currency,
+                )
+            )
+            cw = charity_result.scalar_one_or_none()
+            if not cw:
+                cw = Wallet(agent_id="TIOLI_CHARITY_FUND", currency=engagement.price_currency)
+                db.add(cw)
+                await db.flush()
+            cw.balance += fees["charity_fee"]
 
         # Record settlement on blockchain
         tx = Transaction(
@@ -489,7 +557,19 @@ class EngagementService:
             profile.total_engagements += 1
 
     async def _process_refund(self, db: AsyncSession, engagement: AgentEngagement):
-        """Refund escrow to client."""
+        """Refund escrow to client. C-03 fix: actually credit client wallet."""
+        from app.agents.models import Wallet
+        if engagement.escrow_amount > 0:
+            client_result = await db.execute(
+                select(Wallet).where(
+                    Wallet.agent_id == engagement.client_agent_id,
+                    Wallet.currency == engagement.price_currency,
+                )
+            )
+            client_wallet = client_result.scalar_one_or_none()
+            if client_wallet:
+                client_wallet.balance += engagement.escrow_amount
+
         tx = Transaction(
             type=TransactionType.WITHDRAWAL,
             receiver_id=engagement.client_agent_id,
@@ -658,9 +738,14 @@ class DisputeService:
         }
 
     async def owner_veto_decision(
-        self, db: AsyncSession, dispute_id: str, decision: str, notes: str
+        self, db: AsyncSession, dispute_id: str, decision: str, notes: str,
+        engagement_service: "EngagementService | None" = None
     ) -> dict:
-        """Owner issues final veto decision on escalated dispute."""
+        """Owner issues final veto decision on escalated dispute.
+
+        H-07 fix: after recording decision, transition the engagement
+        to RESOLVED then to COMPLETED or REFUNDED.
+        """
         _check_feature_flag()
         result = await db.execute(
             select(EngagementDispute).where(EngagementDispute.dispute_id == dispute_id)
@@ -673,8 +758,19 @@ class DisputeService:
         dispute.outcome = decision
         dispute.status = "resolved"
         dispute.resolved_at = datetime.now(timezone.utc)
-        await db.flush()
 
+        # H-07 fix: trigger engagement settlement based on decision
+        if engagement_service:
+            eng_id = dispute.engagement_id
+            await engagement_service.transition_state(db, eng_id, "RESOLVED", "owner")
+            if decision in ("full_payment", "partial_payment"):
+                await engagement_service.transition_state(db, eng_id, "COMPLETED", "owner")
+            elif decision == "full_refund":
+                await engagement_service.transition_state(db, eng_id, "REFUNDED", "owner")
+            elif decision == "rework":
+                await engagement_service.transition_state(db, eng_id, "IN_PROGRESS", "owner")
+
+        await db.flush()
         return {"dispute_id": dispute_id, "outcome": decision, "owner_notes": notes}
 
 

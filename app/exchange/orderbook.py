@@ -328,8 +328,9 @@ class TradingEngine:
         # Update buyer wallets
         buyer_quote_wallet = await self._get_wallet(db, buyer.agent_id, buyer.quote_currency)
         buyer_base_wallet = await self._get_wallet(db, buyer.agent_id, buyer.base_currency)
-        # Unfreeze and deduct quote currency
-        buyer_quote_wallet.frozen_balance = max(0, buyer_quote_wallet.frozen_balance - total_value)
+        # C-08 fix: unfreeze based on original order price, not trade price
+        unfreeze_amount = quantity * buyer.price
+        buyer_quote_wallet.frozen_balance = max(0, buyer_quote_wallet.frozen_balance - unfreeze_amount)
         buyer_quote_wallet.balance -= total_value
         # Credit base currency (minus fees on the base side)
         buyer_base_wallet.balance += quantity
@@ -342,6 +343,14 @@ class TradingEngine:
         seller_base_wallet.balance -= quantity
         # Credit quote currency (after fees)
         seller_quote_wallet.balance += fee_breakdown["net_amount"]
+
+        # C-06 fix: credit fee recipient wallets (fees must not vanish)
+        if fee_breakdown["founder_commission"] > 0:
+            founder_wallet = await self._get_wallet(db, "TIOLI_FOUNDER", incoming.quote_currency)
+            founder_wallet.balance += fee_breakdown["founder_commission"]
+        if fee_breakdown["charity_fee"] > 0:
+            charity_wallet = await self._get_wallet(db, "TIOLI_CHARITY_FUND", incoming.quote_currency)
+            charity_wallet.balance += fee_breakdown["charity_fee"]
 
         # Update order fill states
         now = datetime.now(timezone.utc)

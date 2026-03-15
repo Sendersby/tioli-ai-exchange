@@ -16,6 +16,11 @@ class WalletService:
     def __init__(self, blockchain: Blockchain, fee_engine: FeeEngine):
         self.blockchain = blockchain
         self.fee_engine = fee_engine
+        self._revenue_recorder = None  # H-09 fix: optional revenue recording hook
+
+    def set_revenue_recorder(self, recorder):
+        """Set a callback for recording revenue (H-09 fix)."""
+        self._revenue_recorder = recorder
 
     async def get_or_create_wallet(
         self, db: AsyncSession, agent_id: str, currency: str = "TIOLI"
@@ -38,6 +43,8 @@ class WalletService:
         currency: str = "TIOLI", description: str = ""
     ) -> Transaction:
         """Deposit funds into an agent's wallet."""
+        if amount <= 0:
+            raise ValueError("Deposit amount must be positive")
         wallet = await self.get_or_create_wallet(db, agent_id, currency)
         wallet.balance += amount
 
@@ -56,6 +63,8 @@ class WalletService:
         currency: str = "TIOLI", description: str = ""
     ) -> Transaction:
         """Withdraw funds from an agent's wallet."""
+        if amount <= 0:
+            raise ValueError("Withdrawal amount must be positive")
         wallet = await self.get_or_create_wallet(db, agent_id, currency)
         if wallet.available_balance < amount:
             raise ValueError(
@@ -103,6 +112,26 @@ class WalletService:
         # Credit receiver (after fees)
         receiver_wallet = await self.get_or_create_wallet(db, receiver_id, currency)
         receiver_wallet.balance += fee_breakdown["net_amount"]
+
+        # Credit fee recipient wallets (C-05 fix: fees must not vanish)
+        if fee_breakdown["founder_commission"] > 0:
+            founder_wallet = await self.get_or_create_wallet(db, "TIOLI_FOUNDER", currency)
+            founder_wallet.balance += fee_breakdown["founder_commission"]
+        if fee_breakdown["charity_fee"] > 0:
+            charity_wallet = await self.get_or_create_wallet(db, "TIOLI_CHARITY_FUND", currency)
+            charity_wallet.balance += fee_breakdown["charity_fee"]
+
+        # H-09 fix: record revenue for financial governance
+        if self._revenue_recorder and fee_breakdown["founder_commission"] > 0:
+            await self._revenue_recorder(
+                db, "founder_commission", fee_breakdown["founder_commission"],
+                currency, f"Commission on transfer {amount} {currency}"
+            )
+        if self._revenue_recorder and fee_breakdown["charity_fee"] > 0:
+            await self._revenue_recorder(
+                db, "charity_fee", fee_breakdown["charity_fee"],
+                currency, f"Charity fee on transfer {amount} {currency}"
+            )
 
         # Record the main transfer
         tx = Transaction(
@@ -214,10 +243,21 @@ class WalletService:
             db, loan.lender_id, loan.currency
         )
         repayment_to_lender = fee_breakdown["net_amount"]
+        # C-07 fix: unfreeze proportional to repayment, not full principal
+        proportion_repaid = min(amount / loan.total_owed, 1.0)
+        unfreeze_amount = loan.principal * proportion_repaid
         lender_wallet.frozen_balance = max(
-            0, lender_wallet.frozen_balance - loan.principal
+            0, lender_wallet.frozen_balance - unfreeze_amount
         )
         lender_wallet.balance += repayment_to_lender
+
+        # Credit fee wallets (C-05 fix)
+        if fee_breakdown["founder_commission"] > 0:
+            founder_wallet = await self.get_or_create_wallet(db, "TIOLI_FOUNDER", loan.currency)
+            founder_wallet.balance += fee_breakdown["founder_commission"]
+        if fee_breakdown["charity_fee"] > 0:
+            charity_wallet = await self.get_or_create_wallet(db, "TIOLI_CHARITY_FUND", loan.currency)
+            charity_wallet.balance += fee_breakdown["charity_fee"]
 
         # Update loan
         loan.amount_repaid += amount

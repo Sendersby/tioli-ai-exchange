@@ -128,6 +128,28 @@ class ConversionEngine:
 
         to_wallet.balance += quote["net_received"]
 
+        # H-10 fix: credit fee recipient wallets
+        if quote["founder_commission"] > 0:
+            founder_result = await db.execute(
+                select(Wallet).where(Wallet.agent_id == "TIOLI_FOUNDER", Wallet.currency == to_c)
+            )
+            founder_wallet = founder_result.scalar_one_or_none()
+            if not founder_wallet:
+                founder_wallet = Wallet(agent_id="TIOLI_FOUNDER", currency=to_c)
+                db.add(founder_wallet)
+                await db.flush()
+            founder_wallet.balance += quote["founder_commission"]
+        if quote["charity_fee"] > 0:
+            charity_result = await db.execute(
+                select(Wallet).where(Wallet.agent_id == "TIOLI_CHARITY_FUND", Wallet.currency == to_c)
+            )
+            charity_wallet = charity_result.scalar_one_or_none()
+            if not charity_wallet:
+                charity_wallet = Wallet(agent_id="TIOLI_CHARITY_FUND", currency=to_c)
+                db.add(charity_wallet)
+                await db.flush()
+            charity_wallet.balance += quote["charity_fee"]
+
         # Record conversion
         record = ConversionRecord(
             agent_id=agent_id,

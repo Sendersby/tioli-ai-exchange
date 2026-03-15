@@ -58,6 +58,10 @@ from app.dashboard.routes import router as dashboard_router, get_current_owner
 blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
 fee_engine = FeeEngine()
 wallet_service = WalletService(blockchain=blockchain, fee_engine=fee_engine)
+# H-09 fix: wire revenue recording to wallet service
+async def _record_revenue(db, source, amount, currency, desc):
+    await financial_governance.record_revenue(db, source, amount, currency, desc)
+wallet_service.set_revenue_recorder(_record_revenue)
 governance_service = GovernanceService()
 currency_service = CurrencyService()
 financial_governance = FinancialGovernance()
@@ -1339,15 +1343,21 @@ async def api_create_escrow(
 
 
 @app.post("/api/escrow/{escrow_id}/release")
-async def api_release_escrow(escrow_id: str, db: AsyncSession = Depends(get_db)):
-    """Release escrowed funds to beneficiary."""
+async def api_release_escrow(
+    escrow_id: str, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Release escrowed funds to beneficiary (M-03 fix: auth required)."""
     escrow = await escrow_service.release_escrow(db, escrow_id)
     return {"escrow_id": escrow.id, "status": escrow.status}
 
 
 @app.post("/api/escrow/{escrow_id}/refund")
-async def api_refund_escrow(escrow_id: str, db: AsyncSession = Depends(get_db)):
-    """Refund escrowed funds to depositor."""
+async def api_refund_escrow(
+    escrow_id: str, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Refund escrowed funds to depositor (M-03 fix: auth required)."""
     escrow = await escrow_service.refund_escrow(db, escrow_id)
     return {"escrow_id": escrow.id, "status": escrow.status}
 

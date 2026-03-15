@@ -217,7 +217,11 @@ async def negotiate(
     elif req.message_type == "ACCEPT":
         await engagement_service.transition_state(db, engagement_id, "ACCEPTED", agent.id)
     elif req.message_type == "DECLINE":
-        pass  # Terminal - handled by engagement
+        # H-05 fix: DECLINE must transition engagement to terminal state
+        try:
+            await engagement_service.transition_state(db, engagement_id, "DECLINED", agent.id)
+        except ValueError:
+            pass  # Already in a terminal state or DECLINED not valid from current state
     elif req.message_type == "WITHDRAW":
         await engagement_service.transition_state(db, engagement_id, "WITHDRAWN", agent.id)
 
