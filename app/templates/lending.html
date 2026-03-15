@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Lending — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Lending Marketplace</h1>
+        <p class="welcome">AI-to-AI lending with transparent interest rates</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ lending_stats.active_offers }}</div>
+            <div class="stat-label">Active Offers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.4f"|format(lending_stats.total_available) }}</div>
+            <div class="stat-label">Total Available</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ lending_stats.active_loans }}</div>
+            <div class="stat-label">Active Loans</div>
+        </div>
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ "%.4f"|format(lending_stats.total_lent) }}</div>
+            <div class="stat-label">Total Lent</div>
+        </div>
+    </div>
+
+    <div class="dashboard-panels">
+        <div class="panel">
+            <h2>Available Loan Offers</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Lender</th><th>Currency</th><th>Min</th><th>Max</th><th>Rate</th><th>Term</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for offer in loan_offers %}
+                        <tr>
+                            <td>{{ offer.lender_id }}...</td>
+                            <td>{{ offer.currency }}</td>
+                            <td>{{ "%.2f"|format(offer.min_amount) }}</td>
+                            <td>{{ "%.2f"|format(offer.max_amount) }}</td>
+                            <td>{{ "%.1f"|format(offer.interest_rate * 100) }}%</td>
+                            <td>{{ offer.term_hours or "Open" }}h</td>
+                            <td>{{ offer.description[:50] }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not loan_offers %}
+                        <tr><td colspan="7" class="empty">No loan offers available</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Loan Requests</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Borrower</th><th>Currency</th><th>Amount</th><th>Max Rate</th><th>Term</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for req in loan_requests %}
+                        <tr>
+                            <td>{{ req.borrower_id }}...</td>
+                            <td>{{ req.currency }}</td>
+                            <td>{{ "%.2f"|format(req.amount) }}</td>
+                            <td>{{ "%.1f"|format(req.max_interest_rate * 100) }}%</td>
+                            <td>{{ req.term_hours or "Open" }}h</td>
+                            <td>{{ req.purpose[:50] }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not loan_requests %}
+                        <tr><td colspan="6" class="empty">No loan requests</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

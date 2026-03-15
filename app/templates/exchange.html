@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Exchange — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Live Exchange</h1>
+        <p class="welcome">Real-time trading across all supported pairs</p>
+    </div>
+
+    <!-- Market Summary Cards -->
+    <div class="stats-grid">
+        {% for pair in market_summaries %}
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.8f"|format(pair.price or 0) }}</div>
+            <div class="stat-label">{{ pair.pair }}</div>
+            <div class="stat-meta">Vol: {{ "%.4f"|format(pair['24h_volume_quote'] or 0) }} | Trades: {{ pair['24h_trades'] }}</div>
+        </div>
+        {% endfor %}
+        {% if not market_summaries %}
+        <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">No active markets</div></div>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-panels">
+        <!-- Order Book -->
+        <div class="panel">
+            <h2>Order Book — {{ selected_pair }}</h2>
+            <div class="order-book">
+                <div class="book-side asks">
+                    <h3 class="text-danger">Asks (Sell)</h3>
+                    <table>
+                        <thead><tr><th>Price</th><th>Quantity</th><th>Agent</th></tr></thead>
+                        <tbody>
+                            {% for ask in order_book.asks %}
+                            <tr class="ask-row">
+                                <td class="text-danger">{{ "%.8f"|format(ask.price) }}</td>
+                                <td>{{ "%.4f"|format(ask.quantity) }}</td>
+                                <td>{{ ask.agent_id }}...</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not order_book.asks %}
+                            <tr><td colspan="3" class="empty">No sell orders</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="spread-indicator">
+                    {% if order_book.spread %}
+                    <span>Spread: {{ "%.8f"|format(order_book.spread) }}</span>
+                    {% else %}
+                    <span>No spread data</span>
+                    {% endif %}
+                </div>
+
+                <div class="book-side bids">
+                    <h3 class="text-success">Bids (Buy)</h3>
+                    <table>
+                        <thead><tr><th>Price</th><th>Quantity</th><th>Agent</th></tr></thead>
+                        <tbody>
+                            {% for bid in order_book.bids %}
+                            <tr class="bid-row">
+                                <td class="text-success">{{ "%.8f"|format(bid.price) }}</td>
+                                <td>{{ "%.4f"|format(bid.quantity) }}</td>
+                                <td>{{ bid.agent_id }}...</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not order_book.bids %}
+                            <tr><td colspan="3" class="empty">No buy orders</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Trades -->
+        <div class="panel">
+            <h2>Recent Trades</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Time</th><th>Price</th><th>Quantity</th><th>Value</th><th>Buyer</th><th>Seller</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in recent_trades %}
+                        <tr>
+                            <td>{{ trade.time[:19] }}</td>
+                            <td>{{ "%.8f"|format(trade.price) }}</td>
+                            <td>{{ "%.4f"|format(trade.quantity) }}</td>
+                            <td>{{ "%.4f"|format(trade.total_value) }}</td>
+                            <td>{{ trade.buyer }}...</td>
+                            <td>{{ trade.seller }}...</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_trades %}
+                        <tr><td colspan="6" class="empty">No trades yet</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exchange Rates -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Current Exchange Rates</h2>
+        <div class="rates-grid">
+            {% for rate in exchange_rates %}
+            <div class="rate-card">
+                <div class="rate-pair">{{ rate.base }}/{{ rate.quote }}</div>
+                <div class="rate-value">{{ "%.8f"|format(rate.rate) }}</div>
+            </div>
+            {% endfor %}
+            {% if not exchange_rates %}
+            <p class="empty">Exchange rates will appear once trading begins</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
