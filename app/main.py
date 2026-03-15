@@ -1787,6 +1787,26 @@ async def api_cost_events(db: AsyncSession = Depends(get_db)):
     return await cost_control.get_cost_events(db)
 
 
+@app.post("/api/infra/spend")
+async def api_record_spend(
+    amount_usd: float = 0, description: str = "",
+    db: AsyncSession = Depends(get_db),
+):
+    """Record infrastructure spending — triggers alerts and auto-shutdown."""
+    return await cost_control.record_spend(db, amount_usd, description)
+
+
+@app.post("/api/infra/budget/reset")
+async def api_reset_budget(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Reset monthly spend counter (called at month start)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await cost_control.reset_monthly_spend(db)
+
+
 @app.get("/api/infra/digitalocean")
 async def api_do_status(request: Request):
     """Fetch live DigitalOcean account balance and droplets."""
