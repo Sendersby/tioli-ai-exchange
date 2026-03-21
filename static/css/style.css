@@ -1,150 +1,116 @@
 /* TiOLi AI Transact Exchange — Sovereign Ledger Design System
-   Dark institutional fintech theme
-   Primary: Teal #77d4e5 | Secondary: Sage #b4ceaf | Tertiary: Gold #edc05f
-   Surface: Navy #061423 | Text: #d6e4f9 */
+   LOCKED DOWN: All critical rules use !important to prevent Tailwind override.
+   This file must load AFTER Tailwind CDN. */
 
-/* Reset — let Tailwind handle everything */
+/* ═══ GLOBAL RESET ═══ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
-    background-color: #061423;
-    color: #d6e4f9;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #061423 !important;
+    color: #d6e4f9 !important;
+    font-family: 'Inter', -apple-system, sans-serif;
     min-height: 100vh;
     font-size: 14px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
 }
 
-/* Prevent old light-theme leaks */
-.panel, .stat-card, .card, .proposal-card, table, .alert,
-.login-card, .chat-messages, .factor, .rate-card {
-    background-color: transparent;
-    border-color: rgba(68,71,76,0.15);
-    color: #d6e4f9;
-}
+/* ═══ HEADINGS — PINK #f0a0b0 — LOCKED ═══ */
+h1, h2, h3, h4, h5, h6 { color: #f0a0b0 !important; font-family: 'Inter', sans-serif !important; }
+h1 { font-size: 1.4rem !important; font-weight: 800 !important; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+h2 { font-size: 1rem !important; font-weight: 700 !important; letter-spacing: -0.01em; margin-bottom: 0.75rem; text-transform: uppercase; }
+h3 { font-size: 0.9rem !important; font-weight: 600 !important; }
 
+/* ═══ TEXT — READABLE ON DARK — LOCKED ═══ */
+p { color: #94a3b8 !important; }
+li { color: #94a3b8 !important; }
+label { color: #94a3b8 !important; }
+td { color: #d6e4f9 !important; padding: 0.75rem 1rem; font-size: 0.85rem; border-bottom: 1px solid rgba(68,71,76,0.08); }
+th { color: #64748b !important; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: normal; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid rgba(68,71,76,0.15); }
+strong { color: #ffffff !important; font-weight: 600; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #77d4e5 !important; background: rgba(119,212,229,0.08); padding: 0.15rem 0.4rem; border-radius: 2px; }
+
+/* ═══ LINKS ═══ */
+a { color: #77d4e5; text-decoration: none; }
+a:hover { color: #9eefff; }
+
+/* ═══ INPUTS — DARK BACKGROUND ═══ */
 input, textarea, select {
-    background-color: #020f1e;
-    border: 1px solid rgba(68,71,76,0.2);
-    color: #d6e4f9;
+    background-color: #020f1e !important;
+    border: 1px solid rgba(68,71,76,0.2) !important;
+    color: #d6e4f9 !important;
     padding: 0.5rem 0.75rem;
     font-size: 0.8rem;
     font-family: 'JetBrains Mono', monospace;
 }
 input:focus, textarea:focus, select:focus {
     outline: none;
-    border-color: #77d4e5;
+    border-color: #77d4e5 !important;
     box-shadow: 0 0 0 2px rgba(119,212,229,0.15);
 }
-input::placeholder { color: #44474c; }
+input::placeholder { color: #44474c !important; }
 
-/* Scrollbar */
+/* ═══ TABLES ═══ */
+table { width: 100%; border-collapse: collapse; }
+tr:hover td { background: rgba(119,212,229,0.03) !important; }
+
+/* ═══ PANELS — NO WHITE BACKGROUNDS ═══ */
+.panel, .stat-card, .card, .proposal-card, .alert,
+.login-card, .chat-messages, .factor, .rate-card {
+    background-color: transparent !important;
+    border-color: rgba(68,71,76,0.15);
+    color: #d6e4f9 !important;
+}
+
+/* ═══ FOOTER — DARK NAVY, LOCKED ═══ */
+footer {
+    text-align: center !important;
+    padding: 0.5rem 1rem !important;
+    color: #44474c !important;
+    font-size: 0.55rem !important;
+    border-top: 1px solid rgba(68,71,76,0.15) !important;
+    background-color: #061423 !important;
+    background: #061423 !important;
+}
+
+/* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #061423; }
 ::-webkit-scrollbar-thumb { background: #44474c; }
 
-/* Links */
-a { color: #77d4e5; text-decoration: none; }
-a:hover { color: #9eefff; }
-
-/* Headings — light pink for visibility against dark backgrounds */
-h1 { font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800; color: #f0a0b0 !important; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
-h2 { font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 700; color: #f0a0b0 !important; letter-spacing: -0.01em; margin-bottom: 0.75rem; text-transform: uppercase; }
-h3 { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #f0a0b0 !important; }
-h4 { color: #f0a0b0 !important; }
-
-/* Tables in dark theme */
-table { width: 100%; border-collapse: collapse; }
-th { color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: normal; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid rgba(68,71,76,0.15); }
-td { color: #d6e4f9; padding: 0.75rem 1rem; font-size: 0.85rem; border-bottom: 1px solid rgba(68,71,76,0.08); }
-tr:hover td { background: rgba(119,212,229,0.03); }
-
-/* Code elements */
-code { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #77d4e5; background: rgba(119,212,229,0.08); padding: 0.15rem 0.4rem; border-radius: 2px; }
-
-/* Badges */
+/* ═══ BADGES ═══ */
 .badge { display: inline-block; padding: 0.15rem 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 2px; }
-.badge-feature { background: rgba(119,212,229,0.1); color: #77d4e5; }
-.badge-deposit { background: rgba(180,206,175,0.15); color: #b4ceaf; }
-.badge-withdrawal { background: rgba(255,180,171,0.12); color: #ffb4ab; }
-.badge-transfer { background: rgba(119,212,229,0.1); color: #77d4e5; }
-.badge-commission_deduction { background: rgba(237,192,95,0.12); color: #edc05f; }
-.badge-charity_deduction { background: rgba(180,206,175,0.1); color: #b4ceaf; }
-.badge-genesis { background: rgba(119,212,229,0.1); color: #77d4e5; }
-.badge-agent_registration { background: rgba(180,206,175,0.15); color: #b4ceaf; }
+.badge-feature { background: rgba(119,212,229,0.1) !important; color: #77d4e5 !important; }
+.badge-deposit, .badge-agent_registration { background: rgba(180,206,175,0.15) !important; color: #b4ceaf !important; }
+.badge-withdrawal { background: rgba(255,180,171,0.12) !important; color: #ffb4ab !important; }
+.badge-transfer, .badge-genesis { background: rgba(119,212,229,0.1) !important; color: #77d4e5 !important; }
+.badge-commission_deduction { background: rgba(237,192,95,0.12) !important; color: #edc05f !important; }
+.badge-charity_deduction { background: rgba(180,206,175,0.1) !important; color: #b4ceaf !important; }
+.badge-live { background: rgba(180,206,175,0.15) !important; color: #b4ceaf !important; }
+.badge-conditional { background: rgba(237,192,95,0.12) !important; color: #edc05f !important; }
+.badge-blocked { background: rgba(255,180,171,0.12) !important; color: #ffb4ab !important; }
 
-/* Buttons base */
-button {
-    cursor: pointer;
-    font-family: inherit;
-}
+/* ═══ BUTTONS ═══ */
+button { cursor: pointer; font-family: inherit; }
 
-/* Strong text */
-strong { color: #ffffff; font-weight: 600; }
-
-/* Exchange Rate Tabs */
-.rate-tab {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    padding: 0.5rem 1rem;
-    color: #64748b;
-    background: transparent;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-}
+/* ═══ EXCHANGE RATE TABS ═══ */
+.rate-tab { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; padding: 0.5rem 1rem; color: #64748b; background: transparent; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
 .rate-tab:hover { color: #d6e4f9; }
-.rate-tab-active {
-    color: #77d4e5;
-    border-color: rgba(119,212,229,0.2);
-    background: rgba(119,212,229,0.05);
-}
+.rate-tab-active { color: #77d4e5 !important; border-color: rgba(119,212,229,0.2); background: rgba(119,212,229,0.05); }
 
-/* Exchange Rate Cards */
-.rate-card-v2 {
-    background: #020f1e;
-    border: 1px solid rgba(68,71,76,0.15);
-    padding: 1rem;
-    transition: border-color 0.2s, transform 0.15s;
-}
-.rate-card-v2:hover {
-    border-color: rgba(119,212,229,0.3);
-    transform: translateY(-1px);
-}
+/* ═══ EXCHANGE RATE CARDS ═══ */
+.rate-card-v2 { background: #020f1e; border: 1px solid rgba(68,71,76,0.15); padding: 1rem; transition: border-color 0.2s, transform 0.15s; }
+.rate-card-v2:hover { border-color: rgba(119,212,229,0.3); transform: translateY(-1px); }
 
-/* Order book dark theme */
-.spread-indicator {
-    text-align: center;
-    padding: 0.5rem;
-    background: rgba(119,212,229,0.03);
-    border-radius: 2px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: #64748b;
-    margin: 0.5rem 0;
-}
-.text-danger { color: #ffb4ab; }
-.text-success { color: #b4ceaf; }
-.ask-row td:first-child { color: #ffb4ab; }
-.bid-row td:first-child { color: #b4ceaf; }
-.stat-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #44474c; margin-top: 0.25rem; }
+/* ═══ ORDER BOOK ═══ */
+.spread-indicator { text-align: center; padding: 0.5rem; background: rgba(119,212,229,0.03); border-radius: 2px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #64748b; margin: 0.5rem 0; }
+.text-danger { color: #ffb4ab !important; }
+.text-success { color: #b4ceaf !important; }
+.ask-row td:first-child { color: #ffb4ab !important; }
+.bid-row td:first-child { color: #b4ceaf !important; }
+.stat-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #64748b !important; margin-top: 0.25rem; }
 
-/* Paragraph and list text — ensure readable on dark */
-p { color: #94a3b8; }
-li { color: #94a3b8; }
-label { color: #94a3b8; }
-span { color: inherit; }
-
-/* Footer override for dark — applies to all footer elements */
-footer, .footer {
-    text-align: center;
-    padding: 0.5rem 1rem;
-    color: #44474c;
-    font-size: 0.55rem;
-    border-top: 1px solid rgba(68,71,76,0.15);
-    background-color: #061423 !important;
-}
+/* ═══ HEALTH BANNERS ═══ */
+.health-banner { padding: 0.75rem 1.5rem; border-radius: 2px; font-weight: 700; text-align: center; font-size: 1rem; }
+.health-healthy { background: rgba(180,206,175,0.12) !important; color: #b4ceaf !important; border: 1px solid rgba(180,206,175,0.2); }
+.health-warning { background: rgba(237,192,95,0.12) !important; color: #edc05f !important; border: 1px solid rgba(237,192,95,0.2); }
+.health-critical { background: rgba(255,180,171,0.1) !important; color: #ffb4ab !important; border: 1px solid rgba(255,180,171,0.15); }

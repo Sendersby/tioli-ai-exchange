@@ -216,6 +216,8 @@
     tick();setInterval(tick,1000);
 })();
 </script>
+<!-- Re-load CSS AFTER Tailwind JIT to guarantee dark theme overrides -->
+<link rel="stylesheet" href="/static/css/style.css">
 <!-- Toast notification system -->
 <div id="toastContainer" class="fixed top-20 right-4 z-[200] space-y-2" style="pointer-events:none;"></div>
 <script>
