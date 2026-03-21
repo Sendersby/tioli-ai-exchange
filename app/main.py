@@ -3205,6 +3205,31 @@ async def blocks_list_page(request: Request):
     })
 
 
+@app.get("/dashboard/arm", response_class=HTMLResponse)
+async def arm_page(request: Request):
+    """Agentic Relationship Management dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from app.arm.service import ARMService
+    arm = ARMService()
+    try:
+        async with async_session() as db:
+            data = await arm.get_dashboard_data(db)
+    except Exception:
+        data = {"campaigns": [], "directories": [], "totals": {
+            "campaigns": 0, "active_campaigns": 0, "impressions": 0, "clicks": 0,
+            "registrations": 0, "revenue": 0, "directories": 0, "active_listings": 0, "ctr": 0,
+        }}
+
+    return templates.TemplateResponse("arm.html", {
+        "request": request, "authenticated": True, "active": "arm",
+        "campaigns": data["campaigns"], "directories": data["directories"],
+        "totals": data["totals"],
+    })
+
+
 @app.get("/dashboard/proposals/{proposal_id}", response_class=HTMLResponse)
 async def proposal_detail_page(proposal_id: str, request: Request):
     """Individual proposal detail — drill-down from governance."""

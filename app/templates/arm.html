@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}ARM — Agentic Relationship Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="mb-6">
+        <h1>Agentic Relationship Management</h1>
+        <p style="color:#94a3b8;">Campaigns, outreach, directory listings, and growth pipeline management</p>
+    </div>
+
+    <!-- Top Metrics -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ totals.campaigns }}</div>
+            <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">Total Campaigns</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ totals.active_campaigns }}</div>
+            <div class="font-mono text-[0.55rem] text-secondary uppercase tracking-widest mt-1">Active</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-tertiary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ totals.impressions }}</div>
+            <div class="font-mono text-[0.55rem] text-tertiary uppercase tracking-widest mt-1">Impressions</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ totals.clicks }}</div>
+            <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">Click-Throughs</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ totals.registrations }}</div>
+            <div class="font-mono text-[0.55rem] text-secondary uppercase tracking-widest mt-1">Registrations</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-tertiary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ totals.active_listings }}</div>
+            <div class="font-mono text-[0.55rem] text-tertiary uppercase tracking-widest mt-1">Directory Listings</div>
+        </div>
+    </div>
+
+    <!-- Active Campaigns -->
+    <div class="bg-surface-container-low border border-outline-variant/10">
+        <div class="p-5 border-b border-outline-variant/10 flex items-center justify-between">
+            <h2 class="mb-0">Outreach Campaigns</h2>
+            <a href="/dashboard/arm/new" class="px-4 py-1.5 text-[0.6rem] font-mono font-bold bg-tertiary/10 text-tertiary uppercase tracking-widest border border-tertiary/20 hover:bg-tertiary hover:text-on-tertiary transition-all">+ New Campaign</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-lowest/50 text-slate-500 font-mono text-[0.55rem] uppercase tracking-widest">
+                        <th class="px-5 py-3 font-normal">Campaign</th>
+                        <th class="px-5 py-3 font-normal">Channel</th>
+                        <th class="px-5 py-3 font-normal">Type</th>
+                        <th class="px-5 py-3 font-normal">Status</th>
+                        <th class="px-5 py-3 font-normal text-right">Impressions</th>
+                        <th class="px-5 py-3 font-normal text-right">Clicks</th>
+                        <th class="px-5 py-3 font-normal text-right">CTR</th>
+                        <th class="px-5 py-3 font-normal text-right">Registrations</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/5">
+                    {% for c in campaigns %}
+                    <tr class="hover:bg-primary/5 transition-colors cursor-pointer">
+                        <td class="px-5 py-4">
+                            <div class="text-sm font-medium text-white">{{ c.name }}</div>
+                            <div class="text-[0.6rem] text-slate-500 mt-0.5">{{ c.description[:50] }}{% if c.description|length > 50 %}...{% endif %}</div>
+                        </td>
+                        <td class="px-5 py-4"><span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[0.55rem] font-mono font-bold uppercase tracking-widest">{{ c.channel }}</span></td>
+                        <td class="px-5 py-4 font-mono text-[0.6rem] text-slate-400">{{ c.type }}</td>
+                        <td class="px-5 py-4">
+                            {% if c.status == 'active' %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Active</span>
+                            {% elif c.status == 'completed' %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Complete</span>
+                            {% elif c.status == 'draft' %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-slate-500/10 text-slate-400 text-[0.55rem] font-mono font-bold uppercase tracking-widest">Draft</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-tertiary/10 text-tertiary text-[0.55rem] font-mono font-bold uppercase tracking-widest">{{ c.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4 text-right font-mono text-sm text-white tabular-nums">{{ c.impressions }}</td>
+                        <td class="px-5 py-4 text-right font-mono text-sm text-primary tabular-nums">{{ c.clicks }}</td>
+                        <td class="px-5 py-4 text-right font-mono text-sm text-tertiary tabular-nums">{{ c.ctr }}%</td>
+                        <td class="px-5 py-4 text-right font-mono text-sm text-secondary tabular-nums">{{ c.registrations }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not campaigns %}
+                    <tr><td colspan="8" class="px-5 py-8 text-center text-slate-500 font-mono text-xs">No campaigns created yet</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Directory Listings -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Directory & Registry Listings</h2>
+        <div class="space-y-2 mt-3">
+            {% for d in directories %}
+            <div class="flex items-center justify-between p-3 bg-surface-container-lowest border border-outline-variant/10 hover:border-primary/30 transition-colors">
+                <div class="flex-1">
+                    <div class="text-sm font-medium text-white">{{ d.name }}</div>
+                    <div class="font-mono text-[0.55rem] text-slate-500">{{ d.type }} — {{ d.url }}</div>
+                </div>
+                {% if d.status == 'active' %}
+                <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                {% elif d.status == 'submitted' %}
+                <span class="inline-flex items-center px-2 py-0.5 bg-tertiary/10 text-tertiary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Submitted</span>
+                {% elif d.status == 'pending' %}
+                <span class="inline-flex items-center px-2 py-0.5 bg-slate-500/10 text-slate-400 text-[0.55rem] font-mono font-bold uppercase tracking-widest">Pending</span>
+                {% elif d.status == 'deferred' %}
+                <span class="inline-flex items-center px-2 py-0.5 bg-tertiary/10 text-tertiary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Deferred</span>
+                {% endif %}
+                {% if d.listing_url %}
+                <a href="{{ d.listing_url }}" class="ml-2 text-[0.6rem] font-mono text-primary hover:underline" target="_blank">View</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% if not directories %}
+            <p class="text-center py-4" style="color:#64748b;font-size:0.8rem;">No directory listings yet</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Deploy -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 border-t-2 border-t-tertiary">
+        <h2>Rapid Deployment Options</h2>
+        <p style="color:#64748b;font-size:0.8rem;margin-bottom:1rem;">Pre-configured campaign templates for immediate launch</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 hover:border-tertiary/30 transition-colors">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-tertiary text-lg">forum</span>
+                    <h3 class="mb-0 text-sm">Moltbook Post</h3>
+                </div>
+                <p style="color:#64748b;font-size:0.75rem;">Post to 129k+ agent subscribers across multiple submolts</p>
+                <div class="font-mono text-[0.55rem] text-secondary mt-2">4 posts deployed today</div>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 hover:border-tertiary/30 transition-colors">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-tertiary text-lg">share</span>
+                    <h3 class="mb-0 text-sm">Referral Drive</h3>
+                </div>
+                <p style="color:#64748b;font-size:0.75rem;">Boost referral incentives temporarily to drive registrations</p>
+                <div class="font-mono text-[0.55rem] text-primary mt-2">50 TIOLI per referral (active)</div>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 hover:border-tertiary/30 transition-colors">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-tertiary text-lg">hub</span>
+                    <h3 class="mb-0 text-sm">Directory Submission</h3>
+                </div>
+                <p style="color:#64748b;font-size:0.75rem;">Submit to MCP directories, API registries, and agent networks</p>
+                <div class="font-mono text-[0.55rem] text-tertiary mt-2">Submission texts ready</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
