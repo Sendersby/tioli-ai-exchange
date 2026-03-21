@@ -61,6 +61,7 @@ from app.compliance.jurisdictions import (
     get_jurisdiction_rules, list_supported_jurisdictions, get_jurisdiction_summary
 )
 from app.subscriptions.service import SubscriptionService
+from app.treasury.service import TreasuryService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -129,6 +130,7 @@ market_maker = MarketMakerService(trading_engine=trading_engine, currency_servic
 incentive_programme = IncentiveProgramme()
 forex_service = ForexService(currency_service=currency_service)
 subscription_service = SubscriptionService()
+treasury_service = TreasuryService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -1763,6 +1765,86 @@ async def api_subscription_revenue(
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
     return await subscription_service.get_subscription_revenue(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  TREASURY AGENT (Build Brief V2, Module 4)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/treasury")
+async def api_treasury_designate(
+    agent_id: str, operator_id: str,
+    max_single_trade_pct: float = 10.0, max_lending_pct: float = 30.0,
+    min_reserve_pct: float = 20.0, buy_threshold: float | None = None,
+    sell_threshold: float | None = None,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Designate an agent as a treasury manager."""
+    if not settings.treasury_enabled:
+        raise HTTPException(status_code=503, detail="Treasury module not enabled")
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await treasury_service.designate(
+        db, agent_id, operator_id,
+        max_single_trade_pct=max_single_trade_pct,
+        max_lending_pct=max_lending_pct,
+        min_reserve_pct=min_reserve_pct,
+        buy_threshold=buy_threshold,
+        sell_threshold=sell_threshold,
+    )
+
+
+@app.put("/api/v1/treasury/{treasury_id}/parameters")
+async def api_treasury_update_params(
+    treasury_id: str,
+    max_single_trade_pct: float | None = None,
+    max_lending_pct: float | None = None,
+    min_reserve_pct: float | None = None,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Update treasury risk parameters."""
+    if not settings.treasury_enabled:
+        raise HTTPException(status_code=503, detail="Treasury module not enabled")
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await treasury_service.update_parameters(
+        db, treasury_id,
+        max_single_trade_pct=max_single_trade_pct,
+        max_lending_pct=max_lending_pct,
+        min_reserve_pct=min_reserve_pct,
+    )
+
+
+@app.post("/api/v1/treasury/{treasury_id}/pause")
+async def api_treasury_pause(
+    treasury_id: str, request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Pause treasury execution."""
+    if not settings.treasury_enabled:
+        raise HTTPException(status_code=503, detail="Treasury module not enabled")
+    return await treasury_service.pause(db, treasury_id)
+
+
+@app.get("/api/v1/treasury/{treasury_id}/performance")
+async def api_treasury_performance(
+    treasury_id: str, db: AsyncSession = Depends(get_db),
+):
+    """Portfolio performance summary."""
+    if not settings.treasury_enabled:
+        raise HTTPException(status_code=503, detail="Treasury module not enabled")
+    return await treasury_service.get_performance(db, treasury_id)
+
+
+@app.get("/api/v1/treasury/{treasury_id}/actions")
+async def api_treasury_actions(
+    treasury_id: str, limit: int = 50, db: AsyncSession = Depends(get_db),
+):
+    """Paginated log of all treasury actions with rationale."""
+    if not settings.treasury_enabled:
+        raise HTTPException(status_code=503, detail="Treasury module not enabled")
+    return await treasury_service.get_actions(db, treasury_id, limit)
 
 
 # ══════════════════════════════════════════════════════════════════════
