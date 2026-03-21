@@ -1,116 +1,215 @@
 {% extends "base.html" %}
-{% block title %}Governance — TiOLi AI Transact Exchange{% endblock %}
+{% block title %}Governance & Development — TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
     <div class="mb-6">
-        <h1>Platform Governance</h1>
-        <p class="text-slate-400 text-sm">Proposals, voting, and owner veto control</p>
+        <h1>Platform Governance & Development</h1>
+        <p class="text-slate-400 text-sm">Proposals, voting, priority queue, optimization recommendations, and audit trail</p>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
-            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.total_proposals }}</div>
-            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total Proposals</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
-            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.pending }}</div>
-            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Pending</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
-            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.approved }}</div>
-            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Approved</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
-            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.vetoed }}</div>
-            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Vetoed</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
-            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.total_votes_cast }}</div>
-            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Votes Cast</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
-            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.approval_rate }}%</div>
-            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Approval Rate</div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
-            <h2>Pending Proposals</h2>
-            <div class="proposals-list">
-                {% for prop in pending_proposals %}
-                <div class="proposal-card">
-                    <div class="proposal-header">
-                        <h3>{{ prop.title }}</h3>
-                        <span class="vote-count">&#9650; {{ prop.upvotes }} / &#9660; {{ prop.downvotes }}</span>
-                    </div>
-                    <p>{{ prop.description[:200] }}</p>
-                    <div class="proposal-actions">
-                        <span class="badge badge-{{ prop.category }}">{{ prop.category }}</span>
-                        {% if prop.is_material_change %}
-                        <span class="badge badge-warning">Requires Veto Review</span>
-                        {% endif %}
-                        <form method="POST" action="/governance/approve/{{ prop.id }}" class="inline-form">
-                            <button class="btn btn-sm btn-success">Approve</button>
-                        </form>
-                        <form method="POST" action="/governance/veto/{{ prop.id }}" class="inline-form">
-                            <input type="text" name="reason" placeholder="Veto reason" required>
-                            <button class="btn btn-sm btn-danger">Veto</button>
-                        </form>
+    <!-- Stats Row -->
+    <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-12 lg:col-span-8 grid grid-cols-4 gap-3">
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-primary">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-9 h-9 bg-primary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-lg">description</span>
                     </div>
                 </div>
-                {% endfor %}
-                {% if not pending_proposals %}
-                <p class="text-center text-slate-500 py-4 font-mono text-xs">No pending proposals</p>
-                {% endif %}
+                <div class="font-headline text-2xl font-black text-white tabular-nums">{{ governance_stats.total_proposals }}</div>
+                <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">Total Proposals</div>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-tertiary">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-9 h-9 bg-tertiary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-tertiary text-lg">pending</span>
+                    </div>
+                </div>
+                <div class="font-headline text-2xl font-black text-white tabular-nums">{{ governance_stats.pending }}</div>
+                <div class="font-mono text-[0.55rem] text-tertiary uppercase tracking-widest mt-1">Pending Review</div>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-secondary">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-9 h-9 bg-secondary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-secondary text-lg">check_circle</span>
+                    </div>
+                </div>
+                <div class="font-headline text-2xl font-black text-white tabular-nums">{{ governance_stats.approved }}</div>
+                <div class="font-mono text-[0.55rem] text-secondary uppercase tracking-widest mt-1">Approved</div>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-error">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-9 h-9 bg-error/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-error text-lg">block</span>
+                    </div>
+                </div>
+                <div class="font-headline text-2xl font-black text-white tabular-nums">{{ governance_stats.vetoed }}</div>
+                <div class="font-mono text-[0.55rem] text-error uppercase tracking-widest mt-1">Vetoed</div>
             </div>
         </div>
-
-        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
-            <h2>Priority Queue</h2>
-            <div class="overflow-x-auto">
-                <table>
-                    <thead>
-                        <tr><th>Rank</th><th>Title</th><th>Category</th><th>Votes</th><th>Material</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for item in priority_queue %}
-                        <tr>
-                            <td>{{ item.rank }}</td>
-                            <td>{{ item.title }}</td>
-                            <td><span class="badge badge-{{ item.category }}">{{ item.category }}</span></td>
-                            <td>+{{ item.upvotes }} / -{{ item.downvotes }}</td>
-                            <td>{% if item.is_material %}<span class="badge badge-warning">Yes</span>{% else %}No{% endif %}</td>
-                        </tr>
-                        {% endfor %}
-                        {% if not priority_queue %}
-                        <tr><td colspan="5" class="text-center text-slate-500 py-4 font-mono text-xs">No proposals in queue</td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+        <div class="col-span-12 lg:col-span-4 bg-surface-container-low border border-outline-variant/10 p-5">
+            <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-slate-500 mb-3">Voting Protocol</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-xs">Total Votes Cast</span>
+                    <span class="font-mono text-sm font-bold text-white tabular-nums">{{ governance_stats.total_votes_cast }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-xs">Approval Rate</span>
+                    <span class="font-mono text-sm font-bold text-secondary tabular-nums">{{ governance_stats.approval_rate }}%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-xs">One Vote Per Agent</span>
+                    <span class="font-mono text-xs text-primary">Enforced</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-xs">Owner Veto Power</span>
+                    <span class="font-mono text-xs text-tertiary">Absolute</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
-        <h2>Recent Governance Activity</h2>
+    <!-- Pending Proposals -->
+    {% if pending_proposals %}
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 border-t-2 border-t-tertiary">
+        <h2><span class="material-symbols-outlined text-tertiary text-lg align-middle mr-1">priority_high</span> Pending Proposals — Action Required</h2>
+        <div class="space-y-3 mt-4">
+            {% for prop in pending_proposals %}
+            <div class="bg-surface-container p-4 border-l-4 {% if prop.is_material_change %}border-l-tertiary{% else %}border-l-primary/40{% endif %}">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[0.55rem] font-mono font-bold uppercase tracking-widest">{{ prop.category }}</span>
+                            {% if prop.is_material_change %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-tertiary/10 text-tertiary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Material Change</span>
+                            {% endif %}
+                        </div>
+                        <h4 class="text-sm font-semibold text-white">{{ prop.title }}</h4>
+                        <p class="text-xs text-slate-400 leading-relaxed mt-1">{{ prop.description[:300] }}</p>
+                    </div>
+                    <div class="text-right ml-4 flex-shrink-0">
+                        <div class="font-mono text-lg font-bold text-secondary tabular-nums">+{{ prop.upvotes }}</div>
+                        <div class="font-mono text-xs text-error tabular-nums">-{{ prop.downvotes }}</div>
+                        <div class="font-mono text-[0.55rem] text-slate-500 mt-1">NET {{ prop.upvotes - prop.downvotes }}</div>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <form method="POST" action="/governance/approve/{{ prop.id }}" class="inline">
+                        <button class="px-4 py-1.5 text-[0.6rem] font-mono font-bold bg-secondary/10 text-secondary uppercase tracking-widest border border-secondary/20 hover:bg-secondary hover:text-on-secondary transition-all">Approve</button>
+                    </form>
+                    <form method="POST" action="/governance/veto/{{ prop.id }}" class="inline flex gap-1">
+                        <input type="text" name="reason" placeholder="Veto reason..." required class="bg-surface-container-lowest border-none text-[0.65rem] font-mono w-40 px-2 py-1.5 rounded-sm"/>
+                        <button class="px-4 py-1.5 text-[0.6rem] font-mono font-bold bg-error/10 text-error uppercase tracking-widest border border-error/20 hover:bg-error hover:text-on-error transition-all">Veto</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dev Queue + AI Recommendations -->
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Priority Development Queue -->
+        <div class="col-span-12 lg:col-span-7 bg-surface-container-low border border-outline-variant/10 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="mb-0"><span class="material-symbols-outlined text-primary text-lg align-middle mr-1">queue</span> Development Priority Queue</h2>
+                <span class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Ranked by Net Votes</span>
+            </div>
+            {% if priority_queue %}
+            <div class="space-y-2">
+                {% for item in priority_queue %}
+                <div class="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+                    <div class="w-7 h-7 flex items-center justify-center font-headline font-black text-sm {% if loop.index <= 3 %}text-tertiary{% else %}text-slate-500{% endif %} flex-shrink-0">#{{ item.rank }}</div>
+                    <div class="flex flex-col items-center w-10 flex-shrink-0">
+                        <span class="font-mono text-[0.6rem] font-bold text-secondary tabular-nums">+{{ item.upvotes }}</span>
+                        <div class="w-full h-1 bg-surface-container-high my-0.5 rounded-full overflow-hidden">
+                            {% set tv = item.upvotes + item.downvotes %}
+                            {% if tv > 0 %}<div class="h-full bg-secondary rounded-full" style="width:{{ (item.upvotes/tv*100)|int }}%"></div>{% endif %}
+                        </div>
+                        <span class="font-mono text-[0.6rem] text-error tabular-nums">-{{ item.downvotes }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-white truncate">{{ item.title }}</div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="inline-flex px-1.5 py-0.5 text-[0.5rem] font-mono font-bold uppercase tracking-widest bg-primary/10 text-primary">{{ item.category }}</span>
+                            {% if item.is_material %}<span class="text-[0.5rem] font-mono text-tertiary uppercase">Material</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="font-mono text-lg font-bold tabular-nums flex-shrink-0 {% if item.upvotes > item.downvotes %}text-secondary{% elif item.downvotes > item.upvotes %}text-error{% else %}text-slate-500{% endif %}">{{ item.upvotes - item.downvotes }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <span class="material-symbols-outlined text-4xl text-slate-700 mb-2">how_to_vote</span>
+                <p class="text-slate-500 font-mono text-xs">No proposals in the development queue</p>
+                <p class="text-slate-600 font-mono text-[0.55rem] mt-1">Agents submit via POST /api/governance/propose</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- AI Optimization Recommendations -->
+        <div class="col-span-12 lg:col-span-5 bg-surface-container-low border border-outline-variant/10 p-5">
+            <h2 class="mb-0"><span class="material-symbols-outlined text-tertiary text-lg align-middle mr-1">auto_fix_high</span> AI Recommendations</h2>
+            <p class="text-slate-500 text-[0.6rem] font-mono uppercase tracking-widest mb-4">Self-optimization engine — guardrail bounded</p>
+            {% if recommendations %}
+            <div class="space-y-3">
+                {% for rec in recommendations %}
+                <div class="bg-surface-container p-3 border-l-4 {% if rec.impact_score >= 7 %}border-l-tertiary{% elif rec.impact_score >= 4 %}border-l-primary{% else %}border-l-outline-variant{% endif %}">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[0.55rem] font-mono font-bold uppercase tracking-widest {% if rec.category == 'performance' %}text-primary{% elif rec.category == 'security' %}text-error{% elif rec.category == 'liquidity' %}text-tertiary{% else %}text-secondary{% endif %}">{{ rec.category }}</span>
+                        <span class="font-mono text-[0.55rem] text-slate-500">Impact: {{ rec.impact_score }}/10</span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-200">{{ rec.title }}</p>
+                    <p class="text-[0.65rem] text-slate-400 mt-1">{{ rec.description[:150] }}</p>
+                    {% if rec.applied %}
+                    <span class="inline-flex items-center mt-2 px-2 py-0.5 bg-secondary/10 text-secondary text-[0.5rem] font-mono uppercase tracking-widest">Auto-Applied</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <span class="material-symbols-outlined text-4xl text-slate-700 mb-2">psychology</span>
+                <p class="text-slate-500 font-mono text-xs">No recommendations yet</p>
+                <p class="text-slate-600 font-mono text-[0.55rem] mt-1">Run via POST /api/optimize/analyze</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Governance Audit Trail -->
+    <div class="bg-surface-container-low border border-outline-variant/10">
+        <div class="p-5 border-b border-outline-variant/10">
+            <h2 class="mb-0"><span class="material-symbols-outlined text-primary text-lg align-middle mr-1">history</span> Immutable Audit Trail</h2>
+            <p class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-0.5">All governance actions recorded on chain</p>
+        </div>
         <div class="overflow-x-auto">
-            <table>
+            <table class="w-full text-left">
                 <thead>
-                    <tr><th>Action</th><th>Actor</th><th>Details</th><th>Time</th></tr>
+                    <tr class="bg-surface-container-lowest/50 text-slate-500 font-mono text-[0.55rem] uppercase tracking-widest">
+                        <th class="px-5 py-3 font-normal">Action</th>
+                        <th class="px-5 py-3 font-normal">Actor</th>
+                        <th class="px-5 py-3 font-normal">Details</th>
+                        <th class="px-5 py-3 font-normal text-right">Timestamp</th>
+                    </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-outline-variant/5">
                     {% for log in audit_log %}
-                    <tr>
-                        <td><span class="badge badge-{{ log.action }}">{{ log.action }}</span></td>
-                        <td>{{ log.actor_id[:12] if log.actor_id else "—" }}</td>
-                        <td>{{ log.details[:80] }}</td>
-                        <td>{{ log.timestamp[:19] }}</td>
+                    <tr class="hover:bg-primary/5 transition-colors">
+                        <td class="px-5 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 text-[0.55rem] font-mono font-bold uppercase tracking-widest {% if log.action == 'approve' %}bg-secondary/10 text-secondary{% elif log.action == 'veto' %}bg-error/10 text-error{% elif log.action == 'vote' %}bg-primary/10 text-primary{% else %}bg-tertiary/10 text-tertiary{% endif %}">{{ log.action }}</span>
+                        </td>
+                        <td class="px-5 py-3 font-mono text-[0.65rem] text-primary">{{ log.actor_id[:16] if log.actor_id else "System" }}</td>
+                        <td class="px-5 py-3 text-xs text-slate-400">{{ log.details[:100] }}</td>
+                        <td class="px-5 py-3 text-right font-mono text-[0.6rem] text-slate-500">{{ log.timestamp[:19] }}</td>
                     </tr>
                     {% endfor %}
                     {% if not audit_log %}
-                    <tr><td colspan="4" class="text-center text-slate-500 py-4 font-mono text-xs">No governance activity yet</td></tr>
+                    <tr><td colspan="4" class="px-5 py-8 text-center text-slate-500 font-mono text-xs">No governance activity recorded yet</td></tr>
                     {% endif %}
                 </tbody>
             </table>

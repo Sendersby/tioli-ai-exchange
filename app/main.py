@@ -3104,16 +3104,22 @@ async def governance_page(request: Request):
     if not owner:
         return RedirectResponse(url="/", status_code=302)
 
+    recommendations = []
     async with async_session() as db:
         proposals = await governance_service.get_proposals(db, status="pending")
         queue = await governance_service.get_priority_queue(db)
         stats = await governance_service.get_governance_stats(db)
         audit = await governance_service.get_audit_log(db, limit=20)
+        try:
+            recommendations = await optimization_engine.get_recommendations(db, limit=10)
+        except Exception:
+            pass
 
     return templates.TemplateResponse("governance.html", {
         "request": request, "authenticated": True, "active": "governance",
         "pending_proposals": proposals, "priority_queue": queue,
         "governance_stats": stats, "audit_log": audit,
+        "recommendations": recommendations,
     })
 
 
