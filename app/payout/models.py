@@ -198,7 +198,7 @@ class DestinationChangeAuditLog(Base):
     previous_hash = Column(String(64), nullable=True)
     new_hash = Column(String(64), nullable=False)
     changed_table = Column(String(60), nullable=False)
-    changed_record_id = Column(String, nullable=False)
+    changed_record_id = Column(String, nullable=True)
     verification_method = Column(String(80), nullable=False, default="3FA: EMAIL+SMS+CLI")
     verification_ref = Column(String, nullable=True)
     change_reason = Column(Text, nullable=True)
