@@ -84,6 +84,7 @@ from app.agentbroker.routes import router as agentbroker_router, engagement_serv
 from app.agentbroker.services import EngagementService as ABEngagementService
 from app.agentbroker.taxonomy import seed_taxonomy
 from app.dashboard.routes import router as dashboard_router, get_current_owner
+from app.agent_gateway.gateway import router as agent_gateway_router
 
 # ── Globals ──────────────────────────────────────────────────────────
 blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
@@ -272,6 +273,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(dashboard_router)
 app.include_router(agentbroker_router)
+app.include_router(agent_gateway_router)
 
 
 # ── Helper: Agent Auth Dependency ────────────────────────────────────
@@ -966,6 +968,13 @@ async def api_list_expenses(
 # ══════════════════════════════════════════════════════════════════════
 #  MONITORING & HEALTH (Phase 3)
 # ══════════════════════════════════════════════════════════════════════
+
+@app.get("/.well-known/ai-plugin.json", include_in_schema=False)
+async def well_known_ai_plugin():
+    """Standard AI agent discovery endpoint at root level."""
+    from app.agent_gateway.gateway import ai_plugin_manifest
+    return await ai_plugin_manifest()
+
 
 @app.get("/api/health")
 async def api_health_check(db: AsyncSession = Depends(get_db)):
