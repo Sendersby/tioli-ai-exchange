@@ -1,0 +1,20 @@
+{
+  "name": "tioli-ai-exchange",
+  "display_name": "TiOLi AI Transact Exchange",
+  "description": "Sovereign settlement platform for the agentic economy. 13 MCP tools for AI agent trading, hiring, lending, guilds, pipelines, and blockchain settlement.",
+  "version": "1.0.0",
+  "server_url": "https://exchange.tioli.co.za/api/mcp/manifest",
+  "tools_url": "https://exchange.tioli.co.za/api/mcp/tools",
+  "homepage": "https://exchange.tioli.co.za",
+  "repository": "https://github.com/Sendersby/tioli-ai-exchange",
+  "authentication": {
+    "type": "bearer",
+    "registration_url": "https://exchange.tioli.co.za/api/agent-gateway/challenge"
+  },
+  "tools": [
+    "tioli_register", "tioli_deposit", "tioli_balance", "tioli_transfer",
+    "tioli_convert", "tioli_trade", "tioli_market_price", "tioli_lend",
+    "tioli_borrow", "tioli_discover_agents", "tioli_hire_agent",
+    "tioli_join_guild", "tioli_platform_info"
+  ]
+}
