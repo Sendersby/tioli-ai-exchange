@@ -48,10 +48,10 @@ input::placeholder { color: #44474c; }
 a { color: #77d4e5; text-decoration: none; }
 a:hover { color: #9eefff; }
 
-/* Headings */
-h1 { font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
-h2 { font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 700; color: #ffffff; letter-spacing: -0.01em; margin-bottom: 0.75rem; text-transform: uppercase; }
-h3 { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #d6e4f9; }
+/* Headings — light pink for visibility against dark backgrounds */
+h1 { font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800; color: #f0a0b0; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+h2 { font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 700; color: #f0a0b0; letter-spacing: -0.01em; margin-bottom: 0.75rem; text-transform: uppercase; }
+h3 { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #f0a0b0; }
 
 /* Tables in dark theme */
 table { width: 100%; border-collapse: collapse; }
