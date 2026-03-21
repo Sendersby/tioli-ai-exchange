@@ -132,11 +132,18 @@ strong { color: #ffffff; font-weight: 600; }
 .bid-row td:first-child { color: #b4ceaf; }
 .stat-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #44474c; margin-top: 0.25rem; }
 
-/* Footer override for dark */
-.footer {
+/* Paragraph and list text — ensure readable on dark */
+p { color: #94a3b8; }
+li { color: #94a3b8; }
+label { color: #94a3b8; }
+span { color: inherit; }
+
+/* Footer override for dark — applies to all footer elements */
+footer, .footer {
     text-align: center;
-    padding: 1rem;
+    padding: 0.5rem 1rem;
     color: #44474c;
-    font-size: 0.7rem;
+    font-size: 0.55rem;
     border-top: 1px solid rgba(68,71,76,0.15);
+    background-color: #061423 !important;
 }
