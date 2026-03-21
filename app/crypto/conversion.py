@@ -36,7 +36,7 @@ class ConversionRecord(Base):
     charity_fee = Column(Float, default=0.0)
     conversion_path = Column(String(255), default="")   # e.g. "COMPUTE→TIOLI→BTC"
     status = Column(String(20), default="completed")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class ConversionEngine:

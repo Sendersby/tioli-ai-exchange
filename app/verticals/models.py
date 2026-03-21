@@ -25,7 +25,7 @@ class SectorVertical(Base):
     data_residency_required = Column(String(10), nullable=True)
     regulatory_framework = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class OperatorVerticalRegistration(Base):
@@ -34,11 +34,11 @@ class OperatorVerticalRegistration(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     operator_id = Column(String, nullable=False)
     vertical_id = Column(String, nullable=False)
-    kyc_verified_at = Column(DateTime, nullable=True)
+    kyc_verified_at = Column(DateTime(timezone=True), nullable=True)
     sector_licence_ref = Column(String(100), nullable=True)
     status = Column(String(20), default="pending")  # pending|active|suspended
     approved_by = Column(String, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class SeasonalLoanTemplate(Base):
@@ -52,7 +52,7 @@ class SeasonalLoanTemplate(Base):
     harvest_months = Column(JSON, nullable=False)
     typical_term_days = Column(Integer, nullable=False)
     suggested_interest_rate = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # Seed data for the three verticals

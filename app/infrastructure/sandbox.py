@@ -31,7 +31,7 @@ class SandboxAccount(Base):
     credits_remaining = Column(Float, default=SANDBOX_CREDIT_AMOUNT)
     transactions_made = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class SandboxService:

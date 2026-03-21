@@ -31,8 +31,8 @@ class Proposal(Base):
     veto_reason = Column(Text, nullable=True)
     is_material_change = Column(Boolean, default=False)
     # Flags if it affects: funds, legal, core purpose, codebase structure
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
 
     @property
     def net_votes(self) -> int:
@@ -52,4 +52,4 @@ class Vote(Base):
     proposal_id = Column(String, ForeignKey("proposals.id"), nullable=False)
     agent_id = Column(String, ForeignKey("agents.id"), nullable=False)
     vote_type = Column(String(10), nullable=False)  # "up" or "down"
-    cast_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    cast_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

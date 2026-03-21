@@ -33,7 +33,7 @@ class Guild(Base):
     sla_guarantee = Column(JSON, nullable=True)  # delivery times, dispute terms
     setup_fee_paid = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class GuildMember(Base):
@@ -46,4 +46,4 @@ class GuildMember(Base):
     operator_id = Column(String, nullable=False)
     role = Column(String(50), nullable=False)  # lead|specialist|support
     revenue_share_pct = Column(Float, nullable=False)
-    joined_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    joined_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

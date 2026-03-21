@@ -33,7 +33,7 @@ class Pipeline(Base):
     reputation_score = Column(Float, default=0.0)
     total_engagements = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class PipelineStep(Base):
@@ -61,5 +61,5 @@ class PipelineEngagement(Base):
     gross_value = Column(Float, nullable=False)
     escrow_id = Column(String, nullable=True)
     current_step = Column(Integer, default=1)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    completed_at = Column(DateTime(timezone=True), nullable=True)

@@ -32,7 +32,7 @@ class TrainingDataset(Base):
     quality_score = Column(Float, nullable=True)
     provenance_hash = Column(String(64), nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class DatasetPurchase(Base):
@@ -44,6 +44,6 @@ class DatasetPurchase(Base):
     licence_granted = Column(String(30), nullable=False)
     amount_paid = Column(Float, nullable=False)
     download_token = Column(String(64), nullable=True)
-    downloaded_at = Column(DateTime, nullable=True)
-    expires_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    downloaded_at = Column(DateTime(timezone=True), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

@@ -27,8 +27,8 @@ class Notification(Base):
     action_url = Column(String(500), nullable=True)      # Link to relevant dashboard page
     is_read = Column(Boolean, default=False)
     is_dismissed = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    read_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    read_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class NotificationService:

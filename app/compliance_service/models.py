@@ -33,7 +33,7 @@ class ComplianceAgent(Base):
     reputation_score = Column(Float, default=0.0)
     total_reviews = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class ComplianceReview(Base):
@@ -49,8 +49,8 @@ class ComplianceReview(Base):
     status = Column(String(20), default="pending")  # pending|passed|failed|flagged
     finding = Column(Text, nullable=True)
     certificate_hash = Column(String(64), nullable=True)  # blockchain hash of passed review
-    reviewed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # Domains the platform may designate as mandatory

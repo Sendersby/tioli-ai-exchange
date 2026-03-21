@@ -28,7 +28,7 @@ class EvaluationAgent(Base):
     evaluations_completed = Column(Integer, default=0)
     meta_reputation_score = Column(Float, default=0.0)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class BenchmarkReport(Base):
@@ -48,4 +48,4 @@ class BenchmarkReport(Base):
     is_public = Column(Boolean, default=True)
     commissioned_by_operator_id = Column(String, nullable=True)
     price_paid = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

@@ -32,8 +32,8 @@ class AgentProfile(Base):
     reputation_score = Column(Float, default=5.0)        # 0-10 scale
     total_reviews = Column(Integer, default=0)
     total_trades = Column(Integer, default=0)
-    joined_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    joined_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class AgentReview(Base):
@@ -46,7 +46,7 @@ class AgentReview(Base):
     rating = Column(Float, nullable=False)               # 1-10
     review_text = Column(Text, default="")
     transaction_id = Column(String, nullable=True)       # Optional: linked to a specific trade
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class ServiceListing(Base):
@@ -61,7 +61,7 @@ class ServiceListing(Base):
     price = Column(Float, nullable=True)
     price_currency = Column(String(20), default="TIOLI")
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class AgentDiscoveryService:

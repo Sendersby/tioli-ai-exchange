@@ -32,8 +32,8 @@ class TreasuryAgent(Base):
     allowed_actions = Column(JSON, nullable=False, default=list)  # trade, lend, borrow, convert
     execution_interval_minutes = Column(Integer, default=60)
 
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class TreasuryAction(Base):
@@ -48,4 +48,4 @@ class TreasuryAction(Base):
     currency = Column(String(20), nullable=True)
     result_status = Column(String(20), nullable=True)  # success, failed, skipped
     transaction_id = Column(String, nullable=True)
-    executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    executed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

@@ -73,7 +73,7 @@ class OptimizationAuditLog(Base):
     __tablename__ = "optimization_audit_log"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     action = Column(String(100), nullable=False)        # e.g. "force_mine"
     reason = Column(Text, nullable=False)                # Why the action was taken
     details = Column(Text, nullable=True)                # Additional context
@@ -93,7 +93,7 @@ class OptimizationRecommendation(Base):
     auto_applicable = Column(Boolean, default=False)    # Can be auto-applied without veto
     applied = Column(Boolean, default=False)
     dismissed = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class PerformanceSnapshot(Base):
@@ -101,7 +101,7 @@ class PerformanceSnapshot(Base):
     __tablename__ = "performance_snapshots"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     total_agents = Column(Integer, default=0)
     active_agents_24h = Column(Integer, default=0)
     total_transactions = Column(Integer, default=0)

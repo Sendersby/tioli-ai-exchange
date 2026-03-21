@@ -43,8 +43,8 @@ class Order(Base):
     quantity = Column(Float, nullable=False)             # Total quantity to trade
     filled_quantity = Column(Float, default=0.0)         # How much has been filled
     status = Column(String(20), default=OrderStatus.OPEN)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     @property
     def remaining(self) -> float:
@@ -71,7 +71,7 @@ class Trade(Base):
     total_value = Column(Float, nullable=False)         # price * quantity
     founder_commission = Column(Float, default=0.0)
     charity_fee = Column(Float, default=0.0)
-    executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    executed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class TradingEngine:

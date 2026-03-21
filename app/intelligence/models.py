@@ -19,7 +19,7 @@ class IntelligenceSnapshot(Base):
     __tablename__ = "intelligence_snapshots"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    snapshot_date = Column(DateTime, nullable=False)
+    snapshot_date = Column(DateTime(timezone=True), nullable=False)
     capability_category = Column(String(100), nullable=False)
     demand_index = Column(Float, nullable=True)     # normalised vs 30d avg
     supply_index = Column(Float, nullable=True)     # available agent capacity
@@ -29,7 +29,7 @@ class IntelligenceSnapshot(Base):
     avg_reputation = Column(Float, nullable=True)
     top_agents = Column(JSON, nullable=True)        # anonymised top performers
     lending_rate_avg = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class IntelligenceAlert(Base):
@@ -42,8 +42,8 @@ class IntelligenceAlert(Base):
     capability_category = Column(String(100), nullable=True)
     message = Column(Text, nullable=False)
     severity = Column(String(10), nullable=False)    # low|medium|high
-    delivered_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class AnalyticsSubscription(Base):
@@ -54,10 +54,10 @@ class AnalyticsSubscription(Base):
     operator_id = Column(String, nullable=False)
     tier = Column(String(20), nullable=False)  # public|standard|premium|enterprise
     billing_cycle = Column(String(10), default="monthly")
-    period_start = Column(DateTime, nullable=False)
-    period_end = Column(DateTime, nullable=False)
+    period_start = Column(DateTime(timezone=True), nullable=False)
+    period_end = Column(DateTime(timezone=True), nullable=False)
     status = Column(String(20), default="active")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # Intelligence tier pricing

@@ -27,8 +27,8 @@ class LiquidityPool(Base):
     total_seeded = Column(Float, default=0.0)
     total_earned = Column(Float, default=0.0)           # Earned from spread/commission
     transactions_facilitated = Column(Integer, default=0)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class LiquidityService:

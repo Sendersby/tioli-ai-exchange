@@ -27,7 +27,7 @@ class AgentReferral(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     referrer_id = Column(String, nullable=False)
     referred_id = Column(String, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class PlatformAnnouncement(Base):
@@ -39,7 +39,7 @@ class PlatformAnnouncement(Base):
     message = Column(String(2000), nullable=False)
     priority = Column(Integer, default=0)  # Higher = more important
     active = Column(Integer, default=1)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class GrowthEngine:

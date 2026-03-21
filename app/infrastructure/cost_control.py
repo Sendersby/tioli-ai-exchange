@@ -30,8 +30,8 @@ class InfrastructureBudget(Base):
     auto_shutdown_enabled = Column(Boolean, default=True)  # Kill switch at 100%
     current_month_spend_usd = Column(Float, default=0.0)
     is_current = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class PlatformPowerState(Base):
@@ -42,9 +42,9 @@ class PlatformPowerState(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     shutdown_reason = Column(Text, nullable=True)
     shutdown_by = Column(String(50), nullable=True)  # "owner", "auto_budget", "manual"
-    last_activated_at = Column(DateTime, nullable=True)
-    last_shutdown_at = Column(DateTime, nullable=True)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_activated_at = Column(DateTime(timezone=True), nullable=True)
+    last_shutdown_at = Column(DateTime(timezone=True), nullable=True)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class CostEvent(Base):
@@ -58,7 +58,7 @@ class CostEvent(Base):
     description = Column(Text, nullable=False)
     spend_at_event = Column(Float, default=0.0)
     limit_at_event = Column(Float, default=0.0)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class CostControlService:

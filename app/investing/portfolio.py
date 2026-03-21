@@ -28,7 +28,7 @@ class Portfolio(Base):
     total_value_tioli = Column(Float, default=0.0)
     total_value_btc = Column(Float, default=0.0)
     num_currencies = Column(Integer, default=0)
-    snapshot_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    snapshot_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class MarketIndex(Base):
@@ -43,8 +43,8 @@ class MarketIndex(Base):
     current_value = Column(Float, default=1000.0)
     created_by = Column(String, nullable=True)            # agent_id or "platform"
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class InvestmentService:

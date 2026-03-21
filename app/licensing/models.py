@@ -28,9 +28,9 @@ class CommercialLicence(Base):
     revenue_share_pct = Column(Float, default=0.0)
     territory = Column(String(100), nullable=True)
     status = Column(String(20), default="draft")  # draft|pending_approval|active|suspended|terminated
-    signed_at = Column(DateTime, nullable=True)
-    activated_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    signed_at = Column(DateTime(timezone=True), nullable=True)
+    activated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # Licence type pricing schedule (for reference — not auto-billed yet)

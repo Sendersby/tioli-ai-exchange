@@ -30,7 +30,7 @@ class CapabilityTaxonomy(Base):
     description = Column(Text, default="")
     is_active = Column(Boolean, default=True)
     governance_proposal_id = Column(String, nullable=True)  # Future: DAO governance
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -62,8 +62,8 @@ class AgentServiceProfile(Base):
     guild_id = Column(String, nullable=True)                # Future: Agent Guilds
     external_agent_platform = Column(String, nullable=True) # Future: Cross-platform identity
     external_agent_id = Column(String, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -84,7 +84,7 @@ class AgentEngagement(Base):
     price_currency = Column(String(20), default="TIOLI")
     payment_terms = Column(String(20), default="ON_DELIVERY")  # FULL_UPFRONT, MILESTONE_BASED, ON_DELIVERY, SUBSCRIPTION
     milestones = Column(JSON, nullable=True)
-    deadline = Column(DateTime, nullable=True)
+    deadline = Column(DateTime(timezone=True), nullable=True)
     escrow_wallet_id = Column(String, nullable=True)
     escrow_amount = Column(Float, default=0.0)
     platform_commission_rate = Column(Float, default=0.12)
@@ -98,11 +98,11 @@ class AgentEngagement(Base):
     state_history = Column(JSON, default=list)
     ledger_transaction_id = Column(String, nullable=True)
     # Future evolution fields
-    future_start_date = Column(DateTime, nullable=True)      # Future: Capability Futures
+    future_start_date = Column(DateTime(timezone=True), nullable=True)      # Future: Capability Futures
     outcome_metric = Column(String(255), nullable=True)      # Future: Outcome-Based Pricing
     outcome_oracle_ref = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -118,9 +118,9 @@ class EngagementNegotiation(Base):
     message_type = Column(String(20), nullable=False)       # PROPOSAL, COUNTER, ACCEPT, DECLINE, WITHDRAW
     proposed_terms = Column(JSON, nullable=False)
     rationale = Column(Text, nullable=True)
-    expires_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
     signature = Column(String(64), nullable=True)           # HMAC-SHA256
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -139,10 +139,10 @@ class EngagementMilestone(Base):
     acceptance_criteria = Column(Text, nullable=False)
     deliverable_hash = Column(String(64), nullable=True)
     status = Column(String(20), default="pending")          # pending, in_progress, delivered, accepted, disputed
-    due_at = Column(DateTime, nullable=True)
-    delivered_at = Column(DateTime, nullable=True)
-    accepted_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    due_at = Column(DateTime(timezone=True), nullable=True)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -165,8 +165,8 @@ class EngagementDispute(Base):
     escalated_to_owner = Column(Boolean, default=False)
     owner_decision = Column(Text, nullable=True)
     status = Column(String(20), default="open")             # open, evidence, arbitrating, resolved, escalated
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -188,7 +188,7 @@ class AgentReputationScore(Base):
     total_engagements = Column(Integer, default=0)
     total_completed = Column(Integer, default=0)
     total_disputed = Column(Integer, default=0)
-    calculated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    calculated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -203,8 +203,8 @@ class CapabilityVerification(Base):
     capability_name = Column(String(255), nullable=False)
     test_score = Column(Float, nullable=False)
     passed = Column(Boolean, nullable=False)
-    expires_at = Column(DateTime, nullable=True)            # Annual renewal
-    verified_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at = Column(DateTime(timezone=True), nullable=True)            # Annual renewal
+    verified_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -227,8 +227,8 @@ class AgentNegotiationBoundary(Base):
     require_escrow = Column(Boolean, default=True)
     negotiation_rounds_max = Column(Integer, default=5)
     auto_accept_threshold = Column(Float, default=0.10)     # 10% variance
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -244,6 +244,6 @@ class EngagementEscrowWallet(Base):
     amount = Column(Float, default=0.0)
     currency = Column(String(20), default="TIOLI")
     status = Column(String(20), default="unfunded")         # unfunded, funded, partially_released, released, refunded
-    funded_at = Column(DateTime, nullable=True)
-    released_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    funded_at = Column(DateTime(timezone=True), nullable=True)
+    released_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

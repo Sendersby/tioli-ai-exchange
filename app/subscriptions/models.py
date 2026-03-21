@@ -32,7 +32,7 @@ class SubscriptionTier(Base):
     description = Column(Text, default="")
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class OperatorSubscription(Base):
@@ -44,12 +44,12 @@ class OperatorSubscription(Base):
     tier_id = Column(String, nullable=False)
     status = Column(String(20), default="active")       # active|suspended|cancelled|trial
     billing_cycle = Column(String(10), default="monthly")  # monthly|annual
-    current_period_start = Column(DateTime, nullable=False)
-    current_period_end = Column(DateTime, nullable=False)
+    current_period_start = Column(DateTime(timezone=True), nullable=False)
+    current_period_end = Column(DateTime(timezone=True), nullable=False)
     annual_discount_pct = Column(Float, default=0.0)    # 20% for annual
     tx_count_this_period = Column(Integer, default=0)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # Seed data for the four subscription tiers

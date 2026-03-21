@@ -31,8 +31,8 @@ class PayoutDestination(Base):
     currency = Column(String(20), default="BTC")
     allocation_pct = Column(Float, default=1.0)          # Portion of payouts to this dest (0-1)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class PayoutRecord(Base):
@@ -49,8 +49,8 @@ class PayoutRecord(Base):
     status = Column(String(20), default="pending")      # pending, processing, completed, failed
     tx_reference = Column(String(255), nullable=True)    # Blockchain tx hash or bank reference
     notes = Column(Text, default="")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class PayoutService:

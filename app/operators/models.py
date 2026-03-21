@@ -69,7 +69,7 @@ class Operator(Base):
     # KYC
     kyc_level = Column(Integer, default=KYCLevel.NONE)
     kyc_provider_ref = Column(String(255), nullable=True)  # Reference from Sumsub/Onfido
-    kyc_verified_at = Column(DateTime, nullable=True)
+    kyc_verified_at = Column(DateTime(timezone=True), nullable=True)
 
     # Tier and billing
     tier = Column(String(50), default=OperatorTier.EARLY_ADOPTER)
@@ -82,12 +82,12 @@ class Operator(Base):
     suspension_reason = Column(Text, nullable=True)
 
     # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Terms acceptance
     tos_accepted = Column(Boolean, default=False)
-    tos_accepted_at = Column(DateTime, nullable=True)
+    tos_accepted_at = Column(DateTime(timezone=True), nullable=True)
     privacy_accepted = Column(Boolean, default=False)
 
     @property

@@ -40,7 +40,7 @@ class Currency(Base):
     decimals = Column(Integer, default=8)
     description = Column(String(500), default="")
     reserve_currency = Column(String(20), default="BTC")  # What it pegs/converts to
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class ExchangeRate(Base):
@@ -52,7 +52,7 @@ class ExchangeRate(Base):
     quote_currency = Column(String(20), nullable=False)   # e.g. "BTC"
     rate = Column(Float, nullable=False)                   # 1 base = rate quote
     volume_24h = Column(Float, default=0.0)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ── Default Platform Currencies ─────────────────────────────────────

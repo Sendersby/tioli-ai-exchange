@@ -35,8 +35,8 @@ class IdempotencyRecord(Base):
     agent_id = Column(String, nullable=False)
     response_json = Column(Text, nullable=False)
     status_code = Column(String(10), default="200")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    expires_at = Column(DateTime, default=lambda: datetime.now(timezone.utc) + timedelta(hours=24))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(hours=24))
 
 
 class IdempotencyService:
@@ -131,9 +131,9 @@ class EscrowAccount(Base):
     reason = Column(String(500), default="")
     release_conditions = Column(Text, default="")
     dispute_reason = Column(Text, nullable=True)
-    expires_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    resolved_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class EscrowService:

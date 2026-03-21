@@ -27,7 +27,7 @@ class GovernanceAuditLog(Base):
     actor_id = Column(String, nullable=False)  # agent_id or "owner"
     actor_type = Column(String(20), nullable=False)  # "agent" or "owner"
     details = Column(Text, default="")
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class GovernanceService:

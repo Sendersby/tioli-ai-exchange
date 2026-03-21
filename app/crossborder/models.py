@@ -28,4 +28,4 @@ class InternationalSettlement(Base):
     sarb_sda_year = Column(Integer, nullable=False)
     sarb_cumulative_this_year = Column(Float, nullable=False)
     blocked_by_sarb = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

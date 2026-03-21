@@ -27,7 +27,7 @@ class OwnerPayPalAccount(Base):
     can_pay = Column(Boolean, nullable=False, default=False)
     billing_agreement_id = Column(String(200), nullable=True)
     billing_agreement_status = Column(String(40), nullable=True)
-    billing_agreement_approved_at = Column(DateTime, nullable=True)
+    billing_agreement_approved_at = Column(DateTime(timezone=True), nullable=True)
     receive_pct = Column(Float, nullable=False, default=0.0)
     expense_categories = Column(JSON, nullable=True)
     verified_by_3fa = Column(Boolean, nullable=False, default=False)
@@ -35,7 +35,7 @@ class OwnerPayPalAccount(Base):
     account_hash = Column(String(64), nullable=False, default="")
     previous_version_id = Column(String, nullable=True)
     change_reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     def compute_hash(self) -> str:
         data = json.dumps({
@@ -64,8 +64,8 @@ class PayPalDisbursementRecord(Base):
     paypal_fee_usd = Column(Float, nullable=True)
     status = Column(String(40), nullable=False, default="PENDING")
     failure_reason = Column(Text, nullable=True)
-    initiated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    completed_at = Column(DateTime, nullable=True)
+    initiated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class PayPalOutboundPayment(Base):
@@ -90,8 +90,8 @@ class PayPalOutboundPayment(Base):
     profitability_ratio_at_time = Column(Float, nullable=True)
     three_fa_required = Column(Boolean, nullable=False, default=False)
     three_fa_ref = Column(String, nullable=True)
-    initiated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    completed_at = Column(DateTime, nullable=True)
+    initiated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    completed_at = Column(DateTime(timezone=True), nullable=True)
     ledger_txn_id = Column(String(120), nullable=True)
 
 
@@ -105,11 +105,11 @@ class PayPalBillingAgreement(Base):
     paypal_agreement_id = Column(String(200), nullable=True)
     agreement_status = Column(String(40), nullable=False, default="PENDING_APPROVAL")
     approval_url = Column(Text, nullable=True)
-    approved_at = Column(DateTime, nullable=True)
-    cancelled_at = Column(DateTime, nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
     cancellation_reason = Column(Text, nullable=True)
     max_monthly_charge = Column(Float, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class PayPalWebhookEvent(Base):
@@ -125,8 +125,8 @@ class PayPalWebhookEvent(Base):
     signature_verified = Column(Boolean, nullable=False, default=False)
     processed = Column(Boolean, nullable=False, default=False)
     processing_result = Column(Text, nullable=True)
-    received_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    processed_at = Column(DateTime, nullable=True)
+    received_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    processed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class PayPalAccountAuditLog(Base):
@@ -140,4 +140,4 @@ class PayPalAccountAuditLog(Base):
     new_hash = Column(String(64), nullable=False)
     verification_ref = Column(String, nullable=True)
     change_reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))

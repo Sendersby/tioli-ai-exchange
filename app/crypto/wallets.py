@@ -40,7 +40,7 @@ class CryptoAddress(Base):
     label = Column(String(255), default="")
     is_primary = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class CryptoTransaction(Base):
@@ -59,8 +59,8 @@ class CryptoTransaction(Base):
     confirmations = Column(Integer, default=0)
     status = Column(String(20), default="pending")     # pending, confirming, completed, failed
     fee = Column(Float, default=0.0)                   # Network transaction fee
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    confirmed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    confirmed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class CryptoWalletService:

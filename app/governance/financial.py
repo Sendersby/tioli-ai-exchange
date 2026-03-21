@@ -47,7 +47,7 @@ class PlatformRevenue(Base):
     amount = Column(Float, nullable=False)
     currency = Column(String(20), default="TIOLI")
     description = Column(String(500), default="")
-    recorded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    recorded_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class PlatformExpense(Base):
@@ -67,8 +67,8 @@ class PlatformExpense(Base):
     approved_by = Column(String, nullable=True)
     rejection_reason = Column(Text, nullable=True)
     profitability_at_approval = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class FinancialGovernance:

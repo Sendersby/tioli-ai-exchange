@@ -31,8 +31,8 @@ class ComputeStorage(Base):
     reserved = Column(Float, default=0.0)           # Reserved for scheduled tasks
     total_deposited = Column(Float, default=0.0)     # Lifetime deposits
     total_withdrawn = Column(Float, default=0.0)     # Lifetime withdrawals
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    last_activity = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    last_activity = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     @property
     def available(self) -> float:
@@ -49,9 +49,9 @@ class StorageAllocation(Base):
     amount = Column(Float, nullable=False)
     purpose = Column(String(500), default="general")
     status = Column(String(20), default="active")     # active, used, expired, released
-    expires_at = Column(DateTime, nullable=True)       # None = no expiry
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    used_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)       # None = no expiry
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    used_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class ComputeStorageService:

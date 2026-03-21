@@ -55,7 +55,7 @@ class OwnerPaymentDestination(Base):
     change_reason = Column(Text, nullable=True)
     previous_version_id = Column(String, nullable=True)
     destination_hash = Column(String(64), nullable=False, default="")
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     created_by_event = Column(String(80), nullable=False, default="INITIAL_SETUP")
 
     def compute_hash(self) -> str:
@@ -91,7 +91,7 @@ class OwnerCurrencySplit(Base):
     verified_by_3fa = Column(Boolean, nullable=False, default=False)
     verification_ref = Column(String, nullable=True)
     previous_version_id = Column(String, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     def validate_sum(self) -> bool:
         """Verify allocations sum to 100."""
@@ -120,12 +120,12 @@ class OwnerDisbursementSchedule(Base):
     # Pause controls
     is_paused = Column(Boolean, nullable=False, default=False)
     paused_reason = Column(Text, nullable=True)
-    paused_at = Column(DateTime, nullable=True)
+    paused_at = Column(DateTime(timezone=True), nullable=True)
 
     # Audit
     verified_by_3fa = Column(Boolean, nullable=False, default=False)
     verification_ref = Column(String, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class DisbursementRecord(Base):
@@ -182,10 +182,10 @@ class DisbursementRecord(Base):
     ledger_txn_id = Column(String(120), nullable=True)
 
     # Timing
-    queued_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    started_at = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
-    next_retry_at = Column(DateTime, nullable=True)
+    queued_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    next_retry_at = Column(DateTime(timezone=True), nullable=True)
     retry_count = Column(Integer, nullable=False, default=0)
 
 
@@ -202,7 +202,7 @@ class DestinationChangeAuditLog(Base):
     verification_method = Column(String(80), nullable=False, default="3FA: EMAIL+SMS+CLI")
     verification_ref = Column(String, nullable=True)
     change_reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 class OwnerOffshoreTotalTracker(Base):
@@ -212,4 +212,4 @@ class OwnerOffshoreTotalTracker(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     year = Column(Integer, nullable=False)
     total_zar_equivalent = Column(Float, nullable=False, default=0.0)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

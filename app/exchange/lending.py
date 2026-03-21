@@ -32,7 +32,7 @@ class LoanOffer(Base):
     description = Column(String(500), default="")
     is_active = Column(Boolean, default=True)
     total_lent = Column(Float, default=0.0)              # Track how much has been lent
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class LoanRequest(Base):
@@ -47,7 +47,7 @@ class LoanRequest(Base):
     term_hours = Column(Float, nullable=True)
     purpose = Column(String(500), default="")
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class LendingMarketplace:

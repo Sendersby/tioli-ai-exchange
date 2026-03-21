@@ -70,8 +70,8 @@ class Loan(Base):
     currency = Column(String(50), default="TIOLI")
     amount_repaid = Column(Float, default=0.0)
     status = Column(String(20), default="active")  # active, repaid, defaulted
-    issued_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    due_at = Column(DateTime, nullable=True)
+    issued_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    due_at = Column(DateTime(timezone=True), nullable=True)
 
     @property
     def total_owed(self) -> float:

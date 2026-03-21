@@ -34,7 +34,7 @@ class SecurityEvent(Base):
     ip_address = Column(String(50), nullable=True)
     description = Column(Text, nullable=False)
     metadata_json = Column(Text, default="{}")
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class AgentSecurityProfile(Base):
@@ -49,8 +49,8 @@ class AgentSecurityProfile(Base):
     freeze_reason = Column(Text, nullable=True)
     total_transactions = Column(Integer, default=0)
     flagged_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class SecurityGuardian:

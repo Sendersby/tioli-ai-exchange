@@ -47,7 +47,7 @@ class IncentiveRecord(Base):
     incentive_type = Column(String(50), nullable=False)  # welcome, first_trade, volume_milestone
     amount = Column(Float, nullable=False)
     description = Column(String(500), default="")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class IncentiveProgramme:

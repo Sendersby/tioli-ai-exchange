@@ -36,9 +36,9 @@ class KYARecord(Base):
     compliance_flags = Column(Text, default="[]")          # JSON array of flags
     is_sanctioned = Column(Boolean, default=False)
     risk_score = Column(Float, default=0.0)                # 0=low, 10=high risk
-    verified_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    verified_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class ComplianceFlag(Base):
@@ -54,8 +54,8 @@ class ComplianceFlag(Base):
     status = Column(String(20), default="open")            # open, investigating, resolved, dismissed
     resolved_by = Column(String, nullable=True)
     resolution_notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class ComplianceFramework:
