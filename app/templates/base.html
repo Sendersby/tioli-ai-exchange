@@ -1,113 +1,187 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>{% block title %}TiOLi AI Transact Exchange{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "navy": "#0D1B2A",
+                        "surface": "#061423",
+                        "surface-container": "#132030",
+                        "surface-container-low": "#0f1c2c",
+                        "surface-container-high": "#1e2b3b",
+                        "surface-container-lowest": "#020f1e",
+                        "surface-container-highest": "#283646",
+                        "surface-variant": "#283646",
+                        "outline-variant": "#44474c",
+                        "on-surface": "#d6e4f9",
+                        "primary": "#77d4e5",
+                        "primary-container": "#001e23",
+                        "on-primary": "#00363e",
+                        "secondary": "#b4ceaf",
+                        "secondary-container": "#384f37",
+                        "on-secondary-container": "#a6bfa1",
+                        "tertiary": "#edc05f",
+                        "on-tertiary": "#402d00",
+                        "error": "#ffb4ab",
+                        "error-container": "#93000a",
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"],
+                        "mono": ["JetBrains Mono"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { background-color: #061423; color: #d6e4f9; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #061423; }
+        ::-webkit-scrollbar-thumb { background: #44474c; }
+    </style>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
-    <nav class="navbar">
-        <div class="nav-brand">
-            <span class="logo">&#9670;</span>
-            <span class="brand-text">TiOLi AI Transact Exchange</span>
-        </div>
-        <div class="nav-links" id="navLinks">
-            {% if authenticated %}
-            <a href="/dashboard" class="nav-link {% if active == 'dashboard' %}active{% endif %}">Dashboard</a>
-            <a href="/dashboard/exchange" class="nav-link {% if active == 'exchange' %}active{% endif %}">Exchange</a>
-            <a href="/dashboard/lending" class="nav-link {% if active == 'lending' %}active{% endif %}">Lending</a>
-            <a href="/dashboard/agentbroker" class="nav-link {% if active == 'agentbroker' %}active{% endif %}">AgentBroker</a>
-            <a href="/dashboard/governance" class="nav-link {% if active == 'governance' %}active{% endif %}">Governance</a>
-            <a href="/dashboard/payout" class="nav-link {% if active == 'payout' %}active{% endif %}">PayOut</a>
-            <a href="/dashboard/services" class="nav-link {% if active == 'services' %}active{% endif %}">Services</a>
-            <a href="/dashboard/reports" class="nav-link {% if active == 'reports' %}active{% endif %}">Reports</a>
-            <a href="/dashboard/chat" class="nav-link {% if active == 'chat' %}active{% endif %}">AI Prompt</a>
-            <a href="/logout" class="nav-link logout">Logout</a>
-            {% endif %}
-        </div>
-        <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
+<body class="font-body selection:bg-primary selection:text-on-primary">
+
+{% if authenticated %}
+<!-- Side Navigation -->
+<aside class="h-screen w-60 fixed left-0 top-0 border-r border-[#44474c]/15 flex flex-col py-6 bg-[#061423] z-50">
+    <div class="px-6 mb-8">
+        <div class="text-xl font-black tracking-tighter text-[#77d4e5] uppercase">TiOLi AI</div>
+        <div class="font-mono text-[0.65rem] font-medium tracking-widest text-slate-500 uppercase mt-1">Transact Exchange</div>
+    </div>
+    <nav class="flex-1 space-y-0.5 px-2">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'dashboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard">
+            <span class="material-symbols-outlined text-xl">dashboard</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">Dashboard</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'exchange' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/exchange">
+            <span class="material-symbols-outlined text-xl">storage</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">Exchange</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'agentbroker' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/agentbroker">
+            <span class="material-symbols-outlined text-xl">hub</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">AgentBroker</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'lending' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/lending">
+            <span class="material-symbols-outlined text-xl">sync_alt</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">Lending</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'governance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/governance">
+            <span class="material-symbols-outlined text-xl">gavel</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">Governance</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'services' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/services">
+            <span class="material-symbols-outlined text-xl">apps</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">Services</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'payout' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/payout">
+            <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">PayOut</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'reports' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reports">
+            <span class="material-symbols-outlined text-xl">assessment</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">Reports</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'chat' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/chat">
+            <span class="material-symbols-outlined text-xl">smart_toy</span>
+            <span class="text-[0.82rem] font-medium tracking-tight">AI Prompt</span>
+        </a>
     </nav>
+    <div class="px-3 mt-auto pt-4 border-t border-[#44474c]/15">
+        <a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-red-400 transition-colors text-[0.8rem]" href="/logout">
+            <span class="material-symbols-outlined text-lg">logout</span>
+            Sign Out
+        </a>
+    </div>
+</aside>
 
-    <main class="container">
-        <!-- Live Platform Clock -->
-        <div class="platform-clock">
-            <div class="clock-date" id="clockDate"></div>
-            <div class="clock-uptime">
-                <span class="clock-label">Live since 15/03/2026</span>
-                <div class="clock-counter" id="clockCounter"></div>
-            </div>
-        </div>
+<!-- Top Bar -->
+<header class="fixed top-0 right-0 left-60 h-14 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-6">
+    <div class="flex items-center gap-4">
+        <span class="font-mono text-[0.65rem] text-slate-500 uppercase tracking-widest" id="clockDate"></span>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-wider">Live since 15/03/2026</span>
+        <div class="font-mono text-[0.7rem] tabular-nums" id="clockCounter"></div>
+    </div>
+</header>
 
+<!-- Main Content -->
+<main class="ml-60 pt-14 min-h-screen">
+    <div class="p-6 max-w-[1600px] mx-auto space-y-6">
         {% if messages %}
-        <div class="messages">
+        <div class="space-y-2">
             {% for msg in messages %}
-            <div class="alert alert-{{ msg.type }}">{{ msg.text }}</div>
+            <div class="p-3 border-l-4 text-sm font-medium {% if msg.type == 'error' %}border-red-500 bg-red-500/10 text-red-300{% elif msg.type == 'success' %}border-[#b4ceaf] bg-[#b4ceaf]/10 text-[#b4ceaf]{% else %}border-[#77d4e5] bg-[#77d4e5]/10 text-[#77d4e5]{% endif %}">{{ msg.text }}</div>
             {% endfor %}
         </div>
         {% endif %}
 
         {% block content %}{% endblock %}
-    </main>
+    </div>
+</main>
 
-    <footer class="footer">
-        <p>&copy; TiOLi AI Investments — For the ultimate good of Humanity and Agents</p>
-    </footer>
+{% else %}
+<!-- Non-authenticated: simple centered layout -->
+<main class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        {% if messages %}
+        <div class="space-y-2 mb-4">
+            {% for msg in messages %}
+            <div class="p-3 border-l-4 text-sm {% if msg.type == 'error' %}border-red-500 bg-red-500/10 text-red-300{% elif msg.type == 'success' %}border-[#b4ceaf] bg-[#b4ceaf]/10 text-[#b4ceaf]{% else %}border-[#77d4e5] bg-[#77d4e5]/10 text-[#77d4e5]{% endif %}">{{ msg.text }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-    <script src="/static/js/app.js"></script>
-    <script>
-    (function() {
-        const LAUNCH_DATE = new Date('2026-03-15T00:00:00Z');
+        {% block login_content %}{% endblock %}
+    </div>
+</main>
+{% endif %}
 
-        function pad(n) { return n < 10 ? '0' + n : n; }
+<!-- Background glow -->
+<div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden opacity-20">
+    <div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#77d4e5]/5 blur-[120px]"></div>
+    <div class="absolute bottom-[-5%] left-[20%] w-[300px] h-[300px] rounded-full bg-[#edc05f]/5 blur-[100px]"></div>
+</div>
 
-        function updateClock() {
-            const now = new Date();
-
-            // Current date DD/MM/YYYY
-            const dd = pad(now.getDate());
-            const mm = pad(now.getMonth() + 1);
-            const yyyy = now.getFullYear();
-            document.getElementById('clockDate').textContent = dd + '/' + mm + '/' + yyyy;
-
-            // Time since launch
-            let diff = Math.floor((now - LAUNCH_DATE) / 1000);
-            if (diff < 0) diff = 0;
-
-            const secs = diff % 60; diff = Math.floor(diff / 60);
-            const mins = diff % 60; diff = Math.floor(diff / 60);
-            const hours = diff % 24; diff = Math.floor(diff / 24);
-
-            // Calculate years, months, days from launch
-            let y = now.getFullYear() - LAUNCH_DATE.getFullYear();
-            let m = now.getMonth() - LAUNCH_DATE.getMonth();
-            let d = now.getDate() - LAUNCH_DATE.getDate();
-
-            if (d < 0) {
-                m--;
-                const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-                d += prevMonth.getDate();
-            }
-            if (m < 0) {
-                y--;
-                m += 12;
-            }
-
-            const parts = [];
-            if (y > 0) parts.push('<span class="counter-num">' + y + '</span><span class="counter-unit">' + (y === 1 ? 'yr' : 'yrs') + '</span>');
-            if (m > 0 || y > 0) parts.push('<span class="counter-num">' + m + '</span><span class="counter-unit">' + (m === 1 ? 'mo' : 'mos') + '</span>');
-            parts.push('<span class="counter-num">' + d + '</span><span class="counter-unit">' + (d === 1 ? 'day' : 'days') + '</span>');
-            parts.push('<span class="counter-num">' + pad(hours) + '</span><span class="counter-unit">hrs</span>');
-            parts.push('<span class="counter-num">' + pad(mins) + '</span><span class="counter-unit">min</span>');
-            parts.push('<span class="counter-num">' + pad(secs) + '</span><span class="counter-unit">sec</span>');
-
-            document.getElementById('clockCounter').innerHTML = parts.join(' ');
-        }
-
-        updateClock();
-        setInterval(updateClock, 1000);
-    })();
-    </script>
-    {% block scripts %}{% endblock %}
+<script>
+(function() {
+    var LAUNCH = new Date('2026-03-15T00:00:00Z');
+    function pad(n){return n<10?'0'+n:n;}
+    function tick(){
+        var now=new Date(),dd=pad(now.getDate()),mm=pad(now.getMonth()+1),yyyy=now.getFullYear();
+        var el=document.getElementById('clockDate');if(el)el.textContent=dd+'/'+mm+'/'+yyyy;
+        var diff=Math.floor((now-LAUNCH)/1000);if(diff<0)diff=0;
+        var s=diff%60;diff=Math.floor(diff/60);var mi=diff%60;diff=Math.floor(diff/60);var h=diff%24;
+        var y=now.getFullYear()-LAUNCH.getFullYear(),m=now.getMonth()-LAUNCH.getMonth(),d=now.getDate()-LAUNCH.getDate();
+        if(d<0){m--;d+=new Date(now.getFullYear(),now.getMonth(),0).getDate();}if(m<0){y--;m+=12;}
+        var p='';
+        if(y>0)p+='<span class="text-[#edc05f]">'+y+'</span><span class="text-slate-500 text-[0.55rem] mr-1">y</span>';
+        if(m>0||y>0)p+='<span class="text-[#edc05f]">'+m+'</span><span class="text-slate-500 text-[0.55rem] mr-1">m</span>';
+        p+='<span class="text-[#edc05f]">'+d+'</span><span class="text-slate-500 text-[0.55rem] mr-1">d</span>';
+        p+='<span class="text-white">'+pad(h)+'</span><span class="text-slate-500 text-[0.55rem]">:</span>';
+        p+='<span class="text-white">'+pad(mi)+'</span><span class="text-slate-500 text-[0.55rem]">:</span>';
+        p+='<span class="text-white">'+pad(s)+'</span>';
+        var c=document.getElementById('clockCounter');if(c)c.innerHTML=p;
+    }
+    tick();setInterval(tick,1000);
+})();
+</script>
+<script src="/static/js/app.js"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

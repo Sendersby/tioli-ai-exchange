@@ -1,237 +1,219 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — TiOLi AI Transact Exchange{% endblock %}
+{% block title %}Operations | TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="dashboard-header">
-        <h1>Platform Dashboard</h1>
-        <p class="welcome">Welcome, Stephen — TiOLi AI Investments</p>
-    </div>
-
-    <!-- Platform Overview Cards -->
-    <div class="stats-grid">
-        <div class="stat-card accent-sage">
-            <div class="stat-icon">&#9726;</div>
-            <div class="stat-value">{{ chain_info.chain_length }}</div>
-            <div class="stat-label">Blocks Mined</div>
-        </div>
-        <div class="stat-card accent-teal">
-            <div class="stat-icon">&#8644;</div>
-            <div class="stat-value">{{ chain_info.total_transactions }}</div>
-            <div class="stat-label">Total Transactions</div>
-        </div>
-        <div class="stat-card accent-blue-grey">
-            <div class="stat-icon">&#9881;</div>
-            <div class="stat-value">{{ agent_count }}</div>
-            <div class="stat-label">Registered Agents</div>
-        </div>
-        <div class="stat-card accent-success">
-            <div class="stat-icon">&#9733;</div>
-            <div class="stat-value" style="color:var(--success);">{{ "%.4f"|format(founder_earnings) }}</div>
-            <div class="stat-label">Your Earnings (TIOLI)</div>
-        </div>
-        <div class="stat-card accent-charity">
-            <div class="stat-icon">&#9829;</div>
-            <div class="stat-value" style="color:var(--charity);">{{ "%.4f"|format(charity_total) }}</div>
-            <div class="stat-label">Charity Fund (TIOLI)</div>
-        </div>
-        <div class="stat-card accent-{% if chain_info.is_valid %}success{% else %}danger{% endif %}">
-            <div class="stat-icon">&#9670;</div>
-            <div class="stat-value" style="color:{% if chain_info.is_valid %}var(--success){% else %}var(--danger){% endif %};">
-                {% if chain_info.is_valid %}&#10003; Valid{% else %}&#10007; Invalid{% endif %}
+<!-- Aggregate Economic Infrastructure (Hero) -->
+<section class="grid grid-cols-12 gap-4">
+    <div class="col-span-12 lg:col-span-8">
+        <div class="relative p-6 bg-surface-container-low border-t-2 border-primary overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span class="material-symbols-outlined text-8xl">account_balance</span>
             </div>
-            <div class="stat-label">Chain Integrity</div>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h2 class="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-500 mb-2">Platform Infrastructure</h2>
+                    <div class="flex items-baseline gap-3">
+                        <span class="font-headline text-4xl font-black tracking-tight text-white tabular-nums">{{ "%.4f"|format(founder_earnings) }}</span>
+                        <span class="text-secondary font-mono text-xs tracking-widest uppercase">TIOLI Earned</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[120px]">
+                        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Charity Fund</span>
+                        <span class="block font-mono text-lg text-tertiary tabular-nums">{{ "%.4f"|format(charity_total) }}</span>
+                    </div>
+                    <div class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[120px]">
+                        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Chain Blocks</span>
+                        <span class="block font-mono text-lg text-primary tabular-nums">{{ chain_info.chain_length }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- Volume & Liquidity Metrics -->
-    <div class="stats-grid">
-        <div class="stat-card accent-coral">
-            <div class="stat-icon">&#9889;</div>
-            <div class="stat-value">{{ tx_metrics.trades_24h or 0 }}</div>
-            <div class="stat-label">Trades (24h)</div>
+    <div class="col-span-12 lg:col-span-4 grid grid-cols-2 gap-3">
+        <div class="bg-secondary-container/10 p-4 flex flex-col justify-between border-l-2 border-secondary">
+            <span class="material-symbols-outlined text-secondary">memory</span>
+            <div>
+                <div class="text-[0.6rem] font-mono text-secondary uppercase tracking-widest">Agents</div>
+                <div class="text-xl font-headline font-bold text-white tabular-nums">{{ agent_count }}</div>
+            </div>
         </div>
-        <div class="stat-card accent-teal">
-            <div class="stat-icon">&#8593;</div>
-            <div class="stat-value">{{ "%.2f"|format(tx_metrics.volume_24h or 0) }}</div>
-            <div class="stat-label">Volume 24h (TIOLI)</div>
-        </div>
-        <div class="stat-card accent-sage">
-            <div class="stat-icon">&#9650;</div>
-            <div class="stat-value">{{ "%.2f"|format(tx_metrics.volume_30d or 0) }}</div>
-            <div class="stat-label">Volume 30d (TIOLI)</div>
-        </div>
-        <div class="stat-card accent-blue-grey">
-            <div class="stat-icon">&#9744;</div>
-            <div class="stat-value">{{ tx_metrics.open_orders or 0 }}</div>
-            <div class="stat-label">Open Orders</div>
-        </div>
-        <div class="stat-card accent-coral">
-            <div class="stat-icon">&#9679;</div>
-            <div class="stat-value">{{ tx_metrics.liquidity_score or 0 }}/100</div>
-            <div class="stat-label">Liquidity Score</div>
-        </div>
-        <div class="stat-card accent-{% if tx_metrics.network_status == 'active' %}success{% else %}blue-grey{% endif %}">
-            <div class="stat-icon">&#9784;</div>
-            <div class="stat-value">{{ (tx_metrics.network_status or 'pre-network')|capitalize }}</div>
-            <div class="stat-label">Network Effect</div>
+        <div class="bg-surface-container-high p-4 flex flex-col justify-between border-l-2 border-outline-variant">
+            <span class="material-symbols-outlined text-slate-400">{% if chain_info.is_valid %}verified{% else %}error{% endif %}</span>
+            <div>
+                <div class="text-[0.6rem] font-mono text-slate-400 uppercase tracking-widest">Chain</div>
+                <div class="text-xl font-headline font-bold text-white tabular-nums">{% if chain_info.is_valid %}Valid{% else %}Invalid{% endif %}</div>
+            </div>
         </div>
     </div>
+</section>
 
-    <!-- Charts + Services Row -->
-    <div class="dashboard-panels" style="margin-bottom: 1.5rem;">
-        <div class="panel">
-            <h2>Revenue Breakdown</h2>
-            <div style="position:relative; height:260px;">
+<!-- Volume & Liquidity Metrics -->
+<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Transactions</span>
+        <span class="block font-mono text-lg text-primary tabular-nums">{{ chain_info.total_transactions }}</span>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Trades 24h</span>
+        <span class="block font-mono text-lg text-tertiary tabular-nums">{{ tx_metrics.trades_24h or 0 }}</span>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Volume 24h</span>
+        <span class="block font-mono text-lg text-slate-200 tabular-nums">{{ "%.2f"|format(tx_metrics.volume_24h or 0) }}</span>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Volume 30d</span>
+        <span class="block font-mono text-lg text-slate-200 tabular-nums">{{ "%.2f"|format(tx_metrics.volume_30d or 0) }}</span>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Liquidity</span>
+        <span class="block font-mono text-lg text-primary tabular-nums">{{ tx_metrics.liquidity_score or 0 }}/100</span>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Network</span>
+        <span class="block font-mono text-lg {% if tx_metrics.network_status == 'active' %}text-secondary{% else %}text-slate-400{% endif %} tabular-nums">{{ (tx_metrics.network_status or 'Pre-net')|capitalize }}</span>
+    </div>
+</section>
+
+<!-- Charts + Services -->
+<section class="grid grid-cols-12 gap-6">
+    <div class="col-span-12 lg:col-span-4">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+            <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-slate-500 mb-4">Revenue Allocation</h3>
+            <div style="position:relative;height:200px;">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
-        <div class="panel">
-            <div class="panel-header-row">
-                <h2>Active Services</h2>
-                <a href="/dashboard/services" class="btn btn-sm btn-primary" style="text-decoration:none;">All Services &#8594;</a>
-            </div>
-            <div style="position:relative; height:260px;">
+    </div>
+    <div class="col-span-12 lg:col-span-4">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+            <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-slate-500 mb-4">Service Distribution</h3>
+            <div style="position:relative;height:200px;">
                 <canvas id="serviceChart"></canvas>
             </div>
         </div>
     </div>
-
-    <!-- Services Quick Status -->
-    <div class="panel" style="margin-bottom: 1.5rem;">
-        <h2>Service Status</h2>
-        <div class="services-grid">
-            {% for svc in services_summary %}
-            <div class="service-chip status-{{ svc.status }}">
-                <span class="service-dot"></span>
-                <span class="service-chip-name">{{ svc.name }}</span>
+    <div class="col-span-12 lg:col-span-4">
+        <div class="h-full flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-headline text-sm font-bold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-tertiary text-lg">apps</span>
+                    Active Services
+                </h3>
+                <a href="/dashboard/services" class="text-[0.6rem] font-mono text-primary uppercase tracking-widest hover:underline">View All</a>
             </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Main Panels: Transactions & Proposals -->
-    <div class="dashboard-panels">
-        <div class="panel">
-            <h2>Recent Transactions</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Type</th>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>Amount</th>
-                            <th>Currency</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for tx in recent_transactions %}
-                        <tr>
-                            <td>{{ tx.timestamp[:19] }}</td>
-                            <td><span class="badge badge-{{ tx.type }}">{{ tx.type }}</span></td>
-                            <td>{{ (tx.sender_id or "—")[:12] }}</td>
-                            <td>{{ (tx.receiver_id or "—")[:12] }}</td>
-                            <td>{{ "%.4f"|format(tx.amount) }}</td>
-                            <td>{{ tx.currency }}</td>
-                        </tr>
-                        {% endfor %}
-                        {% if not recent_transactions %}
-                        <tr><td colspan="6" class="empty">No transactions yet</td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="panel">
-            <h2>Pending Proposals</h2>
-            <div class="proposals-list">
-                {% for prop in pending_proposals %}
-                <div class="proposal-card">
-                    <div class="proposal-header">
-                        <h3>{{ prop.title }}</h3>
-                        <span class="vote-count">&#9650; {{ prop.upvotes }} / &#9660; {{ prop.downvotes }}</span>
-                    </div>
-                    <p>{{ prop.description[:200] }}</p>
-                    <div class="proposal-actions">
-                        <span class="badge badge-{{ prop.category }}">{{ prop.category }}</span>
-                        {% if prop.is_material_change %}
-                        <span class="badge badge-warning">Requires Veto Review</span>
-                        {% endif %}
-                        <form method="POST" action="/governance/approve/{{ prop.id }}" class="inline-form">
-                            <button class="btn btn-sm btn-success">Approve</button>
-                        </form>
-                        <form method="POST" action="/governance/veto/{{ prop.id }}" class="inline-form">
-                            <input type="text" name="reason" placeholder="Veto reason" required>
-                            <button class="btn btn-sm btn-danger">Veto</button>
-                        </form>
-                    </div>
+            <div class="flex-1 space-y-1.5">
+                {% for svc in services_summary %}
+                <div class="flex items-center gap-2 px-3 py-2 bg-surface-container-lowest border border-outline-variant/10 hover:border-primary/30 transition-colors">
+                    <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 {% if svc.status == 'live' %}bg-secondary{% elif svc.status == 'conditional' %}bg-tertiary{% else %}bg-red-500{% endif %}"></div>
+                    <span class="text-[0.75rem] font-medium text-slate-200 flex-1">{{ svc.name }}</span>
+                    <span class="text-[0.55rem] font-mono text-slate-500 uppercase">{{ svc.category }}</span>
                 </div>
                 {% endfor %}
-                {% if not pending_proposals %}
-                <p class="empty">No pending proposals</p>
-                {% endif %}
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Settlement History -->
+<section class="bg-surface-container-low border border-outline-variant/10">
+    <div class="p-5 border-b border-outline-variant/10 flex items-center justify-between">
+        <div>
+            <h3 class="font-headline text-base font-bold tracking-tight text-white uppercase">Settlement History</h3>
+            <p class="text-[0.6rem] font-mono text-slate-500 uppercase tracking-widest mt-0.5">Immutable Transactional Ledger</p>
+        </div>
+        <a href="/api/exports/tax-csv" class="flex items-center gap-1 text-[0.65rem] font-mono text-primary uppercase tracking-widest hover:underline">
+            <span class="material-symbols-outlined text-sm">download</span> Export CSV
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-surface-container-lowest/50 text-slate-500 font-mono text-[0.55rem] uppercase tracking-widest">
+                    <th class="px-5 py-3 font-normal">Time</th>
+                    <th class="px-5 py-3 font-normal">Type</th>
+                    <th class="px-5 py-3 font-normal">Origin</th>
+                    <th class="px-5 py-3 font-normal">Destination</th>
+                    <th class="px-5 py-3 font-normal text-right">Magnitude</th>
+                    <th class="px-5 py-3 font-normal text-right">Currency</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/5">
+                {% for tx in recent_transactions %}
+                <tr class="hover:bg-primary/5 transition-colors">
+                    <td class="px-5 py-4 font-mono text-[0.65rem] text-slate-400">{{ tx.timestamp[:19] }}</td>
+                    <td class="px-5 py-4">
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary-container/20 text-on-secondary-container text-[0.55rem] font-mono font-bold uppercase tracking-widest">{{ tx.type }}</span>
+                    </td>
+                    <td class="px-5 py-4 font-mono text-[0.65rem] text-primary">{{ (tx.sender_id or "---")[:12] }}</td>
+                    <td class="px-5 py-4 font-mono text-[0.65rem] text-slate-300">{{ (tx.receiver_id or "---")[:12] }}</td>
+                    <td class="px-5 py-4 text-right font-mono text-sm text-slate-200 tabular-nums">{{ "%.4f"|format(tx.amount) }}</td>
+                    <td class="px-5 py-4 text-right font-mono text-[0.6rem] text-slate-500 uppercase">{{ tx.currency }}</td>
+                </tr>
+                {% endfor %}
+                {% if not recent_transactions %}
+                <tr><td colspan="6" class="px-5 py-8 text-center text-slate-500 font-mono text-xs">No transactions recorded</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Governance Protocols -->
+{% if pending_proposals %}
+<section class="bg-surface-container-low border border-outline-variant/10 p-5">
+    <h3 class="font-headline text-base font-bold text-white uppercase mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-tertiary">gavel</span>
+        Pending Governance Protocols
+    </h3>
+    <div class="space-y-3">
+        {% for prop in pending_proposals %}
+        <div class="bg-surface-container p-4 border-l-4 border-tertiary/60">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[0.6rem] font-mono font-bold text-tertiary uppercase tracking-widest">{{ prop.category }}</span>
+                <span class="text-[0.55rem] font-mono text-slate-500">&#9650; {{ prop.upvotes }} / &#9660; {{ prop.downvotes }}</span>
+            </div>
+            <h4 class="text-sm font-medium text-slate-200 mb-1">{{ prop.title }}</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">{{ prop.description[:200] }}</p>
+            <div class="flex gap-2 mt-3">
+                {% if prop.is_material_change %}
+                <span class="text-[0.55rem] font-mono text-tertiary uppercase tracking-widest">Requires Veto Review</span>
+                {% endif %}
+                <form method="POST" action="/governance/approve/{{ prop.id }}" class="inline">
+                    <button class="px-3 py-1 text-[0.6rem] font-mono font-bold bg-secondary/10 text-secondary uppercase tracking-widest border border-secondary/20 hover:bg-secondary hover:text-on-secondary transition-all">Approve</button>
+                </form>
+                <form method="POST" action="/governance/veto/{{ prop.id }}" class="inline flex gap-1">
+                    <input type="text" name="reason" placeholder="Reason" required class="bg-surface-container-lowest border-none text-[0.65rem] font-mono w-28 px-2 py-1"/>
+                    <button class="px-3 py-1 text-[0.6rem] font-mono font-bold bg-error/10 text-error uppercase tracking-widest border border-error/20 hover:bg-error hover:text-on-error transition-all">Veto</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 (function() {
-    const sageDark = '#6b8a66';
-    const charity = '#7a6b8a';
-    const success = '#5a8a56';
-    const warning = '#c49945';
-    const danger = '#c44545';
+    var primary='#77d4e5',secondary='#b4ceaf',tertiary='#edc05f',danger='#ffb4ab';
+    Chart.defaults.color='#64748b';Chart.defaults.borderColor='rgba(68,71,76,0.15)';
 
-    // Revenue Doughnut
-    new Chart(document.getElementById('revenueChart').getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Founder Earnings', 'Charity Fund'],
-            datasets: [{
-                data: [{{ founder_earnings }}, {{ charity_total }}],
-                backgroundColor: [sageDark, charity],
-                borderColor: '#ffffff',
-                borderWidth: 3,
-                hoverOffset: 8
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false, cutout: '65%',
-            plugins: {
-                legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { family: 'Inter', size: 12 }, color: '#2b2b2b' } },
-                tooltip: { backgroundColor: '#2b2b2b', padding: 12, cornerRadius: 8, callbacks: { label: function(c) { return c.label + ': ' + c.parsed.toFixed(4) + ' TIOLI'; } } }
-            }
-        }
+    new Chart(document.getElementById('revenueChart').getContext('2d'),{
+        type:'doughnut',
+        data:{labels:['Founder','Charity'],datasets:[{data:[{{ founder_earnings }},{{ charity_total }}],backgroundColor:[primary,tertiary],borderColor:'#061423',borderWidth:3,hoverOffset:6}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:14,usePointStyle:true,font:{family:'JetBrains Mono',size:10},color:'#94a3b8'}},tooltip:{backgroundColor:'#1e2b3b',titleFont:{family:'Inter',size:12},bodyFont:{family:'JetBrains Mono',size:11},padding:10,cornerRadius:4,callbacks:{label:function(c){return c.label+': '+c.parsed.toFixed(4)+' TIOLI'}}}}}
     });
 
-    // Service Status Bar
-    {% set live_count = services_summary|selectattr('status', 'equalto', 'live')|list|length %}
-    {% set cond_count = services_summary|selectattr('status', 'equalto', 'conditional')|list|length %}
-    new Chart(document.getElementById('serviceChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: ['Live Now', 'Conditional', 'Blocked'],
-            datasets: [{
-                data: [{{ live_count }}, {{ cond_count }}, 7],
-                backgroundColor: [success, warning, danger],
-                borderRadius: 8, borderSkipped: false, barPercentage: 0.6
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 2, font: { family: 'Inter', size: 11 }, color: '#7a7a7a' }, grid: { color: 'rgba(0,0,0,0.04)' } },
-                x: { ticks: { font: { family: 'Inter', size: 12, weight: '500' }, color: '#2b2b2b' }, grid: { display: false } }
-            },
-            plugins: { legend: { display: false }, tooltip: { backgroundColor: '#2b2b2b', padding: 12, cornerRadius: 8 } }
-        }
+    {% set live_count = services_summary|selectattr('status','equalto','live')|list|length %}
+    {% set cond_count = services_summary|selectattr('status','equalto','conditional')|list|length %}
+    new Chart(document.getElementById('serviceChart').getContext('2d'),{
+        type:'bar',
+        data:{labels:['Live','Conditional','Blocked'],datasets:[{data:[{{ live_count }},{{ cond_count }},7],backgroundColor:[secondary,tertiary,danger],borderRadius:2,barPercentage:0.6}]},
+        options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{stepSize:2,font:{family:'JetBrains Mono',size:10}},grid:{color:'rgba(68,71,76,0.1)'}},x:{ticks:{font:{family:'JetBrains Mono',size:10}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2b3b',padding:10,cornerRadius:4}}}
     });
 })();
 </script>
