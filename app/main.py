@@ -71,6 +71,7 @@ from app.benchmarking.service import BenchmarkingService
 from app.intelligence.service import IntelligenceService
 from app.crossborder.service import CrossBorderService
 from app.verticals.service import VerticalsService
+from app.exports.service import ExportService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -149,6 +150,7 @@ benchmarking_service = BenchmarkingService()
 intelligence_service = IntelligenceService()
 crossborder_service = CrossBorderService()
 verticals_service = VerticalsService()
+export_service = ExportService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -2284,6 +2286,39 @@ async def api_loan_templates(db: AsyncSession = Depends(get_db)):
     if not settings.verticals_enabled:
         raise HTTPException(status_code=503, detail="Verticals module not enabled")
     return await verticals_service.get_loan_templates(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  EXPORTS — PDF Receipts & CSV Tax Export
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/exports/tax-csv")
+async def api_tax_csv_export(request: Request):
+    """Download SARS-compatible CSV tax export of all transactions."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    all_tx = blockchain.get_all_transactions()
+    csv_data = export_service.generate_csv_tax_export(all_tx, "Stephen Endersby / TiOLi AI Investments")
+    from fastapi.responses import Response
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=tioli_tax_export.csv"},
+    )
+
+
+@app.get("/api/exports/receipt/{tx_index}")
+async def api_transaction_receipt(tx_index: int, request: Request):
+    """Generate a receipt for a specific transaction."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    all_tx = blockchain.get_all_transactions()
+    if tx_index < 0 or tx_index >= len(all_tx):
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    receipt = export_service.generate_pdf_receipt(all_tx[tx_index])
+    return {"receipt": receipt}
 
 
 # ══════════════════════════════════════════════════════════════════════
