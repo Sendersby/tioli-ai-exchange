@@ -63,6 +63,31 @@
         </div>
     </div>
 
+    <!-- Active Services Summary -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2>Active Services</h2>
+            <a href="/dashboard/services" class="btn btn-sm" style="background:var(--accent);color:white;text-decoration:none;padding:0.4rem 1rem;border-radius:6px;font-size:0.8rem;">View All Services</a>
+        </div>
+        <div class="stats-grid">
+            {% for svc in services_summary %}
+            <div class="stat-card" style="border-left: 3px solid {% if svc.status == 'live' %}var(--success){% elif svc.status == 'conditional' %}var(--warning){% else %}var(--danger){% endif %};">
+                <div class="stat-value" style="font-size: 1rem;">{{ svc.name }}</div>
+                <div class="stat-label">
+                    {% if svc.status == 'live' %}
+                    <span style="color:var(--success);">Live</span>
+                    {% elif svc.status == 'conditional' %}
+                    <span style="color:var(--warning);">ZAR/Credits Only</span>
+                    {% else %}
+                    <span style="color:var(--danger);">Disabled</span>
+                    {% endif %}
+                    — {{ svc.category }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
     <div class="dashboard-panels">
         <div class="panel">
             <h2>Recent Transactions</h2>

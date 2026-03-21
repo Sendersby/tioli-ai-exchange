@@ -2926,6 +2926,20 @@ async def dashboard_page(request: Request):
         proposals = await governance_service.get_proposals(db, status="pending")
         adoption = await growth_engine.get_adoption_metrics(db)
 
+    # Services summary for dashboard
+    services_summary = [
+        {"name": "Subscriptions", "status": "live", "category": "SaaS"},
+        {"name": "Guilds", "status": "live", "category": "Collectives"},
+        {"name": "Benchmarking", "status": "live", "category": "Evaluation"},
+        {"name": "Training Data", "status": "live", "category": "Data Products"},
+        {"name": "Intelligence", "status": "live", "category": "Analytics"},
+        {"name": "Compliance", "status": "live", "category": "Reviews"},
+        {"name": "Verticals", "status": "live", "category": "Sectors"},
+        {"name": "Pipelines", "status": "conditional", "category": "Orchestration"},
+        {"name": "Treasury", "status": "conditional", "category": "Portfolio"},
+        {"name": "AgentBroker", "status": "conditional", "category": "Engagements"},
+    ]
+
     return templates.TemplateResponse("dashboard.html", {
         "request": request, "authenticated": True, "active": "dashboard",
         "chain_info": info, "agent_count": agent_count,
@@ -2934,6 +2948,7 @@ async def dashboard_page(request: Request):
         "pending_proposals": proposals,
         "tx_metrics": adoption.get("transaction_metrics", {}),
         "charity_status": fee_engine.get_charity_status(),
+        "services_summary": services_summary,
     })
 
 

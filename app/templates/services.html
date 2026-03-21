@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Services — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Platform Services</h1>
+        <p class="welcome">Service status, configuration, and regulatory compliance overview</p>
+    </div>
+
+    <!-- Revenue Summary -->
+    <div class="stats-grid">
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ services_live }}</div>
+            <div class="stat-label">Services Live</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ services_conditional }}</div>
+            <div class="stat-label">Live with Conditions</div>
+        </div>
+        <div class="stat-card" style="border-left: 3px solid var(--danger);">
+            <div class="stat-value">{{ services_blocked }}</div>
+            <div class="stat-label">Blocked (Licence Req.)</div>
+        </div>
+        <div class="stat-card highlight">
+            <div class="stat-value">R{{ "%.0f"|format(subscription_mrr) }}</div>
+            <div class="stat-label">Subscription MRR</div>
+        </div>
+    </div>
+
+    <!-- Subscription Tiers -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Subscription Tiers</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tier</th>
+                        <th>Monthly (ZAR)</th>
+                        <th>Annual (ZAR)</th>
+                        <th>Agents</th>
+                        <th>Tx/Month</th>
+                        <th>Commission</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tier in subscription_tiers %}
+                    <tr>
+                        <td><strong>{{ tier.display_name }}</strong></td>
+                        <td>{% if tier.monthly_price_zar == 0 %}Free{% else %}R{{ "%.0f"|format(tier.monthly_price_zar) }}{% endif %}</td>
+                        <td>{% if tier.annual_price_zar == 0 %}Free{% else %}R{{ "%.0f"|format(tier.annual_price_zar) }}{% endif %}</td>
+                        <td>{{ tier.max_agents or "Unlimited" }}</td>
+                        <td>{{ tier.max_tx_per_month or "Unlimited" }}</td>
+                        <td>{{ tier.commission_rate }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Live Services (Green) -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2 style="color: var(--success);">Live Now — No Licence Required</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Pure B2B services, SaaS products, data products. No financial regulation applies.</p>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Service</th><th>Description</th><th>Revenue Model</th><th>API Endpoint</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for svc in green_services %}
+                    <tr>
+                        <td><strong>{{ svc.name }}</strong></td>
+                        <td>{{ svc.description }}</td>
+                        <td>{{ svc.revenue }}</td>
+                        <td><code style="font-size:0.75rem;">{{ svc.endpoint }}</code></td>
+                        <td><span class="badge" style="background:var(--success);color:white;">Live</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Conditional Services (Amber) -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2 style="color: var(--warning);">Live with Conditions — ZAR / Credits Only</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Legal as B2B commercial transactions. No crypto settlement. No cross-border transfers.</p>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Service</th><th>Description</th><th>Condition</th><th>API Endpoint</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for svc in amber_services %}
+                    <tr>
+                        <td><strong>{{ svc.name }}</strong></td>
+                        <td>{{ svc.description }}</td>
+                        <td style="color:var(--warning);">{{ svc.condition }}</td>
+                        <td><code style="font-size:0.75rem;">{{ svc.endpoint }}</code></td>
+                        <td><span class="badge" style="background:var(--warning);color:white;">Conditional</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Blocked Services (Red) -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2 style="color: var(--danger);">Blocked — Licence Required</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Cannot activate without the specified licence. Criminal liability risk under SA law.</p>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Service</th><th>Licence Required</th><th>Regulator</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for svc in red_services %}
+                    <tr>
+                        <td><strong>{{ svc.name }}</strong></td>
+                        <td>{{ svc.licence }}</td>
+                        <td>{{ svc.regulator }}</td>
+                        <td><span class="badge" style="background:var(--danger);color:white;">Blocked</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Fee Schedule -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Fee Schedule</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Two-component model: max(percentage, floor fee). Charity = 10% of commission.</p>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Transaction Type</th><th>Rate</th><th>Floor Fee (ZAR)</th></tr>
+                </thead>
+                <tbody>
+                    {% for fee in fee_schedule %}
+                    <tr>
+                        <td>{{ fee.type }}</td>
+                        <td>{{ fee.rate }}</td>
+                        <td>{% if fee.floor > 0 %}R{{ "%.2f"|format(fee.floor) }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Intelligence Tiers -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Market Intelligence Tiers</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Tier</th><th>Monthly (ZAR)</th><th>Data Lag</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    {% for intel in intelligence_tiers %}
+                    <tr>
+                        <td><strong>{{ intel.name|capitalize }}</strong></td>
+                        <td>{% if intel.price == 0 %}Free{% elif intel.price %}R{{ "%.0f"|format(intel.price) }}{% else %}Custom{% endif %}</td>
+                        <td>{% if intel.lag > 0 %}{{ intel.lag }} days{% else %}Real-time{% endif %}</td>
+                        <td>{{ intel.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sector Verticals -->
+    <div class="panel" style="margin-top: 1.5rem;">
+        <h2>Sector Verticals</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Vertical</th><th>Compliance Required</th><th>Min KYA Level</th><th>Data Residency</th></tr>
+                </thead>
+                <tbody>
+                    {% for v in verticals %}
+                    <tr>
+                        <td><strong>{{ v.display_name }}</strong></td>
+                        <td>{{ v.mandatory_compliance|join(", ") }}</td>
+                        <td>Level {{ v.required_kya_level }}</td>
+                        <td>{{ v.data_residency or "None" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
