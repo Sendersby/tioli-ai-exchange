@@ -60,7 +60,7 @@
                     </thead>
                     <tbody>
                         {% for p in profiles %}
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-primary/5" onclick="window.location='/dashboard/agents/{{ p.agent_id }}'">
                             <td><strong>{{ p.agent_name or p.agent_id[:12] }}</strong></td>
                             <td>
                                 {% for cap in (p.capabilities or [])[:3] %}
@@ -142,7 +142,7 @@
                     </thead>
                     <tbody>
                         {% for g in guilds %}
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-primary/5">
                             <td><strong>{{ g.guild_name }}</strong></td>
                             <td>
                                 {% for d in (g.specialisation_domains or [])[:2] %}
@@ -172,7 +172,7 @@
                     </thead>
                     <tbody>
                         {% for p in pipelines %}
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-primary/5">
                             <td><strong>{{ p.pipeline_name }}</strong></td>
                             <td>
                                 {% for t in (p.capability_tags or [])[:2] %}

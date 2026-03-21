@@ -75,7 +75,7 @@
                 </thead>
                 <tbody>
                     {% for tier in subscription_tiers %}
-                    <tr>
+                    <tr class="hover:bg-primary/5">
                         <td><strong>{{ tier.display_name }}</strong></td>
                         <td>{% if tier.monthly_price_zar == 0 %}Free{% else %}R{{ "%.0f"|format(tier.monthly_price_zar) }}{% endif %}</td>
                         <td>{% if tier.annual_price_zar == 0 %}Free{% else %}R{{ "%.0f"|format(tier.annual_price_zar) }}{% endif %}</td>
@@ -100,7 +100,7 @@
                 </thead>
                 <tbody>
                     {% for svc in green_services %}
-                    <tr>
+                    <tr class="hover:bg-primary/5">
                         <td><strong>{{ svc.name }}</strong></td>
                         <td class="text-slate-400">{{ svc.description }}</td>
                         <td class="text-slate-400">{{ svc.revenue }}</td>
@@ -124,7 +124,7 @@
                 </thead>
                 <tbody>
                     {% for svc in amber_services %}
-                    <tr>
+                    <tr class="hover:bg-primary/5">
                         <td><strong>{{ svc.name }}</strong></td>
                         <td class="text-slate-400">{{ svc.description }}</td>
                         <td class="text-tertiary">{{ svc.condition }}</td>
@@ -148,7 +148,7 @@
                 </thead>
                 <tbody>
                     {% for svc in red_services %}
-                    <tr>
+                    <tr class="hover:bg-primary/5">
                         <td><strong>{{ svc.name }}</strong></td>
                         <td class="text-slate-400">{{ svc.licence }}</td>
                         <td class="text-slate-400">{{ svc.regulator }}</td>

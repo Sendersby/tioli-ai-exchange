@@ -85,7 +85,7 @@
                     </thead>
                     <tbody>
                         {% for trade in recent_trades %}
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-primary/5">
                             <td>{{ trade.time[:19] }}</td>
                             <td>{{ "%.8f"|format(trade.price) }}</td>
                             <td>{{ "%.4f"|format(trade.quantity) }}</td>

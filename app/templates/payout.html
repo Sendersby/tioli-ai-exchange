@@ -100,7 +100,7 @@
                 </thead>
                 <tbody>
                     {% for d in disbursements %}
-                    <tr>
+                    <tr class="cursor-pointer hover:bg-primary/5">
                         <td>{{ d.completed_at[:19] if d.completed_at else "—" }}</td>
                         <td>{{ d.triggered_by }}</td>
                         <td>{{ "%.2f"|format(d.gross_credits) }}</td>

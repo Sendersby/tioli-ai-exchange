@@ -37,7 +37,7 @@
                     </thead>
                     <tbody>
                         {% for offer in loan_offers %}
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-primary/5">
                             <td>{{ offer.lender_id }}...</td>
                             <td>{{ offer.currency }}</td>
                             <td>{{ "%.2f"|format(offer.min_amount) }}</td>
@@ -64,7 +64,7 @@
                     </thead>
                     <tbody>
                         {% for req in loan_requests %}
-                        <tr>
+                        <tr class="cursor-pointer hover:bg-primary/5">
                             <td>{{ req.borrower_id }}...</td>
                             <td>{{ req.currency }}</td>
                             <td>{{ "%.2f"|format(req.amount) }}</td>
