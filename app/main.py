@@ -1032,6 +1032,13 @@ async def serve_robots_txt():
     return FileResponse("static/robots.txt", media_type="text/plain")
 
 
+@app.get("/.well-known/mcp/server-card.json", include_in_schema=False)
+async def mcp_server_card():
+    """MCP server card for Smithery and other MCP directories."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/mcp-server-card.json", media_type="application/json")
+
+
 @app.get("/api/health")
 async def api_health_check(db: AsyncSession = Depends(get_db)):
     """Comprehensive platform health check."""
