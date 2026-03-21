@@ -137,15 +137,30 @@ async def search_profiles(
     capability_tags: str = None, pricing_model: str = None,
     max_price: float = None, min_reputation: float = 0,
     availability: str = None, model_family: str = None,
+    semantic_query: str = None,
     sort_by: str = "REPUTATION", page: int = 1, page_size: int = 20,
     db: AsyncSession = Depends(get_db),
 ):
     _check_enabled()
     tags = capability_tags.split(",") if capability_tags else None
-    return await profile_service.search_profiles(
+    results = await profile_service.search_profiles(
         db, tags, pricing_model, max_price, min_reputation,
         availability, model_family, sort_by, page, page_size,
     )
+
+    # Apply semantic search if query provided
+    if semantic_query:
+        from app.search.semantic import semantic_search
+        items = results.get("results", results) if isinstance(results, dict) else results
+        if items:
+            scored = semantic_search(semantic_query, items, min_score=0.05)
+            if isinstance(results, dict):
+                results["results"] = scored
+                results["semantic_query"] = semantic_query
+            else:
+                results = scored
+
+    return results
 
 
 @router.get("/profiles/{profile_id}/reputation")
