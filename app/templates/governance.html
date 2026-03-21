@@ -2,41 +2,41 @@
 {% block title %}Governance — TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="dashboard-header">
+<div class="space-y-6">
+    <div class="mb-6">
         <h1>Platform Governance</h1>
-        <p class="welcome">Proposals, voting, and owner veto control</p>
+        <p class="text-slate-400 text-sm">Proposals, voting, and owner veto control</p>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">{{ governance_stats.total_proposals }}</div>
-            <div class="stat-label">Total Proposals</div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.total_proposals }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total Proposals</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ governance_stats.pending }}</div>
-            <div class="stat-label">Pending</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.pending }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Pending</div>
         </div>
-        <div class="stat-card highlight">
-            <div class="stat-value">{{ governance_stats.approved }}</div>
-            <div class="stat-label">Approved</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.approved }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Approved</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ governance_stats.vetoed }}</div>
-            <div class="stat-label">Vetoed</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.vetoed }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Vetoed</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ governance_stats.total_votes_cast }}</div>
-            <div class="stat-label">Votes Cast</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.total_votes_cast }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Votes Cast</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ governance_stats.approval_rate }}%</div>
-            <div class="stat-label">Approval Rate</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ governance_stats.approval_rate }}%</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Approval Rate</div>
         </div>
     </div>
 
-    <div class="dashboard-panels">
-        <div class="panel">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Pending Proposals</h2>
             <div class="proposals-list">
                 {% for prop in pending_proposals %}
@@ -62,14 +62,14 @@
                 </div>
                 {% endfor %}
                 {% if not pending_proposals %}
-                <p class="empty">No pending proposals</p>
+                <p class="text-center text-slate-500 py-4 font-mono text-xs">No pending proposals</p>
                 {% endif %}
             </div>
         </div>
 
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Priority Queue</h2>
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr><th>Rank</th><th>Title</th><th>Category</th><th>Votes</th><th>Material</th></tr>
@@ -85,7 +85,7 @@
                         </tr>
                         {% endfor %}
                         {% if not priority_queue %}
-                        <tr><td colspan="5" class="empty">No proposals in queue</td></tr>
+                        <tr><td colspan="5" class="text-center text-slate-500 py-4 font-mono text-xs">No proposals in queue</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -93,9 +93,9 @@
         </div>
     </div>
 
-    <div class="panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>Recent Governance Activity</h2>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Action</th><th>Actor</th><th>Details</th><th>Time</th></tr>
@@ -110,7 +110,7 @@
                     </tr>
                     {% endfor %}
                     {% if not audit_log %}
-                    <tr><td colspan="4" class="empty">No governance activity yet</td></tr>
+                    <tr><td colspan="4" class="text-center text-slate-500 py-4 font-mono text-xs">No governance activity yet</td></tr>
                     {% endif %}
                 </tbody>
             </table>

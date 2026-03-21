@@ -2,38 +2,38 @@
 {% block title %}PayOut — TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="dashboard-header">
+<div class="space-y-6">
+    <div class="mb-6">
         <h1>PayOut Engine™</h1>
-        <p class="welcome">Commission disbursement & payment management</p>
+        <p class="text-slate-400 text-sm">Commission disbursement & payment management</p>
     </div>
 
     <!-- Earnings Summary -->
-    <div class="stats-grid">
-        <div class="stat-card highlight">
-            <div class="stat-value">{{ "%.4f"|format(balance.balance_credits) }}</div>
-            <div class="stat-label">Balance (Credits)</div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.4f"|format(balance.balance_credits) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Balance (Credits)</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">R{{ "%.2f"|format(balance.zar_equivalent) }}</div>
-            <div class="stat-label">ZAR Equivalent</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">R{{ "%.2f"|format(balance.zar_equivalent) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">ZAR Equivalent</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">${{ "%.2f"|format(balance.usd_equivalent) }}</div>
-            <div class="stat-label">USD Equivalent</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">${{ "%.2f"|format(balance.usd_equivalent) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">USD Equivalent</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ "%.4f"|format(balance.credit_zar_rate) }}</div>
-            <div class="stat-label">Credit/ZAR Rate</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.4f"|format(balance.credit_zar_rate) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Credit/ZAR Rate</div>
         </div>
     </div>
 
-    <div class="dashboard-panels">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Current Split -->
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Currency Split</h2>
             {% if split %}
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <tbody>
                         <tr><td>BTC</td><td>{{ split.pct_btc }}%</td></tr>
@@ -45,15 +45,15 @@
                 </table>
             </div>
             {% else %}
-            <p class="empty">No split configured. Default: 100% retained credits.</p>
+            <p class="text-center text-slate-500 py-4 font-mono text-xs">No split configured. Default: 100% retained credits.</p>
             {% endif %}
         </div>
 
         <!-- Destination -->
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Payment Destination</h2>
             {% if destination %}
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <tbody>
                         {% if destination.btc_address %}<tr><td>BTC Wallet</td><td>{{ destination.btc_address }}</td></tr>{% endif %}
@@ -66,34 +66,34 @@
                 </table>
             </div>
             {% else %}
-            <p class="empty">No destination configured. Set up via API with 3FA.</p>
+            <p class="text-center text-slate-500 py-4 font-mono text-xs">No destination configured. Set up via API with 3FA.</p>
             {% endif %}
         </div>
     </div>
 
     <!-- SARB Status -->
-    <div class="panel" style="margin-top:1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top:1.5rem;">
         <h2>SARB Offshore Limit</h2>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value">R{{ "%.2f"|format(sarb.total_offshore_zar) }}</div>
-                <div class="stat-label">Total Offshore (YTD)</div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+                <div class="font-mono text-xl font-bold text-primary tabular-nums">R{{ "%.2f"|format(sarb.total_offshore_zar) }}</div>
+                <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total Offshore (YTD)</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">R{{ "%.2f"|format(sarb.remaining_zar) }}</div>
-                <div class="stat-label">Remaining</div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+                <div class="font-mono text-xl font-bold text-primary tabular-nums">R{{ "%.2f"|format(sarb.remaining_zar) }}</div>
+                <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Remaining</div>
             </div>
-            <div class="stat-card {% if sarb.warning %}invalid{% else %}valid{% endif %}">
-                <div class="stat-value">{{ sarb.pct_used }}%</div>
-                <div class="stat-label">Used</div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+                <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ sarb.pct_used }}%</div>
+                <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Used</div>
             </div>
         </div>
     </div>
 
     <!-- Disbursement History -->
-    <div class="panel" style="margin-top:1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top:1.5rem;">
         <h2>Disbursement History</h2>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Date</th><th>Trigger</th><th>Credits</th><th>BTC</th><th>ETH</th><th>ZAR</th><th>Retained</th><th>Status</th></tr>
@@ -112,7 +112,7 @@
                     </tr>
                     {% endfor %}
                     {% if not disbursements %}
-                    <tr><td colspan="8" class="empty">No disbursements yet</td></tr>
+                    <tr><td colspan="8" class="text-center text-slate-500 py-4 font-mono text-xs">No disbursements yet</td></tr>
                     {% endif %}
                 </tbody>
             </table>

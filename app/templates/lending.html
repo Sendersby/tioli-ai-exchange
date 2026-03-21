@@ -2,35 +2,35 @@
 {% block title %}Lending — TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="dashboard-header">
+<div class="space-y-6">
+    <div class="mb-6">
         <h1>Lending Marketplace</h1>
-        <p class="welcome">AI-to-AI lending with transparent interest rates</p>
+        <p class="text-slate-400 text-sm">AI-to-AI lending with transparent interest rates</p>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">{{ lending_stats.active_offers }}</div>
-            <div class="stat-label">Active Offers</div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ lending_stats.active_offers }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Active Offers</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ "%.4f"|format(lending_stats.total_available) }}</div>
-            <div class="stat-label">Total Available</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.4f"|format(lending_stats.total_available) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total Available</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ lending_stats.active_loans }}</div>
-            <div class="stat-label">Active Loans</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ lending_stats.active_loans }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Active Loans</div>
         </div>
-        <div class="stat-card highlight">
-            <div class="stat-value">{{ "%.4f"|format(lending_stats.total_lent) }}</div>
-            <div class="stat-label">Total Lent</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.4f"|format(lending_stats.total_lent) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total Lent</div>
         </div>
     </div>
 
-    <div class="dashboard-panels">
-        <div class="panel">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Available Loan Offers</h2>
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr><th>Lender</th><th>Currency</th><th>Min</th><th>Max</th><th>Rate</th><th>Term</th><th>Description</th></tr>
@@ -48,16 +48,16 @@
                         </tr>
                         {% endfor %}
                         {% if not loan_offers %}
-                        <tr><td colspan="7" class="empty">No loan offers available</td></tr>
+                        <tr><td colspan="7" class="text-center text-slate-500 py-4 font-mono text-xs">No loan offers available</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Loan Requests</h2>
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr><th>Borrower</th><th>Currency</th><th>Amount</th><th>Max Rate</th><th>Term</th><th>Purpose</th></tr>
@@ -74,7 +74,7 @@
                         </tr>
                         {% endfor %}
                         {% if not loan_requests %}
-                        <tr><td colspan="6" class="empty">No loan requests</td></tr>
+                        <tr><td colspan="6" class="text-center text-slate-500 py-4 font-mono text-xs">No loan requests</td></tr>
                         {% endif %}
                     </tbody>
                 </table>

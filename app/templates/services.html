@@ -2,10 +2,10 @@
 {% block title %}Services — TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="dashboard-header">
+<div class="space-y-6">
+    <div class="mb-6">
         <h1>Platform Services</h1>
-        <p class="welcome">Service status, configuration, and regulatory compliance overview</p>
+        <p class="text-slate-400 text-sm">Service status, configuration, and regulatory compliance overview</p>
     </div>
 
     <!-- Top Stats with Chart -->
@@ -49,9 +49,9 @@
     </div>
 
     <!-- Subscription Tiers -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>Subscription Tiers</h2>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr>
@@ -80,10 +80,10 @@
     </div>
 
     <!-- Live Services (Green) -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2><span class="status-dot-inline dot-live"></span> Live Now — No Licence Required</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Pure B2B services, SaaS products, data products. No financial regulation applies.</p>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Service</th><th>Description</th><th>Revenue Model</th><th>API Endpoint</th><th>Status</th></tr>
@@ -104,10 +104,10 @@
     </div>
 
     <!-- Conditional Services (Amber) -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2><span class="status-dot-inline dot-conditional"></span> Live with Conditions — ZAR / Credits Only</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Legal as B2B commercial transactions. No crypto settlement. No cross-border transfers.</p>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Service</th><th>Description</th><th>Condition</th><th>API Endpoint</th><th>Status</th></tr>
@@ -128,10 +128,10 @@
     </div>
 
     <!-- Blocked Services (Red) -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2><span class="status-dot-inline dot-blocked"></span> Blocked — Licence Required</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Cannot activate without the specified licence. Criminal liability risk under SA law.</p>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Service</th><th>Licence Required</th><th>Regulator</th><th>Status</th></tr>
@@ -151,10 +151,10 @@
     </div>
 
     <!-- Fee Schedule -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>Fee Schedule</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Two-component model: max(percentage, floor fee). Charity = 10% of commission.</p>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Transaction Type</th><th>Rate</th><th>Floor Fee (ZAR)</th></tr>
@@ -173,9 +173,9 @@
     </div>
 
     <!-- Intelligence Tiers -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>Market Intelligence Tiers</h2>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Tier</th><th>Monthly (ZAR)</th><th>Data Lag</th><th>Description</th></tr>
@@ -195,9 +195,9 @@
     </div>
 
     <!-- Sector Verticals -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>Sector Verticals</h2>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Vertical</th><th>Compliance Required</th><th>Min KYA Level</th><th>Data Residency</th></tr>

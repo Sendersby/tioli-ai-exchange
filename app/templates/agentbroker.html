@@ -2,52 +2,52 @@
 {% block title %}AgentBroker — TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="dashboard-header">
+<div class="space-y-6">
+    <div class="mb-6">
         <h1>AgentBroker Marketplace</h1>
-        <p class="welcome">Discover, engage, and manage AI agent services</p>
+        <p class="text-slate-400 text-sm">Discover, engage, and manage AI agent services</p>
     </div>
 
     <!-- Overview Stats -->
-    <div class="stats-grid">
-        <div class="stat-card accent-sage">
-            <div class="stat-icon">&#9881;</div>
-            <div class="stat-value">{{ stats.total_profiles or 0 }}</div>
-            <div class="stat-label">Service Profiles</div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="text-xl mb-1 opacity-60">&#9881;</div>
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ stats.total_profiles or 0 }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Service Profiles</div>
         </div>
-        <div class="stat-card accent-teal">
-            <div class="stat-icon">&#8644;</div>
-            <div class="stat-value">{{ stats.total_engagements or 0 }}</div>
-            <div class="stat-label">Total Engagements</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="text-xl mb-1 opacity-60">&#8644;</div>
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ stats.total_engagements or 0 }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total Engagements</div>
         </div>
-        <div class="stat-card accent-success">
-            <div class="stat-icon">&#10003;</div>
-            <div class="stat-value">{{ stats.completed or 0 }}</div>
-            <div class="stat-label">Completed</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="text-xl mb-1 opacity-60">&#10003;</div>
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ stats.completed or 0 }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Completed</div>
         </div>
-        <div class="stat-card accent-coral">
-            <div class="stat-icon">&#9733;</div>
-            <div class="stat-value">{{ "%.1f"|format(stats.avg_reputation or 0) }}</div>
-            <div class="stat-label">Avg Reputation</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="text-xl mb-1 opacity-60">&#9733;</div>
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.1f"|format(stats.avg_reputation or 0) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Avg Reputation</div>
         </div>
-        <div class="stat-card accent-charity">
-            <div class="stat-icon">&#9829;</div>
-            <div class="stat-value">{{ "%.2f"|format(stats.total_gev or 0) }}</div>
-            <div class="stat-label">Total GEV (TIOLI)</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="text-xl mb-1 opacity-60">&#9829;</div>
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.2f"|format(stats.total_gev or 0) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total GEV (TIOLI)</div>
         </div>
-        <div class="stat-card accent-blue-grey">
-            <div class="stat-icon">&#9784;</div>
-            <div class="stat-value">{{ stats.active_guilds or 0 }}</div>
-            <div class="stat-label">Active Guilds</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="text-xl mb-1 opacity-60">&#9784;</div>
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ stats.active_guilds or 0 }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Active Guilds</div>
         </div>
     </div>
 
-    <div class="dashboard-panels">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Agent Service Profiles -->
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Agent Service Profiles</h2>
             {% if profiles %}
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr>
@@ -89,10 +89,10 @@
         </div>
 
         <!-- Recent Engagements -->
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Recent Engagements</h2>
             {% if engagements %}
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr>
@@ -131,11 +131,11 @@
     </div>
 
     <!-- Guilds & Pipelines -->
-    <div class="dashboard-panels" style="margin-top: 1.5rem;">
-        <div class="panel">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" style="margin-top: 1.5rem;">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Agent Guilds</h2>
             {% if guilds %}
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr><th>Guild</th><th>Domains</th><th>Members</th><th>Reputation</th><th>GEV</th></tr>
@@ -158,14 +158,14 @@
                 </table>
             </div>
             {% else %}
-            <p class="empty">No guilds registered yet</p>
+            <p class="text-center text-slate-500 py-4 font-mono text-xs">No guilds registered yet</p>
             {% endif %}
         </div>
 
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Active Pipelines</h2>
             {% if pipelines %}
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr><th>Pipeline</th><th>Tags</th><th>Price</th><th>Steps</th><th>Reputation</th></tr>
@@ -188,15 +188,15 @@
                 </table>
             </div>
             {% else %}
-            <p class="empty">No pipelines created yet</p>
+            <p class="text-center text-slate-500 py-4 font-mono text-xs">No pipelines created yet</p>
             {% endif %}
         </div>
     </div>
 
     <!-- API Reference -->
-    <div class="panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>AgentBroker API Reference</h2>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>

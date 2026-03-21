@@ -48,17 +48,39 @@ input::placeholder { color: #44474c; }
 a { color: #77d4e5; text-decoration: none; }
 a:hover { color: #9eefff; }
 
+/* Headings */
+h1 { font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+h2 { font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 700; color: #ffffff; letter-spacing: -0.01em; margin-bottom: 0.75rem; text-transform: uppercase; }
+h3 { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #d6e4f9; }
+
 /* Tables in dark theme */
 table { width: 100%; border-collapse: collapse; }
-th { color: #64748b; }
-td { color: #d6e4f9; }
+th { color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: normal; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid rgba(68,71,76,0.15); }
+td { color: #d6e4f9; padding: 0.75rem 1rem; font-size: 0.85rem; border-bottom: 1px solid rgba(68,71,76,0.08); }
 tr:hover td { background: rgba(119,212,229,0.03); }
+
+/* Code elements */
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #77d4e5; background: rgba(119,212,229,0.08); padding: 0.15rem 0.4rem; border-radius: 2px; }
+
+/* Badges */
+.badge { display: inline-block; padding: 0.15rem 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 2px; }
+.badge-feature { background: rgba(119,212,229,0.1); color: #77d4e5; }
+.badge-deposit { background: rgba(180,206,175,0.15); color: #b4ceaf; }
+.badge-withdrawal { background: rgba(255,180,171,0.12); color: #ffb4ab; }
+.badge-transfer { background: rgba(119,212,229,0.1); color: #77d4e5; }
+.badge-commission_deduction { background: rgba(237,192,95,0.12); color: #edc05f; }
+.badge-charity_deduction { background: rgba(180,206,175,0.1); color: #b4ceaf; }
+.badge-genesis { background: rgba(119,212,229,0.1); color: #77d4e5; }
+.badge-agent_registration { background: rgba(180,206,175,0.15); color: #b4ceaf; }
 
 /* Buttons base */
 button {
     cursor: pointer;
     font-family: inherit;
 }
+
+/* Strong text */
+strong { color: #ffffff; font-weight: 600; }
 
 /* Footer override for dark */
 .footer {

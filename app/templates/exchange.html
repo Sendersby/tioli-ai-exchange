@@ -2,29 +2,29 @@
 {% block title %}Exchange — TiOLi AI Transact Exchange{% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="dashboard-header">
+<div class="space-y-6">
+    <div class="mb-6">
         <h1>Live Exchange</h1>
-        <p class="welcome">Real-time trading across all supported pairs</p>
+        <p class="text-slate-400 text-sm">Real-time trading across all supported pairs</p>
     </div>
 
     <!-- Market Summary Cards -->
-    <div class="stats-grid">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {% for pair in market_summaries %}
-        <div class="stat-card">
-            <div class="stat-value">{{ "%.8f"|format(pair.price or 0) }}</div>
-            <div class="stat-label">{{ pair.pair }}</div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
+            <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.8f"|format(pair.price or 0) }}</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">{{ pair.pair }}</div>
             <div class="stat-meta">Vol: {{ "%.4f"|format(pair['24h_volume_quote'] or 0) }} | Trades: {{ pair['24h_trades'] }}</div>
         </div>
         {% endfor %}
         {% if not market_summaries %}
-        <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">No active markets</div></div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center"><div class="font-mono text-xl font-bold text-primary tabular-nums">—</div><div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">No active markets</div></div>
         {% endif %}
     </div>
 
-    <div class="dashboard-panels">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Order Book -->
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Order Book — {{ selected_pair }}</h2>
             <div class="order-book">
                 <div class="book-side asks">
@@ -40,7 +40,7 @@
                             </tr>
                             {% endfor %}
                             {% if not order_book.asks %}
-                            <tr><td colspan="3" class="empty">No sell orders</td></tr>
+                            <tr><td colspan="3" class="text-center text-slate-500 py-4 font-mono text-xs">No sell orders</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -67,7 +67,7 @@
                             </tr>
                             {% endfor %}
                             {% if not order_book.bids %}
-                            <tr><td colspan="3" class="empty">No buy orders</td></tr>
+                            <tr><td colspan="3" class="text-center text-slate-500 py-4 font-mono text-xs">No buy orders</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -76,9 +76,9 @@
         </div>
 
         <!-- Recent Trades -->
-        <div class="panel">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
             <h2>Recent Trades</h2>
-            <div class="table-wrapper">
+            <div class="overflow-x-auto">
                 <table>
                     <thead>
                         <tr><th>Time</th><th>Price</th><th>Quantity</th><th>Value</th><th>Buyer</th><th>Seller</th></tr>
@@ -95,7 +95,7 @@
                         </tr>
                         {% endfor %}
                         {% if not recent_trades %}
-                        <tr><td colspan="6" class="empty">No trades yet</td></tr>
+                        <tr><td colspan="6" class="text-center text-slate-500 py-4 font-mono text-xs">No trades yet</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -104,7 +104,7 @@
     </div>
 
     <!-- Exchange Rates -->
-    <div class="panel" style="margin-top: 1.5rem;">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>Current Exchange Rates</h2>
         <div class="rates-grid">
             {% for rate in exchange_rates %}
@@ -114,7 +114,7 @@
             </div>
             {% endfor %}
             {% if not exchange_rates %}
-            <p class="empty">Exchange rates will appear once trading begins</p>
+            <p class="text-center text-slate-500 py-4 font-mono text-xs">Exchange rates will appear once trading begins</p>
             {% endif %}
         </div>
     </div>
