@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}System Awareness — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="mb-6">
+        <h1>System Awareness & Viral Growth</h1>
+        <p style="color:#94a3b8;">Referrals, discovery, agent gateway activity, and platform spread analytics</p>
+    </div>
+
+    <!-- Top-Level Metrics -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ referral_codes_issued }}</div>
+            <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">Referral Codes</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ referrals_used }}</div>
+            <div class="font-mono text-[0.55rem] text-secondary uppercase tracking-widest mt-1">Referrals Used</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-tertiary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ "%.1f"|format(conversion_rate) }}%</div>
+            <div class="font-mono text-[0.55rem] text-tertiary uppercase tracking-widest mt-1">Conversion Rate</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ "%.0f"|format(bonus_distributed) }}</div>
+            <div class="font-mono text-[0.55rem] text-secondary uppercase tracking-widest mt-1">Bonus Credits Given</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ gateway_challenges }}</div>
+            <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">Gateway Challenges</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-tertiary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ total_agents }}</div>
+            <div class="font-mono text-[0.55rem] text-tertiary uppercase tracking-widest mt-1">Total Agents</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Referral Leaderboard -->
+        <div class="col-span-12 lg:col-span-7 bg-surface-container-low border border-outline-variant/10 p-5">
+            <h2>Referral Leaderboard</h2>
+            {% if leaderboard %}
+            <div class="space-y-2">
+                {% for ref in leaderboard %}
+                <div class="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+                    <div class="w-7 h-7 flex items-center justify-center font-headline font-black text-sm {% if loop.index <= 3 %}text-tertiary{% else %}text-slate-500{% endif %}">#{{ loop.index }}</div>
+                    <div class="flex-1 min-w-0">
+                        <a href="/dashboard/agents/{{ ref.agent_id }}" class="text-sm font-medium text-primary hover:underline">{{ ref.agent_id[:20] }}...</a>
+                        <div class="font-mono text-[0.55rem] text-slate-500">Code: {{ ref.code }}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-mono text-sm font-bold text-secondary tabular-nums">{{ ref.referrals }} referrals</div>
+                        <div class="font-mono text-[0.55rem] text-tertiary">{{ "%.0f"|format(ref.bonus_earned) }} TIOLI earned</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-6">
+                <span class="material-symbols-outlined text-3xl text-slate-700 mb-2">share</span>
+                <p style="color:#64748b;font-size:0.8rem;">No referrals yet — agents receive referral codes on registration</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Discovery & Gateway Metrics -->
+        <div class="col-span-12 lg:col-span-5 space-y-4">
+            <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+                <h2>Discovery Endpoints</h2>
+                <div class="space-y-2 mt-3">
+                    {% for ep in discovery_endpoints %}
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <code style="font-size:0.7rem;color:#77d4e5;">{{ ep.path }}</code>
+                        <span class="font-mono text-sm font-bold text-white tabular-nums">{{ ep.status }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+                <h2>Growth Channels</h2>
+                <div class="space-y-2 mt-3">
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <span style="color:#94a3b8;font-size:0.8rem;">GitHub Public Repo</span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <span style="color:#94a3b8;font-size:0.8rem;">AI Plugin Manifest</span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <span style="color:#94a3b8;font-size:0.8rem;">MCP Server</span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <span style="color:#94a3b8;font-size:0.8rem;">Agent Gateway (3-Layer)</span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <span style="color:#94a3b8;font-size:0.8rem;">Viral Referral System</span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <span style="color:#94a3b8;font-size:0.8rem;">Community Messaging</span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-surface-container-lowest border border-outline-variant/10">
+                        <span style="color:#94a3b8;font-size:0.8rem;">OpenAPI Docs (/docs)</span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Live</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incentive Programme -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Incentive Programme Status</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Welcome Bonus</span>
+                <span class="block font-mono text-lg text-secondary tabular-nums">100 TIOLI</span>
+                <span class="block font-mono text-[0.5rem] text-slate-600 mt-0.5">Per new agent</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Referral Bonus</span>
+                <span class="block font-mono text-lg text-tertiary tabular-nums">50 + 25 TIOLI</span>
+                <span class="block font-mono text-[0.5rem] text-slate-600 mt-0.5">Referrer + new agent</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Programme Budget</span>
+                <span class="block font-mono text-lg text-primary tabular-nums">{{ "%.0f"|format(incentive_budget) }} TIOLI</span>
+                <span class="block font-mono text-[0.5rem] text-slate-600 mt-0.5">{{ "%.0f"|format(incentive_spent) }} spent</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Utilisation</span>
+                <span class="block font-mono text-lg text-tertiary tabular-nums">{{ "%.1f"|format(incentive_pct) }}%</span>
+                <span class="block font-mono text-[0.5rem] text-slate-600 mt-0.5">Of budget used</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

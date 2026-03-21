@@ -3205,6 +3205,96 @@ async def proposal_detail_page(proposal_id: str, request: Request):
     })
 
 
+@app.get("/dashboard/community", response_class=HTMLResponse)
+async def community_page(request: Request):
+    """Agent community messaging dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from app.growth.viral import AgentMessage
+    from datetime import timedelta
+
+    channels_info = [
+        {"channel": "general", "description": "General agent discussion and coordination"},
+        {"channel": "services", "description": "Service offerings and requests"},
+        {"channel": "hiring", "description": "Agent hiring and availability"},
+        {"channel": "coordination", "description": "Multi-agent task coordination"},
+        {"channel": "marketplace", "description": "Trading and exchange discussion"},
+    ]
+
+    total = 0; unique_senders = 0; messages_today = 0; recent_messages = []
+    try:
+        async with async_session() as db:
+            from datetime import datetime, timezone as tz
+            total = (await db.execute(select(func.count(AgentMessage.id)))).scalar() or 0
+            unique_senders = (await db.execute(select(func.count(func.distinct(AgentMessage.sender_id))))).scalar() or 0
+            today = datetime.now(tz.utc).replace(hour=0, minute=0, second=0)
+            try:
+                messages_today = (await db.execute(select(func.count(AgentMessage.id)).where(AgentMessage.created_at >= today))).scalar() or 0
+            except Exception:
+                pass
+            for ch in channels_info:
+                ch["count"] = (await db.execute(select(func.count(AgentMessage.id)).where(AgentMessage.channel == ch["channel"]))).scalar() or 0
+                lr = await db.execute(select(AgentMessage).where(AgentMessage.channel == ch["channel"]).order_by(AgentMessage.created_at.desc()).limit(1))
+                lm = lr.scalar_one_or_none()
+                ch["latest"] = lm.message if lm else None
+            rr = await db.execute(select(AgentMessage).order_by(AgentMessage.created_at.desc()).limit(50))
+            recent_messages = [{"sender_id": m.sender_id, "channel": m.channel, "message": m.message, "recipient_id": m.recipient_id, "posted_at": str(m.created_at)} for m in rr.scalars().all()]
+    except Exception:
+        pass
+
+    return templates.TemplateResponse("community.html", {
+        "request": request, "authenticated": True, "active": "community",
+        "total_messages": total, "unique_senders": unique_senders,
+        "messages_today": messages_today, "channels": channels_info,
+        "recent_messages": recent_messages,
+    })
+
+
+@app.get("/dashboard/awareness", response_class=HTMLResponse)
+async def awareness_page(request: Request):
+    """System awareness and viral growth dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from app.growth.viral import AgentReferralCode
+    from app.exchange.incentives import IncentiveRecord
+
+    codes_issued = 0; total_uses = 0; total_bonus = 0; leaderboard = []; total_agents = 0; incentive_spent = 0
+    try:
+        async with async_session() as db:
+            codes_issued = (await db.execute(select(func.count(AgentReferralCode.id)))).scalar() or 0
+            total_uses = (await db.execute(select(func.sum(AgentReferralCode.uses)))).scalar() or 0
+            total_bonus = (await db.execute(select(func.sum(AgentReferralCode.total_bonus_earned)))).scalar() or 0
+            lb_r = await db.execute(select(AgentReferralCode).where(AgentReferralCode.uses > 0).order_by(AgentReferralCode.uses.desc()).limit(20))
+            leaderboard = [{"agent_id": r.agent_id, "code": r.code, "referrals": r.uses, "bonus_earned": r.total_bonus_earned} for r in lb_r.scalars().all()]
+            total_agents = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
+            incentive_spent = (await db.execute(select(func.sum(IncentiveRecord.amount)))).scalar() or 0
+    except Exception:
+        pass
+
+    conversion_rate = (total_uses / max(codes_issued, 1)) * 100 if codes_issued else 0
+
+    return templates.TemplateResponse("awareness.html", {
+        "request": request, "authenticated": True, "active": "awareness",
+        "referral_codes_issued": codes_issued, "referrals_used": total_uses,
+        "conversion_rate": conversion_rate, "bonus_distributed": total_bonus or 0,
+        "gateway_challenges": 0, "total_agents": total_agents,
+        "leaderboard": leaderboard,
+        "discovery_endpoints": [
+            {"path": "/.well-known/ai-plugin.json", "status": "Live"},
+            {"path": "/api/agent-gateway/challenge", "status": "Live"},
+            {"path": "/api/agent-gateway/capabilities", "status": "Live"},
+            {"path": "/api/mcp/manifest", "status": "Live"},
+            {"path": "/docs", "status": "Live"},
+        ],
+        "incentive_budget": 50000, "incentive_spent": incentive_spent or 0,
+        "incentive_pct": ((incentive_spent or 0) / 50000) * 100,
+    })
+
+
 @app.get("/dashboard/escrow", response_class=HTMLResponse)
 async def escrow_dashboard_page(request: Request):
     """Escrow accounts dashboard."""
