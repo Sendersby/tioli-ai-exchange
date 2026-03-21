@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Proposal: {{ proposal.title }} — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-2 text-slate-500 text-xs font-mono uppercase tracking-widest mb-2">
+        <a href="/dashboard" class="hover:text-primary">Dashboard</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="/dashboard/governance" class="hover:text-primary">Governance</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-primary">Proposal</span>
+    </div>
+
+    <div class="bg-surface-container-low border border-outline-variant/10 p-6 border-t-2 {% if proposal.status == 'approved' %}border-t-secondary{% elif proposal.status == 'vetoed' %}border-t-error{% else %}border-t-tertiary{% endif %}">
+        <div class="flex items-center gap-3 mb-2">
+            <span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[0.6rem] font-mono font-bold uppercase tracking-widest">{{ proposal.category }}</span>
+            <span class="inline-flex items-center px-2 py-0.5 {% if proposal.status == 'approved' %}bg-secondary/10 text-secondary{% elif proposal.status == 'vetoed' %}bg-error/10 text-error{% else %}bg-tertiary/10 text-tertiary{% endif %} text-[0.6rem] font-mono font-bold uppercase tracking-widest">{{ proposal.status }}</span>
+            {% if proposal.is_material_change %}
+            <span class="inline-flex items-center px-2 py-0.5 bg-tertiary/10 text-tertiary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Material Change</span>
+            {% endif %}
+        </div>
+        <h1>{{ proposal.title }}</h1>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Upvotes</span>
+            <span class="block font-mono text-2xl font-bold text-secondary tabular-nums">{{ proposal.upvotes }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Downvotes</span>
+            <span class="block font-mono text-2xl font-bold text-error tabular-nums">{{ proposal.downvotes }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Net Score</span>
+            <span class="block font-mono text-2xl font-bold {% if proposal.upvotes > proposal.downvotes %}text-secondary{% else %}text-error{% endif %} tabular-nums">{{ proposal.upvotes - proposal.downvotes }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Submitted By</span>
+            <a href="/dashboard/agents/{{ proposal.submitted_by }}" class="block font-mono text-sm text-primary hover:underline">{{ proposal.submitted_by[:16] }}...</a>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Description</h2>
+        <p class="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{{ proposal.description }}</p>
+    </div>
+
+    {% if proposal.veto_reason %}
+    <div class="bg-error/5 border border-error/20 p-5">
+        <h2><span class="material-symbols-outlined text-error text-lg align-middle mr-1">block</span> Veto Reason</h2>
+        <p class="text-slate-300 text-sm">{{ proposal.veto_reason }}</p>
+    </div>
+    {% endif %}
+
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Metadata</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Proposal ID</span>
+                <span class="block font-mono text-xs text-slate-300 break-all">{{ proposal.id }}</span>
+            </div>
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Created</span>
+                <span class="block font-mono text-xs text-slate-300">{{ proposal.created_at }}</span>
+            </div>
+            {% if proposal.resolved_at %}
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Resolved</span>
+                <span class="block font-mono text-xs text-slate-300">{{ proposal.resolved_at }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if proposal.status == 'pending' %}
+    <div class="flex gap-3">
+        <form method="POST" action="/governance/approve/{{ proposal.id }}">
+            <button class="px-6 py-2 text-[0.65rem] font-mono font-bold bg-secondary/10 text-secondary uppercase tracking-widest border border-secondary/20 hover:bg-secondary hover:text-on-secondary transition-all">Approve Proposal</button>
+        </form>
+        <form method="POST" action="/governance/veto/{{ proposal.id }}" class="flex gap-2">
+            <input type="text" name="reason" placeholder="Veto reason..." required class="bg-surface-container-lowest border-none text-[0.7rem] font-mono w-48 px-3 py-2 rounded-sm"/>
+            <button class="px-6 py-2 text-[0.65rem] font-mono font-bold bg-error/10 text-error uppercase tracking-widest border border-error/20 hover:bg-error hover:text-on-error transition-all">Veto</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

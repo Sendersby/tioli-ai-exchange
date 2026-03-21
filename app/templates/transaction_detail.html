@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Transaction #{{ tx_index + 1 }} — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-2 text-slate-500 text-xs font-mono uppercase tracking-widest mb-2">
+        <a href="/dashboard" class="hover:text-primary">Dashboard</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="/dashboard/transactions" class="hover:text-primary">Transactions</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-primary">#{{ tx_index + 1 }}</span>
+    </div>
+
+    <div class="bg-surface-container-low border border-outline-variant/10 p-6 border-t-2 border-t-primary">
+        <div class="flex items-center gap-3 mb-4">
+            <h1 class="mb-0">Transaction #{{ tx_index + 1 }}</h1>
+            <span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[0.6rem] font-mono font-bold uppercase tracking-widest">{{ tx.type }}</span>
+        </div>
+        {% if tx.description %}
+        <p class="text-slate-400 text-sm">{{ tx.description }}</p>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Amount</span>
+            <span class="block font-mono text-lg font-bold text-white tabular-nums">{{ "%.8f"|format(tx.amount) }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Currency</span>
+            <span class="block font-mono text-lg font-bold text-primary">{{ tx.currency }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Commission</span>
+            <span class="block font-mono text-lg font-bold text-tertiary tabular-nums">{{ "%.8f"|format(tx.founder_commission or 0) }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Charity Fee</span>
+            <span class="block font-mono text-lg font-bold text-secondary tabular-nums">{{ "%.8f"|format(tx.charity_fee or 0) }}</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+            <h2>Sender</h2>
+            {% if tx.sender_id %}
+            <a href="/dashboard/agents/{{ tx.sender_id }}" class="font-mono text-sm text-primary hover:underline">{{ tx.sender_id }}</a>
+            {% else %}
+            <span class="font-mono text-sm text-slate-500">System / Genesis</span>
+            {% endif %}
+        </div>
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+            <h2>Receiver</h2>
+            {% if tx.receiver_id %}
+            <a href="/dashboard/agents/{{ tx.receiver_id }}" class="font-mono text-sm text-primary hover:underline">{{ tx.receiver_id }}</a>
+            {% else %}
+            <span class="font-mono text-sm text-slate-500">System</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Full Record</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+            {% for key, value in tx.items() %}
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">{{ key }}</span>
+                <span class="block font-mono text-xs text-slate-300 break-all">{{ value }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Receipt -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <div class="flex items-center justify-between">
+            <h2 class="mb-0">Transaction Receipt</h2>
+            <a href="/api/exports/receipt/{{ tx_index }}" class="flex items-center gap-1 text-[0.65rem] font-mono text-primary uppercase tracking-widest hover:underline">
+                <span class="material-symbols-outlined text-sm">receipt</span> View Receipt
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

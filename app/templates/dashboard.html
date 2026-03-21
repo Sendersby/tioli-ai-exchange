@@ -22,10 +22,10 @@
                         <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Charity Fund</span>
                         <span class="block font-mono text-lg text-tertiary tabular-nums">{{ "%.4f"|format(charity_total) }}</span>
                     </div>
-                    <div class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[120px]">
+                    <a href="/dashboard/blocks" class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[120px] hover:border-primary/30 transition-colors">
                         <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Chain Blocks</span>
                         <span class="block font-mono text-lg text-primary tabular-nums">{{ chain_info.chain_length }}</span>
-                    </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -50,10 +50,10 @@
 
 <!-- Volume & Liquidity Metrics -->
 <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-    <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+    <a href="/dashboard/transactions" class="bg-surface-container-lowest border border-outline-variant/10 p-4 hover:border-primary/30 transition-colors">
         <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Transactions</span>
         <span class="block font-mono text-lg text-primary tabular-nums">{{ chain_info.total_transactions }}</span>
-    </div>
+    </a>
     <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
         <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Trades 24h</span>
         <span class="block font-mono text-lg text-tertiary tabular-nums">{{ tx_metrics.trades_24h or 0 }}</span>
@@ -141,7 +141,7 @@
             </thead>
             <tbody class="divide-y divide-outline-variant/5">
                 {% for tx in recent_transactions %}
-                <tr class="hover:bg-primary/5 transition-colors">
+                <tr class="hover:bg-primary/5 transition-colors cursor-pointer" onclick="window.location='/dashboard/transactions/{{ loop.index0 }}'">
                     <td class="px-5 py-4 font-mono text-[0.65rem] text-slate-400">{{ tx.timestamp[:19] }}</td>
                     <td class="px-5 py-4">
                         <span class="inline-flex items-center px-2 py-0.5 bg-secondary-container/20 text-on-secondary-container text-[0.55rem] font-mono font-bold uppercase tracking-widest">{{ tx.type }}</span>

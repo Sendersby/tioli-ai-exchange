@@ -3028,6 +3028,89 @@ async def dashboard_page(request: Request):
     })
 
 
+@app.get("/dashboard/transactions", response_class=HTMLResponse)
+async def transactions_list_page(request: Request):
+    """Full transaction ledger — drill-down from dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    all_tx = blockchain.get_all_transactions()
+    all_tx_rev = list(reversed(all_tx))
+    total_volume = sum(tx.get("amount", 0) for tx in all_tx)
+    total_commission = sum(tx.get("founder_commission", 0) for tx in all_tx)
+    types = set(tx.get("type", "") for tx in all_tx)
+    return templates.TemplateResponse("transactions_list.html", {
+        "request": request, "authenticated": True, "active": "dashboard",
+        "transactions": all_tx_rev, "total_volume": total_volume,
+        "total_commission": total_commission, "type_count": len(types),
+    })
+
+
+@app.get("/dashboard/transactions/{tx_index}", response_class=HTMLResponse)
+async def transaction_detail_page(tx_index: int, request: Request):
+    """Individual transaction detail."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    all_tx = blockchain.get_all_transactions()
+    if tx_index < 0 or tx_index >= len(all_tx):
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return templates.TemplateResponse("transaction_detail.html", {
+        "request": request, "authenticated": True, "active": "dashboard",
+        "tx": all_tx[tx_index], "tx_index": tx_index,
+    })
+
+
+@app.get("/dashboard/blocks", response_class=HTMLResponse)
+async def blocks_list_page(request: Request):
+    """Blockchain explorer — drill-down from dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    chain_info = blockchain.get_chain_info()
+    blocks = []
+    for i, block in enumerate(blockchain.chain):
+        blocks.append({
+            "index": block.index,
+            "hash": block.hash,
+            "previous_hash": block.previous_hash,
+            "tx_count": len(block.transactions),
+            "timestamp": str(block.timestamp),
+        })
+    blocks.reverse()
+    return templates.TemplateResponse("blocks_list.html", {
+        "request": request, "authenticated": True, "active": "dashboard",
+        "chain_info": chain_info, "blocks": blocks,
+    })
+
+
+@app.get("/dashboard/proposals/{proposal_id}", response_class=HTMLResponse)
+async def proposal_detail_page(proposal_id: str, request: Request):
+    """Individual proposal detail — drill-down from governance."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    from app.governance.models import Proposal
+    async with async_session() as db:
+        result = await db.execute(select(Proposal).where(Proposal.id == proposal_id))
+        prop = result.scalar_one_or_none()
+        if not prop:
+            raise HTTPException(status_code=404, detail="Proposal not found")
+        proposal_data = {
+            "id": prop.id, "title": prop.title, "description": prop.description,
+            "category": prop.category, "submitted_by": prop.submitted_by,
+            "upvotes": prop.upvotes, "downvotes": prop.downvotes,
+            "status": prop.status, "is_material_change": prop.is_material_change,
+            "veto_reason": prop.veto_reason,
+            "created_at": str(prop.created_at) if prop.created_at else None,
+            "resolved_at": str(prop.resolved_at) if prop.resolved_at else None,
+        }
+    return templates.TemplateResponse("proposal_detail.html", {
+        "request": request, "authenticated": True, "active": "governance",
+        "proposal": proposal_data,
+    })
+
+
 @app.get("/dashboard/agents", response_class=HTMLResponse)
 async def agents_list_page(request: Request):
     """List all registered agents — drill-down from dashboard."""
