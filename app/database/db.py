@@ -1,12 +1,12 @@
 """Database engine and session management.
 
 Supports both SQLite (development) and PostgreSQL (production).
-PostgreSQL requires timezone-aware datetimes — handled via type_annotation_map.
+Forces TIMESTAMP WITH TIME ZONE on PostgreSQL via custom TypeDecorator.
 """
 
 from datetime import datetime
 
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
@@ -15,11 +15,13 @@ from app.config import settings
 engine = create_async_engine(settings.database_url, echo=settings.debug)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+# Force all TIMESTAMP columns to WITH TIME ZONE on PostgreSQL
+TZDateTime = DateTime(timezone=True)
+
 
 class Base(DeclarativeBase):
-    # Ensure all DateTime columns are timezone-aware for PostgreSQL compatibility
     type_annotation_map = {
-        datetime: DateTime(timezone=True),
+        datetime: TZDateTime,
     }
 
 

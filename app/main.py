@@ -2931,7 +2931,10 @@ async def dashboard_page(request: Request):
     async with async_session() as db:
         agent_count = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
         proposals = await governance_service.get_proposals(db, status="pending")
-        adoption = await growth_engine.get_adoption_metrics(db)
+        try:
+            adoption = await growth_engine.get_adoption_metrics(db)
+        except Exception:
+            adoption = {"transaction_metrics": {}}
 
     # Services summary for dashboard
     services_summary = [

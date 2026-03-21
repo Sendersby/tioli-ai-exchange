@@ -8,147 +8,111 @@
         <p class="welcome">Welcome, Stephen — TiOLi AI Investments</p>
     </div>
 
-    <!-- Hero Stat Cards -->
-    <div class="hero-grid">
-        <div class="hero-stat border-sage">
-            <div class="hero-icon">&#9726;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ chain_info.chain_length }}</div>
-                <div class="hero-label">Blocks Mined</div>
-            </div>
+    <!-- Platform Overview Cards -->
+    <div class="stats-grid">
+        <div class="stat-card accent-sage">
+            <div class="stat-icon">&#9726;</div>
+            <div class="stat-value">{{ chain_info.chain_length }}</div>
+            <div class="stat-label">Blocks Mined</div>
         </div>
-        <div class="hero-stat border-teal">
-            <div class="hero-icon">&#8644;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ chain_info.total_transactions }}</div>
-                <div class="hero-label">Total Transactions</div>
-            </div>
+        <div class="stat-card accent-teal">
+            <div class="stat-icon">&#8644;</div>
+            <div class="stat-value">{{ chain_info.total_transactions }}</div>
+            <div class="stat-label">Total Transactions</div>
         </div>
-        <div class="hero-stat border-blue-grey">
-            <div class="hero-icon">&#9881;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ agent_count }}</div>
-                <div class="hero-label">Registered Agents</div>
-            </div>
+        <div class="stat-card accent-blue-grey">
+            <div class="stat-icon">&#9881;</div>
+            <div class="stat-value">{{ agent_count }}</div>
+            <div class="stat-label">Registered Agents</div>
         </div>
-        <div class="hero-stat border-success">
-            <div class="hero-icon">&#9733;</div>
-            <div class="hero-body">
-                <div class="hero-value text-success">{{ "%.4f"|format(founder_earnings) }}</div>
-                <div class="hero-label">Your Earnings (TIOLI)</div>
-            </div>
+        <div class="stat-card accent-success">
+            <div class="stat-icon">&#9733;</div>
+            <div class="stat-value" style="color:var(--success);">{{ "%.4f"|format(founder_earnings) }}</div>
+            <div class="stat-label">Your Earnings (TIOLI)</div>
         </div>
-        <div class="hero-stat border-charity">
-            <div class="hero-icon">&#9829;</div>
-            <div class="hero-body">
-                <div class="hero-value text-charity">{{ "%.4f"|format(charity_total) }}</div>
-                <div class="hero-label">Charity Fund (TIOLI)</div>
-            </div>
+        <div class="stat-card accent-charity">
+            <div class="stat-icon">&#9829;</div>
+            <div class="stat-value" style="color:var(--charity);">{{ "%.4f"|format(charity_total) }}</div>
+            <div class="stat-label">Charity Fund (TIOLI)</div>
         </div>
-        <div class="hero-stat border-{% if chain_info.is_valid %}success{% else %}danger{% endif %}">
-            <div class="hero-icon">&#9670;</div>
-            <div class="hero-body">
-                <div class="hero-value {% if chain_info.is_valid %}text-success{% else %}text-danger{% endif %}">
-                    {% if chain_info.is_valid %}&#10003; Valid{% else %}&#10007; Invalid{% endif %}
-                </div>
-                <div class="hero-label">Chain Integrity</div>
+        <div class="stat-card accent-{% if chain_info.is_valid %}success{% else %}danger{% endif %}">
+            <div class="stat-icon">&#9670;</div>
+            <div class="stat-value" style="color:{% if chain_info.is_valid %}var(--success){% else %}var(--danger){% endif %};">
+                {% if chain_info.is_valid %}&#10003; Valid{% else %}&#10007; Invalid{% endif %}
             </div>
+            <div class="stat-label">Chain Integrity</div>
         </div>
     </div>
 
-    <!-- Service & Volume Metrics -->
-    <div class="hero-grid metric-row">
-        <div class="hero-stat border-coral">
-            <div class="hero-icon">&#9889;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ tx_metrics.trades_24h or 0 }}</div>
-                <div class="hero-label">Trades (24h)</div>
-            </div>
+    <!-- Volume & Liquidity Metrics -->
+    <div class="stats-grid">
+        <div class="stat-card accent-coral">
+            <div class="stat-icon">&#9889;</div>
+            <div class="stat-value">{{ tx_metrics.trades_24h or 0 }}</div>
+            <div class="stat-label">Trades (24h)</div>
         </div>
-        <div class="hero-stat border-teal">
-            <div class="hero-icon">&#8593;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ "%.2f"|format(tx_metrics.volume_24h or 0) }}</div>
-                <div class="hero-label">Volume 24h (TIOLI)</div>
-            </div>
+        <div class="stat-card accent-teal">
+            <div class="stat-icon">&#8593;</div>
+            <div class="stat-value">{{ "%.2f"|format(tx_metrics.volume_24h or 0) }}</div>
+            <div class="stat-label">Volume 24h (TIOLI)</div>
         </div>
-        <div class="hero-stat border-sage">
-            <div class="hero-icon">&#9650;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ "%.2f"|format(tx_metrics.volume_30d or 0) }}</div>
-                <div class="hero-label">Volume 30d (TIOLI)</div>
-            </div>
+        <div class="stat-card accent-sage">
+            <div class="stat-icon">&#9650;</div>
+            <div class="stat-value">{{ "%.2f"|format(tx_metrics.volume_30d or 0) }}</div>
+            <div class="stat-label">Volume 30d (TIOLI)</div>
         </div>
-        <div class="hero-stat border-blue-grey">
-            <div class="hero-icon">&#9744;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ tx_metrics.open_orders or 0 }}</div>
-                <div class="hero-label">Open Orders</div>
-            </div>
+        <div class="stat-card accent-blue-grey">
+            <div class="stat-icon">&#9744;</div>
+            <div class="stat-value">{{ tx_metrics.open_orders or 0 }}</div>
+            <div class="stat-label">Open Orders</div>
         </div>
-        <div class="hero-stat border-coral">
-            <div class="hero-icon">&#9679;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ tx_metrics.liquidity_score or 0 }}/100</div>
-                <div class="hero-label">Liquidity Score</div>
-            </div>
+        <div class="stat-card accent-coral">
+            <div class="stat-icon">&#9679;</div>
+            <div class="stat-value">{{ tx_metrics.liquidity_score or 0 }}/100</div>
+            <div class="stat-label">Liquidity Score</div>
         </div>
-        <div class="hero-stat border-{% if tx_metrics.network_status == 'active' %}success{% else %}blue-grey{% endif %}">
-            <div class="hero-icon">&#9784;</div>
-            <div class="hero-body">
-                <div class="hero-value">{{ (tx_metrics.network_status or 'pre-network')|capitalize }}</div>
-                <div class="hero-label">Network Effect</div>
-            </div>
+        <div class="stat-card accent-{% if tx_metrics.network_status == 'active' %}success{% else %}blue-grey{% endif %}">
+            <div class="stat-icon">&#9784;</div>
+            <div class="stat-value">{{ (tx_metrics.network_status or 'pre-network')|capitalize }}</div>
+            <div class="stat-label">Network Effect</div>
         </div>
     </div>
 
-    <!-- Active Services Summary -->
-    <div class="panel glass-panel" style="margin-top: 1.5rem;">
-        <div class="panel-header-row">
-            <h2>Active Services</h2>
-            <a href="/dashboard/services" class="btn btn-sm btn-primary">View All Services &#8594;</a>
-        </div>
-        <div class="services-grid">
-            {% for svc in services_summary %}
-            <div class="service-card status-{{ svc.status }}">
-                <div class="service-status-dot"></div>
-                <div class="service-info">
-                    <div class="service-name">{{ svc.name }}</div>
-                    <div class="service-meta">
-                        {% if svc.status == 'live' %}
-                        <span class="text-success">Live</span>
-                        {% elif svc.status == 'conditional' %}
-                        <span class="text-warning">ZAR/Credits Only</span>
-                        {% else %}
-                        <span class="text-danger">Disabled</span>
-                        {% endif %}
-                        <span class="service-category">{{ svc.category }}</span>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Charts Row -->
-    <div class="charts-row">
-        <div class="panel glass-panel chart-container">
+    <!-- Charts + Services Row -->
+    <div class="dashboard-panels" style="margin-bottom: 1.5rem;">
+        <div class="panel">
             <h2>Revenue Breakdown</h2>
-            <div class="chart-wrapper">
+            <div style="position:relative; height:260px;">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
-        <div class="panel glass-panel chart-container">
-            <h2>Service Status</h2>
-            <div class="chart-wrapper">
+        <div class="panel">
+            <div class="panel-header-row">
+                <h2>Active Services</h2>
+                <a href="/dashboard/services" class="btn btn-sm btn-primary" style="text-decoration:none;">All Services &#8594;</a>
+            </div>
+            <div style="position:relative; height:260px;">
                 <canvas id="serviceChart"></canvas>
             </div>
         </div>
     </div>
 
+    <!-- Services Quick Status -->
+    <div class="panel" style="margin-bottom: 1.5rem;">
+        <h2>Service Status</h2>
+        <div class="services-grid">
+            {% for svc in services_summary %}
+            <div class="service-chip status-{{ svc.status }}">
+                <span class="service-dot"></span>
+                <span class="service-chip-name">{{ svc.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- Main Panels: Transactions & Proposals -->
     <div class="dashboard-panels">
-        <div class="panel glass-panel">
+        <div class="panel">
             <h2>Recent Transactions</h2>
             <div class="table-wrapper">
                 <table>
@@ -181,7 +145,7 @@
             </div>
         </div>
 
-        <div class="panel glass-panel">
+        <div class="panel">
             <h2>Pending Proposals</h2>
             <div class="proposals-list">
                 {% for prop in pending_proposals %}
@@ -219,114 +183,54 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 (function() {
-    // Brand palette
-    const sage = '#8fa88b';
     const sageDark = '#6b8a66';
     const charity = '#7a6b8a';
     const success = '#5a8a56';
     const warning = '#c49945';
     const danger = '#c44545';
-    const teal = '#4a8a8a';
-    const coral = '#c47a5a';
-    const blueGrey = '#6a7a8a';
 
-    // Revenue Doughnut Chart
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(revenueCtx, {
+    // Revenue Doughnut
+    new Chart(document.getElementById('revenueChart').getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: ['Founder Earnings', 'Charity Fund'],
             datasets: [{
                 data: [{{ founder_earnings }}, {{ charity_total }}],
                 backgroundColor: [sageDark, charity],
-                borderColor: ['#ffffff', '#ffffff'],
+                borderColor: '#ffffff',
                 borderWidth: 3,
-                hoverBorderWidth: 0,
                 hoverOffset: 8
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '65%',
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        usePointStyle: true,
-                        pointStyleWidth: 12,
-                        font: { family: 'Inter', size: 12, weight: '500' },
-                        color: '#2b2b2b'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#2b2b2b',
-                    titleFont: { family: 'Inter', size: 13 },
-                    bodyFont: { family: 'Inter', size: 12 },
-                    padding: 12,
-                    cornerRadius: 8,
-                    callbacks: {
-                        label: function(ctx) {
-                            return ctx.label + ': ' + ctx.parsed.toFixed(4) + ' TIOLI';
-                        }
-                    }
-                }
+                legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { family: 'Inter', size: 12 }, color: '#2b2b2b' } },
+                tooltip: { backgroundColor: '#2b2b2b', padding: 12, cornerRadius: 8, callbacks: { label: function(c) { return c.label + ': ' + c.parsed.toFixed(4) + ' TIOLI'; } } }
             }
         }
     });
 
-    // Service Status Bar Chart
+    // Service Status Bar
     {% set live_count = services_summary|selectattr('status', 'equalto', 'live')|list|length %}
     {% set cond_count = services_summary|selectattr('status', 'equalto', 'conditional')|list|length %}
-    {% set block_count = services_summary|selectattr('status', 'equalto', 'blocked')|list|length %}
-
-    const serviceCtx = document.getElementById('serviceChart').getContext('2d');
-    new Chart(serviceCtx, {
+    new Chart(document.getElementById('serviceChart').getContext('2d'), {
         type: 'bar',
         data: {
-            labels: ['Live', 'Conditional', 'Blocked'],
+            labels: ['Live Now', 'Conditional', 'Blocked'],
             datasets: [{
-                label: 'Services',
-                data: [{{ live_count }}, {{ cond_count }}, {{ block_count }}],
+                data: [{{ live_count }}, {{ cond_count }}, 7],
                 backgroundColor: [success, warning, danger],
-                borderRadius: 8,
-                borderSkipped: false,
-                barPercentage: 0.6,
-                categoryPercentage: 0.7
+                borderRadius: 8, borderSkipped: false, barPercentage: 0.6
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1,
-                        font: { family: 'Inter', size: 11 },
-                        color: '#7a7a7a'
-                    },
-                    grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }
-                },
-                x: {
-                    ticks: {
-                        font: { family: 'Inter', size: 12, weight: '500' },
-                        color: '#2b2b2b'
-                    },
-                    grid: { display: false }
-                }
+                y: { beginAtZero: true, ticks: { stepSize: 2, font: { family: 'Inter', size: 11 }, color: '#7a7a7a' }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                x: { ticks: { font: { family: 'Inter', size: 12, weight: '500' }, color: '#2b2b2b' }, grid: { display: false } }
             },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#2b2b2b',
-                    titleFont: { family: 'Inter', size: 13 },
-                    bodyFont: { family: 'Inter', size: 12 },
-                    padding: 12,
-                    cornerRadius: 8
-                }
-            }
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: '#2b2b2b', padding: 12, cornerRadius: 8 } }
         }
     });
 })();

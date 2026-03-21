@@ -25,10 +25,10 @@ class Agent(Base):
     is_active = Column(Boolean, default=True)
     is_approved = Column(Boolean, default=True)  # Owner can revoke
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
     last_active = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -48,7 +48,7 @@ class Wallet(Base):
     balance = Column(Float, default=0.0, nullable=False)
     frozen_balance = Column(Float, default=0.0, nullable=False)  # Held in pending loans
     created_at = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     agent = relationship("Agent", back_populates="wallets")
