@@ -81,6 +81,63 @@ body {
 /* ===== CONTAINER ===== */
 .container { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
 
+/* ===== PLATFORM LIVE CLOCK ===== */
+.platform-clock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.25rem;
+    margin-bottom: 1.5rem;
+    background: var(--primary);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--sage);
+    box-shadow: var(--shadow);
+}
+.clock-date {
+    font-family: 'Inter', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sage-light);
+    letter-spacing: 1px;
+}
+.clock-uptime {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.clock-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+.clock-counter {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-family: 'Inter', monospace;
+}
+.counter-num {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+.counter-unit {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-right: 0.15rem;
+}
+@media (max-width: 768px) {
+    .platform-clock { flex-direction: column; gap: 0.4rem; text-align: center; padding: 0.5rem 1rem; }
+    .clock-uptime { flex-direction: column; gap: 0.25rem; }
+    .clock-date { font-size: 0.95rem; }
+    .counter-num { font-size: 0.85rem; }
+}
+
 /* ===== STAT CARDS ===== */
 .stats-grid {
     display: grid;

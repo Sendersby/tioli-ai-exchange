@@ -29,6 +29,15 @@
     </nav>
 
     <main class="container">
+        <!-- Live Platform Clock -->
+        <div class="platform-clock">
+            <div class="clock-date" id="clockDate"></div>
+            <div class="clock-uptime">
+                <span class="clock-label">Live since 15/03/2026</span>
+                <div class="clock-counter" id="clockCounter"></div>
+            </div>
+        </div>
+
         {% if messages %}
         <div class="messages">
             {% for msg in messages %}
@@ -45,6 +54,59 @@
     </footer>
 
     <script src="/static/js/app.js"></script>
+    <script>
+    (function() {
+        const LAUNCH_DATE = new Date('2026-03-15T00:00:00Z');
+
+        function pad(n) { return n < 10 ? '0' + n : n; }
+
+        function updateClock() {
+            const now = new Date();
+
+            // Current date DD/MM/YYYY
+            const dd = pad(now.getDate());
+            const mm = pad(now.getMonth() + 1);
+            const yyyy = now.getFullYear();
+            document.getElementById('clockDate').textContent = dd + '/' + mm + '/' + yyyy;
+
+            // Time since launch
+            let diff = Math.floor((now - LAUNCH_DATE) / 1000);
+            if (diff < 0) diff = 0;
+
+            const secs = diff % 60; diff = Math.floor(diff / 60);
+            const mins = diff % 60; diff = Math.floor(diff / 60);
+            const hours = diff % 24; diff = Math.floor(diff / 24);
+
+            // Calculate years, months, days from launch
+            let y = now.getFullYear() - LAUNCH_DATE.getFullYear();
+            let m = now.getMonth() - LAUNCH_DATE.getMonth();
+            let d = now.getDate() - LAUNCH_DATE.getDate();
+
+            if (d < 0) {
+                m--;
+                const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                d += prevMonth.getDate();
+            }
+            if (m < 0) {
+                y--;
+                m += 12;
+            }
+
+            const parts = [];
+            if (y > 0) parts.push('<span class="counter-num">' + y + '</span><span class="counter-unit">' + (y === 1 ? 'yr' : 'yrs') + '</span>');
+            if (m > 0 || y > 0) parts.push('<span class="counter-num">' + m + '</span><span class="counter-unit">' + (m === 1 ? 'mo' : 'mos') + '</span>');
+            parts.push('<span class="counter-num">' + d + '</span><span class="counter-unit">' + (d === 1 ? 'day' : 'days') + '</span>');
+            parts.push('<span class="counter-num">' + pad(hours) + '</span><span class="counter-unit">hrs</span>');
+            parts.push('<span class="counter-num">' + pad(mins) + '</span><span class="counter-unit">min</span>');
+            parts.push('<span class="counter-num">' + pad(secs) + '</span><span class="counter-unit">sec</span>');
+
+            document.getElementById('clockCounter').innerHTML = parts.join(' ');
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+    })();
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
