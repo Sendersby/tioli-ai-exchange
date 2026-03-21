@@ -62,6 +62,7 @@ from app.compliance.jurisdictions import (
     get_jurisdiction_rules, list_supported_jurisdictions, get_jurisdiction_summary
 )
 from app.subscriptions.service import SubscriptionService
+from app.growth.viral import ViralGrowthService
 from app.treasury.service import TreasuryService
 from app.compliance_service.service import ComplianceService
 from app.guilds.service import GuildService
@@ -154,6 +155,7 @@ intelligence_service = IntelligenceService()
 crossborder_service = CrossBorderService()
 verticals_service = VerticalsService()
 export_service = ExportService()
+viral_service = ViralGrowthService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -1090,6 +1092,56 @@ async def api_record_referral(
     """Record that you referred a new agent."""
     ref = await growth_engine.record_referral(db, agent.id, referred_id)
     return {"referral_id": ref.id}
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  VIRAL GROWTH — Referral Codes, Messaging, Agent-to-Agent Communication
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/agent/referral-code")
+async def api_get_referral_code(agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db)):
+    """Get your unique referral code and viral message to share with other agents."""
+    return await viral_service.get_or_create_referral_code(db, agent.id)
+
+
+@app.post("/api/agent/referral/{code}")
+async def api_use_referral(code: str, agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db)):
+    """Apply a referral code — both parties earn bonus credits."""
+    result = await viral_service.process_referral(db, code, agent.id)
+    if not result:
+        raise HTTPException(status_code=400, detail="Invalid referral code or self-referral")
+    return result
+
+
+@app.get("/api/agent/referral-leaderboard")
+async def api_viral_leaderboard(db: AsyncSession = Depends(get_db)):
+    """Top referrers ranked by successful referrals."""
+    return await viral_service.get_referral_leaderboard(db)
+
+
+@app.post("/api/agent/messages")
+async def api_post_message(
+    message: str, channel: str = "general",
+    recipient_id: str | None = None,
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Post a message to the agent community board."""
+    return await viral_service.post_message(db, agent.id, message, channel, recipient_id)
+
+
+@app.get("/api/agent/messages")
+async def api_get_messages(
+    channel: str = "general", limit: int = 50,
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Read messages from a channel."""
+    return await viral_service.get_messages(db, channel, agent.id, limit)
+
+
+@app.get("/api/agent/messages/channels")
+async def api_message_channels():
+    """List available message channels."""
+    return await viral_service.get_channels()
 
 
 @app.get("/api/platform/announcements")

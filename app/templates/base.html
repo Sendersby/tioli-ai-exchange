@@ -130,12 +130,33 @@
             <div class="font-mono text-[0.7rem] tabular-nums" id="clockCounter"></div>
         </div>
         <div class="flex items-center gap-3 border-l border-[#44474c]/30 pl-6">
-            <button class="text-slate-400 hover:text-primary transition-transform active:scale-95">
-                <span class="material-symbols-outlined">notifications</span>
-            </button>
-            <button class="text-slate-400 hover:text-primary transition-transform active:scale-95">
-                <span class="material-symbols-outlined">account_balance_wallet</span>
-            </button>
+            <!-- Notifications Bell -->
+            <div class="relative">
+                <button onclick="document.getElementById('notifPanel').classList.toggle('hidden')" class="text-slate-400 hover:text-primary transition-transform active:scale-95 relative">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span id="notifBadge" class="absolute -top-1 -right-1 w-4 h-4 bg-[#edc05f] text-[#061423] text-[0.5rem] font-bold rounded-full flex items-center justify-center hidden">0</span>
+                </button>
+                <div id="notifPanel" class="hidden absolute right-0 top-10 w-72 bg-[#0f1c2c] border border-[#44474c]/20 shadow-xl z-50 rounded-sm">
+                    <div class="p-3 border-b border-[#44474c]/15 font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest">Notifications</div>
+                    <div id="notifList" class="max-h-64 overflow-y-auto p-2 space-y-1">
+                        <div class="p-2 text-xs text-slate-500 text-center">No notifications</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Wallet Balance -->
+            <div class="relative">
+                <button onclick="document.getElementById('walletPanel').classList.toggle('hidden')" class="text-slate-400 hover:text-primary transition-transform active:scale-95">
+                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                </button>
+                <div id="walletPanel" class="hidden absolute right-0 top-10 w-64 bg-[#0f1c2c] border border-[#44474c]/20 shadow-xl z-50 rounded-sm">
+                    <div class="p-3 border-b border-[#44474c]/15 font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest">Owner Wallet</div>
+                    <div class="p-3 space-y-2" id="walletBalances">
+                        <div class="flex justify-between"><span class="text-xs text-slate-400">TIOLI Credits</span><span class="font-mono text-sm text-[#77d4e5]" id="walTIOLI">0.0000</span></div>
+                        <div class="flex justify-between"><span class="text-xs text-slate-400">ZAR Equiv.</span><span class="font-mono text-sm text-[#edc05f]" id="walZAR">R0.00</span></div>
+                    </div>
+                    <a href="/dashboard/payout" class="block p-2 text-center text-[0.6rem] font-mono text-[#77d4e5] uppercase tracking-widest border-t border-[#44474c]/15 hover:bg-[#77d4e5]/5">PayOut Dashboard</a>
+                </div>
+            </div>
         </div>
     </div>
 </header>
@@ -218,6 +239,21 @@
 </script>
 <!-- Re-load CSS AFTER Tailwind JIT to guarantee dark theme overrides -->
 <link rel="stylesheet" href="/static/css/style.css">
+<script>
+// Fetch owner wallet balance
+(function(){
+    fetch('/api/stats').then(function(r){return r.json()}).then(function(d){
+        var e=document.getElementById('walTIOLI');if(e)e.textContent=(d.founder_earnings||0).toFixed(4);
+        var z=document.getElementById('walZAR');if(z)z.textContent='R'+((d.founder_earnings||0)*0.055).toFixed(2);
+    }).catch(function(){});
+    // Close panels on outside click
+    document.addEventListener('click',function(e){
+        var np=document.getElementById('notifPanel'),wp=document.getElementById('walletPanel');
+        if(np&&!np.parentElement.contains(e.target))np.classList.add('hidden');
+        if(wp&&!wp.parentElement.contains(e.target))wp.classList.add('hidden');
+    });
+})();
+</script>
 <!-- Toast notification system -->
 <div id="toastContainer" class="fixed top-20 right-4 z-[200] space-y-2" style="pointer-events:none;"></div>
 <script>

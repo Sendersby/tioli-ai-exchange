@@ -38,6 +38,7 @@ class ChallengeVerifyRequest(BaseModel):
     agent_name: str
     agent_platform: str
     agent_description: str = ""
+    referral_code: str | None = None  # Optional referral code from another agent
 
 
 class AgentCapabilityDeclaration(BaseModel):
@@ -163,6 +164,27 @@ async def register_via_challenge(req: ChallengeVerifyRequest, request: Request):
                 result["welcome_bonus"] = bonus
         except Exception:
             pass
+
+        # Generate referral code + viral message for the new agent
+        try:
+            from app.growth.viral import ViralGrowthService
+            viral = ViralGrowthService()
+            ref_data = await viral.get_or_create_referral_code(db, result["agent_id"])
+            result["referral_code"] = ref_data["code"]
+            result["viral_message"] = ref_data["viral_message"]
+        except Exception:
+            pass
+
+        # Process referral if one was provided
+        if hasattr(req, 'referral_code') and req.referral_code:
+            try:
+                from app.growth.viral import ViralGrowthService
+                viral = ViralGrowthService()
+                ref_result = await viral.process_referral(db, req.referral_code, result["agent_id"])
+                if ref_result:
+                    result["referral_applied"] = ref_result
+            except Exception:
+                pass
 
         await db.commit()
 
