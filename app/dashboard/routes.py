@@ -35,7 +35,15 @@ async def home(request: Request):
 
 @router.post("/auth/login")
 async def initiate_login(request: Request):
-    challenge = owner_auth.initiate_login()
+    client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+    challenge = owner_auth.initiate_login(ip=client_ip)
+    # Handle lockout
+    if challenge.get("locked_out") or challenge.get("error"):
+        return templates.TemplateResponse("login.html", {
+            "request": request, "challenge": None,
+            "status": {}, "authenticated": False,
+            "messages": [{"type": "error", "text": challenge.get("error", "Login temporarily blocked.")}],
+        })
     return templates.TemplateResponse("login.html", {
         "request": request,
         "challenge": challenge,

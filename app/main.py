@@ -272,13 +272,20 @@ app.include_router(agentbroker_router)
 
 # ── Helper: Agent Auth Dependency ────────────────────────────────────
 async def require_agent(
+    request: Request,
     authorization: str = Header(..., description="Bearer <api_key>"),
     db: AsyncSession = Depends(get_db),
 ) -> Agent:
-    """Dependency that authenticates an AI agent via API key."""
+    """Dependency that authenticates an AI agent via API key.
+
+    Includes rate limiting per agent and input validation on auth header.
+    """
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
     api_key = authorization[7:]
+    # Input validation: API key must be reasonable length
+    if len(api_key) < 10 or len(api_key) > 200:
+        raise HTTPException(status_code=401, detail="Invalid API key format")
     agent = await authenticate_agent(db, api_key)
     if not agent:
         raise HTTPException(status_code=401, detail="Invalid or inactive API key")
