@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Setup Authenticator — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h1>Setup Authenticator App</h1>
+        <p class="subtitle">TiOLi AI Transact Exchange</p>
+
+        <div style="margin: 2rem 0; text-align: center;">
+            <p style="margin-bottom: 1rem;">Scan this QR code with <strong>Microsoft Authenticator</strong> or any TOTP authenticator app:</p>
+            <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code" style="max-width: 250px; border-radius: 8px; border: 2px solid var(--sage-border);">
+        </div>
+
+        <div style="margin: 1.5rem 0; text-align: center;">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Or enter this code manually:</p>
+            <code style="background: var(--sage-bg); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.95rem; letter-spacing: 2px; color: var(--accent); font-weight: 700;">{{ secret }}</code>
+        </div>
+
+        <div style="margin-top: 2rem; padding: 1rem; background: var(--sage-bg); border-radius: 8px; border-left: 3px solid var(--accent);">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+                <strong>Steps:</strong><br>
+                1. Open Microsoft Authenticator on your phone<br>
+                2. Tap + → Other account<br>
+                3. Scan the QR code above<br>
+                4. You're done! Use the 6-digit code from the app when logging in.
+            </p>
+        </div>
+
+        <a href="/" class="btn btn-primary btn-full" style="display:block; text-align:center; margin-top:1.5rem; text-decoration:none;">Back to Login</a>
+
+        <div class="security-notice">
+            <p>Save this setup securely. You will need the authenticator app for every login.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -20,6 +20,7 @@ from app.database.db import Base
 class CurrencyType(str, Enum):
     NATIVE = "native"       # TIOLI — platform currency
     CRYPTO = "crypto"       # BTC, ETH, etc.
+    FIAT = "fiat"           # ZAR, USD, EUR, GBP
     AGENT_TOKEN = "agent"   # Custom tokens created by agents
     CREDIT = "credit"       # Compute credits, API credits, etc.
 
@@ -94,6 +95,47 @@ SYSTEM_CURRENCIES = [
         "description": "Represents stored compute capacity — 1 COMPUTE = 1 unit of processing",
         "reserve_currency": "TIOLI",
     },
+    # Fiat currencies (Issue #8 — international expansion)
+    {
+        "symbol": "ZAR",
+        "name": "South African Rand",
+        "currency_type": CurrencyType.FIAT,
+        "total_supply": 0,
+        "max_supply": None,
+        "decimals": 2,
+        "description": "South African Rand — primary fiat currency",
+        "reserve_currency": "USD",
+    },
+    {
+        "symbol": "USD",
+        "name": "US Dollar",
+        "currency_type": CurrencyType.FIAT,
+        "total_supply": 0,
+        "max_supply": None,
+        "decimals": 2,
+        "description": "United States Dollar — global reserve fiat currency",
+        "reserve_currency": "BTC",
+    },
+    {
+        "symbol": "EUR",
+        "name": "Euro",
+        "currency_type": CurrencyType.FIAT,
+        "total_supply": 0,
+        "max_supply": None,
+        "decimals": 2,
+        "description": "Euro — European Union currency",
+        "reserve_currency": "USD",
+    },
+    {
+        "symbol": "GBP",
+        "name": "British Pound",
+        "currency_type": CurrencyType.FIAT,
+        "total_supply": 0,
+        "max_supply": None,
+        "decimals": 2,
+        "description": "British Pound Sterling — United Kingdom currency",
+        "reserve_currency": "USD",
+    },
 ]
 
 # Initial exchange rates (seed values — will be driven by supply/demand)
@@ -102,6 +144,14 @@ INITIAL_RATES = {
     ("TIOLI", "ETH"): 0.00001500,    # 1 TIOLI = 0.000015 ETH
     ("TIOLI", "COMPUTE"): 1.0,       # 1 TIOLI = 1 COMPUTE (parity)
     ("ETH", "BTC"): 0.06667,         # 1 ETH ≈ 0.067 BTC
+    # Fiat rates (seed values — updated by forex service)
+    ("TIOLI", "ZAR"): 0.055,         # 1 TIOLI = R0.055
+    ("TIOLI", "USD"): 0.003,         # 1 TIOLI = $0.003
+    ("TIOLI", "EUR"): 0.0028,        # 1 TIOLI = €0.0028
+    ("TIOLI", "GBP"): 0.0024,        # 1 TIOLI = £0.0024
+    ("USD", "ZAR"): 18.30,           # 1 USD = R18.30
+    ("EUR", "USD"): 1.08,            # 1 EUR = $1.08
+    ("GBP", "USD"): 1.26,            # 1 GBP = $1.26
 }
 
 

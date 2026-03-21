@@ -14,7 +14,7 @@
             <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Challenge: {{ challenge.challenge_id[:12] }}...</p>
 
             <div class="factor-list">
-                <!-- FACTOR 1: Email — verification link sent automatically -->
+                <!-- FACTOR 1: Email — 6-digit code sent to email -->
                 <div class="factor {% if status.email_verified %}verified{% endif %}">
                     <span class="factor-icon">{% if status.email_verified %}&#10003;{% else %}1{% endif %}</span>
                     <div>
@@ -22,18 +22,23 @@
                         {% if status.email_verified %}
                         <p style="color:var(--success);">Email verified</p>
                         {% elif challenge.email_sent %}
-                        <p>Verification link sent to your email. Check your inbox and click the link.</p>
+                        <p>A 6-digit code has been sent to your email. Check your inbox and enter it below.</p>
                         {% else %}
                         <p>Email could not be sent — use manual verification below.</p>
                         {% endif %}
                     </div>
                 </div>
 
-                {% if not status.email_verified and not challenge.email_sent %}
+                {% if not status.email_verified %}
                 <form method="POST" action="/auth/verify-email">
                     <input type="hidden" name="challenge_id" value="{{ challenge.challenge_id }}">
+                    {% if challenge.email_sent %}
+                    <input type="text" name="email_code" placeholder="Enter 6-digit email code" maxlength="6" pattern="[0-9]{6}" required>
+                    <button type="submit" class="btn btn-primary">Verify Email Code</button>
+                    {% else %}
                     <input type="email" name="email" placeholder="Enter your email address" required>
                     <button type="submit" class="btn btn-primary">Verify Email Manually</button>
+                    {% endif %}
                 </form>
                 {% endif %}
 
@@ -46,7 +51,6 @@
                         <p style="color:var(--success);">Phone verified</p>
                         {% else %}
                         <p>Enter the 6-digit code: <code style="background:var(--sage-bg);padding:0.2rem 0.5rem;border-radius:4px;font-size:1.1rem;color:var(--accent);font-weight:700;">{{ challenge.phone_code or "------" }}</code></p>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">SMS delivery coming soon — code displayed here until then</p>
                         {% endif %}
                     </div>
                 </div>
@@ -59,15 +63,15 @@
                 </form>
                 {% endif %}
 
-                <!-- FACTOR 3: CLI — code displayed, entered manually -->
+                <!-- FACTOR 3: Authenticator App (TOTP) -->
                 <div class="factor {% if status.cli_verified %}verified{% endif %}">
                     <span class="factor-icon">{% if status.cli_verified %}&#10003;{% else %}3{% endif %}</span>
                     <div>
-                        <strong>CLI Verification</strong>
+                        <strong>Authenticator App</strong>
                         {% if status.cli_verified %}
-                        <p style="color:var(--success);">CLI verified</p>
+                        <p style="color:var(--success);">Authenticator verified</p>
                         {% else %}
-                        <p>Your CLI code: <code style="background:var(--sage-bg);padding:0.2rem 0.5rem;border-radius:4px;font-size:1.1rem;color:var(--accent);font-weight:700;">{{ challenge.cli_code or "—" }}</code></p>
+                        <p>Enter the 6-digit code from your Microsoft Authenticator app.</p>
                         {% endif %}
                     </div>
                 </div>
@@ -75,8 +79,8 @@
                 {% if not status.cli_verified %}
                 <form method="POST" action="/auth/verify-cli">
                     <input type="hidden" name="challenge_id" value="{{ challenge.challenge_id }}">
-                    <input type="text" name="code" placeholder="Enter CLI code" required>
-                    <button type="submit" class="btn btn-primary">Verify CLI</button>
+                    <input type="text" name="code" placeholder="Enter 6-digit authenticator code" maxlength="6" pattern="[0-9]{6}" required>
+                    <button type="submit" class="btn btn-primary">Verify Authenticator</button>
                 </form>
                 {% endif %}
             </div>

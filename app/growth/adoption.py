@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import Base
 from app.agents.models import Agent
+from app.exchange.orderbook import Trade, Order, OrderStatus
 
 
 class AgentReferral(Base):
@@ -171,7 +172,59 @@ class GrowthEngine:
             select(func.count(AgentReferral.id))
         )).scalar() or 0
 
+        # ── Transaction Volume Metrics (Issue #9) ─────────────────────
+        # Network effect activates at transaction LIQUIDITY, not agent count.
+
+        # Trade volume by period
+        trades_24h = (await db.execute(
+            select(func.count(Trade.id)).where(Trade.executed_at >= day_ago)
+        )).scalar() or 0
+        trades_7d = (await db.execute(
+            select(func.count(Trade.id)).where(Trade.executed_at >= week_ago)
+        )).scalar() or 0
+        trades_30d = (await db.execute(
+            select(func.count(Trade.id)).where(Trade.executed_at >= month_ago)
+        )).scalar() or 0
+
+        volume_24h = (await db.execute(
+            select(func.sum(Trade.total_value)).where(Trade.executed_at >= day_ago)
+        )).scalar() or 0.0
+        volume_7d = (await db.execute(
+            select(func.sum(Trade.total_value)).where(Trade.executed_at >= week_ago)
+        )).scalar() or 0.0
+        volume_30d = (await db.execute(
+            select(func.sum(Trade.total_value)).where(Trade.executed_at >= month_ago)
+        )).scalar() or 0.0
+
+        # Open orders (market depth indicator)
+        open_orders = (await db.execute(
+            select(func.count(Order.id)).where(
+                Order.status.in_([OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED])
+            )
+        )).scalar() or 0
+
+        # Transaction velocity: avg trades per active agent per day
+        tx_velocity = round(trades_24h / max(active_24h, 1), 2)
+
+        # Liquidity score: composite indicator (0-100)
+        # Based on: trade count, volume, active agents, open orders
+        liquidity_score = min(100, round(
+            (min(trades_24h, 50) / 50 * 25) +           # 25 pts for trade count
+            (min(volume_24h, 10000) / 10000 * 25) +      # 25 pts for volume
+            (min(active_24h, 20) / 20 * 25) +             # 25 pts for active agents
+            (min(open_orders, 50) / 50 * 25)               # 25 pts for order depth
+        ))
+
+        # Network effect status
+        if liquidity_score >= 60:
+            network_status = "active"
+        elif liquidity_score >= 30:
+            network_status = "emerging"
+        else:
+            network_status = "pre-network"
+
         return {
+            # Agent metrics (registration-focused)
             "total_agents": total,
             "new_24h": new_24h,
             "new_7d": new_7d,
@@ -181,6 +234,19 @@ class GrowthEngine:
             "platforms": platform_breakdown,
             "total_referrals": total_referrals,
             "growth_rate_7d": round(new_7d / max(total - new_7d, 1) * 100, 1),
+            # Transaction volume metrics (liquidity-focused — Issue #9)
+            "transaction_metrics": {
+                "trades_24h": trades_24h,
+                "trades_7d": trades_7d,
+                "trades_30d": trades_30d,
+                "volume_24h": round(volume_24h, 4),
+                "volume_7d": round(volume_7d, 4),
+                "volume_30d": round(volume_30d, 4),
+                "open_orders": open_orders,
+                "tx_velocity": tx_velocity,
+                "liquidity_score": liquidity_score,
+                "network_status": network_status,
+            },
         }
 
     async def get_announcements(

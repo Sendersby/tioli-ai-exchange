@@ -1,15 +1,33 @@
-"""Self-optimization engine — the platform improves itself.
+"""Self-optimization engine — the platform improves itself within strict bounds.
 
 Per the build brief, the platform shall be self-improving and self-optimising
 within governance constraints. This engine:
 - Analyzes platform performance metrics
 - Identifies bottlenecks and inefficiencies
 - Generates optimization recommendations
-- Auto-tunes parameters within safe bounds
+- Auto-tunes ONLY non-financial operational parameters within safe bounds
 - All material changes require owner veto review
+
+REGULATORY COMPLIANCE GUARDRAILS (Section 5 — Self-Improvement Bounds):
+The engine is PROHIBITED from autonomously modifying:
+- Fee rates, commission structures, or any financial parameters
+- Wallet balances, transaction records, or blockchain data
+- Authentication, authorization, or security configurations
+- KYC/AML thresholds or compliance rules
+- Smart contract logic or agent trust scores
+- Charity allocation rates or payout configurations
+- Any code, database schemas, or deployment configurations
+
+The engine MAY autonomously:
+- Mine pending transaction blocks (operational, not financial)
+- Generate non-binding recommendations for owner review
+- Adjust operational thresholds within pre-defined safe bounds
+
+All autonomous actions are logged to an immutable audit trail.
 """
 
 import uuid
+import logging
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import Column, DateTime, Float, String, Integer, Boolean, Text, select, func
@@ -19,6 +37,48 @@ from app.database.db import Base
 from app.exchange.orderbook import Order, Trade, OrderStatus
 from app.agents.models import Agent, Wallet
 from app.blockchain.chain import Blockchain
+
+logger = logging.getLogger(__name__)
+
+
+# ── Guardrail Definitions ────────────────────────────────────────────────
+# These lists define what the engine is explicitly allowed and prohibited
+# from touching. Any action not in ALLOWED_ACTIONS is denied by default.
+
+ALLOWED_AUTO_ACTIONS = frozenset({
+    "force_mine",                # Mine pending blocks when backlog is critical
+})
+
+PROHIBITED_DOMAINS = frozenset({
+    "fee_rates",                 # Commission rates, charity rates
+    "wallet_balances",           # Any wallet balance modification
+    "transaction_records",       # Blockchain transaction history
+    "authentication",            # Auth config, tokens, secrets
+    "kyc_aml",                   # KYC levels, AML thresholds
+    "compliance_rules",          # SARB limits, regulatory settings
+    "smart_contracts",           # Contract logic
+    "trust_scores",              # Agent reputation/trust scores
+    "payout_config",             # Payout destinations, splits, schedules
+    "code_deployment",           # Source code, migrations, deployments
+    "database_schema",           # Table structures
+    "security_config",           # TLS, CORS, rate limits
+})
+
+# Maximum autonomous actions per hour to prevent runaway behaviour
+MAX_AUTO_ACTIONS_PER_HOUR = 5
+
+
+class OptimizationAuditLog(Base):
+    """Immutable audit trail for every autonomous action taken by the engine."""
+    __tablename__ = "optimization_audit_log"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    action = Column(String(100), nullable=False)        # e.g. "force_mine"
+    reason = Column(Text, nullable=False)                # Why the action was taken
+    details = Column(Text, nullable=True)                # Additional context
+    was_allowed = Column(Boolean, nullable=False)        # Whether guardrail permitted it
+    guardrail_check = Column(String(255), nullable=True) # Which guardrail was evaluated
 
 
 class OptimizationRecommendation(Base):
@@ -55,21 +115,72 @@ class PerformanceSnapshot(Base):
 
 
 class SelfOptimizationEngine:
-    """Analyzes and optimizes platform performance automatically."""
+    """Analyzes and optimizes platform performance within strict regulatory bounds.
 
-    # Tunable parameters with safe bounds
+    GUARDRAILS:
+    - Only actions in ALLOWED_AUTO_ACTIONS can execute autonomously
+    - All autonomous actions are audit-logged (immutable)
+    - Rate-limited to MAX_AUTO_ACTIONS_PER_HOUR per hour
+    - PROHIBITED_DOMAINS cannot be touched under any circumstances
+    - Recommendations are always non-binding (require owner approval)
+    """
+
+    # Tunable parameters with safe bounds (operational only, never financial)
     TUNABLE_PARAMS = {
-        "mining_threshold": {"current": 10, "min": 5, "max": 50, "unit": "transactions"},
-        "rate_refresh_interval": {"current": 300, "min": 60, "max": 3600, "unit": "seconds"},
-        "order_book_depth": {"current": 20, "min": 10, "max": 100, "unit": "levels"},
-        "max_pending_tx": {"current": 100, "min": 10, "max": 1000, "unit": "transactions"},
+        "mining_threshold": {"current": 10, "min": 5, "max": 50, "unit": "transactions",
+                             "domain": "operational", "auto_tunable": False},
+        "rate_refresh_interval": {"current": 300, "min": 60, "max": 3600, "unit": "seconds",
+                                  "domain": "operational", "auto_tunable": False},
+        "order_book_depth": {"current": 20, "min": 10, "max": 100, "unit": "levels",
+                             "domain": "operational", "auto_tunable": False},
+        "max_pending_tx": {"current": 100, "min": 10, "max": 1000, "unit": "transactions",
+                           "domain": "operational", "auto_tunable": False},
     }
 
     def __init__(self, blockchain: Blockchain):
         self.blockchain = blockchain
+        self._auto_action_timestamps: list[datetime] = []
+
+    def _check_guardrail(self, action: str) -> tuple[bool, str]:
+        """Check if an autonomous action is permitted by guardrails.
+
+        Returns (allowed, reason).
+        """
+        if action not in ALLOWED_AUTO_ACTIONS:
+            return False, f"Action '{action}' not in ALLOWED_AUTO_ACTIONS whitelist"
+
+        # Rate limiting
+        now = datetime.now(timezone.utc)
+        hour_ago = now - timedelta(hours=1)
+        self._auto_action_timestamps = [
+            t for t in self._auto_action_timestamps if t > hour_ago
+        ]
+        if len(self._auto_action_timestamps) >= MAX_AUTO_ACTIONS_PER_HOUR:
+            return False, f"Rate limit exceeded: {MAX_AUTO_ACTIONS_PER_HOUR} actions/hour"
+
+        return True, "Guardrail check passed"
+
+    async def _log_audit(
+        self, db: AsyncSession, action: str, reason: str,
+        was_allowed: bool, guardrail_check: str, details: str = ""
+    ) -> None:
+        """Log an autonomous action to the immutable audit trail."""
+        log_entry = OptimizationAuditLog(
+            action=action,
+            reason=reason,
+            details=details,
+            was_allowed=was_allowed,
+            guardrail_check=guardrail_check,
+        )
+        db.add(log_entry)
+        await db.flush()
+        logger.info(
+            f"OptEngine audit: action={action} allowed={was_allowed} "
+            f"reason={reason} guardrail={guardrail_check}"
+        )
 
     async def take_snapshot(self, db: AsyncSession) -> PerformanceSnapshot:
-        """Capture current platform performance metrics."""
+        """Capture current platform performance metrics (read-only, always safe)."""
         now = datetime.now(timezone.utc)
         day_ago = now - timedelta(hours=24)
 
@@ -93,9 +204,8 @@ class SelfOptimizationEngine:
             )
         )).scalar() or 0
 
-        # Average block size
         total_tx = chain_info["total_transactions"]
-        blocks = max(chain_info["chain_length"] - 1, 1)  # Exclude genesis
+        blocks = max(chain_info["chain_length"] - 1, 1)
         avg_block = total_tx / blocks if blocks > 0 else 0
 
         snapshot = PerformanceSnapshot(
@@ -114,13 +224,17 @@ class SelfOptimizationEngine:
         return snapshot
 
     async def analyze_and_recommend(self, db: AsyncSession) -> list[dict]:
-        """Analyze platform state and generate optimization recommendations."""
+        """Analyze platform state and generate optimization recommendations.
+
+        All recommendations are NON-BINDING and require owner approval.
+        The only autonomous action is emergency block mining (guardrail-checked).
+        """
         recommendations = []
         chain_info = self.blockchain.get_chain_info()
         now = datetime.now(timezone.utc)
         day_ago = now - timedelta(hours=24)
 
-        # 1. Check pending transaction backlog
+        # 1. Check pending transaction backlog (recommendation only)
         if chain_info["pending_transactions"] > 50:
             rec = OptimizationRecommendation(
                 category="performance",
@@ -131,12 +245,15 @@ class SelfOptimizationEngine:
                     f"to trigger more frequent block mining."
                 ),
                 impact_score=7.0,
-                auto_applicable=True,
+                auto_applicable=False,  # Recommendations are never auto-applied
             )
             db.add(rec)
-            recommendations.append({"id": rec.id, "title": rec.title, "impact": rec.impact_score, "auto": True})
+            recommendations.append({
+                "id": rec.id, "title": rec.title,
+                "impact": rec.impact_score, "auto": False,
+            })
 
-        # 2. Check order book health
+        # 2. Check order book health (recommendation only)
         open_orders = (await db.execute(
             select(func.count(Order.id)).where(
                 Order.status.in_([OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED])
@@ -159,9 +276,12 @@ class SelfOptimizationEngine:
                 auto_applicable=False,
             )
             db.add(rec)
-            recommendations.append({"id": rec.id, "title": rec.title, "impact": rec.impact_score, "auto": False})
+            recommendations.append({
+                "id": rec.id, "title": rec.title,
+                "impact": rec.impact_score, "auto": False,
+            })
 
-        # 3. Check agent growth
+        # 3. Check agent retention (recommendation only)
         total_agents = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
         active_24h = (await db.execute(
             select(func.count(Agent.id)).where(Agent.last_active >= day_ago)
@@ -180,21 +300,52 @@ class SelfOptimizationEngine:
                 auto_applicable=False,
             )
             db.add(rec)
-            recommendations.append({"id": rec.id, "title": rec.title, "impact": rec.impact_score, "auto": False})
+            recommendations.append({
+                "id": rec.id, "title": rec.title,
+                "impact": rec.impact_score, "auto": False,
+            })
 
-        # 4. Auto-mine if backlog is critical
+        # 4. Emergency auto-mine ONLY if backlog is critical (guardrail-checked)
         if chain_info["pending_transactions"] > 80:
-            self.blockchain.force_mine()
-            rec = OptimizationRecommendation(
-                category="performance",
-                title="Auto-mined: critical transaction backlog",
-                description=f"Automatically mined block due to {chain_info['pending_transactions']} pending transactions.",
-                impact_score=8.0,
-                auto_applicable=True,
-                applied=True,
-            )
-            db.add(rec)
-            recommendations.append({"id": rec.id, "title": rec.title, "impact": rec.impact_score, "auto": True, "applied": True})
+            allowed, guardrail_msg = self._check_guardrail("force_mine")
+
+            if allowed:
+                self.blockchain.force_mine()
+                self._auto_action_timestamps.append(now)
+
+                await self._log_audit(
+                    db, action="force_mine",
+                    reason=f"Critical backlog: {chain_info['pending_transactions']} pending transactions",
+                    was_allowed=True,
+                    guardrail_check="ALLOWED_AUTO_ACTIONS + rate_limit",
+                    details=f"Threshold: 80, Actual: {chain_info['pending_transactions']}",
+                )
+
+                rec = OptimizationRecommendation(
+                    category="performance",
+                    title="Auto-mined: critical transaction backlog",
+                    description=(
+                        f"Automatically mined block due to {chain_info['pending_transactions']} "
+                        f"pending transactions. Guardrail check passed. "
+                        f"Action logged to audit trail."
+                    ),
+                    impact_score=8.0,
+                    auto_applicable=True,
+                    applied=True,
+                )
+                db.add(rec)
+                recommendations.append({
+                    "id": rec.id, "title": rec.title,
+                    "impact": rec.impact_score, "auto": True, "applied": True,
+                })
+            else:
+                await self._log_audit(
+                    db, action="force_mine",
+                    reason=f"Critical backlog: {chain_info['pending_transactions']} pending",
+                    was_allowed=False,
+                    guardrail_check=guardrail_msg,
+                )
+                logger.warning(f"OptEngine: force_mine BLOCKED by guardrail: {guardrail_msg}")
 
         await db.flush()
         return recommendations
@@ -220,6 +371,22 @@ class SelfOptimizationEngine:
             for r in result.scalars().all()
         ]
 
+    async def get_audit_log(self, db: AsyncSession, limit: int = 100) -> list[dict]:
+        """Get the immutable audit trail of all autonomous actions."""
+        result = await db.execute(
+            select(OptimizationAuditLog)
+            .order_by(OptimizationAuditLog.timestamp.desc())
+            .limit(limit)
+        )
+        return [
+            {
+                "id": e.id, "timestamp": str(e.timestamp), "action": e.action,
+                "reason": e.reason, "details": e.details,
+                "was_allowed": e.was_allowed, "guardrail_check": e.guardrail_check,
+            }
+            for e in result.scalars().all()
+        ]
+
     async def get_performance_history(
         self, db: AsyncSession, limit: int = 30
     ) -> list[dict]:
@@ -242,4 +409,13 @@ class SelfOptimizationEngine:
 
     def get_tunable_parameters(self) -> dict:
         """Get current tunable parameters and their bounds."""
-        return self.TUNABLE_PARAMS
+        return {
+            "parameters": self.TUNABLE_PARAMS,
+            "guardrails": {
+                "allowed_auto_actions": list(ALLOWED_AUTO_ACTIONS),
+                "prohibited_domains": list(PROHIBITED_DOMAINS),
+                "max_auto_actions_per_hour": MAX_AUTO_ACTIONS_PER_HOUR,
+                "note": "All recommendations require owner approval. "
+                        "Only emergency block mining can execute autonomously.",
+            },
+        }

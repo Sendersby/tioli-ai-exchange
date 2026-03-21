@@ -154,6 +154,46 @@ class OperatorService:
             for op in result.scalars().all()
         ]
 
+    async def check_auto_tier_upgrade(
+        self, db: AsyncSession, operator_id: str, monthly_volume: float
+    ) -> dict | None:
+        """Automatically upgrade operator tier based on monthly transaction volume.
+
+        Thresholds:
+        - 50,000+ TIOLI monthly  → Volume tier (8%)
+        - 500,000+ TIOLI monthly → Enterprise tier (5%)
+
+        Returns updated tier info if upgraded, None if no change.
+        """
+        result = await db.execute(
+            select(Operator).where(Operator.id == operator_id)
+        )
+        operator = result.scalar_one_or_none()
+        if not operator or operator.custom_rate:
+            return None  # Don't override custom enterprise rates
+
+        current_tier = operator.tier
+        new_tier = None
+
+        if monthly_volume >= 500_000 and current_tier != OperatorTier.ENTERPRISE:
+            new_tier = OperatorTier.ENTERPRISE
+        elif monthly_volume >= 50_000 and current_tier == OperatorTier.EARLY_ADOPTER:
+            new_tier = OperatorTier.VOLUME
+
+        if new_tier:
+            operator.tier = new_tier
+            operator.commission_rate = TIER_COMMISSION_RATES[new_tier]
+            operator.updated_at = datetime.now(timezone.utc)
+            await db.flush()
+            return {
+                "operator_id": operator.id,
+                "previous_tier": current_tier,
+                "new_tier": new_tier,
+                "new_commission_rate": operator.commission_rate,
+                "monthly_volume": monthly_volume,
+            }
+        return None
+
     async def get_tier_schedule(self) -> dict:
         """Get the full tiered commission schedule (transparent per UX principles)."""
         return {

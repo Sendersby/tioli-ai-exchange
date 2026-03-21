@@ -35,6 +35,34 @@
         </div>
     </div>
 
+    <!-- Transaction Volume & Liquidity Metrics (Issue #9) -->
+    <div class="stats-grid" style="margin-top: 1rem;">
+        <div class="stat-card">
+            <div class="stat-value">{{ tx_metrics.trades_24h or 0 }}</div>
+            <div class="stat-label">Trades (24h)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.2f"|format(tx_metrics.volume_24h or 0) }}</div>
+            <div class="stat-label">Volume 24h (TIOLI)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.2f"|format(tx_metrics.volume_30d or 0) }}</div>
+            <div class="stat-label">Volume 30d (TIOLI)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ tx_metrics.open_orders or 0 }}</div>
+            <div class="stat-label">Open Orders</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ tx_metrics.liquidity_score or 0 }}/100</div>
+            <div class="stat-label">Liquidity Score</div>
+        </div>
+        <div class="stat-card {% if tx_metrics.network_status == 'active' %}highlight{% endif %}">
+            <div class="stat-value">{{ (tx_metrics.network_status or 'pre-network')|capitalize }}</div>
+            <div class="stat-label">Network Effect</div>
+        </div>
+    </div>
+
     <div class="dashboard-panels">
         <div class="panel">
             <h2>Recent Transactions</h2>

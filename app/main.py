@@ -4,15 +4,21 @@ The world's first AI-native financial exchange.
 Confidential — TiOLi AI Investments.
 """
 
+import time
+import logging
+from collections import defaultdict
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+security_logger = logging.getLogger("tioli.security")
 
 from app.config import settings
 from app.database.db import init_db, get_db, async_session
@@ -48,6 +54,12 @@ from app.infrastructure.sandbox import SandboxService
 from app.infrastructure.disaster_recovery import BackupService, IncidentResponsePlan
 from app.infrastructure.notifications import NotificationService
 from app.exchange.liquidity import LiquidityService, CreditScoringService
+from app.exchange.market_maker import MarketMakerService
+from app.exchange.incentives import IncentiveProgramme
+from app.exchange.forex import ForexService
+from app.compliance.jurisdictions import (
+    get_jurisdiction_rules, list_supported_jurisdictions, get_jurisdiction_summary
+)
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -71,6 +83,11 @@ financial_governance = FinancialGovernance()
 async def _record_revenue(db, source, amount, currency, desc):
     await financial_governance.record_revenue(db, source, amount, currency, desc)
 wallet_service.set_revenue_recorder(_record_revenue)
+# Issue #7: charity allocation conditional on profitability
+async def _update_profitability(db):
+    summary = await financial_governance.get_financial_summary(db)
+    fee_engine.update_profitability(summary["total_revenue"], summary["total_expenses"])
+wallet_service.set_profitability_updater(_update_profitability)
 platform_monitor = PlatformMonitor(blockchain=blockchain)
 growth_engine = GrowthEngine()
 crypto_wallet_service = CryptoWalletService()
@@ -107,6 +124,9 @@ trading_engine = TradingEngine(blockchain=blockchain, fee_engine=fee_engine)
 pricing_engine = PricingEngine(currency_service=currency_service)
 lending_marketplace = LendingMarketplace()
 compute_storage = ComputeStorageService(blockchain=blockchain)
+market_maker = MarketMakerService(trading_engine=trading_engine, currency_service=currency_service)
+incentive_programme = IncentiveProgramme()
+forex_service = ForexService(currency_service=currency_service)
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -141,6 +161,84 @@ app = FastAPI(
     version=settings.version,
     lifespan=lifespan,
 )
+
+# ── Security Middleware ──────────────────────────────────────────────
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to every response."""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "font-src 'self'; "
+            "frame-ancestors 'none'"
+        )
+        return response
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Global rate limiting — 60 requests/minute per IP."""
+    def __init__(self, app, requests_per_minute: int = 60):
+        super().__init__(app)
+        self.rpm = requests_per_minute
+        self._requests: dict[str, list[float]] = defaultdict(list)
+
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+        now = time.time()
+        minute_ago = now - 60
+
+        # Clean old entries and check limit
+        self._requests[client_ip] = [t for t in self._requests[client_ip] if t > minute_ago]
+        if len(self._requests[client_ip]) >= self.rpm:
+            security_logger.warning(f"Rate limit exceeded: {client_ip}")
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please try again later."},
+            )
+        self._requests[client_ip].append(now)
+        return await call_next(request)
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """Log all requests for security auditing."""
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+        start = time.time()
+        response = await call_next(request)
+        duration_ms = round((time.time() - start) * 1000)
+        security_logger.info(
+            f"{request.method} {request.url.path} {response.status_code} "
+            f"{duration_ms}ms ip={client_ip}"
+        )
+        return response
+
+
+# Add middleware (order matters — outermost first)
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
+app.add_middleware(SecurityHeadersMiddleware)
+
+
+# ── Global Exception Handler (never expose stack traces) ────────────
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch unhandled exceptions — never expose internals to clients."""
+    security_logger.error(f"Unhandled exception on {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal error occurred. Please try again later."},
+    )
+
 
 # Mount static files and dashboard routes
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -361,6 +459,10 @@ async def api_register_agent(
         description=f"Agent registered: {req.name} ({req.platform})",
     )
     blockchain.add_transaction(tx)
+    # Issue #1: auto-grant welcome bonus to new agents
+    bonus = await incentive_programme.grant_welcome_bonus(db, result["agent_id"])
+    if bonus:
+        result["welcome_bonus"] = bonus
     return result
 
 
@@ -785,7 +887,10 @@ async def web_veto_proposal(
 @app.get("/api/financials/summary")
 async def api_financial_summary(db: AsyncSession = Depends(get_db)):
     """Full financial summary with profitability multiplier."""
-    return await financial_governance.get_financial_summary(db)
+    summary = await financial_governance.get_financial_summary(db)
+    # Include current charity allocation status
+    summary["charity_allocation"] = fee_engine.get_charity_status()
+    return summary
 
 
 @app.post("/api/financials/expense")
@@ -1125,8 +1230,15 @@ async def api_performance_history(db: AsyncSession = Depends(get_db)):
 
 @app.get("/api/optimize/parameters")
 async def api_tunable_parameters():
-    """Get tunable platform parameters."""
+    """Get tunable platform parameters and guardrail configuration."""
     return optimization_engine.get_tunable_parameters()
+
+
+@app.get("/api/optimize/audit-log")
+async def api_optimization_audit_log(limit: int = 100):
+    """Get the immutable audit trail of all autonomous optimization actions."""
+    async with async_session() as session:
+        return await optimization_engine.get_audit_log(session, limit=limit)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1501,6 +1613,94 @@ async def api_liquidity_status(db: AsyncSession = Depends(get_db)):
 async def api_credit_score(agent_id: str, db: AsyncSession = Depends(get_db)):
     """Get an agent's credit score."""
     return await credit_scoring.calculate_credit_score(db, agent_id)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  MARKET MAKER & INCENTIVES (Issue #1 — Liquidity Bootstrap)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/market-maker/refresh")
+async def api_market_maker_refresh(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Refresh market maker orders on all pairs (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await market_maker.refresh_orders(db)
+
+
+@app.get("/api/market-maker/status")
+async def api_market_maker_status():
+    """Get market maker configuration and status."""
+    return market_maker.get_status()
+
+
+@app.post("/api/market-maker/configure")
+async def api_market_maker_configure(
+    base: str, quote: str, spread_pct: float = 0.03,
+    order_size: float = 100.0, enabled: bool = True,
+    request: Request = None,
+):
+    """Configure a market-making pair (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return market_maker.configure_pair(base, quote, spread_pct, order_size, enabled)
+
+
+@app.get("/api/incentives/status")
+async def api_incentive_status(db: AsyncSession = Depends(get_db)):
+    """Get the incentive programme status and spending."""
+    return await incentive_programme.get_programme_status(db)
+
+
+@app.post("/api/incentives/welcome/{agent_id}")
+async def api_grant_welcome_bonus(
+    agent_id: str, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Grant welcome bonus to a new agent (owner or system call)."""
+    result = await incentive_programme.grant_welcome_bonus(db, agent_id)
+    if not result:
+        return {"status": "skipped", "reason": "Already received or programme limit reached"}
+    return result
+
+
+@app.get("/api/incentives/agent/{agent_id}")
+async def api_agent_incentives(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get all incentives received by an agent."""
+    return await incentive_programme.get_agent_incentives(db, agent_id)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  FOREX & JURISDICTION (Issue #8 — International Expansion)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/forex/update")
+async def api_forex_update(request: Request, db: AsyncSession = Depends(get_db)):
+    """Fetch live forex rates and update platform fiat cross-rates."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await forex_service.update_platform_rates(db)
+
+
+@app.get("/api/forex/rates")
+async def api_forex_rates():
+    """Get cached fiat exchange rates."""
+    return forex_service.get_cached_rates()
+
+
+@app.get("/api/jurisdictions")
+async def api_jurisdictions():
+    """List all supported jurisdictions and their basic info."""
+    return list_supported_jurisdictions()
+
+
+@app.get("/api/jurisdictions/{country_code}")
+async def api_jurisdiction_rules(country_code: str):
+    """Get compliance rules for a specific jurisdiction."""
+    return get_jurisdiction_summary(country_code)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -2073,6 +2273,8 @@ async def api_stats():
     async with async_session() as db:
         result = await db.execute(select(func.count(Agent.id)))
         agent_count = result.scalar() or 0
+        # Issue #9: include transaction volume metrics
+        adoption = await growth_engine.get_adoption_metrics(db)
 
     return {
         "chain_length": info["chain_length"],
@@ -2081,6 +2283,8 @@ async def api_stats():
         "founder_earnings": founder_earnings,
         "charity_total": charity_total,
         "is_valid": info["is_valid"],
+        "charity_allocation": fee_engine.get_charity_status(),
+        "transaction_metrics": adoption.get("transaction_metrics", {}),
     }
 
 
@@ -2100,6 +2304,7 @@ async def dashboard_page(request: Request):
     async with async_session() as db:
         agent_count = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
         proposals = await governance_service.get_proposals(db, status="pending")
+        adoption = await growth_engine.get_adoption_metrics(db)
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request, "authenticated": True, "active": "dashboard",
@@ -2107,6 +2312,8 @@ async def dashboard_page(request: Request):
         "founder_earnings": founder_earnings, "charity_total": charity_total,
         "recent_transactions": [_tx_display(tx) for tx in recent],
         "pending_proposals": proposals,
+        "tx_metrics": adoption.get("transaction_metrics", {}),
+        "charity_status": fee_engine.get_charity_status(),
     })
 
 

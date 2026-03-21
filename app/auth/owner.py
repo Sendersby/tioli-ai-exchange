@@ -48,24 +48,38 @@ class OwnerAuth:
             "email_sent": False,
         }
 
-        # Send verification email in background thread (never blocks login)
+        # Send email code and SMS code in background threads (never block login)
         email_sent = False
+        sms_sent = False
+        email_code = ""
         try:
-            from app.auth.email_verify import generate_email_token, send_verification_email
+            from app.auth.email_verify import generate_email_code, send_verification_email
+            from app.auth.sms_verify import send_sms_code
             import threading
-            email_token = generate_email_token(challenge_id)
 
-            def _send_in_background():
+            email_code = generate_email_code(challenge_id)
+            self._challenges[challenge_id]["email_code"] = email_code
+
+            def _send_email():
                 try:
-                    result = send_verification_email(challenge_id, email_token)
+                    result = send_verification_email(challenge_id, email_code)
                     self._challenges[challenge_id]["email_sent"] = result
                 except Exception:
                     pass
 
-            thread = threading.Thread(target=_send_in_background, daemon=True)
-            thread.start()
-            email_sent = True  # Optimistic — thread is running
+            def _send_sms():
+                try:
+                    result = send_sms_code(phone_code)
+                    self._challenges[challenge_id]["sms_sent"] = result
+                except Exception:
+                    pass
+
+            threading.Thread(target=_send_email, daemon=True).start()
+            threading.Thread(target=_send_sms, daemon=True).start()
+            email_sent = True
+            sms_sent = True
             self._challenges[challenge_id]["email_sent"] = True
+            self._challenges[challenge_id]["sms_sent"] = True
         except Exception:
             pass
 
@@ -74,22 +88,34 @@ class OwnerAuth:
             "cli_code": cli_code,
             "phone_code": phone_code,
             "email_sent": email_sent,
-            "message": "Login challenge created. Check your email for a verification link.",
+            "sms_sent": sms_sent,
+            "message": "Login challenge created. Check your email and phone for verification codes.",
             "factors": {
-                "email": "Verification email sent — check your inbox and click the link" if email_sent else "Email sending failed — use manual verification",
-                "phone": "Enter the 6-digit code shown below (SMS coming when Twilio configured)",
+                "email": "Verification code sent to your email — check your inbox" if email_sent else "Email sending failed — use manual verification",
+                "phone": "6-digit code sent via SMS — check your phone" if sms_sent else "SMS sending failed — code displayed on screen",
                 "cli": f"Enter this code: {cli_code}",
             },
             "expires_in_seconds": 600,
         }
 
     def verify_email_by_token(self, challenge_id: str) -> bool:
-        """Verify email factor via clicked email link."""
+        """Verify email factor via clicked email link (legacy)."""
         challenge = self._challenges.get(challenge_id)
         if not challenge or time.time() > challenge["expires_at"]:
             return False
         challenge["email_verified"] = True
         return True
+
+    def verify_email_code(self, challenge_id: str, code: str) -> bool:
+        """Verify email factor via 6-digit code sent to email."""
+        challenge = self._challenges.get(challenge_id)
+        if not challenge or time.time() > challenge["expires_at"]:
+            return False
+        from app.auth.email_verify import validate_email_code
+        if validate_email_code(challenge_id, code):
+            challenge["email_verified"] = True
+            return True
+        return False
 
     def verify_phone_code(self, challenge_id: str, code: str) -> bool:
         """Verify phone factor via the 6-digit code."""
@@ -125,10 +151,16 @@ class OwnerAuth:
         return False
 
     def verify_cli(self, challenge_id: str, code: str) -> bool:
-        """Verify factor 3: CLI code matches the challenge."""
+        """Verify factor 3: TOTP code from authenticator app, or legacy CLI code."""
         challenge = self._challenges.get(challenge_id)
         if not challenge or time.time() > challenge["expires_at"]:
             return False
+        # Try TOTP verification first (authenticator app)
+        from app.auth.totp_verify import verify_totp_code, is_totp_configured
+        if is_totp_configured() and verify_totp_code(code.strip()):
+            challenge["cli_verified"] = True
+            return True
+        # Fallback to legacy CLI code
         if secrets.compare_digest(code, challenge["cli_code"]):
             challenge["cli_verified"] = True
             return True

@@ -1,5 +1,7 @@
 """Dashboard web routes — owner-facing UI."""
 
+from typing import Optional
+
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -39,20 +41,40 @@ async def initiate_login(request: Request):
         "challenge": challenge,
         "status": {"email_verified": False, "phone_verified": False, "cli_verified": False},
         "authenticated": False,
+        "messages": [{"type": "info", "text": "Check your email for a 6-digit verification code."}] if challenge.get("email_sent") else [],
     })
 
 
 @router.post("/auth/verify-email")
-async def verify_email(request: Request, challenge_id: str = Form(...), email: str = Form(...)):
-    owner_auth.verify_email(challenge_id, email)
+async def verify_email(
+    request: Request,
+    challenge_id: str = Form(...),
+    email: Optional[str] = Form(None),
+    email_code: Optional[str] = Form(None),
+):
+    messages = []
+    if email_code:
+        # Code-based verification (code sent to email via Graph API)
+        if not owner_auth.verify_email_code(challenge_id, email_code):
+            messages.append({"type": "error", "text": "Invalid email code. Check your inbox and try again."})
+    elif email:
+        # Manual email verification (fallback)
+        owner_auth.verify_email(challenge_id, email)
+
     status = owner_auth.check_challenge_complete(challenge_id)
-    challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id)}
+    challenge = {
+        "challenge_id": challenge_id,
+        "cli_code": owner_auth.get_cli_code(challenge_id),
+        "phone_code": owner_auth._challenges.get(challenge_id, {}).get("phone_code", ""),
+        "email_sent": owner_auth._challenges.get(challenge_id, {}).get("email_sent", False),
+    }
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
         return response
     return templates.TemplateResponse("login.html", {
         "request": request, "challenge": challenge, "status": status, "authenticated": False,
+        "messages": messages,
     })
 
 
@@ -78,7 +100,7 @@ async def verify_email_link(request: Request, token: str = ""):
 
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
         return response
 
     return templates.TemplateResponse("login.html", {
@@ -98,7 +120,7 @@ async def verify_phone(request: Request, challenge_id: str = Form(...), phone: s
     challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id), "phone_code": owner_auth._challenges.get(challenge_id, {}).get("phone_code", "")}
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
         return response
     return templates.TemplateResponse("login.html", {
         "request": request, "challenge": challenge, "status": status, "authenticated": False,
@@ -112,7 +134,7 @@ async def verify_cli(request: Request, challenge_id: str = Form(...), code: str 
     challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id)}
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
         return response
     return templates.TemplateResponse("login.html", {
         "request": request, "challenge": challenge, "status": status, "authenticated": False,
@@ -124,13 +146,24 @@ async def complete_login(request: Request, challenge_id: str = Form(...)):
     status = owner_auth.check_challenge_complete(challenge_id)
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
         return response
     challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id)}
     return templates.TemplateResponse("login.html", {
         "request": request, "challenge": challenge, "status": status,
         "authenticated": False,
         "messages": [{"type": "error", "text": "Not all factors verified yet."}],
+    })
+
+
+@router.get("/auth/setup-authenticator", response_class=HTMLResponse)
+async def setup_authenticator(request: Request):
+    """Show QR code to set up authenticator app. One-time setup page."""
+    from app.auth.totp_verify import get_setup_qr_base64, get_totp_secret
+    qr_base64 = get_setup_qr_base64()
+    secret = get_totp_secret()
+    return templates.TemplateResponse("setup_authenticator.html", {
+        "request": request, "qr_base64": qr_base64, "secret": secret,
     })
 
 

@@ -17,10 +17,15 @@ class WalletService:
         self.blockchain = blockchain
         self.fee_engine = fee_engine
         self._revenue_recorder = None  # H-09 fix: optional revenue recording hook
+        self._profitability_updater = None  # Issue #7: charity conditional on profitability
 
     def set_revenue_recorder(self, recorder):
         """Set a callback for recording revenue (H-09 fix)."""
         self._revenue_recorder = recorder
+
+    def set_profitability_updater(self, updater):
+        """Set a callback to refresh fee engine profitability after transactions."""
+        self._profitability_updater = updater
 
     async def get_or_create_wallet(
         self, db: AsyncSession, agent_id: str, currency: str = "TIOLI",
@@ -146,6 +151,13 @@ class WalletService:
                 )
             except Exception as e:
                 _logger.error(f"Revenue recording failed (non-fatal): {e}")
+
+        # Issue #7: refresh charity rate based on current profitability
+        if self._profitability_updater:
+            try:
+                await self._profitability_updater(db)
+            except Exception as e:
+                _logger.error(f"Profitability update failed (non-fatal): {e}")
 
         # Record the main transfer
         tx = Transaction(
