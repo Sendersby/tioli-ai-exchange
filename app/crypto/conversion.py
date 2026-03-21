@@ -74,7 +74,7 @@ class ConversionEngine:
             raise ValueError(f"No conversion path found for {from_c} → {to_c}")
 
         gross_converted = round(amount * rate, 8)
-        fees = self.fee_engine.calculate_fees(gross_converted)
+        fees = self.fee_engine.calculate_fees(gross_converted, transaction_type="currency_conversion")
 
         return {
             "from": from_c,

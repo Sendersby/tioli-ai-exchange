@@ -136,18 +136,21 @@ class TestCommissionCalculation:
         from app.exchange.fees import FeeEngine
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         fees = engine.calculate_fees(10000)
-        assert fees["founder_commission"] == 1200.0
-        assert fees["charity_fee"] == 1000.0
-        assert fees["net_amount"] == 7800.0
+        # Commission = 12% of 10000 = 1200, charity = 10% of 1200 = 120
+        assert fees["commission"] == 1200.0
+        assert fees["charity_fee"] == 120.0
+        assert fees["founder_commission"] == 1080.0  # 1200 - 120
+        assert fees["net_amount"] == 8800.0           # 10000 - 1200
 
     def test_worked_example_from_brief(self):
-        """Section 6.2 worked example: 10,000 credits engagement."""
+        """V2 Brief: commission = 12% of gross, charity = 10% of commission."""
         from app.exchange.fees import FeeEngine
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         fees = engine.calculate_fees(10000)
-        assert fees["founder_commission"] == 1200  # 12%
-        assert fees["charity_fee"] == 1000          # 10%
-        assert fees["net_amount"] == 7800            # Provider gets 78%
+        assert fees["commission"] == 1200       # 12%
+        assert fees["charity_fee"] == 120       # 10% of commission
+        assert fees["founder_commission"] == 1080  # commission - charity
+        assert fees["net_amount"] == 8800       # Provider gets 88%
 
 
 class TestReputationCalculation:
@@ -265,4 +268,5 @@ class TestSecurityConcepts:
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         # Even if someone passes a different rate, the engine uses its own
         fees = engine.calculate_fees(1000)
-        assert fees["founder_commission"] == 120  # Always server-calculated
+        assert fees["commission"] == 120  # Always server-calculated
+        assert fees["founder_commission"] == 108  # 120 - 12 (charity)

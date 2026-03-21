@@ -30,9 +30,10 @@ class TestConcurrentSafety:
         """Same input always produces same fees — no race condition in calculation."""
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         results = [engine.calculate_fees(1000) for _ in range(100)]
-        assert all(r["founder_commission"] == 120 for r in results)
-        assert all(r["charity_fee"] == 100 for r in results)
-        assert all(r["net_amount"] == 780 for r in results)
+        # commission=120, charity=12 (10% of 120), founder=108, net=880
+        assert all(r["commission"] == 120 for r in results)
+        assert all(r["charity_fee"] == 12 for r in results)
+        assert all(r["net_amount"] == 880 for r in results)
 
     def test_double_spend_prevention_logic(self):
         """Two concurrent reads of same balance should not both succeed."""

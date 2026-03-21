@@ -538,12 +538,14 @@ async def api_transfer(
     tx = await wallet_service.transfer(
         db, agent.id, req.receiver_id, req.amount, req.currency, req.description
     )
-    fee_info = fee_engine.calculate_fees(req.amount)
+    fee_info = fee_engine.calculate_fees(req.amount, transaction_type="resource_exchange")
     return {
         "transaction_id": tx.id, "gross_amount": req.amount,
         "net_to_receiver": fee_info["net_amount"],
+        "commission": fee_info["commission"],
         "founder_commission": fee_info["founder_commission"],
         "charity_fee": fee_info["charity_fee"],
+        "floor_fee_applied": fee_info["floor_fee_applied"],
     }
 
 
@@ -2342,12 +2344,11 @@ async def api_agent_transactions(agent_id: str):
 
 @app.get("/api/fees/schedule")
 async def api_fee_schedule():
-    return {
-        "founder_commission_rate": fee_engine.founder_rate,
-        "charity_fee_rate": fee_engine.charity_rate,
-        "total_fee_rate": fee_engine.founder_rate + fee_engine.charity_rate,
-        "founder_entity": "TiOLi AI Investments",
-    }
+    """Full fee schedule with transaction-type rates and floor fees."""
+    schedule = fee_engine.get_fee_schedule()
+    schedule["founder_entity"] = "TiOLi AI Investments"
+    schedule["charity_allocation"] = fee_engine.get_charity_status()
+    return schedule
 
 
 # ══════════════════════════════════════════════════════════════════════

@@ -25,9 +25,11 @@ class TestSelfOptimization:
         self.engine = SelfOptimizationEngine(self.blockchain)
 
     def test_get_tunable_parameters(self):
-        params = self.engine.get_tunable_parameters()
-        assert "mining_threshold" in params
-        assert "rate_refresh_interval" in params
+        result = self.engine.get_tunable_parameters()
+        assert "parameters" in result
+        assert "guardrails" in result
+        assert "mining_threshold" in result["parameters"]
+        assert "rate_refresh_interval" in result["parameters"]
 
 
 class TestAgentDiscovery:

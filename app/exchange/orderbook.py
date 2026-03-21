@@ -317,7 +317,7 @@ class TradingEngine:
         from app.agents.models import Wallet
 
         total_value = round(price * quantity, 8)
-        fee_breakdown = self.fee_engine.calculate_fees(total_value)
+        fee_breakdown = self.fee_engine.calculate_fees(total_value, transaction_type="resource_exchange")
 
         # Determine buyer and seller
         if incoming.side == OrderSide.BUY:

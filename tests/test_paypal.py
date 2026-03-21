@@ -115,8 +115,10 @@ class TestNonBreaking:
         from app.exchange.fees import FeeEngine
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         fees = engine.calculate_fees(1000)
-        assert fees["founder_commission"] == 120
-        assert fees["net_amount"] == 780
+        # V2: commission=120, charity=12 (10% of commission), founder=108, net=880
+        assert fees["commission"] == 120
+        assert fees["founder_commission"] == 108
+        assert fees["net_amount"] == 880
 
     def test_existing_blockchain_unchanged(self):
         from app.blockchain.transaction import TransactionType

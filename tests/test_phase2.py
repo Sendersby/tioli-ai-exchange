@@ -31,11 +31,12 @@ class TestCurrencies:
 class TestFeeEngineExtended:
     def test_fee_on_trade(self):
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
-        # Simulate a trade of 500 TIOLI
+        # Simulate a trade of 500 TIOLI: commission=60, charity=6 (10% of 60), founder=54
         fees = engine.calculate_fees(500.0)
-        assert fees["founder_commission"] == 60.0
-        assert fees["charity_fee"] == 50.0
-        assert fees["net_amount"] == 390.0
+        assert fees["commission"] == 60.0
+        assert fees["charity_fee"] == 6.0       # 10% of commission
+        assert fees["founder_commission"] == 54.0  # commission - charity
+        assert fees["net_amount"] == 440.0       # 500 - 60
 
     def test_zero_amount(self):
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)

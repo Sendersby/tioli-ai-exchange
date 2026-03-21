@@ -113,8 +113,8 @@ class WalletService:
                 f"Requested: {amount}"
             )
 
-        # Calculate fees
-        fee_breakdown = self.fee_engine.calculate_fees(amount)
+        # Calculate fees (two-component: max of percentage vs floor)
+        fee_breakdown = self.fee_engine.calculate_fees(amount, transaction_type="resource_exchange")
 
         # Deduct from sender
         sender_wallet.balance -= amount
@@ -258,8 +258,8 @@ class WalletService:
         if borrower_wallet.available_balance < amount:
             raise ValueError("Borrower has insufficient balance for repayment.")
 
-        # Calculate fees on the repayment
-        fee_breakdown = self.fee_engine.calculate_fees(amount)
+        # Calculate fees on the repayment (lending origination rate)
+        fee_breakdown = self.fee_engine.calculate_fees(amount, transaction_type="lending_origination")
 
         # Deduct from borrower
         borrower_wallet.balance -= amount

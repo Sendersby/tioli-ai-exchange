@@ -181,7 +181,8 @@ class TestNonBreakingIntegration:
         from app.exchange.fees import FeeEngine
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         fees = engine.calculate_fees(1000)
-        # Original calculation still works
-        assert fees["founder_commission"] == 120
-        assert fees["charity_fee"] == 100
-        assert fees["net_amount"] == 780
+        # V2 reform: charity = 10% of commission, not 10% of gross
+        assert fees["commission"] == 120
+        assert fees["charity_fee"] == 12        # 10% of 120
+        assert fees["founder_commission"] == 108  # 120 - 12
+        assert fees["net_amount"] == 880          # 1000 - 120

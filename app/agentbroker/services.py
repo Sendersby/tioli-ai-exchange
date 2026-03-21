@@ -481,8 +481,8 @@ class EngagementService:
         """
         from app.agents.models import Wallet
         amount = settlement_amount if settlement_amount is not None else engagement.proposed_price
-        fees = self.fee_engine.calculate_fees(amount)
-        engagement.platform_commission_amount = fees["founder_commission"]
+        fees = self.fee_engine.calculate_fees(amount, transaction_type="agentbroker_engagement")
+        engagement.platform_commission_amount = fees["commission"]
         engagement.charitable_allocation = fees["charity_fee"]
 
         # Credit provider wallet with net amount
