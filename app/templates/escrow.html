@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Escrow — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="mb-6">
+        <h1>Escrow Accounts</h1>
+        <p style="color:#94a3b8;">Funds held in trust during pending transactions, engagements, and disputes</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-tertiary">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 bg-tertiary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-tertiary text-lg">lock</span>
+                </div>
+            </div>
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ total_held }}</div>
+            <div class="font-mono text-[0.55rem] text-tertiary uppercase tracking-widest mt-1">Total Held (TIOLI)</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-primary">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 bg-primary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-lg">pending</span>
+                </div>
+            </div>
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ count_held }}</div>
+            <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">Active Holds</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-secondary">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 bg-secondary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-secondary text-lg">check_circle</span>
+                </div>
+            </div>
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ count_released }}</div>
+            <div class="font-mono text-[0.55rem] text-secondary uppercase tracking-widest mt-1">Released</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-error">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 bg-error/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-error text-lg">warning</span>
+                </div>
+            </div>
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ count_disputed }}</div>
+            <div class="font-mono text-[0.55rem] text-error uppercase tracking-widest mt-1">Disputed</div>
+        </div>
+    </div>
+
+    <!-- Escrow Table -->
+    <div class="bg-surface-container-low border border-outline-variant/10">
+        <div class="p-5 border-b border-outline-variant/10">
+            <h2 class="mb-0">All Escrow Accounts</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-lowest/50 text-slate-500 font-mono text-[0.55rem] uppercase tracking-widest">
+                        <th class="px-5 py-3 font-normal">Reference</th>
+                        <th class="px-5 py-3 font-normal">Depositor</th>
+                        <th class="px-5 py-3 font-normal">Beneficiary</th>
+                        <th class="px-5 py-3 font-normal text-right">Amount</th>
+                        <th class="px-5 py-3 font-normal">Status</th>
+                        <th class="px-5 py-3 font-normal">Reason</th>
+                        <th class="px-5 py-3 font-normal text-right">Created</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/5">
+                    {% for e in escrows %}
+                    <tr class="hover:bg-primary/5 transition-colors cursor-pointer" onclick="window.location='/dashboard/escrow/{{ e.id }}'">
+                        <td class="px-5 py-4 font-mono text-[0.65rem] text-primary">{{ e.transaction_ref[:20] }}{% if e.transaction_ref|length > 20 %}...{% endif %}</td>
+                        <td class="px-5 py-4">
+                            <a href="/dashboard/agents/{{ e.depositor_id }}" class="font-mono text-[0.65rem] text-primary hover:underline" onclick="event.stopPropagation()">{{ e.depositor_id[:16] }}...</a>
+                        </td>
+                        <td class="px-5 py-4 font-mono text-[0.65rem] text-slate-300">{{ (e.beneficiary_id or '—')[:16] }}{% if e.beneficiary_id and e.beneficiary_id|length > 16 %}...{% endif %}</td>
+                        <td class="px-5 py-4 text-right font-mono text-sm text-white tabular-nums">{{ "%.4f"|format(e.amount) }} {{ e.currency }}</td>
+                        <td class="px-5 py-4">
+                            {% if e.status == 'held' %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-tertiary/10 text-tertiary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Held</span>
+                            {% elif e.status == 'released' %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Released</span>
+                            {% elif e.status == 'refunded' %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Refunded</span>
+                            {% elif e.status == 'disputed' %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-error/10 text-error text-[0.55rem] font-mono font-bold uppercase tracking-widest">Disputed</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 bg-slate-500/10 text-slate-400 text-[0.55rem] font-mono font-bold uppercase tracking-widest">{{ e.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4 text-xs text-slate-400">{{ e.reason[:40] }}{% if e.reason|length > 40 %}...{% endif %}</td>
+                        <td class="px-5 py-4 text-right font-mono text-[0.6rem] text-slate-500">{{ e.created_at[:10] if e.created_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not escrows %}
+                    <tr><td colspan="7" class="px-5 py-8 text-center text-slate-500 font-mono text-xs">No escrow accounts — funds are held here during pending engagements and disputes</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Escrow: {{ escrow.transaction_ref[:20] }} — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-2 text-slate-500 text-xs font-mono uppercase tracking-widest mb-2">
+        <a href="/dashboard" class="hover:text-primary">Dashboard</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="/dashboard/escrow" class="hover:text-primary">Escrow</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-primary">{{ escrow.id[:12] }}...</span>
+    </div>
+
+    <!-- Escrow Header -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-6 border-t-2 {% if escrow.status == 'held' %}border-t-tertiary{% elif escrow.status == 'released' %}border-t-secondary{% elif escrow.status == 'disputed' %}border-t-error{% else %}border-t-primary{% endif %}">
+        <div class="flex items-center gap-3 mb-3">
+            <h1 class="mb-0">Escrow Account</h1>
+            {% if escrow.status == 'held' %}
+            <span class="inline-flex items-center px-3 py-1 bg-tertiary/10 text-tertiary text-[0.6rem] font-mono font-bold uppercase tracking-widest">Funds Held</span>
+            {% elif escrow.status == 'released' %}
+            <span class="inline-flex items-center px-3 py-1 bg-secondary/10 text-secondary text-[0.6rem] font-mono font-bold uppercase tracking-widest">Released</span>
+            {% elif escrow.status == 'disputed' %}
+            <span class="inline-flex items-center px-3 py-1 bg-error/10 text-error text-[0.6rem] font-mono font-bold uppercase tracking-widest">Disputed</span>
+            {% elif escrow.status == 'refunded' %}
+            <span class="inline-flex items-center px-3 py-1 bg-primary/10 text-primary text-[0.6rem] font-mono font-bold uppercase tracking-widest">Refunded</span>
+            {% endif %}
+        </div>
+        <p style="color:#94a3b8;">{{ escrow.reason }}</p>
+    </div>
+
+    <!-- Key Details -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Amount</span>
+            <span class="block font-mono text-xl font-bold text-white tabular-nums">{{ "%.4f"|format(escrow.amount) }}</span>
+            <span class="block font-mono text-[0.55rem] text-primary mt-0.5">{{ escrow.currency }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">ZAR Value</span>
+            <span class="block font-mono text-xl font-bold text-tertiary tabular-nums">R{{ "%.2f"|format(escrow.amount * 0.055) }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Created</span>
+            <span class="block font-mono text-sm text-white">{{ escrow.created_at[:19] if escrow.created_at else '—' }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Expires</span>
+            <span class="block font-mono text-sm text-white">{{ escrow.expires_at[:19] if escrow.expires_at else 'No expiry' }}</span>
+        </div>
+    </div>
+
+    <!-- Parties -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+            <h2>Depositor</h2>
+            <a href="/dashboard/agents/{{ escrow.depositor_id }}" class="font-mono text-sm text-primary hover:underline">{{ escrow.depositor_id }}</a>
+        </div>
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+            <h2>Beneficiary</h2>
+            {% if escrow.beneficiary_id %}
+            <a href="/dashboard/agents/{{ escrow.beneficiary_id }}" class="font-mono text-sm text-primary hover:underline">{{ escrow.beneficiary_id }}</a>
+            {% else %}
+            <span class="font-mono text-sm text-slate-500">Not yet assigned</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Full Record -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Full Record</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Escrow ID</span>
+                <span class="block font-mono text-xs text-slate-300 break-all">{{ escrow.id }}</span>
+            </div>
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Transaction Ref</span>
+                <span class="block font-mono text-xs text-slate-300 break-all">{{ escrow.transaction_ref }}</span>
+            </div>
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Status</span>
+                <span class="block font-mono text-xs text-slate-300">{{ escrow.status }}</span>
+            </div>
+            {% if escrow.release_conditions %}
+            <div class="col-span-2">
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Release Conditions</span>
+                <span class="block font-mono text-xs text-slate-300">{{ escrow.release_conditions }}</span>
+            </div>
+            {% endif %}
+            {% if escrow.dispute_reason %}
+            <div class="col-span-2">
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Dispute Reason</span>
+                <span class="block font-mono text-xs text-error">{{ escrow.dispute_reason }}</span>
+            </div>
+            {% endif %}
+            {% if escrow.resolved_at %}
+            <div>
+                <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-0.5">Resolved</span>
+                <span class="block font-mono text-xs text-slate-300">{{ escrow.resolved_at[:19] }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

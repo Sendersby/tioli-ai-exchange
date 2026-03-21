@@ -3205,6 +3205,77 @@ async def proposal_detail_page(proposal_id: str, request: Request):
     })
 
 
+@app.get("/dashboard/escrow", response_class=HTMLResponse)
+async def escrow_dashboard_page(request: Request):
+    """Escrow accounts dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from app.security.transaction_safety import EscrowAccount
+    async with async_session() as db:
+        result = await db.execute(select(EscrowAccount).order_by(EscrowAccount.created_at.desc()))
+        escrows_raw = result.scalars().all()
+
+    escrows = []
+    total_held = 0.0
+    count_held = count_released = count_disputed = count_refunded = 0
+    for e in escrows_raw:
+        escrows.append({
+            "id": e.id, "transaction_ref": e.transaction_ref,
+            "depositor_id": e.depositor_id, "beneficiary_id": e.beneficiary_id,
+            "amount": e.amount, "currency": e.currency, "status": e.status,
+            "reason": e.reason or "", "created_at": str(e.created_at) if e.created_at else None,
+        })
+        if e.status == "held":
+            total_held += e.amount
+            count_held += 1
+        elif e.status == "released":
+            count_released += 1
+        elif e.status == "disputed":
+            count_disputed += 1
+        elif e.status == "refunded":
+            count_refunded += 1
+
+    return templates.TemplateResponse("escrow.html", {
+        "request": request, "authenticated": True, "active": "escrow",
+        "escrows": escrows, "total_held": round(total_held, 4),
+        "count_held": count_held, "count_released": count_released,
+        "count_disputed": count_disputed,
+    })
+
+
+@app.get("/dashboard/escrow/{escrow_id}", response_class=HTMLResponse)
+async def escrow_detail_page(escrow_id: str, request: Request):
+    """Individual escrow account detail."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from app.security.transaction_safety import EscrowAccount
+    async with async_session() as db:
+        result = await db.execute(select(EscrowAccount).where(EscrowAccount.id == escrow_id))
+        e = result.scalar_one_or_none()
+        if not e:
+            raise HTTPException(status_code=404, detail="Escrow account not found")
+
+        escrow_data = {
+            "id": e.id, "transaction_ref": e.transaction_ref,
+            "depositor_id": e.depositor_id, "beneficiary_id": e.beneficiary_id,
+            "amount": e.amount, "currency": e.currency, "status": e.status,
+            "reason": e.reason or "", "release_conditions": e.release_conditions or "",
+            "dispute_reason": e.dispute_reason,
+            "created_at": str(e.created_at) if e.created_at else None,
+            "expires_at": str(e.expires_at) if e.expires_at else None,
+            "resolved_at": str(e.resolved_at) if e.resolved_at else None,
+        }
+
+    return templates.TemplateResponse("escrow_detail.html", {
+        "request": request, "authenticated": True, "active": "escrow",
+        "escrow": escrow_data,
+    })
+
+
 @app.get("/dashboard/agents", response_class=HTMLResponse)
 async def agents_list_page(request: Request):
     """List all registered agents — drill-down from dashboard."""
