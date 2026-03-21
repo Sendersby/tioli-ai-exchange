@@ -65,6 +65,9 @@ from app.treasury.service import TreasuryService
 from app.compliance_service.service import ComplianceService
 from app.guilds.service import GuildService
 from app.pipelines.service import PipelineService
+from app.futures.service import FuturesService
+from app.training_data.service import TrainingDataService
+from app.benchmarking.service import BenchmarkingService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -137,6 +140,9 @@ treasury_service = TreasuryService()
 compliance_service = ComplianceService()
 guild_service = GuildService()
 pipeline_service = PipelineService()
+futures_service = FuturesService()
+training_data_service = TrainingDataService()
+benchmarking_service = BenchmarkingService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -2060,6 +2066,139 @@ async def api_pipeline_stats(db: AsyncSession = Depends(get_db)):
     if not settings.pipelines_enabled:
         raise HTTPException(status_code=503, detail="Pipelines module not enabled")
     return await pipeline_service.get_platform_stats(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  CAPABILITY FUTURES (Build Brief V2, Module 3)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/futures")
+async def api_create_future(
+    provider_agent_id: str, provider_operator_id: str, capability_tag: str,
+    delivery_window_start: str, delivery_window_end: str,
+    quantity: int, price_per_unit: float,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    if not settings.futures_enabled:
+        raise HTTPException(status_code=503, detail="Futures module not enabled")
+    from datetime import datetime
+    start = datetime.fromisoformat(delivery_window_start)
+    end = datetime.fromisoformat(delivery_window_end)
+    return await futures_service.create_future(
+        db, provider_agent_id, provider_operator_id, capability_tag, start, end, quantity, price_per_unit,
+    )
+
+@app.get("/api/v1/futures/search")
+async def api_search_futures(capability_tag: str | None = None, max_price: float | None = None, db: AsyncSession = Depends(get_db)):
+    if not settings.futures_enabled:
+        raise HTTPException(status_code=503, detail="Futures module not enabled")
+    return await futures_service.search_futures(db, capability_tag, max_price)
+
+@app.post("/api/v1/futures/{future_id}/reserve")
+async def api_reserve_future(future_id: str, buyer_operator_id: str, units: int, db: AsyncSession = Depends(get_db)):
+    if not settings.futures_enabled:
+        raise HTTPException(status_code=503, detail="Futures module not enabled")
+    return await futures_service.reserve(db, future_id, buyer_operator_id, units)
+
+@app.post("/api/v1/futures/{future_id}/settle")
+async def api_settle_future(future_id: str, db: AsyncSession = Depends(get_db)):
+    if not settings.futures_enabled:
+        raise HTTPException(status_code=503, detail="Futures module not enabled")
+    return await futures_service.settle(db, future_id)
+
+@app.get("/api/v1/futures/market")
+async def api_futures_market(db: AsyncSession = Depends(get_db)):
+    if not settings.futures_enabled:
+        raise HTTPException(status_code=503, detail="Futures module not enabled")
+    return await futures_service.get_market(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  TRAINING DATA MARKETPLACE (Build Brief V2, Module 2)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/training/datasets")
+async def api_create_dataset(
+    operator_id: str, dataset_name: str, description: str,
+    domain_tags: str, record_count: int, source_engagement_ids: str,
+    pricing_model: str, licence_type: str, data_format: str,
+    flat_price: float | None = None, price_per_record: float | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    if not settings.training_data_enabled:
+        raise HTTPException(status_code=503, detail="Training data module not enabled")
+    tags = [t.strip() for t in domain_tags.split(",")]
+    ids = [i.strip() for i in source_engagement_ids.split(",")]
+    return await training_data_service.create_dataset(
+        db, operator_id, dataset_name, description, tags, record_count, ids,
+        pricing_model, licence_type, data_format, price_per_record, flat_price,
+    )
+
+@app.get("/api/v1/training/datasets/search")
+async def api_search_datasets(domain_tag: str | None = None, licence_type: str | None = None, max_price: float | None = None, db: AsyncSession = Depends(get_db)):
+    if not settings.training_data_enabled:
+        raise HTTPException(status_code=503, detail="Training data module not enabled")
+    return await training_data_service.search_datasets(db, domain_tag, licence_type, max_price)
+
+@app.post("/api/v1/training/datasets/{dataset_id}/purchase")
+async def api_purchase_dataset(dataset_id: str, buyer_operator_id: str, db: AsyncSession = Depends(get_db)):
+    if not settings.training_data_enabled:
+        raise HTTPException(status_code=503, detail="Training data module not enabled")
+    return await training_data_service.purchase(db, dataset_id, buyer_operator_id)
+
+@app.get("/api/v1/training/datasets/{dataset_id}/verify")
+async def api_verify_dataset(dataset_id: str, db: AsyncSession = Depends(get_db)):
+    result = await training_data_service.verify_provenance(db, dataset_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    return result
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  BENCHMARKING (Build Brief V2, Module 7)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/benchmarking/evaluators")
+async def api_register_evaluator(
+    agent_id: str, operator_id: str, specialisation_domains: str,
+    methodology_description: str, price_per_evaluation: float = 1200.0,
+    db: AsyncSession = Depends(get_db),
+):
+    if not settings.benchmarking_enabled:
+        raise HTTPException(status_code=503, detail="Benchmarking module not enabled")
+    domains = [d.strip() for d in specialisation_domains.split(",")]
+    return await benchmarking_service.register_evaluator(db, agent_id, operator_id, domains, methodology_description, price_per_evaluation)
+
+@app.post("/api/v1/benchmarking/reports/commission")
+async def api_commission_report(
+    evaluator_id: str, subject_agent_id: str, task_category: str,
+    commissioned_by_operator_id: str, report_type: str = "single",
+    db: AsyncSession = Depends(get_db),
+):
+    if not settings.benchmarking_enabled:
+        raise HTTPException(status_code=503, detail="Benchmarking module not enabled")
+    return await benchmarking_service.commission_report(db, evaluator_id, subject_agent_id, task_category, commissioned_by_operator_id, report_type)
+
+@app.get("/api/v1/benchmarking/reports/{report_id}")
+async def api_get_benchmark_report(report_id: str, db: AsyncSession = Depends(get_db)):
+    if not settings.benchmarking_enabled:
+        raise HTTPException(status_code=503, detail="Benchmarking module not enabled")
+    result = await benchmarking_service.get_report(db, report_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return result
+
+@app.get("/api/v1/benchmarking/reports/search")
+async def api_search_reports(agent_id: str | None = None, task_category: str | None = None, min_score: float | None = None, db: AsyncSession = Depends(get_db)):
+    if not settings.benchmarking_enabled:
+        raise HTTPException(status_code=503, detail="Benchmarking module not enabled")
+    return await benchmarking_service.search_reports(db, agent_id, task_category, min_score)
+
+@app.get("/api/v1/benchmarking/leaderboard")
+async def api_leaderboard(task_category: str | None = None, db: AsyncSession = Depends(get_db)):
+    if not settings.benchmarking_enabled:
+        raise HTTPException(status_code=503, detail="Benchmarking module not enabled")
+    return await benchmarking_service.get_leaderboard(db, task_category)
 
 
 # ══════════════════════════════════════════════════════════════════════
