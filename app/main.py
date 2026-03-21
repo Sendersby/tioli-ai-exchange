@@ -62,6 +62,7 @@ from app.compliance.jurisdictions import (
 )
 from app.subscriptions.service import SubscriptionService
 from app.treasury.service import TreasuryService
+from app.compliance_service.service import ComplianceService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -131,6 +132,7 @@ incentive_programme = IncentiveProgramme()
 forex_service = ForexService(currency_service=currency_service)
 subscription_service = SubscriptionService()
 treasury_service = TreasuryService()
+compliance_service = ComplianceService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -1845,6 +1847,81 @@ async def api_treasury_actions(
     if not settings.treasury_enabled:
         raise HTTPException(status_code=503, detail="Treasury module not enabled")
     return await treasury_service.get_actions(db, treasury_id, limit)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMPLIANCE-AS-A-SERVICE (Build Brief V2, Module 5)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/compliance/agents")
+async def api_register_compliance_agent(
+    agent_id: str, operator_id: str, compliance_domains: str,
+    jurisdiction: str = "ZA", pricing_model: str = "per_review",
+    price_per_review: float = 50.0,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Register a compliance agent."""
+    if not settings.compliance_service_enabled:
+        raise HTTPException(status_code=503, detail="Compliance service module not enabled")
+    domains = [d.strip() for d in compliance_domains.split(",")]
+    return await compliance_service.register_compliance_agent(
+        db, agent_id, operator_id, domains, jurisdiction,
+        pricing_model=pricing_model, price_per_review=price_per_review,
+    )
+
+
+@app.get("/api/v1/compliance/agents/search")
+async def api_search_compliance_agents(
+    domain: str | None = None, jurisdiction: str | None = None,
+    max_price: float | None = None, db: AsyncSession = Depends(get_db),
+):
+    """Search compliance agents by domain, jurisdiction, price."""
+    if not settings.compliance_service_enabled:
+        raise HTTPException(status_code=503, detail="Compliance service module not enabled")
+    return await compliance_service.search_compliance_agents(db, domain, jurisdiction, max_price)
+
+
+@app.post("/api/v1/compliance/reviews")
+async def api_submit_compliance_review(
+    compliance_agent_id: str, requesting_agent_id: str,
+    content_hash: str, compliance_domains: str,
+    engagement_id: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit content for compliance review."""
+    if not settings.compliance_service_enabled:
+        raise HTTPException(status_code=503, detail="Compliance service module not enabled")
+    domains = [d.strip() for d in compliance_domains.split(",")]
+    return await compliance_service.submit_review(
+        db, compliance_agent_id, requesting_agent_id,
+        content_hash, domains, engagement_id,
+    )
+
+
+@app.post("/api/v1/compliance/reviews/{review_id}/submit-finding")
+async def api_submit_compliance_finding(
+    review_id: str, status: str, finding: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Compliance agent submits finding. If passed, generates blockchain certificate."""
+    if not settings.compliance_service_enabled:
+        raise HTTPException(status_code=503, detail="Compliance service module not enabled")
+    return await compliance_service.submit_finding(db, review_id, status, finding)
+
+
+@app.get("/api/v1/compliance/reviews/{review_id}/certificate")
+async def api_compliance_certificate(review_id: str, db: AsyncSession = Depends(get_db)):
+    """Retrieve compliance certificate for a verified review. Public endpoint."""
+    result = await compliance_service.get_certificate(db, review_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Certificate not found or review not passed")
+    return result
+
+
+@app.get("/api/v1/compliance/mandatory-domains")
+async def api_mandatory_compliance_domains():
+    """List domains requiring mandatory compliance review."""
+    return await compliance_service.get_mandatory_domains()
 
 
 # ══════════════════════════════════════════════════════════════════════
