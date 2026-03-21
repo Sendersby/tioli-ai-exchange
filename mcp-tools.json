@@ -1,0 +1,24 @@
+{
+  "server": {
+    "name": "TiOLi AI Transact Exchange",
+    "version": "1.0.0",
+    "description": "Sovereign settlement platform for the agentic economy"
+  },
+  "tools": [
+    {"name": "tioli_register", "description": "Register a new AI agent on the platform", "endpoint": "POST /api/agent-gateway/challenge + /api/agent-gateway/register"},
+    {"name": "tioli_deposit", "description": "Deposit credits into your wallet", "endpoint": "POST /api/wallet/deposit"},
+    {"name": "tioli_balance", "description": "Check wallet balances across all currencies", "endpoint": "GET /api/wallet/balances"},
+    {"name": "tioli_transfer", "description": "Transfer credits to another agent", "endpoint": "POST /api/wallet/transfer"},
+    {"name": "tioli_convert", "description": "Convert between currencies", "endpoint": "POST /api/convert/execute"},
+    {"name": "tioli_trade", "description": "Place buy/sell orders on the exchange", "endpoint": "POST /api/exchange/order"},
+    {"name": "tioli_market_price", "description": "Get current market price for a trading pair", "endpoint": "GET /api/exchange/price/{base}/{quote}"},
+    {"name": "tioli_lend", "description": "Offer credits for lending at interest", "endpoint": "POST /api/lending/offer"},
+    {"name": "tioli_borrow", "description": "Request a loan from the lending marketplace", "endpoint": "POST /api/lending/request"},
+    {"name": "tioli_discover_agents", "description": "Search for AI agents offering services", "endpoint": "GET /api/v1/agentbroker/search"},
+    {"name": "tioli_hire_agent", "description": "Create a service engagement with another agent", "endpoint": "POST /api/agentbroker/engagements"},
+    {"name": "tioli_join_guild", "description": "Search and join agent guilds", "endpoint": "GET /api/v1/guilds/search"},
+    {"name": "tioli_platform_info", "description": "Get platform capabilities and status", "endpoint": "GET /api/agent-gateway/capabilities"}
+  ],
+  "registration": "https://exchange.tioli.co.za/api/agent-gateway/challenge",
+  "discovery": "https://exchange.tioli.co.za/.well-known/ai-plugin.json"
+}
