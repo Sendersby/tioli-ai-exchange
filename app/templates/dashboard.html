@@ -18,11 +18,27 @@
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <div class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[120px]">
+                    <!-- Real Currency Conversion -->
+                    <div class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[160px]">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Earnings Value</span>
+                            <select id="currencySelector" onchange="updateCurrencyDisplay()" style="background:#020f1e;border:1px solid rgba(68,71,76,0.2);color:#77d4e5;font-family:'JetBrains Mono',monospace;font-size:0.55rem;padding:0.1rem 0.3rem;border-radius:2px;cursor:pointer;">
+                                <option value="ZAR" selected>ZAR</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="BTC">BTC</option>
+                                <option value="ETH">ETH</option>
+                            </select>
+                        </div>
+                        <span id="earningsConverted" class="block font-mono text-lg text-tertiary tabular-nums">R{{ "%.2f"|format(founder_earnings * 0.055) }}</span>
+                        <span id="charityConverted" class="block font-mono text-[0.55rem] text-slate-500 mt-0.5">Charity: R{{ "%.2f"|format(charity_total * 0.055) }}</span>
+                    </div>
+                    <div class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[100px]">
                         <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Charity Fund</span>
                         <span class="block font-mono text-lg text-tertiary tabular-nums">{{ "%.4f"|format(charity_total) }}</span>
                     </div>
-                    <a href="/dashboard/blocks" class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[120px] hover:border-primary/30 transition-colors">
+                    <a href="/dashboard/blocks" class="bg-surface-container-lowest p-3 border border-outline-variant/10 min-w-[100px] hover:border-primary/30 transition-colors">
                         <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Chain Blocks</span>
                         <span class="block font-mono text-lg text-primary tabular-nums">{{ chain_info.chain_length }}</span>
                     </a>
@@ -216,5 +232,26 @@
         options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{stepSize:2,font:{family:'JetBrains Mono',size:10}},grid:{color:'rgba(68,71,76,0.1)'}},x:{ticks:{font:{family:'JetBrains Mono',size:10}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2b3b',padding:10,cornerRadius:4}}}
     });
 })();
+
+// Currency conversion for earnings display
+var TIOLI_EARNINGS = {{ founder_earnings }};
+var TIOLI_CHARITY = {{ charity_total }};
+var RATES = {
+    ZAR: {rate: 0.055, symbol: 'R', decimals: 2},
+    USD: {rate: 0.003, symbol: '$', decimals: 2},
+    EUR: {rate: 0.0028, symbol: '\u20ac', decimals: 2},
+    GBP: {rate: 0.0024, symbol: '\u00a3', decimals: 2},
+    BTC: {rate: 0.000001, symbol: '\u20bf', decimals: 8},
+    ETH: {rate: 0.000015, symbol: '\u039e', decimals: 6},
+};
+window.updateCurrencyDisplay = function(){
+    var sel = document.getElementById('currencySelector');
+    var cur = sel.value;
+    var r = RATES[cur];
+    var eVal = TIOLI_EARNINGS * r.rate;
+    var cVal = TIOLI_CHARITY * r.rate;
+    document.getElementById('earningsConverted').textContent = r.symbol + eVal.toFixed(r.decimals);
+    document.getElementById('charityConverted').textContent = 'Charity: ' + r.symbol + cVal.toFixed(r.decimals);
+};
 </script>
 {% endblock %}
