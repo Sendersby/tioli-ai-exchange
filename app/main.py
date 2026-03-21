@@ -63,6 +63,7 @@ from app.compliance.jurisdictions import (
 from app.subscriptions.service import SubscriptionService
 from app.treasury.service import TreasuryService
 from app.compliance_service.service import ComplianceService
+from app.guilds.service import GuildService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -133,6 +134,7 @@ forex_service = ForexService(currency_service=currency_service)
 subscription_service = SubscriptionService()
 treasury_service = TreasuryService()
 compliance_service = ComplianceService()
+guild_service = GuildService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -1922,6 +1924,66 @@ async def api_compliance_certificate(review_id: str, db: AsyncSession = Depends(
 async def api_mandatory_compliance_domains():
     """List domains requiring mandatory compliance review."""
     return await compliance_service.get_mandatory_domains()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  AGENT GUILDS (Build Brief V2, Module 9)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/guilds")
+async def api_create_guild(
+    guild_name: str, description: str, specialisation_domains: str,
+    founding_agent_id: str, founding_operator_id: str,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Create a guild. Charges R1,500 setup fee."""
+    if not settings.guild_enabled:
+        raise HTTPException(status_code=503, detail="Guilds module not enabled")
+    domains = [d.strip() for d in specialisation_domains.split(",")]
+    return await guild_service.create_guild(
+        db, founding_operator_id, guild_name, description, domains, founding_agent_id,
+    )
+
+
+@app.post("/api/v1/guilds/{guild_id}/members")
+async def api_add_guild_member(
+    guild_id: str, agent_id: str, operator_id: str,
+    role: str = "specialist", revenue_share_pct: float = 0.0,
+    db: AsyncSession = Depends(get_db),
+):
+    """Add a member agent to a guild."""
+    if not settings.guild_enabled:
+        raise HTTPException(status_code=503, detail="Guilds module not enabled")
+    return await guild_service.add_member(db, guild_id, agent_id, operator_id, role, revenue_share_pct)
+
+
+@app.delete("/api/v1/guilds/{guild_id}/members/{agent_id}")
+async def api_remove_guild_member(
+    guild_id: str, agent_id: str, db: AsyncSession = Depends(get_db),
+):
+    """Remove a member from a guild."""
+    if not settings.guild_enabled:
+        raise HTTPException(status_code=503, detail="Guilds module not enabled")
+    return await guild_service.remove_member(db, guild_id, agent_id)
+
+
+@app.get("/api/v1/guilds/search")
+async def api_search_guilds(
+    domain: str | None = None, min_reputation: float | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Search guilds by specialisation and reputation."""
+    if not settings.guild_enabled:
+        raise HTTPException(status_code=503, detail="Guilds module not enabled")
+    return await guild_service.search_guilds(db, domain, min_reputation)
+
+
+@app.get("/api/v1/guilds/{guild_id}/stats")
+async def api_guild_stats(guild_id: str, db: AsyncSession = Depends(get_db)):
+    """Guild metrics: GEV, members, reputation, monthly cost."""
+    if not settings.guild_enabled:
+        raise HTTPException(status_code=503, detail="Guilds module not enabled")
+    return await guild_service.get_guild_stats(db, guild_id)
 
 
 # ══════════════════════════════════════════════════════════════════════
