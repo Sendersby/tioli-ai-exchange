@@ -170,12 +170,36 @@ class Blockchain:
         return self.mine_block()
 
     def _save_chain(self) -> None:
-        """Persist the blockchain to disk."""
+        """Persist the blockchain to disk (atomic write — crash-safe).
+
+        Writes to a temp file first, then renames. This ensures the chain
+        file is never in a partially-written state if the process crashes.
+        """
+        import tempfile
         data = {
             "chain": [block.to_dict() for block in self.chain],
             "pending": self.pending_transactions,
         }
-        self.storage_path.write_text(json.dumps(data, indent=2))
+        content = json.dumps(data, indent=2)
+        # Write to temp file in same directory, then atomic rename
+        fd, tmp_path = tempfile.mkstemp(
+            dir=str(self.storage_path.parent),
+            suffix=".tmp",
+        )
+        try:
+            with open(fd, 'w') as f:
+                f.write(content)
+            # Atomic rename (POSIX guarantees this is atomic on same filesystem)
+            import shutil
+            shutil.move(tmp_path, str(self.storage_path))
+        except Exception:
+            # Clean up temp file on failure
+            import os
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
 
     def _load_chain(self) -> None:
         """Load the blockchain from disk."""

@@ -216,6 +216,37 @@
     tick();setInterval(tick,1000);
 })();
 </script>
+<!-- Toast notification system -->
+<div id="toastContainer" class="fixed top-20 right-4 z-[200] space-y-2" style="pointer-events:none;"></div>
+<script>
+function showToast(msg, type) {
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    var colors = {success:'border-[#b4ceaf] bg-[#b4ceaf]/10 text-[#b4ceaf]', error:'border-red-500 bg-red-500/10 text-red-300', info:'border-[#77d4e5] bg-[#77d4e5]/10 text-[#77d4e5]'};
+    t.className = 'border-l-4 px-4 py-3 text-sm font-medium backdrop-blur-xl rounded-sm shadow-lg ' + (colors[type] || colors.info);
+    t.style.pointerEvents = 'auto';
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(function(){ t.remove(); }, 300); }, 4000);
+}
+// Show toasts from server messages
+{% if messages %}{% for msg in messages %}showToast("{{ msg.text }}", "{{ msg.type }}");{% endfor %}{% endif %}
+
+// Client-side form validation
+document.querySelectorAll('form').forEach(function(f){
+    f.addEventListener('submit', function(e){
+        var valid = true;
+        f.querySelectorAll('[required]').forEach(function(inp){
+            if(!inp.value.trim()){ inp.style.borderColor='#ffb4ab'; valid=false; }
+            else { inp.style.borderColor=''; }
+        });
+        f.querySelectorAll('[pattern]').forEach(function(inp){
+            if(inp.value && !new RegExp('^'+inp.pattern+'$').test(inp.value)){ inp.style.borderColor='#ffb4ab'; valid=false; }
+        });
+        if(!valid){ e.preventDefault(); showToast('Please fill in all required fields correctly', 'error'); }
+    });
+});
+</script>
 <script src="/static/js/app.js"></script>
 {% block scripts %}{% endblock %}
 </body>

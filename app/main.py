@@ -4,6 +4,7 @@ The world's first AI-native financial exchange.
 Confidential — TiOLi AI Investments.
 """
 
+import json
 import time
 import logging
 from collections import defaultdict
@@ -261,12 +262,31 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Catch unhandled exceptions — never expose internals to clients."""
+    """Dark themed 500 error page or JSON response."""
     security_logger.error(f"Unhandled exception on {request.url.path}: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "An internal error occurred. Please try again later."},
-    )
+    if "text/html" in request.headers.get("accept", ""):
+        return templates.TemplateResponse("error.html", {
+            "request": request, "error_code": 500,
+            "error_title": "Internal Error",
+            "error_message": "Something went wrong. Our systems are being notified.",
+        }, status_code=500)
+    return JSONResponse(status_code=500, content={"detail": "An internal error occurred."})
+
+
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Dark themed error pages for 404, 403, etc."""
+    if "text/html" in request.headers.get("accept", ""):
+        titles = {404: "Not Found", 403: "Access Denied", 405: "Method Not Allowed"}
+        messages = {404: "The page you're looking for doesn't exist.", 403: "You don't have permission.", 405: "Method not allowed."}
+        return templates.TemplateResponse("error.html", {
+            "request": request, "error_code": exc.status_code,
+            "error_title": titles.get(exc.status_code, "Error"),
+            "error_message": messages.get(exc.status_code, str(exc.detail)),
+        }, status_code=exc.status_code)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 # Mount static files and dashboard routes
@@ -567,13 +587,18 @@ async def api_all_balances(
 async def api_transfer(
     req: TransferRequest, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     """Transfer funds to another agent (fees auto-deducted)."""
+    if idempotency_key:
+        cached = await idempotency_service.check_and_store(db, idempotency_key, "transfer", agent.id)
+        if cached:
+            return JSONResponse(content=json.loads(cached))
     tx = await wallet_service.transfer(
         db, agent.id, req.receiver_id, req.amount, req.currency, req.description
     )
     fee_info = fee_engine.calculate_fees(req.amount, transaction_type="resource_exchange")
-    return {
+    result = {
         "transaction_id": tx.id, "gross_amount": req.amount,
         "net_to_receiver": fee_info["net_amount"],
         "commission": fee_info["commission"],
@@ -581,6 +606,9 @@ async def api_transfer(
         "charity_fee": fee_info["charity_fee"],
         "floor_fee_applied": fee_info["floor_fee_applied"],
     }
+    if idempotency_key:
+        await idempotency_service.store_response(db, idempotency_key, "transfer", agent.id, json.dumps(result, default=str))
+    return result
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -591,17 +619,23 @@ async def api_transfer(
 async def api_place_order(
     req: PlaceOrderRequest, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     """Place a buy or sell order on the exchange."""
+    if idempotency_key:
+        cached = await idempotency_service.check_and_store(db, idempotency_key, "order", agent.id)
+        if cached:
+            return JSONResponse(content=json.loads(cached))
     result = await trading_engine.place_order(
         db, agent.id, req.side, req.base_currency, req.quote_currency,
         req.price, req.quantity,
     )
-    # Update exchange rates after any trades
     if result["trades_executed"] > 0:
         await pricing_engine.update_rates_from_trade(
             db, req.base_currency, req.quote_currency
         )
+    if idempotency_key:
+        await idempotency_service.store_response(db, idempotency_key, "order", agent.id, json.dumps(result, default=str))
     return result
 
 
@@ -1147,14 +1181,22 @@ async def api_conversion_quote(
 async def api_execute_conversion(
     req: ConversionRequest, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     """Execute a currency conversion."""
+    if idempotency_key:
+        cached = await idempotency_service.check_and_store(db, idempotency_key, "convert", agent.id)
+        if cached:
+            return JSONResponse(content=json.loads(cached))
     sec = await security_guardian.check_transaction(db, agent.id, req.amount, "conversion")
     if not sec["allowed"]:
         raise HTTPException(status_code=403, detail=sec["reason"])
-    return await conversion_engine.execute_conversion(
+    result = await conversion_engine.execute_conversion(
         db, agent.id, req.from_currency, req.to_currency, req.amount,
     )
+    if idempotency_key:
+        await idempotency_service.store_response(db, idempotency_key, "convert", agent.id, json.dumps(result, default=str))
+    return result
 
 
 @app.get("/api/convert/history")
