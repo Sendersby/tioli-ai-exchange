@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}{{ agent.name }} — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-slate-500 text-xs font-mono uppercase tracking-widest">
+        <a href="/dashboard" class="hover:text-primary">Dashboard</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="/dashboard/agents" class="hover:text-primary">Agents</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-primary">{{ agent.name }}</span>
+    </div>
+
+    <!-- Agent Header -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-6 border-t-2 border-t-primary">
+        <div class="flex items-start justify-between">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="mb-0">{{ agent.name }}</h1>
+                    {% if agent.is_active %}
+                    <span class="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary text-[0.55rem] font-mono font-bold uppercase tracking-widest">Active</span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 bg-error/10 text-error text-[0.55rem] font-mono font-bold uppercase tracking-widest">Inactive</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-4 text-slate-400 text-xs">
+                    <span class="font-mono">Platform: <span class="text-primary">{{ agent.platform }}</span></span>
+                    <span class="font-mono">ID: <span class="text-slate-300">{{ agent.id }}</span></span>
+                </div>
+                {% if agent.description %}
+                <p class="text-slate-400 text-sm mt-2 max-w-2xl">{{ agent.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Registered</span>
+            <span class="block font-mono text-sm text-white">{{ agent.created_at[:10] if agent.created_at else '—' }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Last Active</span>
+            <span class="block font-mono text-sm text-white">{{ agent.last_active[:19] if agent.last_active else '—' }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Approved</span>
+            <span class="block font-mono text-sm {% if agent.is_approved %}text-secondary{% else %}text-error{% endif %}">{{ 'Yes' if agent.is_approved else 'No' }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Wallets</span>
+            <span class="block font-mono text-sm text-primary tabular-nums">{{ wallets|length }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Total Balance</span>
+            <span class="block font-mono text-sm text-tertiary tabular-nums">{{ "%.4f"|format(total_balance) }}</span>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+            <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Transactions</span>
+            <span class="block font-mono text-sm text-white tabular-nums">{{ tx_count }}</span>
+        </div>
+    </div>
+
+    <!-- Wallets -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Wallet Balances</h2>
+        {% if wallets %}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {% for w in wallets %}
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
+                <div class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest mb-1">{{ w.currency }}</div>
+                <div class="font-mono text-lg font-bold text-white tabular-nums">{{ "%.4f"|format(w.balance) }}</div>
+                {% if w.frozen > 0 %}
+                <div class="font-mono text-[0.55rem] text-tertiary mt-0.5">Frozen: {{ "%.4f"|format(w.frozen) }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-slate-500 py-4 font-mono text-xs">No wallets — agent has not transacted yet</p>
+        {% endif %}
+    </div>
+
+    <!-- Transaction History -->
+    <div class="bg-surface-container-low border border-outline-variant/10">
+        <div class="p-5 border-b border-outline-variant/10">
+            <h2 class="mb-0">Transaction History</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-lowest/50 text-slate-500 font-mono text-[0.55rem] uppercase tracking-widest">
+                        <th class="px-5 py-3 font-normal">Time</th>
+                        <th class="px-5 py-3 font-normal">Type</th>
+                        <th class="px-5 py-3 font-normal">Counterparty</th>
+                        <th class="px-5 py-3 font-normal text-right">Amount</th>
+                        <th class="px-5 py-3 font-normal text-right">Currency</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/5">
+                    {% for tx in transactions %}
+                    <tr class="hover:bg-primary/5 transition-colors">
+                        <td class="px-5 py-3 font-mono text-[0.65rem] text-slate-400">{{ tx.timestamp[:19] }}</td>
+                        <td class="px-5 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-[0.55rem] font-mono font-bold uppercase tracking-widest">{{ tx.type }}</span>
+                        </td>
+                        <td class="px-5 py-3 font-mono text-[0.65rem] text-slate-300">
+                            {% if tx.sender_id == agent.id %}{{ (tx.receiver_id or '—')[:16] }}{% else %}{{ (tx.sender_id or '—')[:16] }}{% endif %}
+                        </td>
+                        <td class="px-5 py-3 text-right font-mono text-sm tabular-nums {% if tx.sender_id == agent.id %}text-error{% else %}text-secondary{% endif %}">
+                            {% if tx.sender_id == agent.id %}-{% else %}+{% endif %}{{ "%.4f"|format(tx.amount) }}
+                        </td>
+                        <td class="px-5 py-3 text-right font-mono text-[0.6rem] text-slate-500 uppercase">{{ tx.currency }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not transactions %}
+                    <tr><td colspan="5" class="px-5 py-8 text-center text-slate-500 font-mono text-xs">No transactions recorded for this agent</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

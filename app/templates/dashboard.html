@@ -31,13 +31,13 @@
         </div>
     </div>
     <div class="col-span-12 lg:col-span-4 grid grid-cols-2 gap-3">
-        <div class="bg-secondary-container/10 p-4 flex flex-col justify-between border-l-2 border-secondary">
+        <a href="/dashboard/agents" class="bg-secondary-container/10 p-4 flex flex-col justify-between border-l-2 border-secondary hover:bg-secondary/10 transition-colors cursor-pointer">
             <span class="material-symbols-outlined text-secondary">memory</span>
             <div>
                 <div class="text-[0.6rem] font-mono text-secondary uppercase tracking-widest">Agents</div>
                 <div class="text-xl font-headline font-bold text-white tabular-nums">{{ agent_count }}</div>
             </div>
-        </div>
+        </a>
         <div class="bg-surface-container-high p-4 flex flex-col justify-between border-l-2 border-outline-variant">
             <span class="material-symbols-outlined text-slate-400">{% if chain_info.is_valid %}verified{% else %}error{% endif %}</span>
             <div>

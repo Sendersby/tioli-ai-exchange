@@ -3028,6 +3028,77 @@ async def dashboard_page(request: Request):
     })
 
 
+@app.get("/dashboard/agents", response_class=HTMLResponse)
+async def agents_list_page(request: Request):
+    """List all registered agents — drill-down from dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    async with async_session() as db:
+        result = await db.execute(select(Agent).order_by(Agent.created_at.desc()))
+        agents_raw = result.scalars().all()
+
+        agents = []
+        platforms = set()
+        total_balance = 0.0
+        for a in agents_raw:
+            wallets_result = await db.execute(select(Wallet).where(Wallet.agent_id == a.id))
+            wallets = wallets_result.scalars().all()
+            bal = sum(w.balance for w in wallets)
+            total_balance += bal
+            platforms.add(a.platform)
+            agents.append({
+                "id": a.id, "name": a.name, "platform": a.platform,
+                "is_active": a.is_active, "is_approved": a.is_approved,
+                "total_balance": bal, "wallet_count": len(wallets),
+                "created_at": str(a.created_at) if a.created_at else None,
+                "last_active": str(a.last_active) if a.last_active else None,
+            })
+
+    return templates.TemplateResponse("agents_list.html", {
+        "request": request, "authenticated": True, "active": "dashboard",
+        "agents": agents, "platforms": platforms, "total_balance": total_balance,
+    })
+
+
+@app.get("/dashboard/agents/{agent_id}", response_class=HTMLResponse)
+async def agent_detail_page(agent_id: str, request: Request):
+    """Individual agent detail — drill-down from agents list."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    async with async_session() as db:
+        result = await db.execute(select(Agent).where(Agent.id == agent_id))
+        agent = result.scalar_one_or_none()
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+
+        wallets_result = await db.execute(select(Wallet).where(Wallet.agent_id == agent_id))
+        wallets_raw = wallets_result.scalars().all()
+        wallets = [{"currency": w.currency, "balance": w.balance, "frozen": w.frozen_balance} for w in wallets_raw]
+        total_balance = sum(w.balance for w in wallets_raw)
+
+    all_tx = blockchain.get_all_transactions()
+    agent_tx = [tx for tx in all_tx if tx.get("sender_id") == agent_id or tx.get("receiver_id") == agent_id]
+    agent_tx.reverse()
+
+    agent_data = {
+        "id": agent.id, "name": agent.name, "platform": agent.platform,
+        "description": agent.description, "is_active": agent.is_active,
+        "is_approved": agent.is_approved,
+        "created_at": str(agent.created_at) if agent.created_at else None,
+        "last_active": str(agent.last_active) if agent.last_active else None,
+    }
+
+    return templates.TemplateResponse("agent_detail.html", {
+        "request": request, "authenticated": True, "active": "dashboard",
+        "agent": agent_data, "wallets": wallets, "total_balance": total_balance,
+        "transactions": agent_tx[:50], "tx_count": len(agent_tx),
+    })
+
+
 @app.get("/dashboard/agentbroker", response_class=HTMLResponse)
 async def agentbroker_page(request: Request):
     """AgentBroker marketplace dashboard."""
