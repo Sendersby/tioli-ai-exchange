@@ -64,6 +64,7 @@ from app.subscriptions.service import SubscriptionService
 from app.treasury.service import TreasuryService
 from app.compliance_service.service import ComplianceService
 from app.guilds.service import GuildService
+from app.pipelines.service import PipelineService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -135,6 +136,7 @@ subscription_service = SubscriptionService()
 treasury_service = TreasuryService()
 compliance_service = ComplianceService()
 guild_service = GuildService()
+pipeline_service = PipelineService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -1984,6 +1986,80 @@ async def api_guild_stats(guild_id: str, db: AsyncSession = Depends(get_db)):
     if not settings.guild_enabled:
         raise HTTPException(status_code=503, detail="Guilds module not enabled")
     return await guild_service.get_guild_stats(db, guild_id)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  PIPELINES (Build Brief V2, Module 1 — Agent Swarms)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/pipelines")
+async def api_create_pipeline(
+    operator_id: str, pipeline_name: str, description: str,
+    capability_tags: str, steps: list,
+    pricing_model: str = "fixed", base_price: float | None = None,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Create a new pipeline. Revenue shares must sum to 100%."""
+    if not settings.pipelines_enabled:
+        raise HTTPException(status_code=503, detail="Pipelines module not enabled")
+    tags = [t.strip() for t in capability_tags.split(",")]
+    return await pipeline_service.create_pipeline(
+        db, operator_id, pipeline_name, description, tags, steps,
+        pricing_model, base_price,
+    )
+
+
+@app.get("/api/v1/pipelines/search")
+async def api_search_pipelines(
+    capability_tag: str | None = None, max_price: float | None = None,
+    min_reputation: float | None = None, db: AsyncSession = Depends(get_db),
+):
+    """Discover pipelines by capability, price, reputation."""
+    if not settings.pipelines_enabled:
+        raise HTTPException(status_code=503, detail="Pipelines module not enabled")
+    return await pipeline_service.search_pipelines(db, capability_tag, max_price, min_reputation)
+
+
+@app.post("/api/v1/pipelines/{pipeline_id}/engage")
+async def api_engage_pipeline(
+    pipeline_id: str, client_operator_id: str, gross_value: float,
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a pipeline engagement. Fund escrow for full value."""
+    if not settings.pipelines_enabled:
+        raise HTTPException(status_code=503, detail="Pipelines module not enabled")
+    return await pipeline_service.engage_pipeline(db, pipeline_id, client_operator_id, gross_value)
+
+
+@app.post("/api/v1/pipeline-engagements/{engagement_id}/advance")
+async def api_advance_pipeline_step(
+    engagement_id: str, db: AsyncSession = Depends(get_db),
+):
+    """Advance to next step after delivery verified. Releases payment to agent."""
+    if not settings.pipelines_enabled:
+        raise HTTPException(status_code=503, detail="Pipelines module not enabled")
+    return await pipeline_service.advance_step(db, engagement_id)
+
+
+@app.get("/api/v1/pipeline-engagements/{engagement_id}")
+async def api_get_pipeline_engagement(
+    engagement_id: str, db: AsyncSession = Depends(get_db),
+):
+    """Full engagement state including steps."""
+    if not settings.pipelines_enabled:
+        raise HTTPException(status_code=503, detail="Pipelines module not enabled")
+    result = await pipeline_service.get_engagement(db, engagement_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Engagement not found")
+    return result
+
+
+@app.get("/api/v1/pipelines/stats")
+async def api_pipeline_stats(db: AsyncSession = Depends(get_db)):
+    """Platform-wide pipeline statistics."""
+    if not settings.pipelines_enabled:
+        raise HTTPException(status_code=503, detail="Pipelines module not enabled")
+    return await pipeline_service.get_platform_stats(db)
 
 
 # ══════════════════════════════════════════════════════════════════════
