@@ -72,6 +72,7 @@ from app.intelligence.service import IntelligenceService
 from app.crossborder.service import CrossBorderService
 from app.verticals.service import VerticalsService
 from app.exports.service import ExportService
+from app.infrastructure.cache import cache, TTL_SHORT, TTL_MEDIUM, TTL_LONG
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -985,6 +986,12 @@ async def api_anomalies(db: AsyncSession = Depends(get_db)):
     return await platform_monitor.detect_anomalies(db)
 
 
+@app.get("/api/health/cache")
+async def api_cache_stats():
+    """Redis cache statistics."""
+    return cache.get_stats()
+
+
 # ══════════════════════════════════════════════════════════════════════
 #  GOVERNANCE ENHANCED (Phase 3)
 # ══════════════════════════════════════════════════════════════════════
@@ -1714,7 +1721,12 @@ async def api_agent_incentives(agent_id: str, db: AsyncSession = Depends(get_db)
 @app.get("/api/v1/subscriptions/tiers")
 async def api_subscription_tiers(db: AsyncSession = Depends(get_db)):
     """List all available subscription tiers with pricing and features. Public endpoint."""
-    return await subscription_service.list_tiers(db)
+    cached = cache.get("subscription_tiers")
+    if cached:
+        return cached
+    result = await subscription_service.list_tiers(db)
+    cache.set("subscription_tiers", result, TTL_LONG)
+    return result
 
 
 @app.post("/api/v1/subscriptions")
@@ -2357,7 +2369,12 @@ async def api_forex_rates():
 @app.get("/api/jurisdictions")
 async def api_jurisdictions():
     """List all supported jurisdictions and their basic info."""
-    return list_supported_jurisdictions()
+    cached = cache.get("jurisdictions")
+    if cached:
+        return cached
+    result = list_supported_jurisdictions()
+    cache.set("jurisdictions", result, TTL_LONG)
+    return result
 
 
 @app.get("/api/jurisdictions/{country_code}")
@@ -2915,9 +2932,13 @@ async def api_agent_transactions(agent_id: str):
 @app.get("/api/fees/schedule")
 async def api_fee_schedule():
     """Full fee schedule with transaction-type rates and floor fees."""
+    cached = cache.get("fee_schedule")
+    if cached:
+        return cached
     schedule = fee_engine.get_fee_schedule()
     schedule["founder_entity"] = "TiOLi AI Investments"
     schedule["charity_allocation"] = fee_engine.get_charity_status()
+    cache.set("fee_schedule", schedule, TTL_LONG)
     return schedule
 
 
@@ -2994,6 +3015,36 @@ async def dashboard_page(request: Request):
         "tx_metrics": adoption.get("transaction_metrics", {}),
         "charity_status": fee_engine.get_charity_status(),
         "services_summary": services_summary,
+    })
+
+
+@app.get("/dashboard/agentbroker", response_class=HTMLResponse)
+async def agentbroker_page(request: Request):
+    """AgentBroker marketplace dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    profiles = []
+    engagements = []
+    guilds_list = []
+    pipelines_list = []
+    stats = {"total_profiles": 0, "total_engagements": 0, "completed": 0,
+             "avg_reputation": 0, "total_gev": 0, "active_guilds": 0}
+
+    try:
+        async with async_session() as db:
+            guilds_list = await guild_service.search_guilds(db, limit=10)
+            pipelines_list = await pipeline_service.search_pipelines(db, limit=10)
+            stats["active_guilds"] = len(guilds_list)
+    except Exception:
+        pass
+
+    return templates.TemplateResponse("agentbroker.html", {
+        "request": request, "authenticated": True, "active": "agentbroker",
+        "profiles": profiles, "engagements": engagements,
+        "guilds": guilds_list, "pipelines": pipelines_list,
+        "stats": stats,
     })
 
 
