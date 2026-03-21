@@ -8,28 +8,48 @@
         <p class="welcome">Service status, configuration, and regulatory compliance overview</p>
     </div>
 
-    <!-- Revenue Summary -->
-    <div class="stats-grid">
-        <div class="stat-card highlight">
-            <div class="stat-value">{{ services_live }}</div>
-            <div class="stat-label">Services Live</div>
+    <!-- Top Stats with Chart -->
+    <div class="charts-row" style="margin-bottom: 1.5rem;">
+        <div class="stats-side">
+            <div class="hero-stat border-success">
+                <div class="hero-icon">&#10003;</div>
+                <div class="hero-body">
+                    <div class="hero-value text-success">{{ services_live }}</div>
+                    <div class="hero-label">Services Live</div>
+                </div>
+            </div>
+            <div class="hero-stat border-coral">
+                <div class="hero-icon">&#9888;</div>
+                <div class="hero-body">
+                    <div class="hero-value text-warning">{{ services_conditional }}</div>
+                    <div class="hero-label">Live with Conditions</div>
+                </div>
+            </div>
+            <div class="hero-stat border-danger">
+                <div class="hero-icon">&#10007;</div>
+                <div class="hero-body">
+                    <div class="hero-value text-danger">{{ services_blocked }}</div>
+                    <div class="hero-label">Blocked (Licence Req.)</div>
+                </div>
+            </div>
+            <div class="hero-stat border-sage">
+                <div class="hero-icon">&#9733;</div>
+                <div class="hero-body">
+                    <div class="hero-value text-success">R{{ "%.0f"|format(subscription_mrr) }}</div>
+                    <div class="hero-label">Subscription MRR</div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ services_conditional }}</div>
-            <div class="stat-label">Live with Conditions</div>
-        </div>
-        <div class="stat-card" style="border-left: 3px solid var(--danger);">
-            <div class="stat-value">{{ services_blocked }}</div>
-            <div class="stat-label">Blocked (Licence Req.)</div>
-        </div>
-        <div class="stat-card highlight">
-            <div class="stat-value">R{{ "%.0f"|format(subscription_mrr) }}</div>
-            <div class="stat-label">Subscription MRR</div>
+        <div class="panel glass-panel chart-container">
+            <h2>Service Distribution</h2>
+            <div class="chart-wrapper">
+                <canvas id="serviceDistChart"></canvas>
+            </div>
         </div>
     </div>
 
     <!-- Subscription Tiers -->
-    <div class="panel" style="margin-top: 1.5rem;">
+    <div class="panel glass-panel" style="margin-top: 1.5rem;">
         <h2>Subscription Tiers</h2>
         <div class="table-wrapper">
             <table>
@@ -60,8 +80,8 @@
     </div>
 
     <!-- Live Services (Green) -->
-    <div class="panel" style="margin-top: 1.5rem;">
-        <h2 style="color: var(--success);">Live Now — No Licence Required</h2>
+    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+        <h2><span class="status-dot-inline dot-live"></span> Live Now — No Licence Required</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Pure B2B services, SaaS products, data products. No financial regulation applies.</p>
         <div class="table-wrapper">
             <table>
@@ -74,8 +94,8 @@
                         <td><strong>{{ svc.name }}</strong></td>
                         <td>{{ svc.description }}</td>
                         <td>{{ svc.revenue }}</td>
-                        <td><code style="font-size:0.75rem;">{{ svc.endpoint }}</code></td>
-                        <td><span class="badge" style="background:var(--success);color:white;">Live</span></td>
+                        <td><code class="endpoint-code">{{ svc.endpoint }}</code></td>
+                        <td><span class="badge badge-live">Live</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -84,8 +104,8 @@
     </div>
 
     <!-- Conditional Services (Amber) -->
-    <div class="panel" style="margin-top: 1.5rem;">
-        <h2 style="color: var(--warning);">Live with Conditions — ZAR / Credits Only</h2>
+    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+        <h2><span class="status-dot-inline dot-conditional"></span> Live with Conditions — ZAR / Credits Only</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Legal as B2B commercial transactions. No crypto settlement. No cross-border transfers.</p>
         <div class="table-wrapper">
             <table>
@@ -97,9 +117,9 @@
                     <tr>
                         <td><strong>{{ svc.name }}</strong></td>
                         <td>{{ svc.description }}</td>
-                        <td style="color:var(--warning);">{{ svc.condition }}</td>
-                        <td><code style="font-size:0.75rem;">{{ svc.endpoint }}</code></td>
-                        <td><span class="badge" style="background:var(--warning);color:white;">Conditional</span></td>
+                        <td class="text-warning">{{ svc.condition }}</td>
+                        <td><code class="endpoint-code">{{ svc.endpoint }}</code></td>
+                        <td><span class="badge badge-conditional">Conditional</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -108,8 +128,8 @@
     </div>
 
     <!-- Blocked Services (Red) -->
-    <div class="panel" style="margin-top: 1.5rem;">
-        <h2 style="color: var(--danger);">Blocked — Licence Required</h2>
+    <div class="panel glass-panel" style="margin-top: 1.5rem;">
+        <h2><span class="status-dot-inline dot-blocked"></span> Blocked — Licence Required</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Cannot activate without the specified licence. Criminal liability risk under SA law.</p>
         <div class="table-wrapper">
             <table>
@@ -122,7 +142,7 @@
                         <td><strong>{{ svc.name }}</strong></td>
                         <td>{{ svc.licence }}</td>
                         <td>{{ svc.regulator }}</td>
-                        <td><span class="badge" style="background:var(--danger);color:white;">Blocked</span></td>
+                        <td><span class="badge badge-blocked">Blocked</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -131,7 +151,7 @@
     </div>
 
     <!-- Fee Schedule -->
-    <div class="panel" style="margin-top: 1.5rem;">
+    <div class="panel glass-panel" style="margin-top: 1.5rem;">
         <h2>Fee Schedule</h2>
         <p style="color: var(--text-muted); margin-bottom: 1rem;">Two-component model: max(percentage, floor fee). Charity = 10% of commission.</p>
         <div class="table-wrapper">
@@ -153,7 +173,7 @@
     </div>
 
     <!-- Intelligence Tiers -->
-    <div class="panel" style="margin-top: 1.5rem;">
+    <div class="panel glass-panel" style="margin-top: 1.5rem;">
         <h2>Market Intelligence Tiers</h2>
         <div class="table-wrapper">
             <table>
@@ -175,7 +195,7 @@
     </div>
 
     <!-- Sector Verticals -->
-    <div class="panel" style="margin-top: 1.5rem;">
+    <div class="panel glass-panel" style="margin-top: 1.5rem;">
         <h2>Sector Verticals</h2>
         <div class="table-wrapper">
             <table>
@@ -196,4 +216,55 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+    const success = '#5a8a56';
+    const warning = '#c49945';
+    const danger = '#c44545';
+
+    const ctx = document.getElementById('serviceDistChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Live', 'Conditional', 'Blocked'],
+            datasets: [{
+                data: [{{ services_live }}, {{ services_conditional }}, {{ services_blocked }}],
+                backgroundColor: [success, warning, danger],
+                borderColor: ['#ffffff', '#ffffff', '#ffffff'],
+                borderWidth: 3,
+                hoverBorderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 16,
+                        usePointStyle: true,
+                        pointStyleWidth: 12,
+                        font: { family: 'Inter', size: 12, weight: '500' },
+                        color: '#2b2b2b'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#2b2b2b',
+                    titleFont: { family: 'Inter', size: 13 },
+                    bodyFont: { family: 'Inter', size: 12 },
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            }
+        }
+    });
+})();
+</script>
 {% endblock %}
