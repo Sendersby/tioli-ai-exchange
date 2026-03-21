@@ -126,13 +126,37 @@ class TestFeeEngine:
         assert 0.10 <= engine.founder_rate <= 0.15
         assert engine.charity_rate == 0.10
 
-    def test_fee_calculation(self):
+    def test_charity_is_pct_of_commission_not_gross(self):
+        """Build Brief V2 Section 2.2.1: charity = 10% of commission, NOT 10% of gross."""
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         fees = engine.calculate_fees(100.0)
-        assert fees["founder_commission"] == 12.0
-        assert fees["charity_fee"] == 10.0
-        assert fees["net_amount"] == 78.0
-        assert fees["total_fees"] == 22.0
+        # Commission = 12% of 100 = 12.0
+        commission = fees["commission"]
+        assert commission == 12.0
+        # Charity = 10% of commission = 1.2 (NOT 10% of 100 = 10.0)
+        assert fees["charity_fee"] == round(12.0 * 0.10, 8)
+        # Founder net = commission - charity
+        assert fees["founder_commission"] == round(12.0 - 1.2, 8)
+        # Provider receives gross - commission = 88.0
+        assert fees["net_amount"] == 88.0
+
+    def test_fee_calculation_r10_at_8pct(self):
+        """Brief example: R10 trade at 8%, commission=R0.80, charity=R0.08, provider=R9.20."""
+        engine = FeeEngine(founder_rate=0.10, charity_rate=0.10)
+        fees = engine.calculate_fees(10.0, operator_commission_rate=0.08)
+        assert fees["commission"] == 0.80
+        assert fees["charity_fee"] == 0.08
+        assert fees["founder_commission"] == 0.72
+        assert fees["net_amount"] == 9.20
+
+    def test_floor_fee_applied(self):
+        """Floor fee should apply when percentage fee is below floor."""
+        engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
+        # R1 trade at 8%: percentage = R0.08, floor for resource_exchange = R0.50
+        fees = engine.calculate_fees(1.0, operator_commission_rate=0.08, transaction_type="resource_exchange")
+        assert fees["commission"] == 0.50  # Floor applied
+        assert fees["floor_fee_applied"] is True
+        assert fees["charity_fee"] == round(0.50 * 0.10, 8)
 
     def test_rate_bounds_enforced(self):
         engine = FeeEngine(founder_rate=0.50)  # Too high
@@ -144,10 +168,34 @@ class TestFeeEngine:
     def test_small_transaction(self):
         engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
         fees = engine.calculate_fees(0.001)
-        assert fees["net_amount"] > 0
+        assert fees["net_amount"] >= 0
         assert fees["net_amount"] < 0.001
 
     def test_update_rate(self):
         engine = FeeEngine(founder_rate=0.12)
         engine.update_founder_rate(0.14)
         assert engine.founder_rate == 0.14
+
+    def test_transaction_type_rate_override(self):
+        """AgentBroker engagements should use 10% regardless of tier."""
+        engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
+        fees = engine.calculate_fees(100.0, transaction_type="agentbroker_engagement")
+        assert fees["commission"] == 10.0  # 10% for agentbroker
+        assert fees["charity_fee"] == 1.0  # 10% of 10.0
+
+    def test_profitability_conditional_charity(self):
+        """Charity rate adjusts based on platform profitability."""
+        engine = FeeEngine(founder_rate=0.12, charity_rate=0.10)
+        # Pre-profitable: charity = 0% of commission
+        engine.update_profitability(100, 200)
+        fees = engine.calculate_fees(100.0)
+        assert fees["charity_fee"] == 0.0
+        assert fees["charity_status"] == "deferred"
+        # Ramp-up: charity = 5% of commission
+        engine.update_profitability(150, 100)
+        fees = engine.calculate_fees(100.0)
+        assert fees["charity_fee"] == round(12.0 * 0.05, 8)
+        # Full: charity = 10% of commission
+        engine.update_profitability(300, 100)
+        fees = engine.calculate_fees(100.0)
+        assert fees["charity_fee"] == round(12.0 * 0.10, 8)

@@ -35,6 +35,18 @@ class Settings(BaseSettings):
     # AgentBroker feature flag (Phase 1: false, Phase 2: true)
     agentbroker_enabled: bool = False
 
+    # Module feature flags (Build Brief V2 — default false until owner enables)
+    subscriptions_enabled: bool = False
+    guild_enabled: bool = False
+    pipelines_enabled: bool = False
+    futures_enabled: bool = False
+    training_data_enabled: bool = False
+    treasury_enabled: bool = False
+    compliance_service_enabled: bool = False
+    benchmarking_enabled: bool = False
+    intelligence_enabled: bool = False
+    verticals_enabled: bool = False
+
     # Debug
     debug: bool = False
 

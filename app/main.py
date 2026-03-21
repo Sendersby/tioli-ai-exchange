@@ -60,6 +60,7 @@ from app.exchange.forex import ForexService
 from app.compliance.jurisdictions import (
     get_jurisdiction_rules, list_supported_jurisdictions, get_jurisdiction_summary
 )
+from app.subscriptions.service import SubscriptionService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -127,6 +128,7 @@ compute_storage = ComputeStorageService(blockchain=blockchain)
 market_maker = MarketMakerService(trading_engine=trading_engine, currency_service=currency_service)
 incentive_programme = IncentiveProgramme()
 forex_service = ForexService(currency_service=currency_service)
+subscription_service = SubscriptionService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -138,6 +140,7 @@ async def lifespan(app: FastAPI):
     # Seed default currencies and exchange rates
     async with async_session() as db:
         await currency_service.initialize_currencies(db)
+        await subscription_service.seed_tiers(db)
         if settings.agentbroker_enabled:
             await seed_taxonomy(db)
         await db.commit()
@@ -1670,6 +1673,94 @@ async def api_grant_welcome_bonus(
 async def api_agent_incentives(agent_id: str, db: AsyncSession = Depends(get_db)):
     """Get all incentives received by an agent."""
     return await incentive_programme.get_agent_incentives(db, agent_id)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  SUBSCRIPTIONS (Build Brief V2, Section 2.1 — CRITICAL)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/subscriptions/tiers")
+async def api_subscription_tiers(db: AsyncSession = Depends(get_db)):
+    """List all available subscription tiers with pricing and features. Public endpoint."""
+    return await subscription_service.list_tiers(db)
+
+
+@app.post("/api/v1/subscriptions")
+async def api_subscribe(
+    operator_id: str, tier_name: str, billing_cycle: str = "monthly",
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Subscribe an operator to a tier."""
+    if not settings.subscriptions_enabled:
+        raise HTTPException(status_code=503, detail="Subscriptions module not enabled")
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await subscription_service.subscribe(db, operator_id, tier_name, billing_cycle)
+
+
+@app.get("/api/v1/subscriptions/{operator_id}")
+async def api_get_subscription(
+    operator_id: str, request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Return current subscription details for an operator."""
+    if not settings.subscriptions_enabled:
+        raise HTTPException(status_code=503, detail="Subscriptions module not enabled")
+    result = await subscription_service.get_subscription(db, operator_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="No active subscription found")
+    return result
+
+
+@app.put("/api/v1/subscriptions/{operator_id}/upgrade")
+async def api_upgrade_subscription(
+    operator_id: str, new_tier_name: str,
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Upgrade to a higher tier mid-period. Prorates the difference."""
+    if not settings.subscriptions_enabled:
+        raise HTTPException(status_code=503, detail="Subscriptions module not enabled")
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await subscription_service.upgrade(db, operator_id, new_tier_name)
+
+
+@app.post("/api/v1/subscriptions/{operator_id}/renew")
+async def api_renew_subscription(
+    operator_id: str, request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Renew subscription for next period. Triggered by scheduler or owner."""
+    if not settings.subscriptions_enabled:
+        raise HTTPException(status_code=503, detail="Subscriptions module not enabled")
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await subscription_service.renew(db, operator_id)
+
+
+@app.delete("/api/v1/subscriptions/{operator_id}")
+async def api_cancel_subscription(
+    operator_id: str, request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Cancel subscription. Downgrades to Explorer at period end."""
+    if not settings.subscriptions_enabled:
+        raise HTTPException(status_code=503, detail="Subscriptions module not enabled")
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await subscription_service.cancel(db, operator_id)
+
+
+@app.get("/api/v1/subscriptions/revenue/summary")
+async def api_subscription_revenue(
+    request: Request = None, db: AsyncSession = Depends(get_db),
+):
+    """Get subscription revenue summary. Owner only."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await subscription_service.get_subscription_revenue(db)
 
 
 # ══════════════════════════════════════════════════════════════════════
