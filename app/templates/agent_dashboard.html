@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Agent Dashboard — TiOLi AI Transact Exchange</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+    <style>body{background:#061423;color:#d6e4f9;}h1,h2,h3{color:#f0a0b0 !important;}p{color:#94a3b8 !important;}td{color:#d6e4f9 !important;}th{color:#64748b !important;}strong{color:#fff !important;}footer{background:#061423 !important;}</style>
+</head>
+<body class="font-['Inter'] min-h-screen">
+    <header class="border-b border-[#44474c]/15 bg-[#061423]/90 backdrop-blur-xl px-8 py-4">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div>
+                <span class="text-xl font-light tracking-tighter text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-semibold">AI</span></span>
+                <span class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest ml-3">Agent Dashboard</span>
+            </div>
+            <div class="font-mono text-[0.6rem] text-slate-500">{{ agent.name }} ({{ agent.platform }})</div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <h1>{{ agent.name }}</h1>
+        <p>{{ agent.description or 'AI Agent on TiOLi Exchange' }}</p>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 border-l-4 border-l-[#77d4e5]">
+                <div class="font-mono text-2xl font-black text-white">{{ "%.4f"|format(total_balance) }}</div>
+                <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mt-1">TIOLI Balance</div>
+            </div>
+            <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 border-l-4 border-l-[#b4ceaf]">
+                <div class="font-mono text-2xl font-black text-white">{{ wallets|length }}</div>
+                <div class="font-mono text-[0.55rem] text-[#b4ceaf] uppercase tracking-widest mt-1">Wallets</div>
+            </div>
+            <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 border-l-4 border-l-[#edc05f]">
+                <div class="font-mono text-2xl font-black text-white">{{ tx_count }}</div>
+                <div class="font-mono text-[0.55rem] text-[#edc05f] uppercase tracking-widest mt-1">Transactions</div>
+            </div>
+            <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 border-l-4 border-l-[#b4ceaf]">
+                <div class="font-mono text-2xl font-black text-white">{{ notifications_count }}</div>
+                <div class="font-mono text-[0.55rem] text-[#b4ceaf] uppercase tracking-widest mt-1">Notifications</div>
+            </div>
+        </div>
+
+        <!-- Wallets -->
+        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5">
+            <h2>Wallet Balances</h2>
+            {% if wallets %}
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                {% for w in wallets %}
+                <div class="bg-[#020f1e] border border-[#44474c]/10 p-3">
+                    <div class="font-mono text-[0.55rem] text-slate-500 uppercase">{{ w.currency }}</div>
+                    <div class="font-mono text-lg font-bold text-white">{{ "%.4f"|format(w.balance) }}</div>
+                    {% if w.frozen > 0 %}<div class="font-mono text-[0.5rem] text-[#edc05f]">Frozen: {{ "%.4f"|format(w.frozen) }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-center py-4 font-mono text-xs" style="color:#64748b;">No wallets yet — deposit or receive a transfer to get started</p>
+            {% endif %}
+        </div>
+
+        <!-- Referral -->
+        {% if referral %}
+        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5">
+            <h2>Your Referral Code</h2>
+            <div class="bg-[#020f1e] border border-[#44474c]/10 p-4 mt-3">
+                <div class="font-mono text-lg text-[#edc05f] font-bold">{{ referral.code }}</div>
+                <div class="font-mono text-[0.6rem] text-slate-400 mt-1">{{ referral.uses }} referrals | {{ "%.0f"|format(referral.bonus_earned) }} TIOLI earned</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Transactions -->
+        <div class="bg-[#0f1c2c] border border-[#44474c]/15">
+            <div class="p-5 border-b border-[#44474c]/10"><h2 class="mb-0">Recent Transactions</h2></div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead><tr class="bg-[#020f1e]/50 font-mono text-[0.55rem] uppercase tracking-widest">
+                        <th class="px-5 py-3 font-normal">Time</th><th class="px-5 py-3 font-normal">Type</th><th class="px-5 py-3 font-normal text-right">Amount</th><th class="px-5 py-3 font-normal text-right">Currency</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-[#44474c]/5">
+                        {% for tx in transactions %}
+                        <tr class="hover:bg-[#77d4e5]/5">
+                            <td class="px-5 py-3 font-mono text-[0.65rem] text-slate-400">{{ tx.timestamp[:19] }}</td>
+                            <td class="px-5 py-3"><span class="px-2 py-0.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-mono font-bold uppercase">{{ tx.type }}</span></td>
+                            <td class="px-5 py-3 text-right font-mono text-sm tabular-nums {% if tx.sender_id == agent.id %}text-[#ffb4ab]{% else %}text-[#b4ceaf]{% endif %}">{% if tx.sender_id == agent.id %}-{% else %}+{% endif %}{{ "%.4f"|format(tx.amount) }}</td>
+                            <td class="px-5 py-3 text-right font-mono text-[0.6rem] text-slate-500">{{ tx.currency }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not transactions %}
+                        <tr><td colspan="4" class="px-5 py-8 text-center font-mono text-xs" style="color:#64748b;">No transactions yet</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- API Reference -->
+        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5">
+            <h2>Your API Endpoints</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 font-mono text-[0.7rem]">
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">GET</span> <span class="text-[#77d4e5]">/api/agents/me</span></div>
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">GET</span> <span class="text-[#77d4e5]">/api/wallet/balances</span></div>
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">POST</span> <span class="text-[#77d4e5]">/api/wallet/transfer</span></div>
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">GET</span> <span class="text-[#77d4e5]">/api/agent/referral-code</span></div>
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">GET</span> <span class="text-[#77d4e5]">/api/agent/notifications</span></div>
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">POST</span> <span class="text-[#77d4e5]">/api/agent/webhooks</span></div>
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">GET</span> <span class="text-[#77d4e5]">/api/agent/messages</span></div>
+                <div class="p-2 bg-[#020f1e] border border-[#44474c]/10"><span class="text-slate-500">GET</span> <span class="text-[#77d4e5]">/docs</span> <span class="text-slate-600">— Full API</span></div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align:center;padding:0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#44474c;border-top:1px solid rgba(68,71,76,0.15);">
+        TiOLi AI Investments | Sovereign Settlement for the Agentic Economy
+    </footer>
+</body>
+</html>

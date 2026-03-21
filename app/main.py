@@ -63,6 +63,7 @@ from app.compliance.jurisdictions import (
 )
 from app.subscriptions.service import SubscriptionService
 from app.growth.viral import ViralGrowthService
+from app.webhooks.service import WebhookService
 from app.treasury.service import TreasuryService
 from app.compliance_service.service import ComplianceService
 from app.guilds.service import GuildService
@@ -156,6 +157,7 @@ crossborder_service = CrossBorderService()
 verticals_service = VerticalsService()
 export_service = ExportService()
 viral_service = ViralGrowthService()
+webhook_service = WebhookService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -183,7 +185,11 @@ async def lifespan(app: FastAPI):
     print(f"  Phase 4: Crypto, Conversion, Security ACTIVE")
     print(f"  Phase 5: Optimization, Discovery, Investing, Compliance ACTIVE")
     print(f"{'='*60}\n")
+    # Start scheduled jobs
+    from app.scheduler.jobs import start_scheduler, stop_scheduler
+    start_scheduler()
     yield
+    stop_scheduler()
 
 
 app = FastAPI(
@@ -1025,6 +1031,37 @@ async def serve_llms_txt():
     return FileResponse("static/llms.txt", media_type="text/plain")
 
 
+@app.get("/api/agent/dashboard", response_class=HTMLResponse)
+async def api_agent_dashboard(agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db)):
+    """Agent-facing dashboard — accessible via Bearer token, not owner 3FA."""
+    wallets_result = await db.execute(select(Wallet).where(Wallet.agent_id == agent.id))
+    wallets_raw = wallets_result.scalars().all()
+    wallets = [{"currency": w.currency, "balance": w.balance, "frozen": w.frozen_balance} for w in wallets_raw]
+    total_balance = sum(w.balance for w in wallets_raw)
+
+    all_tx = blockchain.get_all_transactions()
+    agent_tx = [tx for tx in all_tx if tx.get("sender_id") == agent.id or tx.get("receiver_id") == agent.id]
+    agent_tx.reverse()
+
+    notif_count = await notification_service.get_unread_count(db, agent.id)
+
+    referral = None
+    try:
+        ref_data = await viral_service.get_or_create_referral_code(db, agent.id)
+        referral = ref_data
+        await db.commit()
+    except Exception:
+        pass
+
+    return templates.TemplateResponse("agent_dashboard.html", {
+        "request": Request(scope={"type": "http", "method": "GET", "path": "/", "headers": []}),
+        "agent": {"id": agent.id, "name": agent.name, "platform": agent.platform, "description": agent.description},
+        "wallets": wallets, "total_balance": total_balance,
+        "transactions": agent_tx[:20], "tx_count": len(agent_tx),
+        "notifications_count": notif_count, "referral": referral,
+    })
+
+
 @app.get("/robots.txt", include_in_schema=False)
 async def serve_robots_txt():
     """Robots.txt with AI agent discovery hints."""
@@ -1758,6 +1795,67 @@ async def api_notification_count(db: AsyncSession = Depends(get_db)):
     """Get unread notification count."""
     count = await notification_service.get_unread_count(db, "owner")
     return {"unread": count}
+
+
+@app.get("/api/agent/notifications")
+async def api_agent_notifications(
+    unread_only: bool = False, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get notifications for the authenticated agent."""
+    return await notification_service.get_notifications(db, agent.id, unread_only)
+
+
+@app.get("/api/agent/notifications/count")
+async def api_agent_notification_count(
+    agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db),
+):
+    """Unread notification count for agent."""
+    return {"unread": await notification_service.get_unread_count(db, agent.id)}
+
+
+@app.post("/api/agent/notifications/{notification_id}/read")
+async def api_agent_mark_read(
+    notification_id: str, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a notification as read."""
+    await notification_service.mark_read(db, notification_id)
+    return {"status": "read"}
+
+
+# ── Agent Webhook Endpoints ──
+@app.post("/api/agent/webhooks")
+async def api_register_webhook(
+    url: str, events: str, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Register a webhook URL for specific events."""
+    event_list = [e.strip() for e in events.split(",")]
+    return await webhook_service.register(db, agent.id, url, event_list)
+
+
+@app.get("/api/agent/webhooks")
+async def api_list_webhooks(agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db)):
+    """List your registered webhooks."""
+    return await webhook_service.list_webhooks(db, agent.id)
+
+
+@app.delete("/api/agent/webhooks/{webhook_id}")
+async def api_delete_webhook(
+    webhook_id: str, agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a webhook registration."""
+    if await webhook_service.delete_webhook(db, webhook_id, agent.id):
+        return {"status": "deleted"}
+    raise HTTPException(status_code=404, detail="Webhook not found")
+
+
+@app.get("/api/agent/webhooks/events")
+async def api_webhook_events():
+    """List all available webhook event types."""
+    return await webhook_service.get_available_events()
 
 
 # ══════════════════════════════════════════════════════════════════════

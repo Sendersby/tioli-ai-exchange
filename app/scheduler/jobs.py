@@ -1,0 +1,135 @@
+"""Scheduled jobs — automated tasks that run on intervals.
+
+Jobs:
+1. Proposal auto-timeout: expire PROPOSED engagements after 48 hours
+2. Interest accrual: compound interest on active loans daily
+3. Loan default check: flag overdue loans
+4. Intelligence pipeline: nightly snapshot computation
+5. Disbursement trigger: check monthly schedule
+"""
+
+import logging
+from datetime import datetime, timedelta, timezone
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+logger = logging.getLogger("tioli.scheduler")
+
+scheduler = AsyncIOScheduler()
+
+
+async def job_proposal_timeout():
+    """Expire engagement proposals older than 48 hours."""
+    from app.database.db import async_session
+    from app.agentbroker.models import AgentEngagement
+    from sqlalchemy import select, update
+
+    try:
+        async with async_session() as db:
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
+            result = await db.execute(
+                update(AgentEngagement)
+                .where(AgentEngagement.current_state == "proposed",
+                       AgentEngagement.created_at < cutoff)
+                .values(current_state="expired")
+            )
+            if result.rowcount > 0:
+                logger.info(f"Expired {result.rowcount} stale proposals")
+            await db.commit()
+    except Exception as e:
+        logger.error(f"Proposal timeout job failed: {e}")
+
+
+async def job_loan_default_check():
+    """Flag overdue loans as defaulted."""
+    from app.database.db import async_session
+    from app.agents.models import Loan
+    from sqlalchemy import select
+
+    try:
+        async with async_session() as db:
+            now = datetime.now(timezone.utc)
+            result = await db.execute(
+                select(Loan).where(
+                    Loan.status == "active",
+                    Loan.due_at < now,
+                )
+            )
+            overdue = result.scalars().all()
+            for loan in overdue:
+                loan.status = "defaulted"
+                logger.info(f"Loan defaulted: {loan.id}")
+            if overdue:
+                await db.commit()
+                logger.info(f"Defaulted {len(overdue)} overdue loans")
+    except Exception as e:
+        logger.error(f"Loan default check failed: {e}")
+
+
+async def job_intelligence_pipeline():
+    """Run nightly intelligence snapshot computation."""
+    from app.database.db import async_session
+    from app.intelligence.service import IntelligenceService
+
+    try:
+        svc = IntelligenceService()
+        async with async_session() as db:
+            result = await svc.run_nightly_pipeline(db)
+            await db.commit()
+            logger.info(f"Intelligence pipeline: {result}")
+    except Exception as e:
+        logger.error(f"Intelligence pipeline failed: {e}")
+
+
+async def job_interest_accrual():
+    """Accrue daily interest on active loans."""
+    from app.database.db import async_session
+    from app.agents.models import Loan
+    from sqlalchemy import select
+
+    try:
+        async with async_session() as db:
+            result = await db.execute(
+                select(Loan).where(Loan.status == "active")
+            )
+            loans = result.scalars().all()
+            for loan in loans:
+                daily_rate = loan.interest_rate / 365
+                accrual = round(loan.amount * daily_rate, 8)
+                loan.amount += accrual
+            if loans:
+                await db.commit()
+                logger.info(f"Interest accrued on {len(loans)} loans")
+    except Exception as e:
+        logger.error(f"Interest accrual failed: {e}")
+
+
+async def job_subscription_renewal():
+    """Check and process subscription renewals."""
+    logger.info("Subscription renewal check (placeholder)")
+
+
+def start_scheduler():
+    """Configure and start all scheduled jobs."""
+    # Every hour: check proposal timeouts
+    scheduler.add_job(job_proposal_timeout, "interval", hours=1, id="proposal_timeout")
+
+    # Daily at 02:00 UTC: loan default check
+    scheduler.add_job(job_loan_default_check, "cron", hour=2, minute=0, id="loan_defaults")
+
+    # Daily at 03:00 UTC: intelligence pipeline
+    scheduler.add_job(job_intelligence_pipeline, "cron", hour=3, minute=0, id="intelligence")
+
+    # Daily at 04:00 UTC: interest accrual
+    scheduler.add_job(job_interest_accrual, "cron", hour=4, minute=0, id="interest_accrual")
+
+    # Daily at 06:00 UTC: subscription renewal check
+    scheduler.add_job(job_subscription_renewal, "cron", hour=6, minute=0, id="subscriptions")
+
+    scheduler.start()
+    logger.info("Scheduler started with 5 jobs")
+
+
+def stop_scheduler():
+    if scheduler.running:
+        scheduler.shutdown()
