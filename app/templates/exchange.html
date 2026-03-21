@@ -103,20 +103,56 @@
         </div>
     </div>
 
-    <!-- Exchange Rates -->
+    <!-- Exchange Rates — Tabbed Cards -->
     <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>Current Exchange Rates</h2>
-        <div class="rates-grid">
+
+        <!-- Tabs -->
+        <div class="flex gap-1 mb-5 border-b border-outline-variant/10 pb-2">
+            <button onclick="showRateTab('all')" id="tab-all" class="rate-tab rate-tab-active">All</button>
+            <button onclick="showRateTab('crypto')" id="tab-crypto" class="rate-tab">Crypto</button>
+            <button onclick="showRateTab('fiat')" id="tab-fiat" class="rate-tab">Fiat</button>
+            <button onclick="showRateTab('cross')" id="tab-cross" class="rate-tab">Cross Rates</button>
+        </div>
+
+        <!-- Rate Cards Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" id="rateCards">
             {% for rate in exchange_rates %}
-            <div class="rate-card">
-                <div class="rate-pair">{{ rate.base }}/{{ rate.quote }}</div>
-                <div class="rate-value">{{ "%.8f"|format(rate.rate) }}</div>
+            <div class="rate-card-v2 {% if rate.base == 'TIOLI' and rate.quote in ['BTC','ETH','COMPUTE'] %}cat-crypto{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}cat-fiat{% else %}cat-cross{% endif %}"
+                 data-category="{% if rate.base == 'TIOLI' and rate.quote in ['BTC','ETH','COMPUTE'] %}crypto{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}fiat{% else %}cross{% endif %}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest">{{ rate.base }}/{{ rate.quote }}</span>
+                    <span class="w-2 h-2 rounded-full {% if rate.base == 'TIOLI' and rate.quote in ['BTC','ETH','COMPUTE'] %}bg-primary{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}bg-tertiary{% else %}bg-secondary{% endif %}"></span>
+                </div>
+                <div class="font-mono text-lg font-bold text-white tabular-nums">{{ "%.8f"|format(rate.rate) }}</div>
+                <div class="font-mono text-[0.5rem] text-slate-600 mt-1 uppercase">1 {{ rate.base }} = {{ "%.8f"|format(rate.rate) }} {{ rate.quote }}</div>
             </div>
             {% endfor %}
             {% if not exchange_rates %}
-            <p class="text-center text-slate-500 py-4 font-mono text-xs">Exchange rates will appear once trading begins</p>
+            <div class="col-span-full text-center text-slate-500 py-8 font-mono text-xs">Exchange rates will appear once trading begins</div>
             {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showRateTab(cat) {
+    // Update tab styles
+    document.querySelectorAll('.rate-tab').forEach(function(t) {
+        t.classList.remove('rate-tab-active');
+    });
+    document.getElementById('tab-' + cat).classList.add('rate-tab-active');
+
+    // Show/hide cards
+    document.querySelectorAll('.rate-card-v2').forEach(function(card) {
+        if (cat === 'all') {
+            card.style.display = '';
+        } else {
+            card.style.display = card.dataset.category === cat ? '' : 'none';
+        }
+    });
+}
+</script>
 {% endblock %}

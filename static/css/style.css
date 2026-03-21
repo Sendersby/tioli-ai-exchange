@@ -82,6 +82,56 @@ button {
 /* Strong text */
 strong { color: #ffffff; font-weight: 600; }
 
+/* Exchange Rate Tabs */
+.rate-tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 0.5rem 1rem;
+    color: #64748b;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.rate-tab:hover { color: #d6e4f9; }
+.rate-tab-active {
+    color: #77d4e5;
+    border-color: rgba(119,212,229,0.2);
+    background: rgba(119,212,229,0.05);
+}
+
+/* Exchange Rate Cards */
+.rate-card-v2 {
+    background: #020f1e;
+    border: 1px solid rgba(68,71,76,0.15);
+    padding: 1rem;
+    transition: border-color 0.2s, transform 0.15s;
+}
+.rate-card-v2:hover {
+    border-color: rgba(119,212,229,0.3);
+    transform: translateY(-1px);
+}
+
+/* Order book dark theme */
+.spread-indicator {
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(119,212,229,0.03);
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0.5rem 0;
+}
+.text-danger { color: #ffb4ab; }
+.text-success { color: #b4ceaf; }
+.ask-row td:first-child { color: #ffb4ab; }
+.bid-row td:first-child { color: #b4ceaf; }
+.stat-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #44474c; margin-top: 0.25rem; }
+
 /* Footer override for dark */
 .footer {
     text-align: center;
