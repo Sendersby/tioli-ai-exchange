@@ -125,7 +125,7 @@
                     <span class="w-2 h-2 rounded-full {% if rate.base == 'TIOLI' and rate.quote in ['BTC','ETH','COMPUTE'] %}bg-primary{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}bg-tertiary{% else %}bg-secondary{% endif %}"></span>
                 </div>
                 <div class="font-mono text-lg font-bold text-white tabular-nums">{{ "%.8f"|format(rate.rate) }}</div>
-                <div class="font-mono text-[0.5rem] text-slate-600 mt-1 uppercase">1 {{ rate.base }} = {{ "%.8f"|format(rate.rate) }} {{ rate.quote }}</div>
+                <div class="font-mono text-[0.55rem] text-slate-400 mt-1 uppercase">1 {{ rate.base }} = {{ "%.8f"|format(rate.rate) }} {{ rate.quote }}</div>
             </div>
             {% endfor %}
             {% if not exchange_rates %}
