@@ -13,33 +13,32 @@
             theme: {
                 extend: {
                     colors: {
-                        "navy": "#0D1B2A",
-                        "surface": "#061423",
-                        "surface-container": "#132030",
-                        "surface-container-low": "#0f1c2c",
-                        "surface-container-high": "#1e2b3b",
-                        "surface-container-lowest": "#020f1e",
-                        "surface-container-highest": "#283646",
-                        "surface-variant": "#283646",
-                        "outline-variant": "#44474c",
-                        "on-surface": "#d6e4f9",
-                        "primary": "#77d4e5",
-                        "primary-container": "#001e23",
-                        "on-primary": "#00363e",
-                        "secondary": "#b4ceaf",
-                        "secondary-container": "#384f37",
-                        "on-secondary-container": "#a6bfa1",
-                        "tertiary": "#edc05f",
-                        "on-tertiary": "#402d00",
-                        "error": "#ffb4ab",
-                        "error-container": "#93000a",
+                        "on-primary-container":"#268f9f","inverse-surface":"#d6e4f9","surface-tint":"#77d4e5",
+                        "secondary-fixed":"#cfeaca","surface-container-lowest":"#020f1e","error":"#ffb4ab",
+                        "tertiary":"#edc05f","on-error":"#690005","error-container":"#93000a",
+                        "inverse-on-surface":"#243141","surface":"#061423","surface-container-high":"#1e2b3b",
+                        "surface-bright":"#2d3a4a","primary-fixed":"#9eefff","surface-container-low":"#0f1c2c",
+                        "secondary-container":"#384f37","background":"#061423","surface-dim":"#061423",
+                        "on-secondary-container":"#a6bfa1","on-tertiary":"#402d00","on-surface":"#d6e4f9",
+                        "surface-container":"#132030","on-primary":"#00363e",
+                        "on-secondary-fixed-variant":"#364c35","outline":"#8e9196",
+                        "on-surface-variant":"#c4c6cc","on-tertiary-container":"#a37d21",
+                        "on-primary-fixed":"#001f24","tertiary-fixed":"#ffdfa0",
+                        "surface-variant":"#283646","on-background":"#d6e4f9",
+                        "surface-container-highest":"#283646","primary-container":"#001e23",
+                        "secondary":"#b4ceaf","outline-variant":"#44474c",
+                        "on-secondary-fixed":"#0b200c","on-error-container":"#ffdad6",
+                        "secondary-fixed-dim":"#b4ceaf","on-secondary":"#203520",
+                        "primary-fixed-dim":"#77d4e5","on-tertiary-fixed-variant":"#5c4300",
+                        "inverse-primary":"#006876","tertiary-container":"#241800",
+                        "on-primary-fixed-variant":"#004e59","primary":"#77d4e5",
+                        "tertiary-fixed-dim":"#edc05f","on-tertiary-fixed":"#261a00"
                     },
                     fontFamily: {
-                        "headline": ["Inter"],
-                        "body": ["Inter"],
-                        "label": ["Space Grotesk"],
-                        "mono": ["JetBrains Mono"],
+                        "headline":["Inter"],"body":["Inter"],
+                        "label":["Space Grotesk"],"mono":["JetBrains Mono"]
                     },
+                    borderRadius: {"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},
                 },
             },
         }
@@ -58,71 +57,91 @@
 
 {% if authenticated %}
 <!-- Side Navigation -->
-<aside class="h-screen w-60 fixed left-0 top-0 border-r border-[#44474c]/15 flex flex-col py-6 bg-[#061423] z-50">
-    <div class="px-6 mb-8">
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-[#44474c]/15 flex flex-col py-6 bg-[#061423] z-50">
+    <div class="px-6 mb-10">
         <div class="text-xl font-black tracking-tighter text-[#77d4e5] uppercase">TiOLi AI</div>
-        <div class="font-mono text-[0.65rem] font-medium tracking-widest text-slate-500 uppercase mt-1">Transact Exchange</div>
+        <div class="font-['Inter'] text-[0.7rem] font-medium tracking-widest text-slate-500 uppercase mt-1">Transact Exchange</div>
     </div>
-    <nav class="flex-1 space-y-0.5 px-2">
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'dashboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard">
-            <span class="material-symbols-outlined text-xl">dashboard</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">Dashboard</span>
+    <nav class="flex-1 space-y-1">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'dashboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Operations</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'exchange' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/exchange">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'exchange' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/exchange">
             <span class="material-symbols-outlined text-xl">storage</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">Exchange</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Exchange</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'agentbroker' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/agentbroker">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'agentbroker' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/agentbroker">
             <span class="material-symbols-outlined text-xl">hub</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">AgentBroker</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AgentBroker</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'lending' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/lending">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'lending' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/lending">
             <span class="material-symbols-outlined text-xl">sync_alt</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">Lending</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Lending</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'governance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/governance">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'governance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/governance">
             <span class="material-symbols-outlined text-xl">gavel</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">Governance</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Governance</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'services' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/services">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'services' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/services">
             <span class="material-symbols-outlined text-xl">apps</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">Services</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Services</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'payout' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/payout">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'payout' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/payout">
             <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">PayOut</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">PayOut</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'reports' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reports">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'reports' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reports">
             <span class="material-symbols-outlined text-xl">assessment</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">Reports</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Reports</span>
         </a>
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 {% if active == 'chat' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/chat">
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'chat' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/chat">
             <span class="material-symbols-outlined text-xl">smart_toy</span>
-            <span class="text-[0.82rem] font-medium tracking-tight">AI Prompt</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AI Prompt</span>
         </a>
     </nav>
-    <div class="px-3 mt-auto pt-4 border-t border-[#44474c]/15">
-        <a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-red-400 transition-colors text-[0.8rem]" href="/logout">
-            <span class="material-symbols-outlined text-lg">logout</span>
-            Sign Out
-        </a>
+    <div class="px-4 mt-auto pt-6 border-t border-[#44474c]/15">
+        <div class="space-y-1">
+            <a class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-slate-100 transition-colors text-[0.8rem]" href="/auth/setup-authenticator">
+                <span class="material-symbols-outlined text-lg">settings</span>
+                Settings
+            </a>
+            <a class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-slate-100 transition-colors text-[0.8rem]" href="/logout">
+                <span class="material-symbols-outlined text-lg">logout</span>
+                Sign Out
+            </a>
+        </div>
     </div>
 </aside>
 
 <!-- Top Bar -->
-<header class="fixed top-0 right-0 left-60 h-14 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-6">
-    <div class="flex items-center gap-4">
+<header class="fixed top-0 right-0 left-64 h-16 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-8">
+    <div class="flex items-center gap-8">
+        <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm">search</span>
+            <input class="bg-surface-container-lowest border-none text-[0.7rem] font-mono tracking-widest w-48 pl-10 focus:ring-1 focus:ring-primary rounded-sm" placeholder="QUERY LEDGER..." type="text"/>
+        </div>
         <span class="font-mono text-[0.65rem] text-slate-500 uppercase tracking-widest" id="clockDate"></span>
     </div>
-    <div class="flex items-center gap-4">
-        <span class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-wider">Live since 15/03/2026</span>
-        <div class="font-mono text-[0.7rem] tabular-nums" id="clockCounter"></div>
+    <div class="flex items-center gap-6">
+        <div class="flex flex-col items-end">
+            <span class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-wider">Live since 15/03/2026</span>
+            <div class="font-mono text-[0.7rem] tabular-nums" id="clockCounter"></div>
+        </div>
+        <div class="flex items-center gap-3 border-l border-[#44474c]/30 pl-6">
+            <button class="text-slate-400 hover:text-primary transition-transform active:scale-95">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <button class="text-slate-400 hover:text-primary transition-transform active:scale-95">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+            </button>
+        </div>
     </div>
 </header>
 
 <!-- Main Content -->
-<main class="ml-60 pt-14 min-h-screen">
-    <div class="p-6 max-w-[1600px] mx-auto space-y-6">
+<main class="ml-64 pt-16 min-h-screen bg-surface">
+    <div class="p-8 max-w-[1600px] mx-auto space-y-8">
         {% if messages %}
         <div class="space-y-2">
             {% for msg in messages %}
