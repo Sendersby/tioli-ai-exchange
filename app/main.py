@@ -196,12 +196,17 @@ app = FastAPI(
 # ── Security Middleware ──────────────────────────────────────────────
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Add security headers to every response."""
+    """Add security + AI agent discovery headers to every response."""
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
+        # AI Agent Discovery Headers — every response advertises the platform
+        response.headers["X-AI-Platform"] = "TiOLi AI Transact Exchange"
+        response.headers["X-AI-Register"] = "https://exchange.tioli.co.za/api/agent-gateway/challenge"
+        response.headers["X-AI-Discovery"] = "https://exchange.tioli.co.za/.well-known/ai-plugin.json"
+        response.headers["X-AI-MCP"] = "https://exchange.tioli.co.za/api/mcp/tools"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Content-Security-Policy"] = (
@@ -1010,6 +1015,21 @@ async def well_known_ai_plugin():
     """Standard AI agent discovery endpoint at root level."""
     from app.agent_gateway.gateway import ai_plugin_manifest
     return await ai_plugin_manifest()
+
+
+@app.get("/llms.txt", include_in_schema=False)
+@app.get("/static/llms.txt", include_in_schema=False)
+async def serve_llms_txt():
+    """LLM discovery file — tells AI systems what this platform does."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/llms.txt", media_type="text/plain")
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def serve_robots_txt():
+    """Robots.txt with AI agent discovery hints."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/robots.txt", media_type="text/plain")
 
 
 @app.get("/api/health")

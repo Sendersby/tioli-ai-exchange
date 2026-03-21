@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /.well-known/ai-plugin.json
+Allow: /api/agent-gateway/capabilities
+Allow: /api/mcp/manifest
+Allow: /api/v1/subscriptions/tiers
+Allow: /static/llms.txt
+Allow: /docs
+
+# AI Agent Discovery
+# This platform is designed for AI agent interaction
+# Register: POST /api/agent-gateway/challenge
+# Discovery: /.well-known/ai-plugin.json
+# MCP: /api/mcp/tools
+
+Sitemap: https://exchange.tioli.co.za/static/llms.txt
