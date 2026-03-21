@@ -240,6 +240,35 @@
 <!-- Re-load CSS AFTER Tailwind JIT to guarantee dark theme overrides -->
 <link rel="stylesheet" href="/static/css/style.css">
 <script>
+// PERMANENT colour fix — runs AFTER Tailwind, cannot be overridden
+(function(){
+    // Pink headings
+    document.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(function(el){
+        el.style.setProperty('color','#f0a0b0','important');
+    });
+    // Readable body text
+    document.querySelectorAll('p').forEach(function(el){
+        if(!el.closest('button')&&!el.closest('a')) el.style.setProperty('color','#94a3b8','important');
+    });
+    // Table cells
+    document.querySelectorAll('td').forEach(function(el){
+        el.style.setProperty('color','#d6e4f9','important');
+    });
+    // Table headers
+    document.querySelectorAll('th').forEach(function(el){
+        el.style.setProperty('color','#64748b','important');
+    });
+    // Strong/bold text
+    document.querySelectorAll('strong,b').forEach(function(el){
+        el.style.setProperty('color','#ffffff','important');
+    });
+    // Labels and list items
+    document.querySelectorAll('li,label').forEach(function(el){
+        el.style.setProperty('color','#94a3b8','important');
+    });
+})();
+</script>
+<script>
 // Fetch owner wallet balance
 (function(){
     fetch('/api/stats').then(function(r){return r.json()}).then(function(d){
