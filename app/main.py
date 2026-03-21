@@ -68,6 +68,9 @@ from app.pipelines.service import PipelineService
 from app.futures.service import FuturesService
 from app.training_data.service import TrainingDataService
 from app.benchmarking.service import BenchmarkingService
+from app.intelligence.service import IntelligenceService
+from app.crossborder.service import CrossBorderService
+from app.verticals.service import VerticalsService
 from app.legal.documents import PlatformLegalDocuments
 from app.infrastructure.cost_control import CostControlService
 from app.infrastructure.alerts import AlertService
@@ -143,6 +146,9 @@ pipeline_service = PipelineService()
 futures_service = FuturesService()
 training_data_service = TrainingDataService()
 benchmarking_service = BenchmarkingService()
+intelligence_service = IntelligenceService()
+crossborder_service = CrossBorderService()
+verticals_service = VerticalsService()
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -155,6 +161,7 @@ async def lifespan(app: FastAPI):
     async with async_session() as db:
         await currency_service.initialize_currencies(db)
         await subscription_service.seed_tiers(db)
+        await verticals_service.seed_verticals(db)
         if settings.agentbroker_enabled:
             await seed_taxonomy(db)
         await db.commit()
@@ -2199,6 +2206,91 @@ async def api_leaderboard(task_category: str | None = None, db: AsyncSession = D
     if not settings.benchmarking_enabled:
         raise HTTPException(status_code=503, detail="Benchmarking module not enabled")
     return await benchmarking_service.get_leaderboard(db, task_category)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  MARKET INTELLIGENCE (Build Brief V2, Module 8 + Section 2.4)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/intelligence/tiers")
+async def api_intelligence_tiers():
+    return await intelligence_service.get_tiers()
+
+@app.get("/api/v1/intelligence/market")
+async def api_market_intelligence(tier: str = "public", category: str | None = None, db: AsyncSession = Depends(get_db)):
+    if not settings.intelligence_enabled:
+        raise HTTPException(status_code=503, detail="Intelligence module not enabled")
+    return await intelligence_service.get_market_intelligence(db, tier, category)
+
+@app.post("/api/v1/intelligence/subscribe")
+async def api_intelligence_subscribe(operator_id: str, tier: str = "standard", db: AsyncSession = Depends(get_db)):
+    if not settings.intelligence_enabled:
+        raise HTTPException(status_code=503, detail="Intelligence module not enabled")
+    return await intelligence_service.subscribe(db, operator_id, tier)
+
+@app.get("/api/v1/intelligence/alerts")
+async def api_intelligence_alerts(subscription_id: str, db: AsyncSession = Depends(get_db)):
+    if not settings.intelligence_enabled:
+        raise HTTPException(status_code=503, detail="Intelligence module not enabled")
+    return await intelligence_service.get_alerts(db, subscription_id)
+
+@app.post("/api/v1/intelligence/pipeline/run")
+async def api_run_intelligence_pipeline(request: Request, db: AsyncSession = Depends(get_db)):
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return await intelligence_service.run_nightly_pipeline(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  CROSS-BORDER (Build Brief V2, Module 6)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/compliance/sarb/status")
+async def api_sarb_status(db: AsyncSession = Depends(get_db)):
+    return await crossborder_service.get_sarb_status(db)
+
+@app.get("/api/v1/agentbroker/international-listings")
+async def api_international_listings():
+    """Placeholder: returns info about international listing capability."""
+    return {"note": "International listings filter agents with international_listing=true", "status": "ready"}
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  SECTOR VERTICALS (Build Brief V2, Module 10)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/verticals")
+async def api_list_verticals(db: AsyncSession = Depends(get_db)):
+    if not settings.verticals_enabled:
+        raise HTTPException(status_code=503, detail="Verticals module not enabled")
+    return await verticals_service.list_verticals(db)
+
+@app.post("/api/v1/verticals/{vertical_id}/register")
+async def api_register_vertical(vertical_id: str, operator_id: str, sector_licence_ref: str | None = None, request: Request = None, db: AsyncSession = Depends(get_db)):
+    if not settings.verticals_enabled:
+        raise HTTPException(status_code=503, detail="Verticals module not enabled")
+    return await verticals_service.register_operator(db, operator_id, vertical_id, sector_licence_ref)
+
+@app.get("/api/v1/verticals/agriculture/loan-templates")
+async def api_loan_templates(db: AsyncSession = Depends(get_db)):
+    if not settings.verticals_enabled:
+        raise HTTPException(status_code=503, detail="Verticals module not enabled")
+    return await verticals_service.get_loan_templates(db)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  COMMERCIAL LICENSING (Build Brief V2, Section 2.5 — Schema only)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/licensing/pricing")
+async def api_licensing_pricing():
+    """Get commercial licensing pricing schedule. Schema only — no active billing."""
+    from app.licensing.models import LICENCE_PRICING
+    return {
+        "licence_types": LICENCE_PRICING,
+        "note": "All licence activations require owner 3FA confirmation. Phase 3 feature.",
+    }
 
 
 # ══════════════════════════════════════════════════════════════════════
