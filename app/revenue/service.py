@@ -542,11 +542,43 @@ class RevenueEngineService:
     # ── Exchange Rate ─────────────────────────────────────────────────
 
     async def get_exchange_rate(self, db: AsyncSession) -> float:
-        """Get current USD/ZAR rate."""
+        """Get current ZAR/USD rate (how many ZAR per 1 USD)."""
         result = await db.execute(
             select(RevenueExchangeRate).order_by(RevenueExchangeRate.fetched_at.desc()).limit(1)
         )
         rate = result.scalar_one_or_none()
         if rate:
-            return rate.rate
-        return 18.50  # default
+            # Check if stale (older than 6 hours)
+            from datetime import timedelta
+            if rate.fetched_at and (datetime.now(timezone.utc) - rate.fetched_at) < timedelta(hours=6):
+                return rate.rate
+        # Fetch fresh rate
+        return await self.refresh_exchange_rate(db)
+
+    async def refresh_exchange_rate(self, db: AsyncSession) -> float:
+        """Fetch live rate from open.er-api.com and store it.
+
+        Same source as the public stats API and the front-end.
+        Source: https://open.er-api.com/v6/latest/ZAR
+        """
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get("https://open.er-api.com/v6/latest/USD")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("result") == "success":
+                        zar_per_usd = data["rates"].get("ZAR", 18.50)
+                        # Store in database
+                        record = RevenueExchangeRate(
+                            base_currency="USD", target_currency="ZAR",
+                            rate=round(zar_per_usd, 4),
+                            source="open.er-api.com",
+                        )
+                        db.add(record)
+                        await db.flush()
+                        logger.info(f"Exchange rate updated: 1 USD = {zar_per_usd} ZAR (open.er-api.com)")
+                        return round(zar_per_usd, 4)
+        except Exception as e:
+            logger.warning(f"Exchange rate fetch failed: {e}")
+        return 18.50  # fallback

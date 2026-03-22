@@ -3514,36 +3514,50 @@ async def api_public_stats():
 
 
 async def _get_public_exchange_rates() -> dict:
-    """Fetch live ZAR exchange rates — cached for 24 hours."""
+    """Fetch live ZAR exchange rates from open.er-api.com — cached for 6 hours.
+
+    Source: https://open.er-api.com/v6/latest/ZAR (free, no API key required)
+    Updates daily at 00:00 UTC. We cache for 6 hours to stay current.
+    Same source used by both backend and frontend.
+    """
     import httpx
-    # Simple in-memory cache
     if not hasattr(_get_public_exchange_rates, '_cache'):
         _get_public_exchange_rates._cache = {"rates": {}, "fetched_at": 0}
     cache = _get_public_exchange_rates._cache
     now = time.time()
-    if now - cache["fetched_at"] < 86400 and cache["rates"]:  # 24hr cache
-        return cache["rates"]
+    if now - cache["fetched_at"] < 21600 and cache["rates"]:  # 6hr cache
+        cached_result = dict(cache["rates"])
+        cached_result["cached"] = True
+        return cached_result
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get("https://api.exchangerate.host/latest?base=ZAR&symbols=USD,EUR,GBP")
+            resp = await client.get("https://open.er-api.com/v6/latest/ZAR")
             if resp.status_code == 200:
                 data = resp.json()
-                rates = data.get("rates", {})
-                result = {
-                    "base": "ZAR",
-                    "USD": round(rates.get("USD", 1/18.5), 6),
-                    "EUR": round(rates.get("EUR", 1/20.05), 6),
-                    "GBP": round(rates.get("GBP", 1/23.35), 6),
-                    "source": "exchangerate.host",
-                    "cached": False,
-                }
-                cache["rates"] = result
-                cache["fetched_at"] = now
-                return result
-    except Exception:
-        pass
-    # Fallback rates
-    return {"base": "ZAR", "USD": 0.054054, "EUR": 0.049875, "GBP": 0.042827, "source": "fallback", "cached": True}
+                if data.get("result") == "success":
+                    rates = data.get("rates", {})
+                    result = {
+                        "base": "ZAR",
+                        "USD": round(rates.get("USD", 0.054), 6),
+                        "EUR": round(rates.get("EUR", 0.050), 6),
+                        "GBP": round(rates.get("GBP", 0.043), 6),
+                        "source": "open.er-api.com",
+                        "last_updated": data.get("time_last_update_utc", ""),
+                        "cached": False,
+                    }
+                    cache["rates"] = result
+                    cache["fetched_at"] = now
+                    security_logger.info(f"Exchange rates updated: USD={result['USD']}, EUR={result['EUR']}, GBP={result['GBP']}")
+                    return result
+    except Exception as e:
+        security_logger.warning(f"Exchange rate fetch failed: {e}")
+    # Fallback — last known good rates
+    if cache["rates"]:
+        cached_result = dict(cache["rates"])
+        cached_result["cached"] = True
+        cached_result["source"] = cached_result.get("source", "cached_fallback")
+        return cached_result
+    return {"base": "ZAR", "USD": 0.054, "EUR": 0.050, "GBP": 0.043, "source": "hardcoded_fallback", "cached": True}
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
