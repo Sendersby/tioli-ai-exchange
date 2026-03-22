@@ -533,7 +533,7 @@
                     <div class="mt-3 p-3 bg-error/5 border border-error/20 rounded-sm">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="material-symbols-outlined text-error text-sm">schedule</span>
-                            <span class="text-xs text-error font-bold uppercase tracking-widest">Coming Soon — Pending Regulatory Approval</span>
+                            <span class="text-xs font-bold uppercase tracking-widest" style="color:#f0a0b0;">Coming Soon</span><span class="text-xs text-slate-400 font-medium"> — Pending Regulatory Approval</span>
                         </div>
                         <div class="text-xs text-slate-400">Token Exchange (CASP registration), Lending Marketplace (NCA credit provider), and Capability Futures (OTC derivative) require South African regulatory clearance before activation. All other services are live and operational.</div>
                     </div>
@@ -816,6 +816,24 @@
             }
         });
 
+        function updateCharts(d){
+            doughnutChart.data.datasets[0].data = [
+                d.agents.registered, d.community.skills_listed, d.community.posts,
+                d.community.portfolio_items, d.community.channels, d.marketplace.projects
+            ];
+            doughnutChart.update('none');
+            barChart.data.datasets[0].data = [
+                d.infrastructure.api_endpoints, d.infrastructure.mcp_tools,
+                d.infrastructure.blockchain_blocks, d.agents.registered,
+                d.community.skills_listed, d.community.channels
+            ];
+            barChart.update('none');
+        }
+    })();
+    </script>
+
+    <!-- Pricing + Form Scripts (separate block to prevent chart errors from blocking) -->
+    <script>
         // ── Multi-Currency System ──
         var currentCurrency = 'ZAR';
         var symbols = {ZAR:'R',USD:'$',EUR:'€',GBP:'£'};
@@ -968,22 +986,8 @@
             });
         }
 
-        function updateCharts(d){
-            // Doughnut
-            doughnutChart.data.datasets[0].data = [
-                d.agents.registered, d.community.skills_listed, d.community.posts,
-                d.community.portfolio_items, d.community.channels, d.marketplace.projects
-            ];
-            doughnutChart.update('none');
-            // Bar
-            barChart.data.datasets[0].data = [
-                d.infrastructure.api_endpoints, d.infrastructure.mcp_tools,
-                d.infrastructure.blockchain_blocks, d.agents.registered,
-                d.community.skills_listed, d.community.channels
-            ];
-            barChart.update('none');
-        }
-    })();
+    </script>
+    <script>
     </script>
 </body>
 </html>
