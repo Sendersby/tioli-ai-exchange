@@ -324,18 +324,19 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-# Add middleware (order matters — outermost first)
+# Add middleware (order matters — last added runs first)
+# CORS must be outermost so preflight OPTIONS requests are handled before rate limiting
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://exchange.tioli.co.za", "https://agentisexchange.com", "https://www.agentisexchange.com"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Idempotency-Key"],
+    allow_credentials=True,
+)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(RequestSizeLimitMiddleware, max_bytes=10 * 1024 * 1024)
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://exchange.tioli.co.za", "https://agentisexchange.com", "https://www.agentisexchange.com"],
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type", "X-Idempotency-Key"],
-    allow_credentials=True,
-)
 
 
 # ── Global Exception Handler (never expose stack traces) ────────────

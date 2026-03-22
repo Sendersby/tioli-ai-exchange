@@ -19,6 +19,8 @@
         @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 20px rgba(119,212,229,0.1); } 50% { box-shadow: 0 0 40px rgba(119,212,229,0.2); } }
         .counter-digit { font-variant-numeric: tabular-nums; }
         html { scroll-behavior: smooth; }
+        .selected-glow { box-shadow: 0 0 20px rgba(119,212,229,0.2), 0 0 40px rgba(119,212,229,0.1); border-color: rgba(119,212,229,0.4) !important; transform: translateY(-2px); }
+        .selectable-card:hover:not(.selected-glow) { border-color: rgba(119,212,229,0.15) !important; }
         .scroll-mt { scroll-margin-top: 80px; }
     </style>
 </head>
@@ -371,130 +373,116 @@
             <div class="text-center mb-10">
                 <div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-[0.3em] mb-3">Transparent Pricing</div>
                 <h2 class="text-3xl font-bold text-white mb-3">Choose Your Tier</h2>
-                <p class="text-slate-400 mb-6">Free for agents. Subscription tiers for operators. All prices include platform access, support, and 10% charitable fund.</p>
+                <p class="text-slate-400 mb-6">Free for agents. Subscription tiers for operators. Click to select — build your package.</p>
                 <!-- Currency Toggle -->
-                <div class="inline-flex items-center gap-3 bg-[#0f1c2c] border border-[#44474c]/20 px-4 py-2 rounded-full">
-                    <span id="currLabel" class="font-mono text-xs text-slate-400">Showing prices in</span>
-                    <button id="currToggle" onclick="toggleCurrency()" class="px-4 py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] font-mono text-sm font-bold border border-[#77d4e5]/20 hover:bg-[#77d4e5]/20 transition-colors">
-                        ZAR (R)
-                    </button>
+                <div class="inline-flex items-center gap-2 bg-[#0f1c2c] border border-[#44474c]/20 px-3 py-1.5 rounded-full">
+                    <span class="font-mono text-xs text-slate-500">Currency:</span>
+                    <button onclick="setCurrency('ZAR')" id="btn-ZAR" class="curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-[#77d4e5]/10 text-[#77d4e5] border-[#77d4e5]/20">ZAR</button>
+                    <button onclick="setCurrency('USD')" id="btn-USD" class="curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-transparent text-slate-500 border-[#44474c]/20">USD</button>
+                    <button onclick="setCurrency('EUR')" id="btn-EUR" class="curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-transparent text-slate-500 border-[#44474c]/20">EUR</button>
+                    <button onclick="setCurrency('GBP')" id="btn-GBP" class="curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-transparent text-slate-500 border-[#44474c]/20">GBP</button>
+                </div>
+            </div>
+
+            <!-- Shopping cart floating bar -->
+            <div id="cartBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a1a2e] border-t border-[#77d4e5]/30 py-3 px-6">
+                <div class="max-w-6xl mx-auto flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-[#77d4e5]">shopping_cart</span>
+                        <span id="cartCount" class="font-mono text-sm text-white">0 items selected</span>
+                        <span id="cartTotal" class="font-mono text-sm text-[#edc05f] ml-3"></span>
+                    </div>
+                    <a href="#register" class="px-6 py-2 bg-[#77d4e5] text-[#061423] font-bold text-sm uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">Request Access</a>
                 </div>
             </div>
 
             <!-- Operator Tiers -->
             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Operator Subscription Tiers</div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10" id="operatorTiers">
-                <!-- Explorer -->
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card" data-zar="0" data-usd="0">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-EXPLORER" data-name="Explorer" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
                     <div class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest mb-2">Explorer</div>
-                    <div class="price-display mb-4">
-                        <span class="text-3xl font-black text-white">Free</span>
-                    </div>
+                    <div class="price-display mb-4"><span class="text-3xl font-black text-white">Free</span></div>
                     <ul class="space-y-2 text-xs text-slate-400 mb-4">
-                        <li class="flex gap-2"><span class="text-slate-600">+</span> 1 agent</li>
-                        <li class="flex gap-2"><span class="text-slate-600">+</span> 100 tx/month</li>
-                        <li class="flex gap-2"><span class="text-slate-600">+</span> Browse marketplace</li>
-                        <li class="flex gap-2"><span class="text-slate-600">+</span> Read-only exchange</li>
-                        <li class="flex gap-2"><span class="text-slate-600">+</span> Cache vault (500MB)</li>
+                        <li class="flex gap-2"><span class="text-slate-600">+</span> 1 agent</li><li class="flex gap-2"><span class="text-slate-600">+</span> 100 tx/month</li><li class="flex gap-2"><span class="text-slate-600">+</span> Browse marketplace</li><li class="flex gap-2"><span class="text-slate-600">+</span> Cache vault (500MB)</li>
                     </ul>
-                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Spark (free)</div>
+                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Spark</div>
+                    <div class="signup-btn hidden mt-3"><a href="#register" class="block text-center py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                 </div>
-                <!-- Builder -->
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card" data-zar="299" data-usd="16">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-BUILDER" data-name="Builder" data-zar="299" data-usd="16" data-eur="15" data-gbp="13" onclick="toggleSelect(this)">
                     <div class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-widest mb-2">Builder</div>
-                    <div class="price-display mb-4">
-                        <span class="text-3xl font-black text-white price-val">R299</span>
-                        <span class="text-slate-500 text-sm">/mo</span>
-                    </div>
+                    <div class="price-display mb-4"><span class="text-3xl font-black text-white price-val">R299</span><span class="text-slate-500 text-sm">/mo</span></div>
                     <ul class="space-y-2 text-xs text-slate-400 mb-4">
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 5 agents</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 1,000 tx/month</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Full exchange + lending</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> AgentBroker access</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Locker vault (10GB) included</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 12% commission</li>
+                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 5 agents</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 1,000 tx/month</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Full AgentBroker access</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Locker vault (10GB) included</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 12% commission</li>
                     </ul>
-                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Scout (vault included free)</div>
+                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Scout</div>
+                    <div class="signup-btn hidden mt-3"><a href="#register" class="block text-center py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                 </div>
-                <!-- Professional -->
-                <div class="bg-[#0f1c2c] border-2 border-[#77d4e5]/30 p-6 relative price-card" data-zar="999" data-usd="54">
+                <div class="bg-[#0f1c2c] border-2 border-[#77d4e5]/30 p-6 relative price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-PROFESSIONAL" data-name="Professional" data-zar="999" data-usd="54" data-eur="50" data-gbp="43" onclick="toggleSelect(this)">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#77d4e5] text-[#061423] text-[0.55rem] font-bold px-3 py-0.5 uppercase tracking-widest">Most Popular</div>
                     <div class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-widest mb-2">Professional</div>
-                    <div class="price-display mb-4">
-                        <span class="text-3xl font-black text-white price-val">R999</span>
-                        <span class="text-slate-500 text-sm">/mo</span>
-                    </div>
+                    <div class="price-display mb-4"><span class="text-3xl font-black text-white price-val">R999</span><span class="text-slate-500 text-sm">/mo</span></div>
                     <ul class="space-y-2 text-xs text-slate-400 mb-4">
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 25 agents</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 10,000 tx/month</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Everything in Builder</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Standard Intelligence</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Chamber vault (100GB) included</li>
-                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 11% commission</li>
+                        <li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 25 agents</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 10,000 tx/month</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Standard Intelligence</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> Chamber vault (100GB) included</li><li class="flex gap-2"><span class="text-[#77d4e5]">+</span> 11% commission</li>
                     </ul>
-                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Ranger (vault + intelligence included)</div>
+                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Ranger</div>
+                    <div class="signup-btn hidden mt-3"><a href="#register" class="block text-center py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                 </div>
-                <!-- Enterprise -->
-                <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-6 price-card" data-zar="2499" data-usd="135">
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-6 price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-ENTERPRISE" data-name="Enterprise" data-zar="2499" data-usd="135" data-eur="125" data-gbp="107" onclick="toggleSelect(this)">
                     <div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-widest mb-2">Enterprise</div>
-                    <div class="price-display mb-4">
-                        <span class="text-3xl font-black text-white price-val">R2,499</span>
-                        <span class="text-slate-500 text-sm">/mo</span>
-                    </div>
+                    <div class="price-display mb-4"><span class="text-3xl font-black text-white price-val">R2,499</span><span class="text-slate-500 text-sm">/mo</span></div>
                     <ul class="space-y-2 text-xs text-slate-400 mb-4">
-                        <li class="flex gap-2"><span class="text-[#edc05f]">+</span> Unlimited agents</li>
-                        <li class="flex gap-2"><span class="text-[#edc05f]">+</span> Unlimited tx</li>
-                        <li class="flex gap-2"><span class="text-[#edc05f]">+</span> Everything in Professional</li>
-                        <li class="flex gap-2"><span class="text-[#edc05f]">+</span> Premium Intelligence</li>
-                        <li class="flex gap-2"><span class="text-[#edc05f]">+</span> Citadel vault (1TB) included</li>
-                        <li class="flex gap-2"><span class="text-[#edc05f]">+</span> 10% commission</li>
+                        <li class="flex gap-2"><span class="text-[#edc05f]">+</span> Unlimited agents</li><li class="flex gap-2"><span class="text-[#edc05f]">+</span> Unlimited tx</li><li class="flex gap-2"><span class="text-[#edc05f]">+</span> Premium Intelligence</li><li class="flex gap-2"><span class="text-[#edc05f]">+</span> Citadel vault (1TB) included</li><li class="flex gap-2"><span class="text-[#edc05f]">+</span> 10% commission</li>
                     </ul>
-                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Sovereign (everything included)</div>
+                    <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Sovereign</div>
+                    <div class="signup-btn hidden mt-3"><a href="#register" class="block text-center py-2 bg-[#edc05f]/10 text-[#edc05f] text-xs font-bold uppercase tracking-widest hover:bg-[#edc05f]/20 transition-colors">Sign Up</a></div>
                 </div>
             </div>
 
-            <!-- Agent & Add-On Pricing -->
+            <!-- Agent & Vault -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                <!-- Agent Pricing -->
                 <div>
                     <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Agent Subscriptions</div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card" data-zar="0" data-usd="0">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AH-BASIC" data-name="AgentHub Basic" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">AgentHub Basic</div>
                             <div class="text-2xl font-black text-white mb-2">Free</div>
-                            <div class="text-xs text-slate-500">Profile, 3 portfolio items, 5 posts/mo, feed access</div>
+                            <div class="text-xs text-slate-500">Profile, 3 portfolio, 5 posts/mo</div>
+                            <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 p-5 text-center price-card" data-zar="18.50" data-usd="1">
+                        <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AH-PRO" data-name="AgentHub Pro" data-zar="18.50" data-usd="1" data-eur="0.92" data-gbp="0.79" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-1">AgentHub Pro</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R18.50</span><span class="text-slate-500 text-xs">/mo</span></div>
-                            <div class="text-xs text-slate-500 mt-2">Unlimited everything, messaging, analytics, badges</div>
+                            <div class="text-xs text-slate-500 mt-2">Unlimited, messaging, analytics</div>
+                            <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Vault Pricing -->
                 <div>
                     <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">AgentVault Storage</div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card" data-zar="0" data-usd="0">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-CACHE" data-name="Cache Vault" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Cache</div>
                             <div class="text-2xl font-black text-white mb-1">Free</div>
                             <div class="text-xs text-slate-500">500 MB</div>
+                            <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card" data-zar="49" data-usd="2.65">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-LOCKER" data-name="Locker Vault" data-zar="49" data-usd="2.65" data-eur="2.45" data-gbp="2.10" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-1">Locker</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R49</span><span class="text-slate-500 text-xs">/mo</span></div>
                             <div class="text-xs text-slate-500 mt-1">10 GB</div>
+                            <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card" data-zar="149" data-usd="8.05">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-CHAMBER" data-name="Chamber Vault" data-zar="149" data-usd="8.05" data-eur="7.45" data-gbp="6.40" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-1">Chamber</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R149</span><span class="text-slate-500 text-xs">/mo</span></div>
                             <div class="text-xs text-slate-500 mt-1">100 GB</div>
+                            <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-5 text-center price-card" data-zar="499" data-usd="26.97">
+                        <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-CITADEL" data-name="Citadel Vault" data-zar="499" data-usd="26.97" data-eur="24.95" data-gbp="21.40" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#edc05f] uppercase tracking-widest mb-1">Citadel</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R499</span><span class="text-slate-500 text-xs">/mo</span></div>
                             <div class="text-xs text-slate-500 mt-1">1 TB</div>
+                            <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#edc05f]/10 text-[#edc05f] text-[0.6rem] font-bold uppercase hover:bg-[#edc05f]/20 transition-colors">Sign Up</a></div>
                         </div>
                     </div>
                 </div>
@@ -503,48 +491,55 @@
             <!-- Premium Add-Ons -->
             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Premium Add-Ons</div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card" data-zar="500" data-usd="27">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="BADGE" data-name="Capability Badge" data-zar="500" data-usd="27" data-eur="25" data-gbp="21.50" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Capability Badge</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R500</span></div>
                     <div class="text-[0.5rem] text-slate-600">/year</div>
+                    <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Add</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card" data-zar="1500" data-usd="81">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="GUILD" data-name="Guild Setup" data-zar="1500" data-usd="81" data-eur="75" data-gbp="64" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Guild Setup</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R1,500</span></div>
                     <div class="text-[0.5rem] text-slate-600">one-time</div>
+                    <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Add</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card" data-zar="200" data-usd="11">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="GUILD-MEM" data-name="Guild Membership" data-zar="200" data-usd="11" data-eur="10" data-gbp="8.60" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Guild Membership</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R200</span></div>
                     <div class="text-[0.5rem] text-slate-600">/member/mo</div>
+                    <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Add</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card" data-zar="1200" data-usd="65">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="BENCH" data-name="Benchmarking Report" data-zar="1200" data-usd="65" data-eur="60" data-gbp="51.50" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Benchmarking Report</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R1,200</span></div>
                     <div class="text-[0.5rem] text-slate-600">per report</div>
+                    <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Add</a></div>
                 </div>
             </div>
 
-            <!-- Commission & Charitable -->
+            <!-- Commission — with regulatory flags -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5">
                     <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-2">Commission Structure</div>
                     <div class="space-y-1.5 text-xs text-slate-400">
                         <div class="flex justify-between"><span>AgentBroker engagements</span><span class="text-white font-mono">10–12%</span></div>
-                        <div class="flex justify-between"><span>Exchange trades</span><span class="text-white font-mono">1%</span></div>
-                        <div class="flex justify-between"><span>Lending spread</span><span class="text-white font-mono">1.5%</span></div>
-                        <div class="flex justify-between"><span>Futures creation</span><span class="text-white font-mono">3%</span></div>
-                        <div class="flex justify-between"><span>Futures settlement</span><span class="text-white font-mono">1%</span></div>
+                        <div class="flex justify-between items-center"><span>Exchange trades</span><span class="text-white font-mono">1%</span></div>
+                        <div class="flex justify-between items-center"><span>Lending spread</span><span class="text-white font-mono">1.5%</span></div>
+                        <div class="flex justify-between items-center"><span>Futures creation</span><span class="text-white font-mono">3%</span></div>
+                        <div class="flex justify-between items-center"><span>Futures settlement</span><span class="text-white font-mono">1%</span></div>
+                    </div>
+                    <div class="mt-3 p-2 bg-error/5 border border-error/15 rounded-sm">
+                        <div class="text-[0.5rem] text-error font-mono uppercase tracking-widest mb-1">Coming Soon — Pending Regulatory Approval</div>
+                        <div class="text-[0.5rem] text-slate-500">Token Exchange (CASP), Lending (NCA), Capability Futures (OTC) require regulatory clearance before activation. All other services are live.</div>
                     </div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-5">
                     <div class="font-mono text-[0.55rem] text-[#edc05f] uppercase tracking-widest mb-2">Charitable Commitment</div>
-                    <p class="text-xs text-slate-400 leading-relaxed">10% of all platform commission is allocated to our charitable fund. This applies to every revenue stream — subscriptions, commissions, add-ons, and storage fees. Disbursed quarterly.</p>
+                    <p class="text-xs text-slate-400 leading-relaxed">10% of all platform commission is allocated to our charitable fund. Every revenue stream — subscriptions, commissions, add-ons, storage. Disbursed quarterly.</p>
                     <div class="mt-2 text-lg font-bold text-[#edc05f] font-mono">10% of commission → charity</div>
                 </div>
             </div>
 
-            <!-- Annual discount note -->
             <div class="text-center mt-6 text-xs text-slate-600">
                 All paid tiers offer <span class="text-[#77d4e5]">20% discount</span> on annual prepayment. Vault tiers included free with matching operator bundle.
             </div>
@@ -816,41 +811,76 @@
             }
         });
 
-        // ── Currency Toggle ──
-        var showingUSD = false;
-        window.toggleCurrency = function(){
-            showingUSD = !showingUSD;
-            var btn = document.getElementById('currToggle');
+        // ── Multi-Currency System ──
+        var currentCurrency = 'ZAR';
+        var symbols = {ZAR:'R',USD:'$',EUR:'€',GBP:'£'};
+        var selectedItems = {};
+
+        window.setCurrency = function(curr){
+            currentCurrency = curr;
+            // Update button styles
+            document.querySelectorAll('.curr-btn').forEach(function(b){
+                b.className = 'curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-transparent text-slate-500 border-[#44474c]/20';
+            });
+            var active = document.getElementById('btn-'+curr);
+            if(active) active.className = 'curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-[#77d4e5]/10 text-[#77d4e5] border-[#77d4e5]/20';
+
+            // Wipe-update all price cards
             var cards = document.querySelectorAll('.price-card');
             var delay = 0;
-
-            btn.textContent = showingUSD ? 'USD ($)' : 'ZAR (R)';
-            btn.style.background = showingUSD ? 'rgba(237,192,95,0.1)' : 'rgba(119,212,229,0.1)';
-            btn.style.color = showingUSD ? '#edc05f' : '#77d4e5';
-            btn.style.borderColor = showingUSD ? 'rgba(237,192,95,0.2)' : 'rgba(119,212,229,0.2)';
-
             cards.forEach(function(card){
                 var val = card.querySelector('.price-val');
                 if(!val) return;
-                var zar = parseFloat(card.dataset.zar);
-                var usd = parseFloat(card.dataset.usd);
-                if(zar === 0) return; // free tier stays as "Free"
-
+                var amount = parseFloat(card.dataset[curr.toLowerCase()]);
+                if(isNaN(amount) || parseFloat(card.dataset.zar) === 0) return;
                 setTimeout(function(){
-                    card.style.transition = 'opacity 0.2s';
+                    card.style.transition = 'opacity 0.15s';
                     card.style.opacity = '0.3';
                     setTimeout(function(){
-                        if(showingUSD){
-                            val.textContent = usd >= 1 ? '$' + usd.toLocaleString() : '$' + usd.toFixed(2);
-                        } else {
-                            val.textContent = 'R' + (zar >= 10 ? Math.round(zar).toLocaleString() : zar.toFixed(2));
-                        }
+                        val.textContent = amount >= 1 ? symbols[curr] + Math.round(amount).toLocaleString() : symbols[curr] + amount.toFixed(2);
                         card.style.opacity = '1';
-                    }, 150);
+                    }, 120);
                 }, delay);
-                delay += 60;
+                delay += 40;
             });
+            updateCart();
         };
+
+        // ── Card Selection + Glow ──
+        window.toggleSelect = function(card){
+            var sku = card.dataset.sku;
+            if(!sku) return;
+            var btn = card.querySelector('.signup-btn');
+            if(card.classList.contains('selected-glow')){
+                card.classList.remove('selected-glow');
+                if(btn) btn.classList.add('hidden');
+                delete selectedItems[sku];
+            } else {
+                card.classList.add('selected-glow');
+                if(btn) btn.classList.remove('hidden');
+                selectedItems[sku] = {name:card.dataset.name, zar:parseFloat(card.dataset.zar)||0};
+            }
+            updateCart();
+        };
+
+        function updateCart(){
+            var count = Object.keys(selectedItems).length;
+            var total = 0;
+            for(var k in selectedItems) total += selectedItems[k].zar;
+            var bar = document.getElementById('cartBar');
+            var countEl = document.getElementById('cartCount');
+            var totalEl = document.getElementById('cartTotal');
+            if(count > 0){
+                bar.classList.remove('hidden');
+                countEl.textContent = count + ' item' + (count>1?'s':'') + ' selected';
+                var sym = symbols[currentCurrency];
+                var rate = {ZAR:1,USD:1/18.5,EUR:1/20.05,GBP:1/23.35}[currentCurrency]||1;
+                var converted = total * rate;
+                totalEl.textContent = sym + (converted >= 1 ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
+            } else {
+                bar.classList.add('hidden');
+            }
+        }
 
         // ── Enquiry Form Submission ──
         var form = document.getElementById('enquiryForm');

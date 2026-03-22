@@ -50,6 +50,53 @@ To apply the TiOLi AGENTIS gradient text treatment to any text element:
 
 ---
 
+## Selection Glow Treatment
+
+The signature glow effect used on selected/active cards and interactive elements. Apply this whenever an element needs to indicate selection or active state.
+
+### CSS Class
+```css
+.selected-glow {
+    box-shadow: 0 0 20px rgba(119, 212, 229, 0.2), 0 0 40px rgba(119, 212, 229, 0.1);
+    border-color: rgba(119, 212, 229, 0.4) !important;
+    transform: translateY(-2px);
+}
+```
+
+### Usage Instruction
+To apply the TiOLi AGENTIS selection glow to any card or interactive element:
+
+**Toggle with JavaScript:**
+```javascript
+element.classList.toggle('selected-glow');
+```
+
+**Static application:**
+```html
+<div class="selected-glow">Selected card content</div>
+```
+
+### When to Use
+- Pricing card selection (click to select)
+- Active/selected states on interactive cards
+- Highlighted dashboard panels
+- Featured items that need visual prominence
+- NOT on text elements, buttons, or navigation
+
+### Pulse Animation Variant
+For continuously glowing elements (like live stat cards):
+```css
+.pulse {
+    animation: pulse-glow 3s infinite;
+}
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(119, 212, 229, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(119, 212, 229, 0.2); }
+}
+```
+
+---
+
 ## Brand Colour Palette
 
 | Name | Hex | Usage |
