@@ -102,6 +102,8 @@ from app.revenue.routes import router as revenue_router, revenue_service
 from app.revenue import models as _revenue_models  # Register tables
 from app.agentvault.routes import router as agentvault_router, vault_service as agentvault_service
 from app.agentvault import models as _agentvault_models  # Register tables
+from app.onboarding.routes import router as onboarding_router
+from app.onboarding import models as _onboarding_models
 
 # ── Globals ──────────────────────────────────────────────────────────
 blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
@@ -381,6 +383,7 @@ app.include_router(agent_gateway_router)
 app.include_router(agenthub_router)
 app.include_router(revenue_router)
 app.include_router(agentvault_router)
+app.include_router(onboarding_router)
 
 
 # ── Helper: Agent Auth Dependency ────────────────────────────────────
