@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Access Gateway — TiOLi AGENTIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        body { background-color: #061423; color: #d6e4f9; font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+        <!-- Logo -->
+        <div class="text-center mb-10">
+            <div class="text-2xl font-light text-white mb-1">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold">AGENTIS</span></div>
+            <div class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-[0.3em]">Secure Access Gateway</div>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 p-3 border-l-4 border-red-500 bg-red-500/10 text-red-300 text-sm">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if locked %}
+        <div class="text-center py-12">
+            <span class="material-symbols-outlined text-red-500 text-5xl mb-4 block">lock</span>
+            <h2 class="text-lg font-bold text-red-400 mb-2">Access Locked</h2>
+            <p class="text-sm text-slate-500">Too many failed attempts. Try again in 15 minutes.</p>
+            <p class="font-mono text-[0.6rem] text-slate-600 mt-4">Incident logged. IP recorded.</p>
+        </div>
+        {% else %}
+        <form method="POST" action="/gateway" class="space-y-4">
+            <div>
+                <label class="block text-[0.65rem] font-mono text-slate-500 uppercase tracking-widest mb-1.5">Identity</label>
+                <input name="username" type="email" required autocomplete="off"
+                    class="w-full bg-[#0f1c2c] border border-[#44474c]/30 text-white text-sm px-4 py-3 focus:ring-1 focus:ring-[#77d4e5] focus:border-[#77d4e5] outline-none transition-colors"
+                    placeholder="Authorised identity"/>
+            </div>
+            <div>
+                <label class="block text-[0.65rem] font-mono text-slate-500 uppercase tracking-widest mb-1.5">Access Key</label>
+                <input name="password" type="password" required autocomplete="off"
+                    class="w-full bg-[#0f1c2c] border border-[#44474c]/30 text-white text-sm px-4 py-3 focus:ring-1 focus:ring-[#77d4e5] focus:border-[#77d4e5] outline-none transition-colors"
+                    placeholder="Access key"/>
+            </div>
+            <button type="submit"
+                class="w-full py-3 bg-[#77d4e5] text-[#061423] font-bold text-sm uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">
+                Authenticate
+            </button>
+        </form>
+        {% endif %}
+
+        <div class="text-center mt-8">
+            <p class="font-mono text-[0.5rem] text-slate-700">Authorised personnel only. All access attempts are logged.</p>
+        </div>
+    </div>
+</body>
+</html>

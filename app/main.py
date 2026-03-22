@@ -4432,6 +4432,71 @@ async def modules_page(request: Request):
     })
 
 
+# ── Secure Access Gateway ──────────────────────────────────────────────
+# Hashed credentials — SHA-256. Lockout after 5 failures for 15 minutes.
+import hashlib as _gw_hashlib
+_GATEWAY_USER_HASH = "a]0c65e75156feb41b5b8faa65a2fcb980cb8f24afd1e tried"  # placeholder
+_GATEWAY_PASS_HASH = "d748e36e6ac9de72f9ef73b09a945448e79eba8761b1ea78e39869d3caee7710"
+_GATEWAY_USER_HASH = _gw_hashlib.sha256(b"sendersby@tioli.onmicrosoft.com").hexdigest()
+_gateway_failures: dict[str, list[float]] = defaultdict(list)
+_GATEWAY_MAX_ATTEMPTS = 5
+_GATEWAY_LOCKOUT_SECS = 900
+
+
+@app.get("/gateway", response_class=HTMLResponse)
+async def gateway_page(request: Request):
+    """Secure access gateway — login form."""
+    client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+    now = time.time()
+    cutoff = now - _GATEWAY_LOCKOUT_SECS
+    _gateway_failures[client_ip] = [t for t in _gateway_failures[client_ip] if t > cutoff]
+    locked = len(_gateway_failures[client_ip]) >= _GATEWAY_MAX_ATTEMPTS
+    return templates.TemplateResponse("gateway.html", {
+        "request": request, "error": None, "locked": locked,
+    })
+
+
+@app.post("/gateway", response_class=HTMLResponse)
+async def gateway_auth(request: Request):
+    """Validate gateway credentials and redirect to exchange login."""
+    client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+    now = time.time()
+    cutoff = now - _GATEWAY_LOCKOUT_SECS
+    _gateway_failures[client_ip] = [t for t in _gateway_failures[client_ip] if t > cutoff]
+
+    if len(_gateway_failures[client_ip]) >= _GATEWAY_MAX_ATTEMPTS:
+        security_logger.warning(f"Gateway lockout: {client_ip}")
+        return templates.TemplateResponse("gateway.html", {
+            "request": request, "error": None, "locked": True,
+        })
+
+    form = await request.form()
+    username = form.get("username", "").strip()
+    password = form.get("password", "").strip()
+
+    user_hash = _gw_hashlib.sha256(username.encode()).hexdigest()
+    pass_hash = _gw_hashlib.sha256(password.encode()).hexdigest()
+
+    if user_hash == _GATEWAY_USER_HASH and pass_hash == _GATEWAY_PASS_HASH:
+        _gateway_failures.pop(client_ip, None)
+        security_logger.info(f"Gateway access granted: {client_ip}")
+        # Clear any existing session to force fresh 3FA login
+        response = RedirectResponse(url="/", status_code=302)
+        response.delete_cookie("session_token")
+        return response
+    else:
+        _gateway_failures[client_ip].append(now)
+        remaining = _GATEWAY_MAX_ATTEMPTS - len(_gateway_failures[client_ip])
+        security_logger.warning(f"Gateway failed attempt: {client_ip} ({remaining} remaining)")
+        error = "Access denied. Invalid credentials." if remaining > 0 else None
+        locked = remaining <= 0
+        return templates.TemplateResponse("gateway.html", {
+            "request": request,
+            "error": error if not locked else None,
+            "locked": locked,
+        })
+
+
 @app.get("/pricing", response_class=HTMLResponse)
 async def pricing_page(request: Request):
     """Pricing page — shows sidebar when authenticated, standalone when not."""
