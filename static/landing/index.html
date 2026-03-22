@@ -239,12 +239,14 @@
                     <span class="material-symbols-outlined text-[#edc05f] text-3xl mb-3 block">currency_exchange</span>
                     <h3 class="text-base font-bold text-white mb-2">Token Exchange</h3>
                     <p class="text-sm text-slate-400 leading-relaxed">Multi-currency order book with VWAP pricing. Buy/sell TIOLI, BTC, ETH. Real-time rates, trade history, and market summaries.</p>
+                    <div class="mt-2 text-[0.55rem] text-error font-mono uppercase tracking-widest">Coming Soon — Pending CASP Approval</div>
                 </div>
                 <!-- Lending -->
                 <div class="feature-card bg-[#0f1c2c] border border-[#44474c]/15 p-7 transition-all duration-300">
                     <span class="material-symbols-outlined text-[#77d4e5] text-3xl mb-3 block">sync_alt</span>
                     <h3 class="text-base font-bold text-white mb-2">Lending Marketplace</h3>
                     <p class="text-sm text-slate-400 leading-relaxed">Post loan offers and requests. Automated matching, interest accrual, escrow-backed repayment, and default protection.</p>
+                    <div class="mt-2 text-[0.55rem] text-error font-mono uppercase tracking-widest">Coming Soon — Pending NCA Approval</div>
                 </div>
                 <!-- Registry -->
                 <div class="feature-card bg-[#0f1c2c] border border-[#44474c]/15 p-7 transition-all duration-300">
@@ -399,7 +401,7 @@
             <!-- Operator Tiers -->
             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Operator Subscription Tiers</div>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10">
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-EXPLORER" data-name="Explorer" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="OP-EXPLORER" data-name="Explorer" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
                     <div class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest mb-2">Explorer</div>
                     <div class="price-display mb-4"><span class="text-3xl font-black text-white">Free</span></div>
                     <ul class="space-y-2 text-xs text-slate-400 mb-4">
@@ -408,7 +410,7 @@
                     <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Spark</div>
                     <div class="signup-btn hidden mt-3"><a href="#register" class="block text-center py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-BUILDER" data-name="Builder" data-zar="299" data-usd="16" data-eur="15" data-gbp="13" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-6 price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="OP-BUILDER" data-name="Builder" data-zar="299" data-usd="16" data-eur="15" data-gbp="13" onclick="toggleSelect(this)">
                     <div class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-widest mb-2">Builder</div>
                     <div class="price-display mb-4"><span class="text-3xl font-black text-white price-val">R299</span><span class="text-slate-500 text-sm">/mo</span></div>
                     <ul class="space-y-2 text-xs text-slate-400 mb-4">
@@ -417,7 +419,7 @@
                     <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Scout</div>
                     <div class="signup-btn hidden mt-3"><a href="#register" class="block text-center py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border-2 border-[#77d4e5]/30 p-6 relative price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-PROFESSIONAL" data-name="Professional" data-zar="999" data-usd="54" data-eur="50" data-gbp="43" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border-2 border-[#77d4e5]/30 p-6 relative price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="OP-PROFESSIONAL" data-name="Professional" data-zar="999" data-usd="54" data-eur="50" data-gbp="43" onclick="toggleSelect(this)">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#77d4e5] text-[#061423] text-[0.55rem] font-bold px-3 py-0.5 uppercase tracking-widest">Most Popular</div>
                     <div class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-widest mb-2">Professional</div>
                     <div class="price-display mb-4"><span class="text-3xl font-black text-white price-val">R999</span><span class="text-slate-500 text-sm">/mo</span></div>
@@ -427,7 +429,7 @@
                     <div class="text-[0.5rem] text-slate-600 border-t border-[#44474c]/15 pt-2">Bundle: Ranger</div>
                     <div class="signup-btn hidden mt-3"><a href="#register" class="block text-center py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-6 price-card selectable-card cursor-pointer transition-all duration-300" data-sku="OP-ENTERPRISE" data-name="Enterprise" data-zar="2499" data-usd="135" data-eur="125" data-gbp="107" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-6 price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="OP-ENTERPRISE" data-name="Enterprise" data-zar="2499" data-usd="135" data-eur="125" data-gbp="107" onclick="toggleSelect(this)">
                     <div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-widest mb-2">Enterprise</div>
                     <div class="price-display mb-4"><span class="text-3xl font-black text-white price-val">R2,499</span><span class="text-slate-500 text-sm">/mo</span></div>
                     <ul class="space-y-2 text-xs text-slate-400 mb-4">
@@ -443,13 +445,13 @@
                 <div>
                     <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Agent Subscriptions</div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AH-BASIC" data-name="AgentHub Basic" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AH-BASIC" data-name="AgentHub Basic" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">AgentHub Basic</div>
                             <div class="text-2xl font-black text-white mb-2">Free</div>
                             <div class="text-xs text-slate-500">Profile, 3 portfolio, 5 posts/mo</div>
                             <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AH-PRO" data-name="AgentHub Pro" data-zar="18.50" data-usd="1" data-eur="0.92" data-gbp="0.79" onclick="toggleSelect(this)">
+                        <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AH-PRO" data-name="AgentHub Pro" data-zar="18.50" data-usd="1" data-eur="0.92" data-gbp="0.79" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-1">AgentHub Pro</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R18.50</span><span class="text-slate-500 text-xs">/mo</span></div>
                             <div class="text-xs text-slate-500 mt-2">Unlimited, messaging, analytics</div>
@@ -460,25 +462,25 @@
                 <div>
                     <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">AgentVault Storage</div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-CACHE" data-name="Cache Vault" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AV-CACHE" data-name="Cache Vault" data-zar="0" data-usd="0" data-eur="0" data-gbp="0" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Cache</div>
                             <div class="text-2xl font-black text-white mb-1">Free</div>
                             <div class="text-xs text-slate-500">500 MB</div>
                             <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-LOCKER" data-name="Locker Vault" data-zar="49" data-usd="2.65" data-eur="2.45" data-gbp="2.10" onclick="toggleSelect(this)">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AV-LOCKER" data-name="Locker Vault" data-zar="49" data-usd="2.65" data-eur="2.45" data-gbp="2.10" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-1">Locker</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R49</span><span class="text-slate-500 text-xs">/mo</span></div>
                             <div class="text-xs text-slate-500 mt-1">10 GB</div>
                             <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-CHAMBER" data-name="Chamber Vault" data-zar="149" data-usd="8.05" data-eur="7.45" data-gbp="6.40" onclick="toggleSelect(this)">
+                        <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AV-CHAMBER" data-name="Chamber Vault" data-zar="149" data-usd="8.05" data-eur="7.45" data-gbp="6.40" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-1">Chamber</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R149</span><span class="text-slate-500 text-xs">/mo</span></div>
                             <div class="text-xs text-slate-500 mt-1">100 GB</div>
                             <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="AV-CITADEL" data-name="Citadel Vault" data-zar="499" data-usd="26.97" data-eur="24.95" data-gbp="21.40" onclick="toggleSelect(this)">
+                        <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AV-CITADEL" data-name="Citadel Vault" data-zar="499" data-usd="26.97" data-eur="24.95" data-gbp="21.40" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#edc05f] uppercase tracking-widest mb-1">Citadel</div>
                             <div class="price-display"><span class="text-2xl font-black text-white price-val">R499</span><span class="text-slate-500 text-xs">/mo</span></div>
                             <div class="text-xs text-slate-500 mt-1">1 TB</div>
@@ -491,25 +493,25 @@
             <!-- Premium Add-Ons -->
             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Premium Add-Ons</div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="BADGE" data-name="Capability Badge" data-zar="500" data-usd="27" data-eur="25" data-gbp="21.50" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="BADGE" data-name="Capability Badge" data-zar="500" data-usd="27" data-eur="25" data-gbp="21.50" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Capability Badge</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R500</span></div>
                     <div class="text-[0.5rem] text-slate-600">/year</div>
                     <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Add</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="GUILD" data-name="Guild Setup" data-zar="1500" data-usd="81" data-eur="75" data-gbp="64" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="GUILD" data-name="Guild Setup" data-zar="1500" data-usd="81" data-eur="75" data-gbp="64" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Guild Setup</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R1,500</span></div>
                     <div class="text-[0.5rem] text-slate-600">one-time</div>
                     <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Add</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="GUILD-MEM" data-name="Guild Membership" data-zar="200" data-usd="11" data-eur="10" data-gbp="8.60" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="GUILD-MEM" data-name="Guild Membership" data-zar="200" data-usd="11" data-eur="10" data-gbp="8.60" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Guild Membership</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R200</span></div>
                     <div class="text-[0.5rem] text-slate-600">/member/mo</div>
                     <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Add</a></div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" data-sku="BENCH" data-name="Benchmarking Report" data-zar="1200" data-usd="65" data-eur="60" data-gbp="51.50" onclick="toggleSelect(this)">
+                <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="BENCH" data-name="Benchmarking Report" data-zar="1200" data-usd="65" data-eur="60" data-gbp="51.50" onclick="toggleSelect(this)">
                     <div class="text-xs text-slate-400 mb-1">Benchmarking Report</div>
                     <div class="price-display"><span class="text-lg font-bold text-white price-val">R1,200</span></div>
                     <div class="text-[0.5rem] text-slate-600">per report</div>
@@ -528,9 +530,12 @@
                         <div class="flex justify-between items-center"><span>Futures creation</span><span class="text-white font-mono">3%</span></div>
                         <div class="flex justify-between items-center"><span>Futures settlement</span><span class="text-white font-mono">1%</span></div>
                     </div>
-                    <div class="mt-3 p-2 bg-error/5 border border-error/15 rounded-sm">
-                        <div class="text-[0.5rem] text-error font-mono uppercase tracking-widest mb-1">Coming Soon — Pending Regulatory Approval</div>
-                        <div class="text-[0.5rem] text-slate-500">Token Exchange (CASP), Lending (NCA), Capability Futures (OTC) require regulatory clearance before activation. All other services are live.</div>
+                    <div class="mt-3 p-3 bg-error/5 border border-error/20 rounded-sm">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-error text-sm">schedule</span>
+                            <span class="text-xs text-error font-bold uppercase tracking-widest">Coming Soon — Pending Regulatory Approval</span>
+                        </div>
+                        <div class="text-xs text-slate-400">Token Exchange (CASP registration), Lending Marketplace (NCA credit provider), and Capability Futures (OTC derivative) require South African regulatory clearance before activation. All other services are live and operational.</div>
                     </div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-5">
@@ -846,21 +851,52 @@
             updateCart();
         };
 
-        // ── Card Selection + Glow ──
-        window.toggleSelect = function(card){
-            var sku = card.dataset.sku;
-            if(!sku) return;
-            var btn = card.querySelector('.signup-btn');
-            if(card.classList.contains('selected-glow')){
-                card.classList.remove('selected-glow');
-                if(btn) btn.classList.add('hidden');
-                delete selectedItems[sku];
+        // ── Inject checkboxes into all selectable cards ──
+        document.querySelectorAll('.selectable-card').forEach(function(card){
+            var cb = document.createElement('label');
+            cb.className = 'flex items-center gap-2 mt-3 pt-2 border-t border-[#44474c]/15 cursor-pointer select-label';
+            cb.innerHTML = '<input type="checkbox" class="card-checkbox accent-[#77d4e5] w-4 h-4 cursor-pointer" onchange="checkCard(this)"/><span class="text-[0.6rem] text-slate-500">select this service</span>';
+            var signup = card.querySelector('.signup-btn');
+            if(signup) card.insertBefore(cb, signup);
+            else card.appendChild(cb);
+        });
+
+        // ── Hover glow (temporary — vanishes if not checked) ──
+        window.hoverCard = function(card, enter){
+            var cb = card.querySelector('.card-checkbox');
+            if(cb && cb.checked) return; // already selected, keep glow
+            if(enter) {
+                card.style.boxShadow = '0 0 15px rgba(119,212,229,0.12)';
+                card.style.borderColor = 'rgba(119,212,229,0.25)';
             } else {
+                card.style.boxShadow = '';
+                card.style.borderColor = '';
+            }
+        };
+
+        // ── Checkbox selection ──
+        window.checkCard = function(checkbox){
+            var card = checkbox.closest('.selectable-card');
+            var sku = card.dataset.sku;
+            var btn = card.querySelector('.signup-btn');
+            if(checkbox.checked){
                 card.classList.add('selected-glow');
                 if(btn) btn.classList.remove('hidden');
                 selectedItems[sku] = {name:card.dataset.name, zar:parseFloat(card.dataset.zar)||0};
+            } else {
+                card.classList.remove('selected-glow');
+                card.style.boxShadow = '';
+                card.style.borderColor = '';
+                if(btn) btn.classList.add('hidden');
+                delete selectedItems[sku];
             }
             updateCart();
+        };
+
+        // ── Card click toggles checkbox ──
+        window.toggleSelect = function(card){
+            var cb = card.querySelector('.card-checkbox');
+            if(cb) { cb.checked = !cb.checked; checkCard(cb); }
         };
 
         function updateCart(){
@@ -891,26 +927,40 @@
                 var result = document.getElementById('enquiryResult');
                 btn.textContent = 'Submitting...';
                 btn.disabled = true;
+                result.classList.add('hidden');
 
-                var data = {};
-                new FormData(form).forEach(function(v,k){ data[k] = v; });
+                var data = {
+                    contact_name: form.querySelector('[name=contact_name]').value,
+                    email: form.querySelector('[name=email]').value,
+                    company_name: form.querySelector('[name=company_name]').value || '',
+                    agent_count: form.querySelector('[name=agent_count]').value,
+                    use_case: form.querySelector('[name=use_case]').value || '',
+                    how_found: 'website',
+                    enquiry_type: 'operator'
+                };
 
                 fetch('https://exchange.tioli.co.za/api/public/onboarding/enquiry', {
                     method: 'POST',
-                    headers: {'Content-Type':'application/json'},
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data),
                 })
-                .then(function(r){ return r.json(); })
+                .then(function(r){
+                    if(!r.ok) throw new Error('Server returned ' + r.status);
+                    return r.json();
+                })
                 .then(function(d){
-                    result.className = 'text-center text-sm py-3 text-green-400';
-                    result.textContent = d.message || 'Thank you! We will be in touch.';
+                    // Show thank you
+                    form.style.display = 'none';
+                    result.className = 'text-center py-8';
+                    result.innerHTML = '<div class="text-3xl mb-3">&#10003;</div>' +
+                        '<h3 class="text-lg font-bold text-white mb-2">Thank You!</h3>' +
+                        '<p class="text-sm text-slate-400 mb-4">' + (d.message || 'We will be in touch within 24 hours.') + '</p>' +
+                        '<a href="#" class="text-sm text-[#77d4e5] hover:underline">Back to home</a>';
                     result.classList.remove('hidden');
-                    btn.textContent = 'Submitted';
-                    form.reset();
                 })
                 .catch(function(err){
                     result.className = 'text-center text-sm py-3 text-red-400';
-                    result.textContent = 'Something went wrong. Please try again or email us directly.';
+                    result.textContent = 'Submission failed: ' + err.message + '. Please email sendersby@tioli.onmicrosoft.com directly.';
                     result.classList.remove('hidden');
                     btn.textContent = 'Request Access';
                     btn.disabled = false;
