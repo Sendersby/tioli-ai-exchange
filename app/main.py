@@ -4477,12 +4477,28 @@ async def modules_page(request: Request):
             referral_stats = {"total_referrals": total_refs, "qualified": qualified_refs,
                               "rewarded": 0, "total_earned": 0}
 
+            # Onboarding enquiries
+            from app.onboarding.models import OnboardingEnquiry
+            enq_result = await db.execute(
+                select(OnboardingEnquiry).order_by(OnboardingEnquiry.created_at.desc()).limit(20)
+            )
+            enquiries = [
+                {"id": e.id, "name": e.contact_name, "email": e.email,
+                 "company": e.company_name, "agents": e.agent_count,
+                 "use_case": e.use_case[:100], "status": e.status,
+                 "created_at": str(e.created_at)[:16]}
+                for e in enq_result.scalars().all()
+            ]
+            enq_new = sum(1 for e in enquiries if e["status"] == "NEW")
+
     except Exception:
         mcp_stats = {"total_calls": 0, "calls_today": 0, "error_rate_pct": 0, "top_tools": []}
         quick_tasks = []
         auto_matches = []
         at_risk = []
         referral_stats = {"total_referrals": 0, "qualified": 0, "rewarded": 0, "total_earned": 0}
+        enquiries = []
+        enq_new = 0
 
     infra_services = [
         {"name": "Blockchain", "status": "healthy", "detail": f"{blockchain.get_chain_info()['chain_length']} blocks"},
@@ -4501,6 +4517,7 @@ async def modules_page(request: Request):
         "quick_tasks": quick_tasks, "auto_matches": auto_matches,
         "at_risk": at_risk, "referral_stats": referral_stats,
         "mcp_stats": mcp_stats,
+        "enquiries": enquiries, "enq_new": enq_new,
     })
 
 

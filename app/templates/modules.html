@@ -8,6 +8,58 @@
         <p class="text-slate-400 text-sm">All Build Brief V2 modules, AgentHub features, and infrastructure services</p>
     </div>
 
+    <!-- Enquiries Inbox -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 {% if enq_new > 0 %}border-l-4 border-l-[#edc05f]{% endif %}">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#edc05f]">inbox</span>
+                Operator Enquiries
+                {% if enq_new > 0 %}
+                <span class="bg-[#edc05f] text-[#061423] text-[0.55rem] font-bold px-2 py-0.5 rounded-full">{{ enq_new }} NEW</span>
+                {% endif %}
+            </h2>
+        </div>
+        {% if enquiries and enquiries|length > 0 %}
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Company</th><th>Agents</th><th>Use Case</th><th>Status</th><th>Date</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for e in enquiries %}
+                    <tr class="{% if e.status == 'NEW' %}bg-[#edc05f]/5{% endif %}">
+                        <td class="text-white text-sm font-medium">{{ e.name }}</td>
+                        <td><a href="mailto:{{ e.email }}" class="text-primary text-xs hover:underline">{{ e.email }}</a></td>
+                        <td class="text-slate-400 text-xs">{{ e.company or '—' }}</td>
+                        <td class="font-mono text-xs text-slate-400">{{ e.agents }}</td>
+                        <td class="text-slate-500 text-xs max-w-xs truncate">{{ e.use_case or '—' }}</td>
+                        <td>
+                            <span class="font-mono text-[0.55rem] px-1.5 py-0.5 {% if e.status == 'NEW' %}bg-[#edc05f]/10 text-[#edc05f]{% elif e.status == 'APPROVED' %}bg-secondary/10 text-secondary{% elif e.status == 'CONTACTED' %}bg-primary/10 text-primary{% elif e.status == 'DECLINED' %}bg-error/10 text-error{% else %}bg-slate-700/30 text-slate-500{% endif %}">{{ e.status }}</span>
+                        </td>
+                        <td class="text-[0.6rem] text-slate-500">{{ e.created_at }}</td>
+                        <td>
+                            {% if e.status == 'NEW' %}
+                            <div class="flex gap-1">
+                                <button onclick="updateEnquiry('{{ e.id }}','APPROVED')" class="text-[0.55rem] px-2 py-1 bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors">Approve</button>
+                                <button onclick="updateEnquiry('{{ e.id }}','CONTACTED')" class="text-[0.55rem] px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors">Contact</button>
+                                <button onclick="updateEnquiry('{{ e.id }}','DECLINED')" class="text-[0.55rem] px-2 py-1 bg-error/10 text-error hover:bg-error/20 transition-colors">Decline</button>
+                            </div>
+                            {% elif e.status == 'CONTACTED' %}
+                            <button onclick="updateEnquiry('{{ e.id }}','APPROVED')" class="text-[0.55rem] px-2 py-1 bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors">Approve</button>
+                            {% else %}
+                            <span class="text-[0.5rem] text-slate-600">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs">No enquiries yet. They'll appear here when operators submit the form at agentisexchange.com</p>
+        {% endif %}
+    </div>
+
     <!-- Module Status Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
@@ -184,4 +236,24 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateEnquiry(id, status) {
+    fetch('/api/public/onboarding/enquiries/' + id, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: status, notes: ''}),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        showToast('Enquiry ' + status.toLowerCase(), 'success');
+        setTimeout(function() { location.reload(); }, 800);
+    })
+    .catch(function() {
+        showToast('Failed to update enquiry', 'error');
+    });
+}
+</script>
 {% endblock %}
