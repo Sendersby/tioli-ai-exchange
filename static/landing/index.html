@@ -387,14 +387,28 @@
             </div>
 
             <!-- Shopping cart floating bar -->
-            <div id="cartBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a1a2e] border-t border-[#77d4e5]/30 py-3 px-6">
-                <div class="max-w-6xl mx-auto flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-[#77d4e5]">shopping_cart</span>
-                        <span id="cartCount" class="font-mono text-sm text-white">0 items selected</span>
-                        <span id="cartTotal" class="font-mono text-sm text-[#edc05f] ml-3"></span>
+            <div id="cartBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a1a2e]/95 backdrop-blur-xl border-t border-[#77d4e5]/30 py-4 px-6">
+                <div class="max-w-6xl mx-auto">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[#77d4e5]">shopping_cart</span>
+                            <span id="cartCount" class="font-mono text-sm text-white">0 services selected</span>
+                            <span id="cartTotal" class="font-mono text-sm text-[#edc05f] ml-3"></span>
+                        </div>
+                        <a id="multiSignupBtn" href="#register" class="hidden px-8 py-2.5 font-bold text-sm uppercase tracking-widest transition-all hover:scale-105" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                            Sign Up for Selected Services
+                        </a>
                     </div>
-                    <a href="#register" class="px-6 py-2 bg-[#77d4e5] text-[#061423] font-bold text-sm uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">Request Access</a>
+                    <!-- What happens next -->
+                    <div class="text-[0.6rem] text-slate-500 flex items-center gap-4">
+                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">1.</span> Submit enquiry form</span>
+                        <span class="text-slate-700">→</span>
+                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">2.</span> We review within 24hrs</span>
+                        <span class="text-slate-700">→</span>
+                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">3.</span> Receive access credentials</span>
+                        <span class="text-slate-700">→</span>
+                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">4.</span> Activate via secure gateway</span>
+                    </div>
                 </div>
             </div>
 
@@ -883,20 +897,29 @@
             updateCart();
         };
 
-        // ── Inject checkboxes into all selectable cards ──
+        // ── Product groups (only one selectable per group) ──
+        var productGroups = {
+            'OP-EXPLORER':'operator','OP-BUILDER':'operator','OP-PROFESSIONAL':'operator','OP-ENTERPRISE':'operator',
+            'AH-BASIC':'agenthub','AH-PRO':'agenthub',
+            'AV-CACHE':'vault','AV-LOCKER':'vault','AV-CHAMBER':'vault','AV-CITADEL':'vault',
+        };
+        // Addons (BADGE, GUILD, GUILD-MEM, BENCH) have no group — multi-select allowed
+
+        // ── Inject checkboxes ──
         document.querySelectorAll('.selectable-card').forEach(function(card){
             var cb = document.createElement('label');
             cb.className = 'flex items-center gap-2 mt-3 pt-2 border-t border-[#44474c]/15 cursor-pointer select-label';
             cb.innerHTML = '<input type="checkbox" class="card-checkbox accent-[#77d4e5] w-4 h-4 cursor-pointer" onchange="checkCard(this)"/><span class="text-[0.6rem] text-slate-500">select this service</span>';
+            // Remove per-card signup buttons
             var signup = card.querySelector('.signup-btn');
-            if(signup) card.insertBefore(cb, signup);
-            else card.appendChild(cb);
+            if(signup) signup.remove();
+            card.appendChild(cb);
         });
 
-        // ── Hover glow (temporary — vanishes if not checked) ──
+        // ── Hover glow ──
         window.hoverCard = function(card, enter){
             var cb = card.querySelector('.card-checkbox');
-            if(cb && cb.checked) return; // already selected, keep glow
+            if(cb && cb.checked) return;
             if(enter) {
                 card.style.boxShadow = '0 0 15px rgba(119,212,229,0.12)';
                 card.style.borderColor = 'rgba(119,212,229,0.25)';
@@ -906,20 +929,35 @@
             }
         };
 
-        // ── Checkbox selection ──
+        // ── Checkbox selection with group enforcement ──
         window.checkCard = function(checkbox){
             var card = checkbox.closest('.selectable-card');
             var sku = card.dataset.sku;
-            var btn = card.querySelector('.signup-btn');
+            var group = productGroups[sku]; // undefined for addons
+
             if(checkbox.checked){
+                // If this SKU belongs to a group, deselect others in same group
+                if(group){
+                    document.querySelectorAll('.selectable-card').forEach(function(other){
+                        var otherSku = other.dataset.sku;
+                        if(otherSku !== sku && productGroups[otherSku] === group){
+                            var otherCb = other.querySelector('.card-checkbox');
+                            if(otherCb && otherCb.checked){
+                                otherCb.checked = false;
+                                other.classList.remove('selected-glow');
+                                other.style.boxShadow = '';
+                                other.style.borderColor = '';
+                                delete selectedItems[otherSku];
+                            }
+                        }
+                    });
+                }
                 card.classList.add('selected-glow');
-                if(btn) btn.classList.remove('hidden');
-                selectedItems[sku] = {name:card.dataset.name, zar:parseFloat(card.dataset.zar)||0};
+                selectedItems[sku] = {name:card.dataset.name, zar:parseFloat(card.dataset.zar)||0, group:group||'addon'};
             } else {
                 card.classList.remove('selected-glow');
                 card.style.boxShadow = '';
                 card.style.borderColor = '';
-                if(btn) btn.classList.add('hidden');
                 delete selectedItems[sku];
             }
             updateCart();
@@ -934,18 +972,24 @@
         function updateCart(){
             var count = Object.keys(selectedItems).length;
             var total = 0;
-            for(var k in selectedItems) total += selectedItems[k].zar;
+            var names = [];
+            for(var k in selectedItems){ total += selectedItems[k].zar; names.push(selectedItems[k].name); }
             var bar = document.getElementById('cartBar');
             var countEl = document.getElementById('cartCount');
             var totalEl = document.getElementById('cartTotal');
+            var signupBtn = document.getElementById('multiSignupBtn');
             if(count > 0){
                 bar.classList.remove('hidden');
-                countEl.textContent = count + ' item' + (count>1?'s':'') + ' selected';
+                countEl.textContent = count + ' service' + (count>1?'s':'') + ': ' + names.join(' + ');
                 var sym = symbols[currentCurrency];
                 var converted = currentCurrency === 'ZAR' ? total : total * liveRates[currentCurrency];
                 totalEl.textContent = sym + (converted >= 1 ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
+                // Show signup button when 2+ items selected
+                if(count >= 2 && signupBtn) signupBtn.classList.remove('hidden');
+                else if(signupBtn) signupBtn.classList.add('hidden');
             } else {
                 bar.classList.add('hidden');
+                if(signupBtn) signupBtn.classList.add('hidden');
             }
         }
 
