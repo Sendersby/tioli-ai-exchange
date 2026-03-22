@@ -466,11 +466,16 @@
                         <a id="inlineSignupBtn" href="#register" class="hidden block text-center py-2.5 font-bold text-sm uppercase tracking-widest transition-all hover:scale-105 mb-3" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
                             Sign Up
                         </a>
-                        <div class="text-[0.5rem] text-slate-600 space-y-1">
-                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">1.</span> Submit enquiry</div>
-                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">2.</span> Review in 24hrs</div>
-                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">3.</span> Receive credentials</div>
-                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">4.</span> Activate via gateway</div>
+                        <div class="text-xs text-slate-400 space-y-2">
+                            <div class="flex items-start gap-2"><span class="text-[#77d4e5] font-bold">1.</span><span>Submit the enquiry form</span></div>
+                            <div class="flex items-start gap-2"><span class="text-[#77d4e5] font-bold">2.</span><span>We review within 24 hours</span></div>
+                            <div class="flex items-start gap-2"><span class="text-[#77d4e5] font-bold">3.</span><span>Receive your access credentials</span></div>
+                            <div class="flex items-start gap-2"><span class="text-[#77d4e5] font-bold">4.</span><span>Activate via secure gateway</span></div>
+                        </div>
+                        <div id="lastStepArrow" class="hidden mt-4 text-center">
+                            <div class="text-sm font-bold text-[#edc05f] mb-1">Last step!</div>
+                            <div class="text-xs text-slate-400">Complete the form below</div>
+                            <svg class="mx-auto mt-2 animate-bounce" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#edc05f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
                         </div>
                     </div>
                 </div>
@@ -994,8 +999,9 @@
                 var sym = symbols[currentCurrency];
                 var converted = currentCurrency === 'ZAR' ? total : total * liveRates[currentCurrency];
                 totalEl.textContent = sym + (converted >= 1 ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
-                if(count >= 2) signupBtn.classList.remove('hidden');
-                else signupBtn.classList.add('hidden');
+                var arrow = document.getElementById('lastStepArrow');
+                if(count >= 2) { signupBtn.classList.remove('hidden'); if(arrow) arrow.classList.remove('hidden'); }
+                else { signupBtn.classList.add('hidden'); if(arrow) arrow.classList.add('hidden'); }
             } else {
                 panel.classList.add('hidden');
             }
@@ -1032,13 +1038,23 @@
                     return r.json();
                 })
                 .then(function(d){
-                    // Show thank you
+                    // Show detailed thank you with approval process
                     form.style.display = 'none';
-                    result.className = 'text-center py-8';
-                    result.innerHTML = '<div class="text-3xl mb-3">&#10003;</div>' +
-                        '<h3 class="text-lg font-bold text-white mb-2">Thank You!</h3>' +
-                        '<p class="text-sm text-slate-400 mb-4">' + (d.message || 'We will be in touch within 24 hours.') + '</p>' +
-                        '<a href="#" class="text-sm text-[#77d4e5] hover:underline">Back to home</a>';
+                    result.className = 'py-6';
+                    result.innerHTML = '<div class="text-center mb-6">' +
+                        '<div class="w-14 h-14 bg-[#77d4e5]/10 border border-[#77d4e5]/20 rounded-full flex items-center justify-center mx-auto mb-3">' +
+                        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#77d4e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+                        '<h3 class="text-xl font-bold text-white mb-2">Thank You!</h3>' +
+                        '<p class="text-sm text-slate-400">Your enquiry has been received.</p></div>' +
+                        '<div class="bg-[#061423] border border-[#44474c]/20 p-5 mb-4">' +
+                        '<div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-widest mb-3">What Happens Next</div>' +
+                        '<div class="space-y-3 text-sm text-slate-400">' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#77d4e5]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#77d4e5] font-bold">1</span><div><span class="text-white font-medium">Review</span> — Our team reviews your enquiry within 24 hours.</div></div>' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#77d4e5]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#77d4e5] font-bold">2</span><div><span class="text-white font-medium">Approval</span> — Once approved, you receive secure access credentials via email.</div></div>' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#77d4e5]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#77d4e5] font-bold">3</span><div><span class="text-white font-medium">Onboarding</span> — Access the platform through our secure gateway and complete your profile setup.</div></div>' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#edc05f]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#edc05f] font-bold">4</span><div><span class="text-white font-medium">Billing</span> — Billing commences <span class="text-[#edc05f] font-medium">only after approval</span>. No charges until your account is active and you confirm your subscription tier.</div></div>' +
+                        '</div></div>' +
+                        '<div class="text-center"><a href="#" class="text-sm text-[#77d4e5] hover:underline">← Back to home</a></div>';
                     result.classList.remove('hidden');
                 })
                 .catch(function(err){
