@@ -50,20 +50,44 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #061423; }
         ::-webkit-scrollbar-thumb { background: #44474c; }
+        /* Sidebar collapse transitions */
+        #sidebar { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+        #sidebar.collapsed { transform: translateX(-100%); }
+        #sidebarOverlay { transition: opacity 0.3s ease; }
+        #mainContent, #topBar, #mainFooter { transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1), left 0.3s cubic-bezier(0.4,0,0.2,1); }
+        #sidebarToggle { transition: left 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease; }
     </style>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body class="font-body selection:bg-primary selection:text-on-primary">
 
 {% if authenticated %}
+<!-- Sidebar Overlay (mobile) -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleSidebar()"></div>
+
+<!-- Collapsed sidebar reveal strip -->
+<div id="sidebarReveal" class="fixed top-0 left-0 w-5 h-screen z-[55] hidden cursor-pointer bg-[#77d4e5]/8 hover:bg-[#77d4e5]/25 hover:w-10 transition-all duration-200 flex flex-col items-center border-r border-[#77d4e5]/15" onclick="toggleSidebar()">
+    <div class="mt-4 w-8 h-8 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity" style="opacity:0" id="revealIcon">
+        <span class="material-symbols-outlined text-[#77d4e5] text-lg">menu</span>
+    </div>
+</div>
+<style>
+    #sidebarReveal:hover { width: 2.5rem; }
+    #sidebarReveal:hover #revealIcon { opacity: 1 !important; }
+</style>
+
 <!-- Side Navigation -->
-<aside class="h-screen w-64 fixed left-0 top-0 border-r border-[#44474c]/15 flex flex-col py-6 bg-[#061423] z-50">
+<aside id="sidebar" class="h-screen w-64 fixed left-0 top-0 border-r border-[#44474c]/15 flex flex-col py-6 bg-[#061423] z-50">
+    <!-- Toggle button inside sidebar -->
+    <button id="sidebarToggle" onclick="toggleSidebar()" class="absolute top-4 right-3 z-[60] w-7 h-7 flex items-center justify-center rounded-sm text-slate-500 hover:text-[#77d4e5] hover:bg-[#1e2b3b] transition-colors" title="Collapse sidebar">
+        <span class="material-symbols-outlined text-lg" id="toggleIcon">menu_open</span>
+    </button>
     <div class="px-6 mb-10">
         <div class="text-xl font-light tracking-tighter text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-semibold">AI</span></div>
         <div class="font-['Inter'] text-[0.7rem] font-medium tracking-widest text-slate-500 uppercase mt-1">Transact Exchange</div>
         <div class="font-mono text-[0.5rem] tracking-widest text-slate-600 uppercase mt-0.5">Sovereign Settlement for the Agentic Economy</div>
     </div>
-    <nav class="flex-1 space-y-1">
+    <nav class="flex-1 space-y-1 overflow-y-auto">
         <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'dashboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard">
             <span class="material-symbols-outlined">dashboard</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Operations</span>
@@ -112,6 +136,14 @@
             <span class="material-symbols-outlined text-xl">assessment</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Reports</span>
         </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'revenue' %}text-[#edc05f] bg-[#edc05f]/5 border-l-2 border-[#edc05f]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/owner/revenue">
+            <span class="material-symbols-outlined text-xl">payments</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Revenue</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'modules' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/modules">
+            <span class="material-symbols-outlined text-xl">extension</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Modules</span>
+        </a>
         <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'chat' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/chat">
             <span class="material-symbols-outlined text-xl">smart_toy</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AI Prompt</span>
@@ -132,11 +164,12 @@
 </aside>
 
 <!-- Top Bar -->
-<header class="fixed top-0 right-0 left-64 h-16 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-8">
-    <div class="flex items-center gap-8">
-        <div class="relative">
+<header id="topBar" class="fixed top-0 right-0 left-64 h-16 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-8">
+    <div class="flex items-center gap-6">
+        <div class="relative" id="globalSearchWrap">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm">search</span>
-            <input class="bg-surface-container-lowest border-none text-[0.7rem] font-mono tracking-widest w-48 pl-10 focus:ring-1 focus:ring-primary rounded-sm" placeholder="QUERY LEDGER..." type="text"/>
+            <input id="globalSearchInput" class="bg-surface-container-lowest border border-[#44474c]/20 text-[0.7rem] font-mono tracking-widest w-56 pl-10 pr-3 py-2 focus:ring-1 focus:ring-primary focus:border-primary rounded-sm" placeholder="Search platform..." type="text" autocomplete="off"/>
+            <div id="globalSearchResults" class="hidden absolute left-0 top-full mt-1 w-72 bg-[#0f1c2c] border border-[#44474c]/20 shadow-xl z-50 rounded-sm max-h-80 overflow-y-auto"></div>
         </div>
         <span class="font-mono text-[0.65rem] text-slate-500 uppercase tracking-widest" id="clockDate"></span>
     </div>
@@ -178,7 +211,7 @@
 </header>
 
 <!-- Main Content -->
-<main class="ml-64 pt-16 min-h-screen bg-surface">
+<main id="mainContent" class="ml-64 pt-16 min-h-screen bg-surface">
     <div class="p-8 max-w-[1600px] mx-auto space-y-8">
         {% if messages %}
         <div class="space-y-2">
@@ -210,7 +243,7 @@
 {% endif %}
 
 <!-- Footer -->
-<footer class="{% if authenticated %}ml-64{% endif %}" style="background-color:#061423 !important;background:#061423 !important;border-top:1px solid rgba(68,71,76,0.15);padding:0.75rem 1.5rem;text-align:center;">
+<footer id="mainFooter" class="{% if authenticated %}ml-64{% endif %}" style="background-color:#061423 !important;background:#061423 !important;border-top:1px solid rgba(68,71,76,0.15);padding:0.75rem 1.5rem;text-align:center;">
     <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:#64748b;letter-spacing:0.03em;">
         TiOLi AI Investments &nbsp;|&nbsp; Version: 1.0 &nbsp;|&nbsp; <span id="footerDate" style="color:#64748b;"></span> &nbsp;|&nbsp; Copyright &copy; <span id="footerYear" style="color:#64748b;"></span> TiOLi AI Investments. All rights reserved.
     </span>
@@ -368,6 +401,133 @@ document.querySelectorAll('form').forEach(function(f){
         if(!valid){ e.preventDefault(); showToast('Please fill in all required fields correctly', 'error'); }
     });
 });
+</script>
+<!-- Collapsible Sidebar -->
+<script>
+(function(){
+    var sidebar = document.getElementById('sidebar');
+    var toggle = document.getElementById('sidebarToggle');
+    var reveal = document.getElementById('sidebarReveal');
+    var overlay = document.getElementById('sidebarOverlay');
+    var topBar = document.getElementById('topBar');
+    var main = document.getElementById('mainContent');
+    var footer = document.getElementById('mainFooter');
+    var icon = document.getElementById('toggleIcon');
+    if(!sidebar) return;
+
+    var MOBILE = 768;
+    var KEY = 'tioli_sidebar_collapsed';
+
+    function isMobile(){ return window.innerWidth < MOBILE; }
+
+    function collapse(save){
+        sidebar.classList.add('collapsed');
+        if(icon) icon.textContent = 'menu';
+        if(overlay) overlay.classList.add('hidden');
+        if(reveal) reveal.classList.remove('hidden');
+        if(!isMobile()){
+            if(topBar) topBar.style.left = '0';
+            if(main) main.style.marginLeft = '0';
+            if(footer) footer.style.marginLeft = '0';
+        }
+        if(save !== false) localStorage.setItem(KEY, '1');
+    }
+
+    function expand(save){
+        sidebar.classList.remove('collapsed');
+        if(icon) icon.textContent = 'menu_open';
+        if(reveal) reveal.classList.add('hidden');
+        if(isMobile()){
+            if(overlay) overlay.classList.remove('hidden');
+            if(topBar) topBar.style.left = '0';
+            if(main) main.style.marginLeft = '0';
+            if(footer) footer.style.marginLeft = '0';
+        } else {
+            if(overlay) overlay.classList.add('hidden');
+            if(topBar) topBar.style.left = '16rem';
+            if(main) main.style.marginLeft = '16rem';
+            if(footer) footer.style.marginLeft = '16rem';
+        }
+        if(save !== false) localStorage.setItem(KEY, '0');
+    }
+
+    window.toggleSidebar = function(){
+        if(sidebar.classList.contains('collapsed')) expand();
+        else collapse();
+    };
+
+    function handleResize(){
+        if(isMobile()){
+            collapse(false);
+        } else {
+            var saved = localStorage.getItem(KEY);
+            if(saved === '1') collapse(false);
+            else expand(false);
+        }
+    }
+
+    // Initial state
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    // Close sidebar on nav click (mobile only)
+    sidebar.querySelectorAll('a').forEach(function(a){
+        a.addEventListener('click', function(){
+            if(isMobile()) collapse();
+        });
+    });
+})();
+
+// Global Search
+(function(){
+    var input = document.getElementById('globalSearchInput');
+    var results = document.getElementById('globalSearchResults');
+    if(!input || !results) return;
+
+    var pages = [
+        {name:'Operations Dashboard', url:'/dashboard', icon:'dashboard', desc:'Main overview, stats, chain integrity'},
+        {name:'Exchange', url:'/dashboard/exchange', icon:'storage', desc:'Order book, trading, market rates'},
+        {name:'AgentBroker', url:'/dashboard/agentbroker', icon:'hub', desc:'Engagements, escrow, agent matching'},
+        {name:'Lending', url:'/dashboard/lending', icon:'sync_alt', desc:'Loan offers, requests, marketplace'},
+        {name:'Governance', url:'/dashboard/governance', icon:'gavel', desc:'Proposals, voting, audit trail'},
+        {name:'Services', url:'/dashboard/services', icon:'apps', desc:'Module status, fees, tiers, verticals'},
+        {name:'PayOut', url:'/dashboard/payout', icon:'account_balance_wallet', desc:'Earnings, disbursement, SARB'},
+        {name:'Community / AgentHub', url:'/dashboard/community', icon:'forum', desc:'Agent profiles, feed, projects, rankings'},
+        {name:'Awareness', url:'/dashboard/awareness', icon:'campaign', desc:'Growth metrics, viral engine'},
+        {name:'ARM', url:'/dashboard/arm', icon:'rocket_launch', desc:'Campaigns, directories, outreach'},
+        {name:'Escrow', url:'/dashboard/escrow', icon:'lock', desc:'Escrow accounts, holds, releases'},
+        {name:'Reports', url:'/dashboard/reports', icon:'assessment', desc:'Financial, health, activity, anomalies'},
+        {name:'AI Prompt', url:'/dashboard/chat', icon:'smart_toy', desc:'Natural language platform commands'},
+        {name:'Settings', url:'/auth/setup-authenticator', icon:'settings', desc:'Authenticator, security setup'},
+        {name:'Agents', url:'/dashboard/agents', icon:'group', desc:'Registered agents, profiles'},
+        {name:'Transactions', url:'/dashboard/transactions', icon:'receipt_long', desc:'Full transaction ledger'},
+        {name:'Blocks', url:'/dashboard/blocks', icon:'view_module', desc:'Blockchain explorer'},
+    ];
+    var timer;
+    input.addEventListener('input', function(){
+        clearTimeout(timer);
+        var q = input.value.trim().toLowerCase();
+        if(q.length < 2){ results.classList.add('hidden'); return; }
+        timer = setTimeout(function(){
+            var matches = pages.filter(function(p){
+                return p.name.toLowerCase().indexOf(q) >= 0 || p.desc.toLowerCase().indexOf(q) >= 0;
+            });
+            if(matches.length === 0){
+                results.innerHTML = '<div class="p-3 text-xs text-slate-500 text-center">No results</div>';
+            } else {
+                results.innerHTML = matches.map(function(m){
+                    return '<a href="'+m.url+'" class="flex items-center gap-3 px-3 py-2 hover:bg-primary/5 transition-colors">'
+                        +'<span class="material-symbols-outlined text-slate-500 text-sm">'+m.icon+'</span>'
+                        +'<div><div class="text-sm text-white">'+m.name+'</div>'
+                        +'<div class="text-[0.6rem] text-slate-500">'+m.desc+'</div></div></a>';
+                }).join('');
+            }
+            results.classList.remove('hidden');
+        }, 150);
+    });
+    input.addEventListener('blur', function(){ setTimeout(function(){ results.classList.add('hidden'); }, 200); });
+    input.addEventListener('focus', function(){ if(input.value.trim().length >= 2) results.classList.remove('hidden'); });
+})();
 </script>
 <script src="/static/js/app.js"></script>
 {% block scripts %}{% endblock %}

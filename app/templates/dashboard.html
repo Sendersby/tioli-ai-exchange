@@ -64,6 +64,45 @@
     </div>
 </section>
 
+<!-- Revenue & Community Pulse -->
+<section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+    <a href="/owner/revenue" class="bg-surface-container-lowest border border-outline-variant/10 p-3 border-l-4 border-l-[#edc05f] hover:border-[#edc05f]/40 transition-colors col-span-2">
+        <div class="flex items-center justify-between mb-1">
+            <span class="font-mono text-[0.5rem] text-[#edc05f] uppercase tracking-widest">Revenue MTD</span>
+            <span class="font-mono text-[0.45rem] text-slate-600">{{ "%.1f"|format(rev.progress_pct) }}%</span>
+        </div>
+        <div class="font-headline text-2xl font-black text-[#edc05f] tabular-nums">${{ "%.2f"|format(rev.mtd_usd) }}</div>
+        <div class="mt-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+            <div class="h-full bg-[#edc05f] rounded-full" style="width: {{ [rev.progress_pct, 100]|min }}%"></div>
+        </div>
+        <div class="text-[0.45rem] text-slate-600 mt-0.5">Target: ${{ "%.0f"|format(rev.target_usd) }} | Projected: ${{ "%.0f"|format(rev.projected_month_usd) }}</div>
+    </a>
+    <a href="/dashboard/community" class="bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+        <span class="font-mono text-[0.5rem] text-primary uppercase tracking-widest">Profiles</span>
+        <div class="font-mono text-lg text-white tabular-nums mt-1">{{ hub_stats.total_profiles }}</div>
+    </a>
+    <a href="/dashboard/community" class="bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+        <span class="font-mono text-[0.5rem] text-secondary uppercase tracking-widest">Posts</span>
+        <div class="font-mono text-lg text-white tabular-nums mt-1">{{ hub_stats.total_posts }}</div>
+    </a>
+    <a href="/dashboard/community" class="bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+        <span class="font-mono text-[0.5rem] text-tertiary uppercase tracking-widest">Connections</span>
+        <div class="font-mono text-lg text-white tabular-nums mt-1">{{ hub_stats.total_connections }}</div>
+    </a>
+    <a href="/dashboard/community" class="bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+        <span class="font-mono text-[0.5rem] text-primary uppercase tracking-widest">Channels</span>
+        <div class="font-mono text-lg text-white tabular-nums mt-1">{{ hub_stats.active_channels }}</div>
+    </a>
+    <a href="/dashboard/modules" class="bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+        <span class="font-mono text-[0.5rem] text-secondary uppercase tracking-widest">Modules</span>
+        <div class="font-mono text-lg text-white tabular-nums mt-1">12</div>
+    </a>
+    <a href="/pricing" class="bg-surface-container-lowest border border-outline-variant/10 p-3 hover:border-primary/30 transition-colors">
+        <span class="font-mono text-[0.5rem] text-tertiary uppercase tracking-widest">Pricing</span>
+        <div class="font-mono text-lg text-white tabular-nums mt-1">3 tiers</div>
+    </a>
+</section>
+
 <!-- Volume & Liquidity Metrics -->
 <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
     <a href="/dashboard/transactions" class="bg-surface-container-lowest border border-outline-variant/10 p-4 hover:border-primary/30 transition-colors">

@@ -126,10 +126,52 @@ async def create_profile(
     return {"profile_id": profile.profile_id, "service_title": profile.service_title}
 
 
+class UpdateProfileRequest(BaseModel):
+    service_title: str | None = None
+    service_description: str | None = None
+    capability_tags: list[str] | None = None
+    model_family: str | None = None
+    context_window: int | None = None
+    pricing_model: str | None = None
+    base_price: float | None = None
+    price_currency: str | None = None
+    availability_status: str | None = None
+
+
 @router.get("/profiles/{profile_id}")
 async def get_profile(profile_id: str, db: AsyncSession = Depends(get_db)):
     _check_enabled()
     return await profile_service.get_profile(db, profile_id)
+
+
+@router.put("/profiles/{profile_id}")
+async def update_profile(
+    profile_id: str, req: UpdateProfileRequest,
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a service profile — owner agent only."""
+    _check_enabled()
+    return await profile_service.update_profile(
+        db, profile_id, agent.id, **req.model_dump(exclude_none=True),
+    )
+
+
+@router.delete("/profiles/{profile_id}")
+async def deactivate_profile(
+    profile_id: str, agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Deactivate (soft-delete) a service profile — owner agent only."""
+    _check_enabled()
+    return await profile_service.deactivate_profile(db, profile_id, agent.id)
+
+
+@router.get("/agents/{agent_id}/profiles")
+async def get_agent_profiles(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get all service profiles for an agent."""
+    _check_enabled()
+    return await profile_service.get_agent_profiles(db, agent_id)
 
 
 @router.get("/search")
@@ -394,3 +436,122 @@ async def agent_engagements(
 ):
     _check_enabled()
     return await engagement_service.list_engagements(db, agent_id, state)
+
+
+# ── Engagement Templates ──────────────────────────────────────────────
+
+ENGAGEMENT_TEMPLATES = [
+    {
+        "template_id": "data_analysis",
+        "name": "Data Analysis Report",
+        "description": "Agent analyses a dataset and produces an insight report",
+        "scope_of_work": "Analyse the provided dataset. Identify key trends, outliers, and actionable insights. Produce a structured report with visualisation descriptions.",
+        "acceptance_criteria": "Report contains: executive summary, methodology, key findings (min 5), data quality assessment, and recommendations.",
+        "suggested_price": 50.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["data_analysis", "reporting", "insights"],
+        "estimated_hours": 2,
+    },
+    {
+        "template_id": "code_generation",
+        "name": "Code Generation Task",
+        "description": "Agent writes code to specification with tests",
+        "scope_of_work": "Implement the specified functionality in the requested language. Include error handling, input validation, and unit tests.",
+        "acceptance_criteria": "Code compiles/runs without errors. All unit tests pass. Code follows language best practices. Documentation included.",
+        "suggested_price": 75.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["code_generation", "programming", "testing"],
+        "estimated_hours": 4,
+    },
+    {
+        "template_id": "research_report",
+        "name": "Research & Literature Review",
+        "description": "Agent conducts research on a topic and produces a comprehensive review",
+        "scope_of_work": "Research the specified topic. Identify and synthesise at least 10 relevant sources. Produce a structured literature review with citations.",
+        "acceptance_criteria": "Review contains: introduction, methodology, thematic analysis, gaps identified, bibliography with 10+ sources.",
+        "suggested_price": 60.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["research", "writing", "analysis"],
+        "estimated_hours": 3,
+    },
+    {
+        "template_id": "translation",
+        "name": "Document Translation",
+        "description": "Agent translates a document between languages",
+        "scope_of_work": "Translate the provided document from source to target language. Maintain formatting, tone, and technical terminology.",
+        "acceptance_criteria": "Translation is accurate, fluent, culturally appropriate. Technical terms correctly rendered. Original formatting preserved.",
+        "suggested_price": 30.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["translation", "multilingual", "localisation"],
+        "estimated_hours": 1,
+    },
+    {
+        "template_id": "legal_review",
+        "name": "Legal Document Review",
+        "description": "Agent reviews a legal document and flags risks",
+        "scope_of_work": "Review the provided legal document. Identify potential risks, ambiguities, and non-standard clauses. Provide a risk assessment summary.",
+        "acceptance_criteria": "Review identifies: key risks (ranked), ambiguous clauses, missing protections, compliance gaps, and recommended amendments.",
+        "suggested_price": 100.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["legal", "compliance", "risk_assessment"],
+        "estimated_hours": 3,
+    },
+    {
+        "template_id": "creative_content",
+        "name": "Creative Content Production",
+        "description": "Agent creates original content (articles, copy, narratives)",
+        "scope_of_work": "Produce original creative content matching the specified brief, tone, audience, and format requirements.",
+        "acceptance_criteria": "Content is original, on-brief, appropriate tone, correct word count, ready for publication.",
+        "suggested_price": 40.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["writing", "creative", "content"],
+        "estimated_hours": 2,
+    },
+    {
+        "template_id": "financial_analysis",
+        "name": "Financial Analysis & Modelling",
+        "description": "Agent builds financial models and produces analysis",
+        "scope_of_work": "Build a financial model based on provided data. Include revenue projections, cost analysis, sensitivity testing, and executive summary.",
+        "acceptance_criteria": "Model is formula-driven, assumptions documented, sensitivity analysis on 3+ variables, executive summary included.",
+        "suggested_price": 120.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["financial_analysis", "modelling", "forecasting"],
+        "estimated_hours": 5,
+    },
+    {
+        "template_id": "api_integration",
+        "name": "API Integration Task",
+        "description": "Agent integrates with an external API and produces working connector",
+        "scope_of_work": "Build an integration with the specified API. Handle authentication, error cases, rate limiting, and data transformation.",
+        "acceptance_criteria": "Integration authenticates successfully, handles all specified endpoints, error handling tested, documentation provided.",
+        "suggested_price": 80.0,
+        "currency": "TIOLI",
+        "payment_terms": "ON_DELIVERY",
+        "capability_tags": ["api_integration", "programming", "systems"],
+        "estimated_hours": 4,
+    },
+]
+
+
+@router.get("/templates")
+async def list_engagement_templates():
+    """Get pre-built engagement contract templates."""
+    _check_enabled()
+    return ENGAGEMENT_TEMPLATES
+
+
+@router.get("/templates/{template_id}")
+async def get_engagement_template(template_id: str):
+    """Get a specific engagement template."""
+    _check_enabled()
+    for t in ENGAGEMENT_TEMPLATES:
+        if t["template_id"] == template_id:
+            return t
+    raise HTTPException(status_code=404, detail="Template not found")

@@ -1,8 +1,8 @@
 """Cost alert notifications — Email and WhatsApp.
 
 Sends budget warnings to the platform owner via:
-1. Email (SMTP to sendersby@tioli.onmicrosoft.com)
-2. WhatsApp (via Twilio WhatsApp API to +270827090435)
+1. Email (Microsoft Graph API, SMTP fallback)
+2. WhatsApp (via Twilio WhatsApp API)
 
 Triggered automatically at warning (70%), critical (90%), and
 auto-shutdown (100%) thresholds.
@@ -17,11 +17,13 @@ from datetime import datetime, timezone
 
 import httpx
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 # Owner contact details
-OWNER_EMAIL = "sendersby@tioli.onmicrosoft.com"
-OWNER_PHONE = "+270827090435"  # WhatsApp number
+OWNER_EMAIL = settings.owner_email
+OWNER_PHONE = settings.owner_phone
 
 
 class AlertService:
@@ -87,20 +89,81 @@ class AlertService:
         return results
 
     async def _send_email(self, subject: str, body: str) -> dict:
-        """Send email via SMTP.
+        """Send email via Microsoft Graph API (primary) with SMTP fallback.
 
-        Supports Microsoft 365 SMTP or any configured SMTP server.
-        Set these environment variables:
-          SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
+        Graph API works over HTTPS (port 443) — not affected by SMTP port blocks.
         """
+        # Try Graph API first
+        result = await self._send_via_graph(subject, body)
+        if result.get("sent"):
+            return result
+
+        # Fallback to SMTP
+        return await self._send_via_smtp(subject, body)
+
+    async def _send_via_graph(self, subject: str, body: str) -> dict:
+        """Send email via Microsoft Graph API."""
+        tenant_id = os.environ.get("AZURE_TENANT_ID", "")
+        client_id = os.environ.get("AZURE_CLIENT_ID", "")
+        client_secret = os.environ.get("AZURE_CLIENT_SECRET", "")
+
+        if not all([tenant_id, client_id, client_secret]):
+            logger.warning("Graph API alert skipped — Azure credentials not configured")
+            return {"sent": False, "reason": "Azure credentials not configured"}
+
+        try:
+            async with httpx.AsyncClient() as client:
+                # Get access token
+                token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+                token_resp = await client.post(token_url, data={
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "scope": "https://graph.microsoft.com/.default",
+                    "grant_type": "client_credentials",
+                }, timeout=15)
+
+                if token_resp.status_code != 200:
+                    logger.error(f"Graph API token failed: {token_resp.status_code}")
+                    return {"sent": False, "reason": f"Token request failed: {token_resp.status_code}"}
+
+                access_token = token_resp.json().get("access_token")
+
+                # Send email
+                sender = OWNER_EMAIL
+                mail_url = f"https://graph.microsoft.com/v1.0/users/{sender}/sendMail"
+                mail_resp = await client.post(mail_url, headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                }, json={
+                    "message": {
+                        "subject": subject,
+                        "body": {"contentType": "Text", "content": body},
+                        "toRecipients": [{"emailAddress": {"address": OWNER_EMAIL}}],
+                    },
+                    "saveToSentItems": False,
+                }, timeout=15)
+
+                if mail_resp.status_code in (200, 202):
+                    logger.info(f"Graph API alert sent to {OWNER_EMAIL}: {subject}")
+                    return {"sent": True, "to": OWNER_EMAIL, "method": "graph_api"}
+                else:
+                    logger.error(f"Graph API send failed: {mail_resp.status_code} {mail_resp.text}")
+                    return {"sent": False, "reason": f"Graph send failed: {mail_resp.status_code}"}
+
+        except Exception as e:
+            logger.error(f"Graph API alert failed: {e}")
+            return {"sent": False, "error": str(e)}
+
+    async def _send_via_smtp(self, subject: str, body: str) -> dict:
+        """Send email via SMTP (fallback)."""
         smtp_host = os.environ.get("SMTP_HOST", "smtp.office365.com")
         smtp_port = int(os.environ.get("SMTP_PORT", "587"))
         smtp_user = os.environ.get("SMTP_USER", "")
         smtp_password = os.environ.get("SMTP_PASSWORD", "")
 
         if not smtp_user or not smtp_password:
-            logger.warning("Email alert skipped — SMTP_USER/SMTP_PASSWORD not configured")
-            return {"sent": False, "reason": "SMTP credentials not configured. Set SMTP_USER and SMTP_PASSWORD env vars."}
+            logger.warning("SMTP alert skipped — credentials not configured")
+            return {"sent": False, "reason": "SMTP credentials not configured"}
 
         try:
             msg = MIMEMultipart()
@@ -109,15 +172,15 @@ class AlertService:
             msg["Subject"] = subject
             msg.attach(MIMEText(body, "plain"))
 
-            with smtplib.SMTP(smtp_host, smtp_port) as server:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
                 server.starttls()
                 server.login(smtp_user, smtp_password)
                 server.send_message(msg)
 
-            logger.info(f"Email alert sent to {OWNER_EMAIL}: {subject}")
-            return {"sent": True, "to": OWNER_EMAIL}
+            logger.info(f"SMTP alert sent to {OWNER_EMAIL}: {subject}")
+            return {"sent": True, "to": OWNER_EMAIL, "method": "smtp"}
         except Exception as e:
-            logger.error(f"Email alert failed: {e}")
+            logger.error(f"SMTP alert failed: {e}")
             return {"sent": False, "error": str(e)}
 
     async def _send_whatsapp(self, message: str) -> dict:

@@ -86,35 +86,6 @@ async def verify_email(
     })
 
 
-@router.get("/auth/verify-email-link")
-async def verify_email_link(request: Request, token: str = ""):
-    """Handle clicked email verification link — auto-verifies email factor."""
-    from app.auth.email_verify import validate_email_token
-    challenge_id = validate_email_token(token)
-    if not challenge_id:
-        return templates.TemplateResponse("login.html", {
-            "request": request, "challenge": None, "status": {},
-            "authenticated": False,
-            "messages": [{"type": "error", "text": "Invalid or expired verification link."}],
-        })
-
-    owner_auth.verify_email_by_token(challenge_id)
-    status = owner_auth.check_challenge_complete(challenge_id)
-    challenge = {
-        "challenge_id": challenge_id,
-        "cli_code": owner_auth.get_cli_code(challenge_id),
-        "phone_code": owner_auth._challenges.get(challenge_id, {}).get("phone_code", ""),
-    }
-
-    if status.get("complete"):
-        response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
-        return response
-
-    return templates.TemplateResponse("login.html", {
-        "request": request, "challenge": challenge, "status": status, "authenticated": False,
-        "messages": [{"type": "success", "text": "Email verified successfully! Complete the remaining factors."}],
-    })
 
 
 @router.post("/auth/verify-phone")

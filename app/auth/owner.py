@@ -11,6 +11,8 @@ Security hardening:
 - Failed attempt logging for security audit
 """
 
+import json
+import os
 import secrets
 import time
 import logging
@@ -28,13 +30,52 @@ MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_DURATION_SECONDS = 900  # 15 minutes
 MAX_ACTIVE_CHALLENGES = 3       # Max concurrent challenges
 
+# Persistent storage for brute force state (survives restarts)
+_BRUTE_FORCE_FILE = os.path.join(os.path.dirname(__file__), ".brute_force_state.json")
+
 
 class BruteForceProtection:
-    """Tracks failed login attempts and enforces lockouts."""
+    """Tracks failed login attempts and enforces lockouts.
+
+    State is persisted to disk so lockouts survive server restarts.
+    """
 
     def __init__(self):
         self._failed_attempts: dict[str, list[float]] = defaultdict(list)
         self._lockouts: dict[str, float] = {}
+        self._load_state()
+
+    def _load_state(self) -> None:
+        """Load persisted brute force state from disk."""
+        try:
+            if os.path.exists(_BRUTE_FORCE_FILE):
+                with open(_BRUTE_FORCE_FILE, "r") as f:
+                    data = json.load(f)
+                now = time.time()
+                # Restore only non-expired lockouts
+                for ip, until in data.get("lockouts", {}).items():
+                    if until > now:
+                        self._lockouts[ip] = until
+                # Restore only recent failed attempts
+                cutoff = now - LOCKOUT_DURATION_SECONDS
+                for ip, timestamps in data.get("attempts", {}).items():
+                    valid = [t for t in timestamps if t > cutoff]
+                    if valid:
+                        self._failed_attempts[ip] = valid
+        except Exception as e:
+            logger.warning(f"Could not load brute force state: {e}")
+
+    def _save_state(self) -> None:
+        """Persist brute force state to disk."""
+        try:
+            data = {
+                "lockouts": dict(self._lockouts),
+                "attempts": dict(self._failed_attempts),
+            }
+            with open(_BRUTE_FORCE_FILE, "w") as f:
+                json.dump(data, f)
+        except Exception as e:
+            logger.warning(f"Could not save brute force state: {e}")
 
     def record_failure(self, ip: str) -> None:
         """Record a failed verification attempt."""
@@ -47,6 +88,7 @@ class BruteForceProtection:
         if len(self._failed_attempts[ip]) >= MAX_FAILED_ATTEMPTS:
             self._lockouts[ip] = now + LOCKOUT_DURATION_SECONDS
             logger.warning(f"Brute force lockout triggered for IP {ip}: {len(self._failed_attempts[ip])} failed attempts")
+        self._save_state()
 
     def is_locked_out(self, ip: str) -> bool:
         """Check if an IP is currently locked out."""
@@ -56,6 +98,7 @@ class BruteForceProtection:
         # Lockout expired — clear it
         if ip in self._lockouts:
             del self._lockouts[ip]
+            self._save_state()
         return False
 
     def get_remaining_lockout(self, ip: str) -> int:
@@ -68,6 +111,7 @@ class BruteForceProtection:
         """Clear failed attempts on successful login."""
         self._failed_attempts.pop(ip, None)
         self._lockouts.pop(ip, None)
+        self._save_state()
 
 
 class OwnerAuth:

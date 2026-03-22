@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Owner identity (3-factor auth)
     owner_email: str = "sendersby@tioli.onmicrosoft.com"
-    owner_phone: str = "+270827090435"
+    owner_phone: str = ""  # Set via OWNER_PHONE env var
     owner_cli_token: str = secrets.token_urlsafe(32)
 
     # Database
@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     benchmarking_enabled: bool = False
     intelligence_enabled: bool = False
     verticals_enabled: bool = False
+    agenthub_enabled: bool = False
 
     # Debug
     debug: bool = False

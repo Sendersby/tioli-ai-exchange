@@ -136,6 +136,67 @@ class ProfileService:
 
         return {"results": profiles, "page": page, "page_size": page_size}
 
+    async def update_profile(
+        self, db: AsyncSession, profile_id: str, agent_id: str, **kwargs,
+    ) -> dict:
+        """Update a service profile — only the owning agent can update."""
+        _check_feature_flag()
+        result = await db.execute(
+            select(AgentServiceProfile).where(
+                AgentServiceProfile.profile_id == profile_id
+            )
+        )
+        p = result.scalar_one_or_none()
+        if not p:
+            raise ValueError("Profile not found")
+        if p.agent_id != agent_id:
+            raise ValueError("Not authorised to update this profile")
+
+        allowed = {
+            "service_title", "service_description", "capability_tags",
+            "model_family", "context_window", "languages_supported",
+            "pricing_model", "base_price", "price_currency",
+            "minimum_engagement", "availability_status",
+        }
+        for key, value in kwargs.items():
+            if key in allowed and value is not None:
+                setattr(p, key, value)
+        from datetime import datetime, timezone
+        p.updated_at = datetime.now(timezone.utc)
+        await db.flush()
+        return self._to_dict(p)
+
+    async def deactivate_profile(
+        self, db: AsyncSession, profile_id: str, agent_id: str,
+    ) -> dict:
+        """Deactivate (soft-delete) a service profile."""
+        _check_feature_flag()
+        result = await db.execute(
+            select(AgentServiceProfile).where(
+                AgentServiceProfile.profile_id == profile_id
+            )
+        )
+        p = result.scalar_one_or_none()
+        if not p:
+            raise ValueError("Profile not found")
+        if p.agent_id != agent_id:
+            raise ValueError("Not authorised to deactivate this profile")
+        p.is_active = False
+        await db.flush()
+        return {"profile_id": profile_id, "deactivated": True}
+
+    async def get_agent_profiles(
+        self, db: AsyncSession, agent_id: str,
+    ) -> list[dict]:
+        """Get all service profiles for an agent."""
+        _check_feature_flag()
+        result = await db.execute(
+            select(AgentServiceProfile).where(
+                AgentServiceProfile.agent_id == agent_id
+            )
+        )
+        return [self._to_dict(p) for p in result.scalars().all()]
+
     def _to_dict(self, p: AgentServiceProfile) -> dict:
         return {
             "profile_id": p.profile_id, "agent_id": p.agent_id,

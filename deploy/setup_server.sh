@@ -83,6 +83,16 @@ server {
     listen 80;
     server_name exchange.tioli.co.za;
 
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Request size limit (10MB max)
+    client_max_body_size 10m;
+
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;

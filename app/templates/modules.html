@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Modules — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="mb-4">
+        <h1>Platform Modules</h1>
+        <p class="text-slate-400 text-sm">All Build Brief V2 modules, AgentHub features, and infrastructure services</p>
+    </div>
+
+    <!-- Module Status Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {% for mod in modules %}
+        <div class="bg-surface-container-low border border-outline-variant/10 p-5 hover:border-primary/20 transition-colors">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg {% if mod.enabled %}text-secondary{% else %}text-slate-600{% endif %}">{{ mod.icon }}</span>
+                    <h3 class="text-sm font-medium text-white mb-0">{{ mod.name }}</h3>
+                </div>
+                <span class="font-mono text-[0.5rem] px-1.5 py-0.5 {% if mod.enabled %}bg-secondary/10 text-secondary{% else %}bg-slate-700/30 text-slate-500{% endif %} uppercase tracking-widest">
+                    {{ "Live" if mod.enabled else "Off" }}
+                </span>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">{{ mod.description }}</p>
+
+            <!-- Key Metrics -->
+            {% if mod.metrics %}
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                {% for key, val in mod.metrics.items() %}
+                <div class="bg-surface-container-lowest p-2">
+                    <div class="font-mono text-sm text-white">{{ val }}</div>
+                    <div class="text-[0.45rem] text-slate-500 uppercase">{{ key }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- API endpoint -->
+            <div class="text-[0.5rem] text-slate-600 font-mono">{{ mod.api_base }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Infrastructure Services -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Infrastructure Services</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            {% for svc in infra_services %}
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-sm {% if svc.status == 'healthy' %}text-secondary{% else %}text-error{% endif %}">{{ "check_circle" if svc.status == "healthy" else "error" }}</span>
+                    <span class="text-xs text-white">{{ svc.name }}</span>
+                </div>
+                <div class="text-[0.5rem] text-slate-500">{{ svc.detail }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Quick Tasks Pipeline -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Quick Tasks Pipeline</h2>
+        {% if quick_tasks and quick_tasks|length > 0 %}
+        <div class="overflow-x-auto mt-3">
+            <table>
+                <thead><tr><th>Title</th><th>Price</th><th>Status</th><th>Provider</th><th>Commission</th><th>Ordered</th></tr></thead>
+                <tbody>
+                    {% for t in quick_tasks %}
+                    <tr>
+                        <td class="text-white text-sm">{{ t.title[:40] }}</td>
+                        <td class="font-mono text-xs">{{ t.price }} TIOLI</td>
+                        <td><span class="font-mono text-[0.55rem] px-1.5 py-0.5 {% if t.status == 'CONFIRMED' %}bg-secondary/10 text-secondary{% elif t.status == 'DELIVERED' %}bg-primary/10 text-primary{% else %}bg-tertiary/10 text-tertiary{% endif %}">{{ t.status }}</span></td>
+                        <td><code class="text-[0.6rem] text-slate-400">{{ t.provider[:12] if t.provider else '' }}</code></td>
+                        <td class="font-mono text-xs text-[#edc05f]">{{ t.commission }}</td>
+                        <td class="text-[0.6rem] text-slate-500">{{ t.ordered_at[:10] if t.ordered_at else '' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs">No quick tasks yet</p>
+        {% endif %}
+    </div>
+
+    <!-- Auto-Match Activity -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Auto-Match Activity</h2>
+        {% if auto_matches and auto_matches|length > 0 %}
+        <div class="overflow-x-auto mt-3">
+            <table>
+                <thead><tr><th>Task Description</th><th>Matches</th><th>Status</th><th>Created</th></tr></thead>
+                <tbody>
+                    {% for m in auto_matches %}
+                    <tr>
+                        <td class="text-white text-sm">{{ m.task[:60] }}</td>
+                        <td class="font-mono text-xs">{{ m.proposals_sent }}</td>
+                        <td><span class="font-mono text-[0.55rem] px-1.5 py-0.5 bg-primary/10 text-primary">{{ m.status }}</span></td>
+                        <td class="text-[0.6rem] text-slate-500">{{ m.created_at[:10] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs">No auto-match requests yet. Use: <code class="text-primary">POST /api/v1/revenue/auto-match</code></p>
+        {% endif %}
+    </div>
+
+    <!-- Retention Risk -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Retention Risk Monitor</h2>
+        {% if at_risk and at_risk|length > 0 %}
+        <div class="space-y-2 mt-3">
+            {% for r in at_risk %}
+            <div class="flex items-center justify-between bg-surface-container-lowest border-l-2 {% if r.risk == 'CRITICAL' %}border-l-error{% else %}border-l-tertiary{% endif %} p-3">
+                <div>
+                    <span class="text-sm text-white">{{ r.entity_type|title }}: {{ r.entity_id[:16] }}</span>
+                    <span class="text-[0.55rem] text-slate-500 ml-2">{{ r.days_inactive }} days inactive</span>
+                </div>
+                <span class="font-mono text-[0.5rem] {% if r.risk == 'CRITICAL' %}text-error{% else %}text-tertiary{% endif %} uppercase">{{ r.risk }} ({{ r.score }}/100)</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs"><span class="material-symbols-outlined text-secondary text-sm align-middle">check_circle</span> All subscribers healthy</p>
+        {% endif %}
+    </div>
+
+    <!-- Referral Programme -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Referral Programme</h2>
+        <div class="grid grid-cols-4 gap-3 mt-3">
+            <div class="bg-surface-container-lowest p-3 text-center">
+                <div class="font-headline text-xl font-bold text-white">{{ referral_stats.total_referrals or 0 }}</div>
+                <div class="font-mono text-[0.45rem] text-slate-500 uppercase mt-0.5">Total Referrals</div>
+            </div>
+            <div class="bg-surface-container-lowest p-3 text-center">
+                <div class="font-headline text-xl font-bold text-secondary">{{ referral_stats.qualified or 0 }}</div>
+                <div class="font-mono text-[0.45rem] text-slate-500 uppercase mt-0.5">Qualified</div>
+            </div>
+            <div class="bg-surface-container-lowest p-3 text-center">
+                <div class="font-headline text-xl font-bold text-[#edc05f]">{{ referral_stats.rewarded or 0 }}</div>
+                <div class="font-mono text-[0.45rem] text-slate-500 uppercase mt-0.5">Rewarded</div>
+            </div>
+            <div class="bg-surface-container-lowest p-3 text-center">
+                <div class="font-headline text-xl font-bold text-primary">{{ referral_stats.total_earned or 0 }}</div>
+                <div class="font-mono text-[0.45rem] text-slate-500 uppercase mt-0.5">TIOLI Earned</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP Server Status -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>MCP Server</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            <div class="bg-surface-container-lowest p-3">
+                <div class="font-mono text-lg text-primary">{{ mcp_stats.total_calls }}</div>
+                <div class="text-[0.45rem] text-slate-500 uppercase">Total Tool Calls</div>
+            </div>
+            <div class="bg-surface-container-lowest p-3">
+                <div class="font-mono text-lg text-white">{{ mcp_stats.calls_today }}</div>
+                <div class="text-[0.45rem] text-slate-500 uppercase">Calls Today</div>
+            </div>
+            <div class="bg-surface-container-lowest p-3">
+                <div class="font-mono text-lg text-{% if mcp_stats.error_rate_pct < 5 %}secondary{% else %}error{% endif %}">{{ mcp_stats.error_rate_pct }}%</div>
+                <div class="text-[0.45rem] text-slate-500 uppercase">Error Rate</div>
+            </div>
+            <div class="bg-surface-container-lowest p-3">
+                <div class="font-mono text-lg text-white">{{ mcp_stats.top_tools|length }}</div>
+                <div class="text-[0.45rem] text-slate-500 uppercase">Active Tools</div>
+            </div>
+        </div>
+        {% if mcp_stats.top_tools %}
+        <div class="mt-3 space-y-1">
+            {% for tool in mcp_stats.top_tools %}
+            <div class="flex items-center justify-between text-xs">
+                <code class="text-primary">{{ tool.tool }}</code>
+                <span class="font-mono text-slate-400">{{ tool.calls }} calls</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

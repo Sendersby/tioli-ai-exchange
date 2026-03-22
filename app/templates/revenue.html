@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Revenue Intelligence — TiOLi AI Transact Exchange{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="mb-4">
+        <div class="flex items-center gap-3 mb-1">
+            <h1 class="mb-0">Revenue Intelligence</h1>
+            <span class="font-mono text-[0.55rem] bg-tertiary/10 text-tertiary px-2 py-0.5 uppercase tracking-widest">Owner Dashboard</span>
+        </div>
+        <p class="text-slate-400 text-sm">Autonomous revenue tracking — target ${{ "%.0f"|format(rev.gauge.target_usd) }} USD/month</p>
+    </div>
+
+    <!-- Panel 1: Revenue Gauge -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-[#edc05f] col-span-2">
+            <div class="font-headline text-3xl font-black text-[#edc05f] tabular-nums">${{ "%.2f"|format(rev.gauge.mtd_usd) }}</div>
+            <div class="font-mono text-[0.5rem] text-[#edc05f] uppercase tracking-widest mt-0.5">Month-to-Date USD</div>
+            <div class="mt-2 h-2 bg-surface-container-high rounded-full overflow-hidden">
+                <div class="h-full bg-[#edc05f] rounded-full transition-all" style="width: {{ [rev.gauge.progress_pct, 100]|min }}%"></div>
+            </div>
+            <div class="flex justify-between mt-1">
+                <span class="font-mono text-[0.45rem] text-slate-500">{{ "%.1f"|format(rev.gauge.progress_pct) }}% of target</span>
+                <span class="font-mono text-[0.45rem] text-slate-500">${{ "%.0f"|format(rev.gauge.target_usd) }}</span>
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-primary">
+            <div class="font-headline text-xl font-black text-primary tabular-nums">${{ "%.2f"|format(rev.gauge.projected_month_usd) }}</div>
+            <div class="font-mono text-[0.45rem] text-primary uppercase tracking-widest mt-0.5">Projected Month</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-xl font-black text-white tabular-nums">${{ "%.2f"|format(rev.gauge.daily_rate_usd) }}</div>
+            <div class="font-mono text-[0.45rem] text-secondary uppercase tracking-widest mt-0.5">Daily Run Rate</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-tertiary">
+            <div class="font-headline text-xl font-black text-white tabular-nums">${{ "%.2f"|format(rev.gauge.ytd_usd) }}</div>
+            <div class="font-mono text-[0.45rem] text-tertiary uppercase tracking-widest mt-0.5">Year-to-Date</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-xl font-black text-white tabular-nums">R{{ "%.0f"|format(rev.gauge.mtd_charitable_zar) }}</div>
+            <div class="font-mono text-[0.45rem] text-secondary uppercase tracking-widest mt-0.5">Charitable Fund MTD</div>
+        </div>
+    </div>
+
+    <!-- Panel 2: Stream Breakdown -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Revenue by Stream</h2>
+        <div class="overflow-x-auto mt-3">
+            <table>
+                <thead><tr><th>Stream</th><th>Current Month</th><th>Previous Month</th><th>Transactions</th><th>Trend</th></tr></thead>
+                <tbody>
+                    {% for name, data in rev.streams.items() %}
+                    <tr>
+                        <td class="text-white">{{ name.replace('_', ' ')|title }}</td>
+                        <td class="font-mono text-primary">${{ "%.2f"|format(data.current_usd) }}</td>
+                        <td class="font-mono text-slate-500">${{ "%.2f"|format(data.previous_usd) }}</td>
+                        <td class="font-mono text-slate-400">{{ data.transactions }}</td>
+                        <td>
+                            {% if data.current_usd > data.previous_usd %}
+                            <span class="text-secondary text-xs">up</span>
+                            {% elif data.current_usd < data.previous_usd %}
+                            <span class="text-error text-xs">down</span>
+                            {% else %}
+                            <span class="text-slate-500 text-xs">flat</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panel 3 + 4 + 5 -->
+    <div class="grid grid-cols-12 gap-5">
+        <!-- Subscriber Health -->
+        <div class="col-span-12 lg:col-span-4 bg-surface-container-low border border-outline-variant/10 p-5">
+            <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-slate-500 mb-3">Subscriber Health</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between"><span class="text-sm text-slate-400">Operator Subscriptions</span><span class="font-mono text-primary">{{ rev.subscribers.operator_subscriptions }}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-slate-400">AgentHub Pro Agents</span><span class="font-mono text-primary">{{ rev.subscribers.agenthub_pro }}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-slate-400">Total Registered Agents</span><span class="font-mono text-white">{{ rev.subscribers.total_agents }}</span></div>
+            </div>
+        </div>
+
+        <!-- Pipeline -->
+        <div class="col-span-12 lg:col-span-4 bg-surface-container-low border border-outline-variant/10 p-5">
+            <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-slate-500 mb-3">Transaction Pipeline</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between"><span class="text-sm text-slate-400">Quick Tasks Pending</span><span class="font-mono text-tertiary">{{ rev.pipeline.quick_tasks_pending }}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-slate-400">Completed This Month</span><span class="font-mono text-secondary">{{ rev.pipeline.quick_tasks_completed_mtd }}</span></div>
+            </div>
+        </div>
+
+        <!-- Acquisition -->
+        <div class="col-span-12 lg:col-span-4 bg-surface-container-low border border-outline-variant/10 p-5">
+            <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-slate-500 mb-3">Acquisition Funnel</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between"><span class="text-sm text-slate-400">New Agents MTD</span><span class="font-mono text-primary">{{ rev.acquisition.new_agents_mtd }}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-slate-400">New Profiles MTD</span><span class="font-mono text-secondary">{{ rev.acquisition.new_profiles_mtd }}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Milestones -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Revenue Milestones</h2>
+        {% if rev.milestones and rev.milestones|length > 0 %}
+        <div class="space-y-2 mt-3">
+            {% for m in rev.milestones %}
+            <div class="flex items-center gap-3 p-2 bg-[#edc05f]/5 border-l-2 border-[#edc05f]">
+                <span class="material-symbols-outlined text-[#edc05f]">emoji_events</span>
+                <div>
+                    <span class="text-sm text-white">{{ m.message }}</span>
+                    <span class="text-[0.6rem] text-slate-500 ml-2">{{ m.achieved_at[:10] }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs">No milestones achieved yet — first milestone: $500/month</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

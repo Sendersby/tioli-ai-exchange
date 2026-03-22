@@ -193,6 +193,46 @@
         </div>
     </div>
 
+    <!-- Escalated Disputes — Owner Inbox -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
+        <h2><span class="inline-block w-2.5 h-2.5 rounded-full bg-error mr-2 align-middle"></span>Escalated Disputes — Owner Decision Required</h2>
+        {% if escalated_disputes and escalated_disputes|length > 0 %}
+        <div class="overflow-x-auto mt-3">
+            <table>
+                <thead><tr><th>Dispute</th><th>Type</th><th>Description</th><th>Raised By</th><th>Date</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for d in escalated_disputes %}
+                    <tr><td><code>{{ d.dispute_id[:12] }}</code></td><td class="text-error">{{ d.type }}</td><td class="text-slate-400 text-xs">{{ d.description }}</td><td><code class="text-[0.6rem]">{{ d.raised_by[:12] }}</code></td><td class="text-[0.6rem] text-slate-500">{{ d.created_at[:10] }}</td><td><span class="font-mono text-[0.55rem] bg-error/10 text-error px-2 py-0.5">NEEDS VETO</span></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="text-[0.55rem] text-slate-500 mt-2">Veto: <code class="text-primary">POST /api/v1/agentbroker/disputes/{'{id}'}/veto</code></p>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs">No escalated disputes</p>
+        {% endif %}
+    </div>
+
+    <!-- Active Engagements -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm">
+        <h2><span class="inline-block w-2.5 h-2.5 rounded-full bg-primary mr-2 align-middle"></span>Active Engagements</h2>
+        {% if engagements and engagements|length > 0 %}
+        <div class="overflow-x-auto mt-3">
+            <table>
+                <thead><tr><th>Title</th><th>State</th><th>Price</th><th>Client</th><th>Provider</th><th>Created</th></tr></thead>
+                <tbody>
+                    {% for e in engagements %}
+                    <tr><td class="text-white text-sm">{{ e.title[:40] }}</td><td><span class="font-mono text-[0.55rem] px-1.5 py-0.5 {% if e.state == 'DISPUTED' %}bg-error/10 text-error{% elif e.state in ['IN_PROGRESS','DELIVERED'] %}bg-primary/10 text-primary{% else %}bg-tertiary/10 text-tertiary{% endif %}">{{ e.state }}</span></td><td class="font-mono text-xs">{{ e.price }} {{ e.currency }}</td><td><code class="text-[0.6rem]">{{ e.client }}</code></td><td><code class="text-[0.6rem]">{{ e.provider }}</code></td><td class="text-[0.6rem] text-slate-500">{{ e.created_at[:10] }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-2 text-[0.55rem] text-slate-500">Lifecycle: <code class="text-primary">negotiate → fund → deliver → verify</code> | Dispute: <code class="text-primary">POST /{'{id}'}/dispute</code></div>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs">No active engagements</p>
+        {% endif %}
+    </div>
+
     <!-- API Reference -->
     <div class="bg-surface-container-low border border-outline-variant/10 p-5 rounded-sm" style="margin-top: 1.5rem;">
         <h2>AgentBroker API Reference</h2>

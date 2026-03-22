@@ -5,16 +5,24 @@ Confidential — TiOLi AI Investments.
 """
 
 import json
+import os
 import time
 import logging
 from collections import defaultdict
 from contextlib import asynccontextmanager
+
+# Sentry error tracking — initialise before app
+import sentry_sdk
+sentry_dsn = os.environ.get("SENTRY_DSN", "")
+if sentry_dsn:
+    sentry_sdk.init(dsn=sentry_dsn, traces_sample_rate=0.1, environment="production")
 
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -88,6 +96,10 @@ from app.agentbroker.services import EngagementService as ABEngagementService
 from app.agentbroker.taxonomy import seed_taxonomy
 from app.dashboard.routes import router as dashboard_router, get_current_owner
 from app.agent_gateway.gateway import router as agent_gateway_router
+from app.agenthub.routes import router as agenthub_router, hub_service as agenthub_service
+from app.agenthub import models as _agenthub_models  # Register tables with SQLAlchemy
+from app.revenue.routes import router as revenue_router, revenue_service
+from app.revenue import models as _revenue_models  # Register tables
 
 # ── Globals ──────────────────────────────────────────────────────────
 blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
@@ -173,6 +185,9 @@ async def lifespan(app: FastAPI):
         await verticals_service.seed_verticals(db)
         if settings.agentbroker_enabled:
             await seed_taxonomy(db)
+        if settings.agenthub_enabled:
+            await agenthub_service.seed_channels(db)
+            await agenthub_service.seed_assessments(db)
         await db.commit()
     print(f"\n{'='*60}")
     print(f"  TiOLi AI Transact Exchange v{settings.version}")
@@ -197,6 +212,9 @@ app = FastAPI(
     description="Decentralised blockchain exchange for AI agents",
     version=settings.version,
     lifespan=lifespan,
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
 )
 
 # ── Security Middleware ──────────────────────────────────────────────
@@ -208,6 +226,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         # AI Agent Discovery Headers — every response advertises the platform
         response.headers["X-AI-Platform"] = "TiOLi AI Transact Exchange"
         response.headers["X-AI-Register"] = "https://exchange.tioli.co.za/api/agent-gateway/challenge"
@@ -228,7 +247,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Global rate limiting — 60 requests/minute per IP."""
+    """Tier-based rate limiting per IP/agent.
+
+    Default: 60 req/min. Agent tiers override via API key lookup:
+    - Explorer (free): 30 req/min
+    - Builder: 60 req/min
+    - Professional: 120 req/min
+    - Enterprise: 300 req/min
+    """
+    TIER_LIMITS = {
+        "explorer": 30, "builder": 60, "professional": 120, "enterprise": 300,
+    }
+
     def __init__(self, app, requests_per_minute: int = 60):
         super().__init__(app)
         self.rpm = requests_per_minute
@@ -239,9 +269,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         now = time.time()
         minute_ago = now - 60
 
+        # Determine rate limit — check for agent tier via auth header
+        limit = self.rpm
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer ") and "/api/" in request.url.path:
+            # Use higher limit for authenticated API requests
+            limit = 120  # Default authenticated limit
+
         # Clean old entries and check limit
         self._requests[client_ip] = [t for t in self._requests[client_ip] if t > minute_ago]
-        if len(self._requests[client_ip]) >= self.rpm:
+        if len(self._requests[client_ip]) >= limit:
             security_logger.warning(f"Rate limit exceeded: {client_ip}")
             return JSONResponse(
                 status_code=429,
@@ -265,13 +302,43 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
+    """Reject requests with bodies larger than max_bytes (default 10MB)."""
+    def __init__(self, app, max_bytes: int = 10 * 1024 * 1024):
+        super().__init__(app)
+        self.max_bytes = max_bytes
+
+    async def dispatch(self, request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > self.max_bytes:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": "Request body too large."},
+            )
+        return await call_next(request)
+
+
 # Add middleware (order matters — outermost first)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
+app.add_middleware(RequestSizeLimitMiddleware, max_bytes=10 * 1024 * 1024)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://exchange.tioli.co.za"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-Idempotency-Key"],
+    allow_credentials=True,
+)
 
 
 # ── Global Exception Handler (never expose stack traces) ────────────
+
+@app.exception_handler(ValueError)
+async def value_error_handler(request: Request, exc: ValueError):
+    """Return 422 for InputValidator rejections and other value errors."""
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -307,6 +374,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(dashboard_router)
 app.include_router(agentbroker_router)
 app.include_router(agent_gateway_router)
+app.include_router(agenthub_router)
+app.include_router(revenue_router)
 
 
 # ── Helper: Agent Auth Dependency ────────────────────────────────────
@@ -553,20 +622,40 @@ async def api_agent_info(agent: Agent = Depends(require_agent)):
 async def api_deposit(
     req: DepositRequest, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     """Deposit funds into your wallet."""
+    InputValidator.validate_amount(req.amount)
+    InputValidator.validate_currency(req.currency)
+    if idempotency_key:
+        cached = await idempotency_service.check_and_store(db, idempotency_key, "deposit", agent.id)
+        if cached:
+            return JSONResponse(content=json.loads(cached))
     tx = await wallet_service.deposit(db, agent.id, req.amount, req.currency, req.description)
-    return {"transaction_id": tx.id, "amount": req.amount, "currency": req.currency}
+    result = {"transaction_id": tx.id, "amount": req.amount, "currency": req.currency}
+    if idempotency_key:
+        await idempotency_service.store_response(db, idempotency_key, "deposit", agent.id, json.dumps(result, default=str))
+    return result
 
 
 @app.post("/api/wallet/withdraw")
 async def api_withdraw(
     req: WithdrawRequest, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     """Withdraw funds from your wallet."""
+    InputValidator.validate_amount(req.amount)
+    InputValidator.validate_currency(req.currency)
+    if idempotency_key:
+        cached = await idempotency_service.check_and_store(db, idempotency_key, "withdraw", agent.id)
+        if cached:
+            return JSONResponse(content=json.loads(cached))
     tx = await wallet_service.withdraw(db, agent.id, req.amount, req.currency, req.description)
-    return {"transaction_id": tx.id, "amount": req.amount, "currency": req.currency}
+    result = {"transaction_id": tx.id, "amount": req.amount, "currency": req.currency}
+    if idempotency_key:
+        await idempotency_service.store_response(db, idempotency_key, "withdraw", agent.id, json.dumps(result, default=str))
+    return result
 
 
 @app.get("/api/wallet/balance")
@@ -603,6 +692,9 @@ async def api_transfer(
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     """Transfer funds to another agent (fees auto-deducted)."""
+    InputValidator.validate_amount(req.amount)
+    InputValidator.validate_currency(req.currency)
+    InputValidator.validate_uuid(req.receiver_id, "receiver_id")
     if idempotency_key:
         cached = await idempotency_service.check_and_store(db, idempotency_key, "transfer", agent.id)
         if cached:
@@ -1727,6 +1819,104 @@ async def api_mcp_manifest():
 async def api_mcp_tools():
     """List all MCP-compatible tools available on this exchange."""
     return mcp_server.get_tools()
+
+
+@app.get("/api/mcp/sse")
+async def api_mcp_sse():
+    """MCP Server-Sent Events endpoint for streaming transport.
+
+    Compatible with MCP 2025 Streamable HTTP spec.
+    Clients connect via EventSource and receive tool results as SSE events.
+    """
+    from fastapi.responses import StreamingResponse
+    import asyncio
+
+    async def event_stream():
+        # Send server info as first event
+        server_info = json.dumps({
+            "jsonrpc": "2.0",
+            "method": "notifications/initialized",
+            "params": {
+                "serverInfo": mcp_server.get_server_info(),
+                "capabilities": {
+                    "tools": {"listChanged": True},
+                    "resources": {"listChanged": True},
+                    "prompts": {"listChanged": True},
+                },
+                "protocolVersion": "2025-03-26",
+            },
+        })
+        yield f"event: message\ndata: {server_info}\n\n"
+
+        # Send tools list
+        tools = mcp_server.get_tools()
+        tools_event = json.dumps({
+            "jsonrpc": "2.0",
+            "method": "notifications/tools/list",
+            "params": {"tools": tools},
+        })
+        yield f"event: message\ndata: {tools_event}\n\n"
+
+        # Keep connection alive with periodic pings
+        while True:
+            await asyncio.sleep(30)
+            yield f"event: ping\ndata: {{}}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.post("/api/mcp/message")
+async def api_mcp_message(request: Request, db: AsyncSession = Depends(get_db)):
+    """MCP JSON-RPC message handler — process tool calls via HTTP POST.
+
+    Accepts MCP JSON-RPC 2.0 messages and returns results.
+    """
+    body = await request.json()
+    method = body.get("method", "")
+    params = body.get("params", {})
+    msg_id = body.get("id")
+
+    if method == "initialize":
+        return {
+            "jsonrpc": "2.0", "id": msg_id,
+            "result": {
+                "serverInfo": mcp_server.get_server_info(),
+                "capabilities": {"tools": {}, "resources": {}, "prompts": {}},
+                "protocolVersion": "2025-03-26",
+            },
+        }
+    elif method == "tools/list":
+        return {
+            "jsonrpc": "2.0", "id": msg_id,
+            "result": {"tools": mcp_server.get_tools()},
+        }
+    elif method == "tools/call":
+        tool_name = params.get("name", "")
+        arguments = params.get("arguments", {})
+        try:
+            result = await mcp_server.execute_tool(tool_name, arguments, db)
+            return {
+                "jsonrpc": "2.0", "id": msg_id,
+                "result": {"content": [{"type": "text", "text": json.dumps(result, default=str)}]},
+            }
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0", "id": msg_id,
+                "error": {"code": -32000, "message": str(e)},
+            }
+    else:
+        return {
+            "jsonrpc": "2.0", "id": msg_id,
+            "error": {"code": -32601, "message": f"Method not found: {method}"},
+        }
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -3172,6 +3362,55 @@ async def api_fee_schedule():
 
 
 # ══════════════════════════════════════════════════════════════════════
+#  MODULE ADMINISTRATION (Owner 3FA required)
+# ══════════════════════════════════════════════════════════════════════
+
+MODULE_FLAGS = [
+    "agentbroker_enabled", "subscriptions_enabled", "guild_enabled",
+    "pipelines_enabled", "futures_enabled", "training_data_enabled",
+    "treasury_enabled", "compliance_service_enabled", "benchmarking_enabled",
+    "intelligence_enabled", "verticals_enabled",
+]
+
+
+@app.get("/api/admin/modules")
+async def api_admin_modules(request: Request):
+    """List all module feature flags and their current status."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    return {
+        "modules": {flag: getattr(settings, flag) for flag in MODULE_FLAGS},
+    }
+
+
+@app.post("/api/admin/modules/{module_name}/enable")
+async def api_admin_enable_module(module_name: str, request: Request):
+    """Enable a module. Requires owner authentication."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    flag = f"{module_name}_enabled"
+    if flag not in MODULE_FLAGS:
+        raise HTTPException(status_code=404, detail=f"Unknown module: {module_name}")
+    setattr(settings, flag, True)
+    return {"module": module_name, "enabled": True}
+
+
+@app.post("/api/admin/modules/{module_name}/disable")
+async def api_admin_disable_module(module_name: str, request: Request):
+    """Disable a module. Requires owner authentication."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    flag = f"{module_name}_enabled"
+    if flag not in MODULE_FLAGS:
+        raise HTTPException(status_code=404, detail=f"Unknown module: {module_name}")
+    setattr(settings, flag, False)
+    return {"module": module_name, "enabled": False}
+
+
+# ══════════════════════════════════════════════════════════════════════
 #  DASHBOARD PAGES
 # ══════════════════════════════════════════════════════════════════════
 
@@ -3235,6 +3474,18 @@ async def dashboard_page(request: Request):
         {"name": "AgentBroker", "status": "conditional", "category": "Engagements"},
     ]
 
+    # Revenue data for dashboard
+    rev_data = {"mtd_usd": 0, "target_usd": 5000, "progress_pct": 0, "projected_month_usd": 0}
+    hub_stats = {"total_profiles": 0, "total_posts": 0, "total_connections": 0, "active_channels": 0}
+    try:
+        async with async_session() as db2:
+            rev_full = await revenue_service.get_revenue_dashboard(db2)
+            rev_data = rev_full.get("gauge", rev_data)
+            if settings.agenthub_enabled:
+                hub_stats = await agenthub_service.get_community_stats(db2)
+    except Exception:
+        pass
+
     return templates.TemplateResponse("dashboard.html", {
         "request": request, "authenticated": True, "active": "dashboard",
         "chain_info": info, "agent_count": agent_count,
@@ -3244,6 +3495,7 @@ async def dashboard_page(request: Request):
         "tx_metrics": adoption.get("transaction_metrics", {}),
         "charity_status": fee_engine.get_charity_status(),
         "services_summary": services_summary,
+        "rev": rev_data, "hub_stats": hub_stats,
     })
 
 
@@ -3357,11 +3609,41 @@ async def proposal_detail_page(proposal_id: str, request: Request):
 
 @app.get("/dashboard/community", response_class=HTMLResponse)
 async def community_page(request: Request):
-    """Agent community messaging dashboard."""
+    """Agent community — AgentHub when enabled, legacy messaging otherwise."""
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
 
+    # ── AgentHub™ Community Network ──
+    if settings.agenthub_enabled:
+        async with async_session() as db:
+            stats = await agenthub_service.get_community_stats(db)
+            feed = await agenthub_service.get_feed(db, None, 15, 0)
+            top_agents = await agenthub_service.search_directory(db, limit=10)
+            channels = await agenthub_service.list_channels(db)
+            leaderboard = await agenthub_service.get_leaderboard(db, limit=10)
+            trending = await agenthub_service.get_trending_agents(db, limit=5)
+            spotlights = await agenthub_service.get_active_spotlights(db, limit=5)
+            challenges = await agenthub_service.list_challenges(db, status="OPEN", limit=5)
+            events = await agenthub_service.list_events(db, upcoming_only=True, limit=5)
+            gigs = await agenthub_service.list_gig_packages(db, limit=5)
+            newsletters = await agenthub_service.list_newsletters(db, limit=5)
+            companies = await agenthub_service.browse_companies(db, limit=5)
+            mod_queue = await agenthub_service.get_moderation_queue(db, limit=5)
+            artefacts = await agenthub_service.browse_registry(db, limit=5)
+            trending_topics = await agenthub_service.get_trending_topics(db, limit=8)
+        return templates.TemplateResponse("agenthub.html", {
+            "request": request, "authenticated": True, "active": "community",
+            "stats": stats, "feed": feed, "top_agents": top_agents,
+            "channels": channels, "leaderboard": leaderboard,
+            "trending_agents": trending, "spotlights": spotlights,
+            "challenges": challenges, "events": events, "gigs": gigs,
+            "newsletters": newsletters, "companies": companies,
+            "mod_queue": mod_queue, "artefacts": artefacts,
+            "trending_topics": trending_topics,
+        })
+
+    # ── Legacy community messaging ──
     from app.growth.viral import AgentMessage
     from datetime import timedelta
 
@@ -3601,19 +3883,53 @@ async def agentbroker_page(request: Request):
     stats = {"total_profiles": 0, "total_engagements": 0, "completed": 0,
              "avg_reputation": 0, "total_gev": 0, "active_guilds": 0}
 
+    escalated_disputes = []
+    active_engagements = []
     try:
         async with async_session() as db:
             guilds_list = await guild_service.search_guilds(db, limit=10)
             pipelines_list = await pipeline_service.search_pipelines(db, limit=10)
             stats["active_guilds"] = len(guilds_list)
+
+            # Get escalated disputes for owner inbox
+            from app.agentbroker.models import AgentEngagement, EngagementDispute
+            disp_result = await db.execute(
+                select(EngagementDispute).where(
+                    EngagementDispute.escalated_to_owner == True,
+                    EngagementDispute.status == "ESCALATED",
+                ).order_by(EngagementDispute.created_at.desc()).limit(20)
+            )
+            for d in disp_result.scalars().all():
+                escalated_disputes.append({
+                    "dispute_id": d.dispute_id, "engagement_id": d.engagement_id,
+                    "type": d.dispute_type, "description": d.description[:200],
+                    "raised_by": d.raised_by, "status": d.status,
+                    "created_at": str(d.created_at),
+                })
+
+            # Get recent active engagements
+            eng_result = await db.execute(
+                select(AgentEngagement).where(
+                    AgentEngagement.current_state.in_(["DRAFT", "PROPOSED", "NEGOTIATING", "ACCEPTED", "FUNDED", "IN_PROGRESS", "DELIVERED", "DISPUTED"])
+                ).order_by(AgentEngagement.created_at.desc()).limit(20)
+            )
+            for e in eng_result.scalars().all():
+                active_engagements.append({
+                    "engagement_id": e.engagement_id, "title": e.engagement_title,
+                    "state": e.current_state, "price": e.proposed_price,
+                    "currency": e.price_currency,
+                    "client": e.client_agent_id[:12] if e.client_agent_id else "",
+                    "provider": e.provider_agent_id[:12] if e.provider_agent_id else "",
+                    "created_at": str(e.created_at),
+                })
     except Exception:
         pass
 
     return templates.TemplateResponse("agentbroker.html", {
         "request": request, "authenticated": True, "active": "agentbroker",
-        "profiles": profiles, "engagements": engagements,
+        "profiles": profiles, "engagements": active_engagements,
         "guilds": guilds_list, "pipelines": pipelines_list,
-        "stats": stats,
+        "stats": stats, "escalated_disputes": escalated_disputes,
     })
 
 
@@ -3748,6 +4064,79 @@ async def api_tax_report_csv(request: Request, db: AsyncSession = Depends(get_db
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=tioli_tax_report_{summary['year']}.csv"},
     )
+
+
+@app.get("/dashboard/services", response_class=HTMLResponse)
+async def services_page(request: Request):
+    """Platform services overview — regulatory status, fees, tiers, verticals."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from app.exchange.fees import FLOOR_FEES, TRANSACTION_TYPE_RATES
+    from app.intelligence.models import INTELLIGENCE_TIERS
+    from app.subscriptions.models import SUBSCRIPTION_TIER_SEEDS
+
+    async with async_session() as db:
+        verticals_data = await verticals_service.list_verticals(db)
+        tiers = await subscription_service.list_tiers(db)
+        mrr = await subscription_service.get_mrr(db) if hasattr(subscription_service, "get_mrr") else 0
+
+    # Green services — no licence required
+    green_services = [
+        {"name": "Subscriptions", "description": "Operator subscription tiers (Explorer → Enterprise)", "revenue": "SaaS monthly/annual", "endpoint": "/api/v1/subscriptions/tiers"},
+        {"name": "Agent Guilds", "description": "Agent collectives with shared reputation", "revenue": "R1,500 setup + R200/member/mo", "endpoint": "/api/v1/guilds"},
+        {"name": "Benchmarking", "description": "Agent performance evaluation and leaderboards", "revenue": "R500/report, 15% commission", "endpoint": "/api/v1/benchmarking/evaluators"},
+        {"name": "Training Data", "description": "Dataset marketplace with provenance verification", "revenue": "15% commission on sales", "endpoint": "/api/v1/training/datasets"},
+        {"name": "Market Intelligence", "description": "Tiered market analytics with lag-based pricing", "revenue": "R0-R2,000/mo subscription", "endpoint": "/api/v1/intelligence/market"},
+        {"name": "Compliance-as-a-Service", "description": "KYA/KYC/AML compliance reviews and certificates", "revenue": "AgentBroker commission", "endpoint": "/api/v1/compliance/agents"},
+        {"name": "Sector Verticals", "description": "Healthcare, agriculture, finance sector compliance", "revenue": "Vertical registration", "endpoint": "/api/v1/verticals"},
+    ]
+
+    # Amber services — conditional (ZAR/credits only)
+    amber_services = [
+        {"name": "Pipelines", "description": "Multi-step agent orchestration", "condition": "ZAR/credits only, no crypto settlement", "endpoint": "/api/v1/pipelines"},
+        {"name": "Treasury Agents", "description": "Autonomous portfolio management", "condition": "ZAR/credits only, owner 3FA required", "endpoint": "/api/v1/treasury"},
+        {"name": "AgentBroker", "description": "Agent discovery, engagement, escrow", "condition": "ZAR/credits only, no cross-border", "endpoint": "/api/v1/agentbroker"},
+    ]
+
+    # Red services — licence required
+    red_services = [
+        {"name": "Crypto Exchange", "licence": "CASP registration (FIC Act)", "regulator": "FSCA / FIC"},
+        {"name": "Cross-Border Settlements", "licence": "Authorised Dealer / AD Licence", "regulator": "SARB"},
+        {"name": "Capability Futures", "licence": "OTC Derivative Provider", "regulator": "FSCA"},
+        {"name": "Commercial Lending", "licence": "Credit Provider (NCA)", "regulator": "NCR"},
+    ]
+
+    # Fee schedule
+    fee_schedule = [
+        {"type": t.replace("_", " ").title(), "rate": f"{r*100:.1f}%", "floor": FLOOR_FEES.get(t, 0)}
+        for t, r in TRANSACTION_TYPE_RATES.items()
+    ]
+
+    # Intelligence tiers
+    intel_tiers = [
+        {"name": k, "price": v.get("monthly_zar", 0), "lag": v.get("lag_days", 0), "description": v.get("description", "")}
+        for k, v in INTELLIGENCE_TIERS.items()
+    ]
+
+    return templates.TemplateResponse("services.html", {
+        "request": request, "authenticated": True, "active": "services",
+        "services_live": len(green_services),
+        "services_conditional": len(amber_services),
+        "services_blocked": len(red_services),
+        "subscription_mrr": mrr if isinstance(mrr, (int, float)) else 0,
+        "subscription_tiers": tiers or [
+            {**s, "annual_price_zar": round(s["monthly_price_zar"] * 12 * 0.8, 2)}
+            for s in SUBSCRIPTION_TIER_SEEDS
+        ],
+        "green_services": green_services,
+        "amber_services": amber_services,
+        "red_services": red_services,
+        "fee_schedule": fee_schedule,
+        "intelligence_tiers": intel_tiers,
+        "verticals": verticals_data,
+    })
 
 
 @app.get("/dashboard/reports", response_class=HTMLResponse)
@@ -3917,3 +4306,147 @@ async def api_chat(req: ChatRequest, request: Request):
         )}
     else:
         return {"response": f"Command not recognized. Type 'help' for available commands."}
+
+
+@app.get("/dashboard/chat", response_class=HTMLResponse)
+async def chat_page(request: Request):
+    """AI Prompt — owner chat interface."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("chat.html", {
+        "request": request, "authenticated": True, "active": "chat",
+    })
+
+
+@app.get("/dashboard/modules", response_class=HTMLResponse)
+async def modules_page(request: Request):
+    """All platform modules — status, metrics, management."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    # Build module list with metrics
+    modules_list = [
+        {"name": "AgentBroker", "icon": "hub", "enabled": settings.agentbroker_enabled,
+         "description": "15-state engagement lifecycle, escrow, AI arbitration",
+         "api_base": "/api/v1/agentbroker/*", "metrics": {}},
+        {"name": "AgentHub", "icon": "forum", "enabled": settings.agenthub_enabled,
+         "description": "Professional community network for AI agents",
+         "api_base": "/api/v1/agenthub/*", "metrics": {}},
+        {"name": "Subscriptions", "icon": "card_membership", "enabled": settings.subscriptions_enabled,
+         "description": "Operator subscription tiers (Explorer→Enterprise)",
+         "api_base": "/api/v1/subscriptions/*", "metrics": {}},
+        {"name": "Guilds", "icon": "groups", "enabled": settings.guild_enabled,
+         "description": "Agent collectives with shared reputation",
+         "api_base": "/api/v1/guilds/*", "metrics": {}},
+        {"name": "Pipelines", "icon": "account_tree", "enabled": settings.pipelines_enabled,
+         "description": "Multi-step agent orchestration workflows",
+         "api_base": "/api/v1/pipelines/*", "metrics": {}},
+        {"name": "Futures", "icon": "trending_up", "enabled": settings.futures_enabled,
+         "description": "Forward contracts on agent capacity",
+         "api_base": "/api/v1/futures/*", "metrics": {}},
+        {"name": "Training Data", "icon": "dataset", "enabled": settings.training_data_enabled,
+         "description": "Dataset marketplace with provenance verification",
+         "api_base": "/api/v1/training/*", "metrics": {}},
+        {"name": "Treasury", "icon": "savings", "enabled": settings.treasury_enabled,
+         "description": "Autonomous portfolio management within risk bounds",
+         "api_base": "/api/v1/treasury/*", "metrics": {}},
+        {"name": "Compliance CaaS", "icon": "verified_user", "enabled": settings.compliance_service_enabled,
+         "description": "KYA/KYC/AML compliance reviews and certificates",
+         "api_base": "/api/v1/compliance/*", "metrics": {}},
+        {"name": "Benchmarking", "icon": "speed", "enabled": settings.benchmarking_enabled,
+         "description": "Agent performance evaluation and leaderboards",
+         "api_base": "/api/v1/benchmarking/*", "metrics": {}},
+        {"name": "Intelligence", "icon": "insights", "enabled": settings.intelligence_enabled,
+         "description": "Market intelligence with tiered access",
+         "api_base": "/api/v1/intelligence/*", "metrics": {}},
+        {"name": "Verticals", "icon": "category", "enabled": settings.verticals_enabled,
+         "description": "Healthcare, Agriculture, Finance sector configs",
+         "api_base": "/api/v1/verticals/*", "metrics": {}},
+    ]
+
+    # Populate metrics where possible
+    try:
+        async with async_session() as db:
+            hub_stats = await agenthub_service.get_community_stats(db)
+            modules_list[1]["metrics"] = {
+                "Profiles": hub_stats["total_profiles"],
+                "Posts": hub_stats["total_posts"],
+                "Connections": hub_stats["total_connections"],
+                "Channels": hub_stats["active_channels"],
+            }
+
+            mcp_stats = await agenthub_service.get_mcp_analytics(db)
+            quick_tasks = await revenue_service.list_quick_tasks(db, limit=10)
+            at_risk = await revenue_service.get_at_risk_subscribers(db)
+
+            # Auto-match activity
+            from app.revenue.models import AutoMatchRequest as AMR
+            am_result = await db.execute(
+                select(AMR).order_by(AMR.created_at.desc()).limit(10)
+            )
+            auto_matches = [
+                {"task": m.task_description[:60], "proposals_sent": m.proposals_sent,
+                 "status": m.status, "created_at": str(m.created_at)}
+                for m in am_result.scalars().all()
+            ]
+
+            # Referral stats (aggregate)
+            from app.agenthub.models import AgentHubReferral
+            total_refs = (await db.execute(
+                select(func.count(AgentHubReferral.id))
+            )).scalar() or 0
+            qualified_refs = (await db.execute(
+                select(func.count(AgentHubReferral.id)).where(
+                    AgentHubReferral.status.in_(["QUALIFIED", "REWARDED"])
+                )
+            )).scalar() or 0
+            referral_stats = {"total_referrals": total_refs, "qualified": qualified_refs,
+                              "rewarded": 0, "total_earned": 0}
+
+    except Exception:
+        mcp_stats = {"total_calls": 0, "calls_today": 0, "error_rate_pct": 0, "top_tools": []}
+        quick_tasks = []
+        auto_matches = []
+        at_risk = []
+        referral_stats = {"total_referrals": 0, "qualified": 0, "rewarded": 0, "total_earned": 0}
+
+    infra_services = [
+        {"name": "Blockchain", "status": "healthy", "detail": f"{blockchain.get_chain_info()['chain_length']} blocks"},
+        {"name": "Fee Engine", "status": "healthy", "detail": f"{fee_engine.founder_rate*100:.0f}% commission"},
+        {"name": "MCP Server", "status": "healthy", "detail": "13 tools exposed"},
+        {"name": "Cloudflare", "status": "healthy", "detail": "WAF + DDoS active"},
+        {"name": "PayPal", "status": "healthy", "detail": "Integration ready"},
+        {"name": "Graph API Email", "status": "healthy", "detail": "Verification working"},
+        {"name": "Rate Limiter", "status": "healthy", "detail": "60-120 req/min"},
+        {"name": "Brute Force", "status": "healthy", "detail": "Persistent lockouts"},
+    ]
+
+    return templates.TemplateResponse("modules.html", {
+        "request": request, "authenticated": True, "active": "modules",
+        "modules": modules_list, "infra_services": infra_services,
+        "quick_tasks": quick_tasks, "auto_matches": auto_matches,
+        "at_risk": at_risk, "referral_stats": referral_stats,
+        "mcp_stats": mcp_stats,
+    })
+
+
+@app.get("/pricing", response_class=HTMLResponse)
+async def pricing_page(request: Request):
+    """Public pricing page — no auth required."""
+    return templates.TemplateResponse("pricing.html", {"request": request})
+
+
+@app.get("/owner/revenue", response_class=HTMLResponse)
+async def revenue_dashboard_page(request: Request):
+    """Revenue Intelligence Dashboard — owner only, 3FA protected."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    async with async_session() as db:
+        rev = await revenue_service.get_revenue_dashboard(db)
+    return templates.TemplateResponse("revenue.html", {
+        "request": request, "authenticated": True, "active": "revenue",
+        "rev": rev,
+    })

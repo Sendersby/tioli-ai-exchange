@@ -15,13 +15,11 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: tioli
-      POSTGRES_PASSWORD: tioli2026exchange
-      POSTGRES_DB: tioli_exchange
+      POSTGRES_USER: ${POSTGRES_USER:-tioli}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-tioli_exchange}
     volumes:
       - pg_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tioli"]
       interval: 5s
