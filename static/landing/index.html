@@ -834,10 +834,23 @@
 
     <!-- Pricing + Form Scripts (separate block to prevent chart errors from blocking) -->
     <script>
-        // ── Multi-Currency System ──
+        // ── Multi-Currency System (live rates from API) ──
         var currentCurrency = 'ZAR';
         var symbols = {ZAR:'R',USD:'$',EUR:'€',GBP:'£'};
+        var liveRates = {ZAR:1, USD:0.054054, EUR:0.049875, GBP:0.042827}; // fallback
         var selectedItems = {};
+
+        // Fetch live rates from public stats API
+        fetch('https://exchange.tioli.co.za/api/public/stats')
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if(d.exchange_rates){
+                    liveRates.USD = d.exchange_rates.USD || liveRates.USD;
+                    liveRates.EUR = d.exchange_rates.EUR || liveRates.EUR;
+                    liveRates.GBP = d.exchange_rates.GBP || liveRates.GBP;
+                }
+            })
+            .catch(function(){});
 
         window.setCurrency = function(curr){
             currentCurrency = curr;
@@ -854,8 +867,9 @@
             cards.forEach(function(card){
                 var val = card.querySelector('.price-val');
                 if(!val) return;
-                var amount = parseFloat(card.dataset[curr.toLowerCase()]);
-                if(isNaN(amount) || parseFloat(card.dataset.zar) === 0) return;
+                var zarPrice = parseFloat(card.dataset.zar);
+                if(isNaN(zarPrice) || zarPrice === 0) return;
+                var amount = curr === 'ZAR' ? zarPrice : Math.round(zarPrice * liveRates[curr] * 100) / 100;
                 setTimeout(function(){
                     card.style.transition = 'opacity 0.15s';
                     card.style.opacity = '0.3';
@@ -928,8 +942,7 @@
                 bar.classList.remove('hidden');
                 countEl.textContent = count + ' item' + (count>1?'s':'') + ' selected';
                 var sym = symbols[currentCurrency];
-                var rate = {ZAR:1,USD:1/18.5,EUR:1/20.05,GBP:1/23.35}[currentCurrency]||1;
-                var converted = total * rate;
+                var converted = currentCurrency === 'ZAR' ? total : total * liveRates[currentCurrency];
                 totalEl.textContent = sym + (converted >= 1 ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
             } else {
                 bar.classList.add('hidden');

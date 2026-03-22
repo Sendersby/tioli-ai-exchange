@@ -3509,7 +3509,41 @@ async def api_public_stats():
             "api_endpoints": 400,
             "mcp_tools": 13,
         },
+        "exchange_rates": await _get_public_exchange_rates(),
     }
+
+
+async def _get_public_exchange_rates() -> dict:
+    """Fetch live ZAR exchange rates — cached for 24 hours."""
+    import httpx
+    # Simple in-memory cache
+    if not hasattr(_get_public_exchange_rates, '_cache'):
+        _get_public_exchange_rates._cache = {"rates": {}, "fetched_at": 0}
+    cache = _get_public_exchange_rates._cache
+    now = time.time()
+    if now - cache["fetched_at"] < 86400 and cache["rates"]:  # 24hr cache
+        return cache["rates"]
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get("https://api.exchangerate.host/latest?base=ZAR&symbols=USD,EUR,GBP")
+            if resp.status_code == 200:
+                data = resp.json()
+                rates = data.get("rates", {})
+                result = {
+                    "base": "ZAR",
+                    "USD": round(rates.get("USD", 1/18.5), 6),
+                    "EUR": round(rates.get("EUR", 1/20.05), 6),
+                    "GBP": round(rates.get("GBP", 1/23.35), 6),
+                    "source": "exchangerate.host",
+                    "cached": False,
+                }
+                cache["rates"] = result
+                cache["fetched_at"] = now
+                return result
+    except Exception:
+        pass
+    # Fallback rates
+    return {"base": "ZAR", "USD": 0.054054, "EUR": 0.049875, "GBP": 0.042827, "source": "fallback", "cached": True}
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
