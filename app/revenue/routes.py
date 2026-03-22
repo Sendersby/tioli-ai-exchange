@@ -141,3 +141,32 @@ async def api_record_revenue(
         db, req.stream, req.source_type, req.gross_zar, req.description,
         req.source_id, req.agent_id, req.operator_id,
     )
+
+
+# ── Margin Protection ────────────────────────────────────────────────
+
+@router.get("/margins")
+async def api_margins():
+    """Get margin analysis for all products — owner only."""
+    from app.revenue.margin_protection import get_all_margins
+    return get_all_margins()
+
+
+@router.get("/margins/summary")
+async def api_margin_summary():
+    """Get margin protection summary."""
+    from app.revenue.margin_protection import get_margin_summary
+    return get_margin_summary()
+
+
+class ValidatePriceRequest(BaseModel):
+    product_name: str
+    proposed_price_zar: float
+    estimated_cost_zar: float
+
+
+@router.post("/margins/validate")
+async def api_validate_price(req: ValidatePriceRequest):
+    """Validate a proposed price against the margin protection rule."""
+    from app.revenue.margin_protection import validate_new_price
+    return validate_new_price(req.product_name, req.proposed_price_zar, req.estimated_cost_zar)
