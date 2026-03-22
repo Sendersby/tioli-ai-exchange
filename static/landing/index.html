@@ -386,31 +386,6 @@
                 </div>
             </div>
 
-            <!-- Shopping cart floating bar -->
-            <div id="cartBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a1a2e]/95 backdrop-blur-xl border-t border-[#77d4e5]/30 py-4 px-6">
-                <div class="max-w-6xl mx-auto">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-[#77d4e5]">shopping_cart</span>
-                            <span id="cartCount" class="font-mono text-sm text-white">0 services selected</span>
-                            <span id="cartTotal" class="font-mono text-sm text-[#edc05f] ml-3"></span>
-                        </div>
-                        <a id="multiSignupBtn" href="#register" class="hidden px-8 py-2.5 font-bold text-sm uppercase tracking-widest transition-all hover:scale-105" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
-                            Sign Up for Selected Services
-                        </a>
-                    </div>
-                    <!-- What happens next -->
-                    <div class="text-[0.6rem] text-slate-500 flex items-center gap-4">
-                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">1.</span> Submit enquiry form</span>
-                        <span class="text-slate-700">→</span>
-                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">2.</span> We review within 24hrs</span>
-                        <span class="text-slate-700">→</span>
-                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">3.</span> Receive access credentials</span>
-                        <span class="text-slate-700">→</span>
-                        <span class="flex items-center gap-1"><span class="text-[#77d4e5]">4.</span> Activate via secure gateway</span>
-                    </div>
-                </div>
-            </div>
 
             <!-- Operator Tiers -->
             <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Operator Subscription Tiers</div>
@@ -454,8 +429,8 @@
                 </div>
             </div>
 
-            <!-- Agent & Vault -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <!-- Agent & Cart & Vault -->
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 mb-10 items-start">
                 <div>
                     <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">Agent Subscriptions</div>
                     <div class="grid grid-cols-2 gap-4">
@@ -473,6 +448,33 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Inline Cart Panel (between Agent & Vault) -->
+                <div id="inlineCart" class="hidden self-center">
+                    <div class="bg-[#0f1c2c] border border-[#77d4e5]/25 p-5 w-56 glow" style="box-shadow: 0 0 30px rgba(119,212,229,0.08);">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="material-symbols-outlined text-[#77d4e5] text-lg">shopping_cart</span>
+                            <span class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-widest">Your Selection</span>
+                        </div>
+                        <div id="inlineCartItems" class="space-y-1.5 mb-3 text-xs text-slate-400"></div>
+                        <div class="border-t border-[#44474c]/20 pt-2 mb-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[0.6rem] text-slate-500 font-mono uppercase">Total</span>
+                                <span id="inlineCartTotal" class="font-mono text-sm font-bold text-[#edc05f]"></span>
+                            </div>
+                        </div>
+                        <a id="inlineSignupBtn" href="#register" class="hidden block text-center py-2.5 font-bold text-sm uppercase tracking-widest transition-all hover:scale-105 mb-3" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                            Sign Up
+                        </a>
+                        <div class="text-[0.5rem] text-slate-600 space-y-1">
+                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">1.</span> Submit enquiry</div>
+                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">2.</span> Review in 24hrs</div>
+                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">3.</span> Receive credentials</div>
+                            <div class="flex items-center gap-1"><span class="text-[#77d4e5]">4.</span> Activate via gateway</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-[0.3em] text-center mb-4">AgentVault Storage</div>
                     <div class="grid grid-cols-2 gap-4">
@@ -972,24 +974,30 @@
         function updateCart(){
             var count = Object.keys(selectedItems).length;
             var total = 0;
-            var names = [];
-            for(var k in selectedItems){ total += selectedItems[k].zar; names.push(selectedItems[k].name); }
-            var bar = document.getElementById('cartBar');
-            var countEl = document.getElementById('cartCount');
-            var totalEl = document.getElementById('cartTotal');
-            var signupBtn = document.getElementById('multiSignupBtn');
+            var itemsHtml = '';
+            for(var k in selectedItems){
+                total += selectedItems[k].zar;
+                var sym = symbols[currentCurrency];
+                var price = currentCurrency === 'ZAR' ? selectedItems[k].zar : selectedItems[k].zar * liveRates[currentCurrency];
+                var priceStr = selectedItems[k].zar === 0 ? 'Free' : sym + (price >= 1 ? Math.round(price) : price.toFixed(2));
+                itemsHtml += '<div class="flex justify-between"><span class="text-white">' + selectedItems[k].name + '</span><span class="font-mono text-[#77d4e5]">' + priceStr + '</span></div>';
+            }
+
+            var panel = document.getElementById('inlineCart');
+            var itemsEl = document.getElementById('inlineCartItems');
+            var totalEl = document.getElementById('inlineCartTotal');
+            var signupBtn = document.getElementById('inlineSignupBtn');
+
             if(count > 0){
-                bar.classList.remove('hidden');
-                countEl.textContent = count + ' service' + (count>1?'s':'') + ': ' + names.join(' + ');
+                panel.classList.remove('hidden');
+                itemsEl.innerHTML = itemsHtml;
                 var sym = symbols[currentCurrency];
                 var converted = currentCurrency === 'ZAR' ? total : total * liveRates[currentCurrency];
                 totalEl.textContent = sym + (converted >= 1 ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
-                // Show signup button when 2+ items selected
-                if(count >= 2 && signupBtn) signupBtn.classList.remove('hidden');
-                else if(signupBtn) signupBtn.classList.add('hidden');
+                if(count >= 2) signupBtn.classList.remove('hidden');
+                else signupBtn.classList.add('hidden');
             } else {
-                bar.classList.add('hidden');
-                if(signupBtn) signupBtn.classList.add('hidden');
+                panel.classList.add('hidden');
             }
         }
 
