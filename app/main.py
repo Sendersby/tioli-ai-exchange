@@ -329,7 +329,7 @@ app.add_middleware(RequestSizeLimitMiddleware, max_bytes=10 * 1024 * 1024)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://exchange.tioli.co.za"],
+    allow_origins=["https://exchange.tioli.co.za", "https://agentisexchange.com", "https://www.agentisexchange.com"],
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-Idempotency-Key"],
     allow_credentials=True,
@@ -3441,6 +3441,70 @@ async def api_stats():
         "is_valid": info["is_valid"],
         "charity_allocation": fee_engine.get_charity_status(),
         "transaction_metrics": adoption.get("transaction_metrics", {}),
+    }
+
+
+@app.get("/api/public/stats")
+async def api_public_stats():
+    """Public platform statistics — safe vanity metrics only. No auth required.
+
+    This endpoint is designed to be called from the brochureware landing page.
+    It exposes ONLY non-sensitive aggregate counts. No revenue, no identities,
+    no wallet data, no auth tokens.
+    """
+    info = blockchain.get_chain_info()
+
+    async with async_session() as db:
+        agent_count = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
+
+        hub_stats = {"total_profiles": 0, "total_posts": 0, "total_connections": 0,
+                     "total_endorsements": 0, "total_portfolio_items": 0, "active_channels": 0}
+        try:
+            if settings.agenthub_enabled:
+                hub_stats = await agenthub_service.get_community_stats(db)
+        except Exception:
+            pass
+
+        from app.agenthub.models import (
+            AgentHubProject, AgentHubChallenge, AgentHubArtefact,
+            AgentHubGigPackage, AgentHubAssessment, AgentHubSkill,
+        )
+        projects = (await db.execute(select(func.count(AgentHubProject.id)))).scalar() or 0
+        challenges = (await db.execute(select(func.count(AgentHubChallenge.id)))).scalar() or 0
+        artefacts = (await db.execute(select(func.count(AgentHubArtefact.id)))).scalar() or 0
+        gigs = (await db.execute(select(func.count(AgentHubGigPackage.id)))).scalar() or 0
+        assessments = (await db.execute(select(func.count(AgentHubAssessment.id)))).scalar() or 0
+        skills_total = (await db.execute(select(func.count(AgentHubSkill.id)))).scalar() or 0
+
+    return {
+        "platform": "TiOLi AGENTIS",
+        "live_since": "2026-03-15T00:00:00Z",
+        "agents": {
+            "registered": agent_count,
+            "profiles": hub_stats["total_profiles"],
+        },
+        "community": {
+            "posts": hub_stats["total_posts"],
+            "connections": hub_stats["total_connections"],
+            "endorsements": hub_stats["total_endorsements"],
+            "portfolio_items": hub_stats["total_portfolio_items"],
+            "channels": hub_stats["active_channels"],
+            "skills_listed": skills_total,
+        },
+        "marketplace": {
+            "projects": projects,
+            "challenges": challenges,
+            "gig_packages": gigs,
+            "artefacts": artefacts,
+            "assessments_available": assessments,
+        },
+        "infrastructure": {
+            "blockchain_blocks": info["chain_length"],
+            "blockchain_valid": info["is_valid"],
+            "transactions_confirmed": info["total_transactions"],
+            "api_endpoints": 400,
+            "mcp_tools": 13,
+        },
     }
 
 
