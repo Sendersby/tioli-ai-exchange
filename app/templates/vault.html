@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}AgentVault™ — TiOLi AGENTIS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="mb-4">
+        <div class="flex items-center gap-3 mb-1">
+            <h1 class="mb-0">AgentVault</h1>
+            <span class="font-mono text-[0.55rem] bg-primary/10 text-primary px-2 py-0.5 uppercase tracking-widest">Secure Storage</span>
+        </div>
+        <p class="text-slate-400 text-sm">Agentic Secure Storage-as-a-Service — digital vault for every agent asset class</p>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ vault_stats.total_vaults }}</div>
+            <div class="font-mono text-[0.45rem] text-primary uppercase tracking-widest mt-0.5">Active Vaults</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ vault_stats.total_objects }}</div>
+            <div class="font-mono text-[0.45rem] text-secondary uppercase tracking-widest mt-0.5">Objects Stored</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-tertiary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ vault_stats.total_used_display }}</div>
+            <div class="font-mono text-[0.45rem] text-tertiary uppercase tracking-widest mt-0.5">Total Used</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ vault_stats.cache_count }}</div>
+            <div class="font-mono text-[0.45rem] text-primary uppercase tracking-widest mt-0.5">Cache Tier</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-secondary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ vault_stats.paid_count }}</div>
+            <div class="font-mono text-[0.45rem] text-secondary uppercase tracking-widest mt-0.5">Paid Tier</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 border-l-4 border-l-[#edc05f]">
+            <div class="font-headline text-2xl font-black text-[#edc05f] tabular-nums">R{{ "%.0f"|format(vault_stats.mrr) }}</div>
+            <div class="font-mono text-[0.45rem] text-[#edc05f] uppercase tracking-widest mt-0.5">Vault MRR</div>
+        </div>
+    </div>
+
+    <!-- Tier Comparison -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Storage Tiers</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            {% for tier in tiers %}
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 {% if tier.tier_name == 'chamber' %}border-primary/30{% endif %}">
+                <div class="font-mono text-[0.6rem] {% if tier.tier_name == 'citadel' %}text-[#edc05f]{% else %}text-primary{% endif %} uppercase tracking-widest mb-1">{{ tier.display_name }}</div>
+                <div class="flex items-baseline gap-1 mb-3">
+                    {% if tier.monthly_zar == 0 %}
+                    <span class="text-2xl font-bold text-white">Free</span>
+                    {% else %}
+                    <span class="text-2xl font-bold text-white">R{{ "%.0f"|format(tier.monthly_zar) }}</span>
+                    <span class="text-slate-500 text-sm">/mo</span>
+                    {% endif %}
+                </div>
+                <ul class="space-y-1.5 text-xs text-slate-400">
+                    <li class="flex gap-2"><span class="text-primary">+</span> {{ tier.storage_display }}</li>
+                    <li class="flex gap-2"><span class="text-primary">+</span> {{ tier.max_agents or "Unlimited" }} agents</li>
+                    <li class="flex gap-2"><span class="text-primary">+</span> {% if tier.version_history_days == -1 %}Unlimited{% else %}{{ tier.version_history_days }}d{% endif %} version history</li>
+                    <li class="flex gap-2"><span class="text-primary">+</span> {{ tier.max_delegates if tier.max_delegates is not none else "Unlimited" }} delegates</li>
+                    <li class="flex gap-2"><span class="text-primary">+</span> {% if tier.audit_log_days == -1 %}Perpetual{% else %}{{ tier.audit_log_days }}d{% endif %} audit log</li>
+                </ul>
+                {% if tier.bundle_tier %}
+                <div class="mt-3 text-[0.5rem] text-slate-600 border-t border-outline-variant/10 pt-2">
+                    Bundled free with {{ tier.bundle_tier|title }} operator tier
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Active Vaults Table -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Active Vaults</h2>
+        {% if vaults and vaults|length > 0 %}
+        <div class="overflow-x-auto mt-3">
+            <table>
+                <thead><tr><th>Agent</th><th>Tier</th><th>Used</th><th>Quota</th><th>%</th><th>Status</th><th>Billing</th><th>Created</th></tr></thead>
+                <tbody>
+                    {% for v in vaults %}
+                    <tr>
+                        <td><code class="text-[0.6rem]">{{ v.agent_id[:16] }}</code></td>
+                        <td><span class="font-mono text-xs {% if v.tier_name == 'citadel' %}text-[#edc05f]{% elif v.tier_name == 'chamber' %}text-primary{% else %}text-slate-400{% endif %}">{{ v.tier }}</span></td>
+                        <td class="font-mono text-xs">{{ v.used_display }}</td>
+                        <td class="font-mono text-xs text-slate-500">{{ v.quota_display }}</td>
+                        <td>
+                            <div class="w-16 h-1.5 bg-surface-container-high rounded-full overflow-hidden inline-block align-middle">
+                                <div class="h-full {% if v.used_pct > 90 %}bg-error{% elif v.used_pct > 70 %}bg-tertiary{% else %}bg-primary{% endif %} rounded-full" style="width: {{ [v.used_pct, 100]|min }}%"></div>
+                            </div>
+                            <span class="text-[0.5rem] text-slate-500 ml-1">{{ v.used_pct }}%</span>
+                        </td>
+                        <td><span class="font-mono text-[0.55rem] px-1.5 py-0.5 {% if v.status == 'active' %}bg-secondary/10 text-secondary{% elif v.status == 'quota_exceeded' %}bg-error/10 text-error{% else %}bg-slate-700/30 text-slate-500{% endif %}">{{ v.status }}</span></td>
+                        <td class="font-mono text-xs text-slate-500">{% if v.effective_monthly_zar > 0 %}R{{ "%.0f"|format(v.effective_monthly_zar) }}/mo{% else %}Free{% endif %}</td>
+                        <td class="text-[0.6rem] text-slate-500">{{ v.created_at[:10] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-6 text-slate-500 text-xs">No vaults created yet. Agents create vaults via <code class="text-primary">POST /api/v1/agentvault/vaults</code></p>
+        {% endif %}
+    </div>
+
+    <!-- Recent Audit Log -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>Recent Vault Activity</h2>
+        {% if audit_log and audit_log|length > 0 %}
+        <div class="overflow-x-auto mt-3">
+            <table>
+                <thead><tr><th>Time</th><th>Action</th><th>Object</th><th>Size</th><th>Result</th><th>Agent</th></tr></thead>
+                <tbody>
+                    {% for l in audit_log %}
+                    <tr>
+                        <td class="text-[0.6rem] text-slate-500">{{ l.created_at[:19] }}</td>
+                        <td><span class="font-mono text-[0.55rem] text-primary">{{ l.action }}</span></td>
+                        <td class="text-xs text-slate-400">{{ (l.object_key or "—")[:40] }}</td>
+                        <td class="font-mono text-[0.55rem] text-slate-500">{% if l.bytes_delta > 0 %}+{{ l.bytes_delta }}{% elif l.bytes_delta < 0 %}{{ l.bytes_delta }}{% else %}—{% endif %}</td>
+                        <td><span class="text-[0.5rem] {% if l.result == 'success' %}text-secondary{% else %}text-error{% endif %}">{{ l.result }}</span></td>
+                        <td><code class="text-[0.5rem] text-slate-600">{{ l.agent_id[:12] }}</code></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-4 text-slate-500 text-xs">No vault activity yet</p>
+        {% endif %}
+    </div>
+
+    <!-- API Reference -->
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h2>AgentVault™ API</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-[0.6rem] font-mono">
+            <div class="space-y-1.5">
+                <div class="text-slate-500 font-semibold mb-1">Vault Management</div>
+                <div class="flex justify-between text-slate-400"><span>Create vault</span><code class="text-primary">POST /vaults</code></div>
+                <div class="flex justify-between text-slate-400"><span>My vault</span><code class="text-primary">GET /vaults/my</code></div>
+                <div class="flex justify-between text-slate-400"><span>Upgrade</span><code class="text-primary">PUT /vaults/{id}/upgrade</code></div>
+                <div class="flex justify-between text-slate-400"><span>Usage</span><code class="text-primary">GET /vaults/{id}/usage</code></div>
+                <div class="flex justify-between text-slate-400"><span>Tiers</span><code class="text-primary">GET /tiers</code></div>
+            </div>
+            <div class="space-y-1.5">
+                <div class="text-slate-500 font-semibold mb-1">Object Operations</div>
+                <div class="flex justify-between text-slate-400"><span>Store</span><code class="text-primary">PUT /vaults/{id}/objects/{key}</code></div>
+                <div class="flex justify-between text-slate-400"><span>Retrieve</span><code class="text-primary">GET /vaults/{id}/objects/{key}</code></div>
+                <div class="flex justify-between text-slate-400"><span>Delete</span><code class="text-primary">DELETE /vaults/{id}/objects/{key}</code></div>
+                <div class="flex justify-between text-slate-400"><span>List</span><code class="text-primary">GET /vaults/{id}/objects</code></div>
+                <div class="flex justify-between text-slate-400"><span>Versions</span><code class="text-primary">GET /{key}/versions</code></div>
+            </div>
+        </div>
+        <div class="text-[0.45rem] text-slate-600 mt-3 pt-2 border-t border-outline-variant/10">
+            Base: <code class="text-primary">/api/v1/agentvault</code> | Auth: <code class="text-primary">Bearer &lt;key&gt;</code> | 20+ endpoints
+        </div>
+    </div>
+</div>
+{% endblock %}

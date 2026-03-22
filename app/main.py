@@ -100,6 +100,8 @@ from app.agenthub.routes import router as agenthub_router, hub_service as agenth
 from app.agenthub import models as _agenthub_models  # Register tables with SQLAlchemy
 from app.revenue.routes import router as revenue_router, revenue_service
 from app.revenue import models as _revenue_models  # Register tables
+from app.agentvault.routes import router as agentvault_router, vault_service as agentvault_service
+from app.agentvault import models as _agentvault_models  # Register tables
 
 # ── Globals ──────────────────────────────────────────────────────────
 blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
@@ -188,6 +190,8 @@ async def lifespan(app: FastAPI):
         if settings.agenthub_enabled:
             await agenthub_service.seed_channels(db)
             await agenthub_service.seed_assessments(db)
+        if settings.agentvault_enabled:
+            await agentvault_service.seed_tiers(db)
         await db.commit()
     print(f"\n{'='*60}")
     print(f"  TiOLi AGENTIS v{settings.version}")
@@ -376,6 +380,7 @@ app.include_router(agentbroker_router)
 app.include_router(agent_gateway_router)
 app.include_router(agenthub_router)
 app.include_router(revenue_router)
+app.include_router(agentvault_router)
 
 
 # ── Helper: Agent Auth Dependency ────────────────────────────────────
@@ -4495,6 +4500,69 @@ async def gateway_auth(request: Request):
             "error": error if not locked else None,
             "locked": locked,
         })
+
+
+@app.get("/dashboard/vault", response_class=HTMLResponse)
+async def vault_dashboard_page(request: Request):
+    """AgentVault™ dashboard — owner visibility into all vault operations."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from app.agentvault.models import AgentVault, VaultObject, VaultAuditLog, AgentVaultTier
+
+    tiers = []
+    vaults = []
+    audit_log = []
+    vault_stats = {
+        "total_vaults": 0, "total_objects": 0, "total_used_display": "0 B",
+        "cache_count": 0, "paid_count": 0, "mrr": 0,
+    }
+
+    try:
+        async with async_session() as db:
+            tiers = await agentvault_service.list_tiers(db)
+
+            # Get all vaults
+            vault_result = await db.execute(
+                select(AgentVault).where(AgentVault.status != "cancelled")
+                .order_by(AgentVault.created_at.desc())
+            )
+            all_vaults = vault_result.scalars().all()
+            for v in all_vaults:
+                tier_result = await db.execute(
+                    select(AgentVaultTier).where(AgentVaultTier.id == v.vault_tier_id)
+                )
+                tier = tier_result.scalar_one_or_none()
+                vaults.append(agentvault_service._vault_to_dict(v, tier))
+
+            vault_stats["total_vaults"] = len(all_vaults)
+            vault_stats["total_objects"] = (await db.execute(
+                select(func.count(VaultObject.id)).where(VaultObject.is_current_version == True)
+            )).scalar() or 0
+            total_used = sum(v.used_bytes for v in all_vaults)
+            vault_stats["total_used_display"] = agentvault_service._format_bytes(total_used)
+            vault_stats["cache_count"] = sum(1 for v in all_vaults if v.effective_monthly_zar == 0)
+            vault_stats["paid_count"] = sum(1 for v in all_vaults if v.effective_monthly_zar > 0)
+            vault_stats["mrr"] = sum(v.effective_monthly_zar for v in all_vaults)
+
+            # Recent audit
+            audit_result = await db.execute(
+                select(VaultAuditLog).order_by(VaultAuditLog.created_at.desc()).limit(20)
+            )
+            audit_log = [
+                {"action": l.action, "object_key": l.object_key, "bytes_delta": l.bytes_delta,
+                 "result": l.result, "agent_id": l.agent_id, "created_at": str(l.created_at)}
+                for l in audit_result.scalars().all()
+            ]
+    except Exception:
+        pass
+
+    return templates.TemplateResponse("vault.html", {
+        "request": request, "authenticated": True, "active": "vault",
+        "tiers": tiers, "vaults": vaults, "audit_log": audit_log,
+        "vault_stats": vault_stats,
+    })
 
 
 @app.get("/pricing", response_class=HTMLResponse)

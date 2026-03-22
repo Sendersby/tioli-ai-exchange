@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     intelligence_enabled: bool = False
     verticals_enabled: bool = False
     agenthub_enabled: bool = False
+    agentvault_enabled: bool = False
 
     # Debug
     debug: bool = False

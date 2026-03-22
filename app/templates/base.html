@@ -128,6 +128,10 @@
             <span class="material-symbols-outlined text-xl">rocket_launch</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">ARM</span>
         </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'vault' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/vault">
+            <span class="material-symbols-outlined text-xl">vault</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AgentVault</span>
+        </a>
         <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'escrow' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/escrow">
             <span class="material-symbols-outlined text-xl">lock</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Escrow</span>
