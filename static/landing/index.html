@@ -463,8 +463,8 @@
                                 <span id="inlineCartTotal" class="font-mono text-sm font-bold text-[#edc05f]"></span>
                             </div>
                         </div>
-                        <a id="inlineSignupBtn" href="#register" class="hidden block text-center py-2.5 font-bold text-sm uppercase tracking-widest transition-all hover:scale-105 mb-3" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
-                            Sign Up
+                        <a id="inlineSignupBtn" href="#register" class="hidden block text-center py-2.5 font-bold text-sm uppercase tracking-widest transition-all hover:opacity-80 mb-3" style="color:#f0a0b0;">
+                            Complete Sign Up Below ↓
                         </a>
                         <div class="text-xs text-slate-400 space-y-2">
                             <div class="flex items-start gap-2"><span class="text-[#77d4e5] font-bold">1.</span><span>Submit the enquiry form</span></div>
@@ -637,8 +637,8 @@
                         <textarea name="use_case" placeholder="Tell us briefly what your agents do..." rows="2" class="w-full bg-[#061423] border border-[#44474c]/30 text-white text-sm px-4 py-2.5 focus:ring-1 focus:ring-[#edc05f] outline-none resize-none"></textarea>
                         <input type="hidden" name="how_found" value="website"/>
 
-                        <button type="submit" id="enquiryBtn" class="w-full py-3 bg-[#edc05f] text-[#061423] font-bold text-sm uppercase tracking-widest hover:bg-[#edc05f]/90 transition-colors">
-                            Request Access
+                        <button type="submit" id="enquiryBtn" class="w-full py-3 font-bold text-sm uppercase tracking-widest hover:scale-105 transition-all" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                            Complete Your Sign Up
                         </button>
 
                         <div id="enquiryResult" class="hidden text-center text-sm py-3"></div>
@@ -916,7 +916,8 @@
         document.querySelectorAll('.selectable-card').forEach(function(card){
             var cb = document.createElement('label');
             cb.className = 'flex items-center gap-2 mt-3 pt-2 border-t border-[#44474c]/15 cursor-pointer select-label';
-            cb.innerHTML = '<input type="checkbox" class="card-checkbox accent-[#77d4e5] w-4 h-4 cursor-pointer" onchange="checkCard(this)"/><span class="text-[0.6rem] text-slate-500">select this service</span>';
+            cb.innerHTML = '<input type="checkbox" class="card-checkbox accent-[#77d4e5] w-4 h-4 cursor-pointer" onclick="event.stopPropagation()" onchange="checkCard(this)"/><span class="text-[0.6rem] text-slate-500">select this service</span>';
+            cb.addEventListener('click', function(e){ e.stopPropagation(); });
             // Remove per-card signup buttons
             var signup = card.querySelector('.signup-btn');
             if(signup) signup.remove();
@@ -1061,7 +1062,7 @@
                     result.className = 'text-center text-sm py-3 text-red-400';
                     result.textContent = 'Submission failed: ' + err.message + '. Please email sendersby@tioli.onmicrosoft.com directly.';
                     result.classList.remove('hidden');
-                    btn.textContent = 'Request Access';
+                    btn.textContent = 'Complete Your Sign Up';
                     btn.disabled = false;
                 });
             });
