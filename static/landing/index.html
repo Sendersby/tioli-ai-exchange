@@ -684,13 +684,9 @@
         </div>
     </footer>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Live Stats + Uptime + Charts Script -->
+    <!-- 1. Uptime Counter (standalone) -->
     <script>
     (function(){
-        // Uptime counter
         var LAUNCH = new Date('2026-03-15T00:00:00Z');
         function pad(n){ return n < 10 ? '0'+n : n; }
         function updateUptime(){
@@ -705,10 +701,14 @@
         }
         updateUptime();
         setInterval(updateUptime, 1000);
+    })();
+    </script>
 
-        // Live stats fetch
+    <!-- 2. Live Stats Fetch (standalone — must not depend on Chart.js) -->
+    <script>
+    (function(){
         function fetchStats(){
-            fetch('https://exchange.tioli.co.za/api/public/stats')
+            fetch('https://exchange.tioli.co.za/api/public/stats?t='+Date.now())
                 .then(function(r){ return r.json(); })
                 .then(function(d){
                     // Primary
@@ -740,7 +740,6 @@
                         label.textContent = 'invalid';
                         label.className = 'text-red-400';
                     }
-                })
                     // Update ticker
                     var ids2 = {'tk-agents':d.agents.registered,'tk-blocks':d.infrastructure.blockchain_blocks,
                         'tk-skills':d.community.skills_listed,'tk-posts':d.community.posts,
@@ -751,14 +750,21 @@
                     var vEl=document.getElementById('tk-valid');
                     if(vEl){ vEl.textContent=d.infrastructure.blockchain_valid?'VALID':'INVALID'; vEl.className=d.infrastructure.blockchain_valid?'text-green-400':'text-red-400'; }
 
-                    // Update charts
-                    updateCharts(d);
+                    // Update charts if available
+                    if(typeof updateCharts === 'function') updateCharts(d);
                 })
-                .catch(function(){ /* silent fail — stats just show dashes */ });
+                .catch(function(e){ console.warn('Stats fetch failed:', e); });
         }
         fetchStats();
         setInterval(fetchStats, 60000);
+    })();
+    </script>
 
+    <!-- 3. Charts (depends on Chart.js — isolated so failures don't break stats) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    (function(){
+        try {
         // ── Charts ──
         var chartColors = {
             cyan: '#77d4e5', cyanFade: 'rgba(119,212,229,0.15)',
@@ -837,7 +843,7 @@
             }
         });
 
-        function updateCharts(d){
+        window.updateCharts = function(d){
             doughnutChart.data.datasets[0].data = [
                 d.agents.registered, d.community.skills_listed, d.community.posts,
                 d.community.portfolio_items, d.community.channels, d.marketplace.projects
@@ -850,6 +856,7 @@
             ];
             barChart.update('none');
         }
+        } catch(e) { console.warn('Charts failed to load:', e); }
     })();
     </script>
 
@@ -862,7 +869,7 @@
         var selectedItems = {};
 
         // Fetch live rates from public stats API
-        fetch('https://exchange.tioli.co.za/api/public/stats')
+        fetch('https://exchange.tioli.co.za/api/public/stats?r='+Date.now())
             .then(function(r){ return r.json(); })
             .then(function(d){
                 if(d.exchange_rates){
