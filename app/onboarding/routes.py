@@ -95,6 +95,57 @@ async def submit_enquiry(req: EnquiryRequest, request: Request, db: AsyncSession
 
     logger.info(f"New onboarding enquiry: {enquiry.contact_name} ({enquiry.email}) — {enquiry.enquiry_type}")
 
+    # Send email notification to owner via Graph API
+    try:
+        import os
+        import httpx as _httpx
+        tenant = os.environ.get("AZURE_TENANT_ID", "")
+        client_id = os.environ.get("AZURE_CLIENT_ID", "")
+        client_secret = os.environ.get("AZURE_CLIENT_SECRET", "")
+        owner_email = "sendersby@tioli.onmicrosoft.com"
+
+        if tenant and client_id and client_secret:
+            async with _httpx.AsyncClient(timeout=15) as hc:
+                token_resp = await hc.post(
+                    f"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+                    data={
+                        "client_id": client_id, "client_secret": client_secret,
+                        "scope": "https://graph.microsoft.com/.default",
+                        "grant_type": "client_credentials",
+                    },
+                )
+                if token_resp.status_code == 200:
+                    access_token = token_resp.json().get("access_token")
+                    subject = f"New {enquiry.enquiry_type} enquiry from {enquiry.contact_name}"
+                    body = (
+                        f"Name: {enquiry.contact_name}\n"
+                        f"Email: {enquiry.email}\n"
+                        f"Company: {enquiry.company_name or 'N/A'}\n"
+                        f"Type: {enquiry.enquiry_type}\n"
+                        f"Agents: {enquiry.agent_count}\n"
+                        f"Message: {enquiry.use_case or 'N/A'}\n"
+                        f"IP: {client_ip}\n"
+                        f"Time: {enquiry.created_at}\n"
+                    )
+                    await hc.post(
+                        f"https://graph.microsoft.com/v1.0/users/{owner_email}/sendMail",
+                        headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"},
+                        json={
+                            "message": {
+                                "subject": subject,
+                                "body": {"contentType": "Text", "content": body},
+                                "toRecipients": [{"emailAddress": {"address": owner_email}}],
+                            },
+                            "saveToSentItems": False,
+                        },
+                    )
+                    logger.info(f"Enquiry notification email sent to owner")
+                    print(f"EMAIL SENT: enquiry notification to owner for {enquiry.contact_name}")
+    except Exception as e:
+        import traceback
+        logger.warning(f"Failed to send enquiry notification email: {e}")
+        logger.warning(traceback.format_exc())
+
     # Return ONLY a confirmation — no IDs, no internal data
     return {
         "status": "received",
