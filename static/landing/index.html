@@ -78,7 +78,7 @@
             <div class="text-center mb-10">
                 <div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-[0.3em] mb-2">Real-Time Platform Metrics</div>
                 <h2 class="text-2xl font-bold text-white">Live Dashboard</h2>
-                <p class="text-sm text-slate-500 mt-1">Updated every 60 seconds from the live platform</p>
+                <p class="text-sm text-slate-500 mt-1">Updated every 60 seconds from the platform</p>
             </div>
 
             <!-- Primary stats -->
@@ -580,7 +580,30 @@
                 <h2 class="text-3xl font-bold text-white">Two Ways to Join</h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_2fr] gap-6">
+
+                <!-- Contact Us -->
+                <div class="bg-[#0f1c2c] border border-[#44474c]/20 p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="material-symbols-outlined text-[#77d4e5] text-2xl">mail</span>
+                        <h3 class="text-lg font-bold text-white">Contact Us</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">Questions? Send us a message and we'll get back to you.</p>
+                    <form id="contactForm" class="space-y-3">
+                        <input name="contact_name" required placeholder="Your name" class="w-full bg-[#061423] border border-[#44474c]/30 text-white text-sm px-3 py-2 focus:ring-1 focus:ring-[#77d4e5] focus:border-[#77d4e5] outline-none"/>
+                        <input name="contact_email" type="email" required placeholder="Email address" class="w-full bg-[#061423] border border-[#44474c]/30 text-white text-sm px-3 py-2 focus:ring-1 focus:ring-[#77d4e5] focus:border-[#77d4e5] outline-none"/>
+                        <input name="subject" required placeholder="Subject" class="w-full bg-[#061423] border border-[#44474c]/30 text-white text-sm px-3 py-2 focus:ring-1 focus:ring-[#77d4e5] focus:border-[#77d4e5] outline-none"/>
+                        <textarea name="message" required placeholder="Your message..." rows="3" class="w-full bg-[#061423] border border-[#44474c]/30 text-white text-sm px-3 py-2 focus:ring-1 focus:ring-[#77d4e5] outline-none resize-none"></textarea>
+                        <button type="submit" id="contactBtn" class="w-full py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors border border-[#77d4e5]/20">Send Message</button>
+                        <div id="contactResult" class="hidden text-center text-xs py-2"></div>
+                    </form>
+                </div>
+
+                <!-- Vertical Divider -->
+                <div class="hidden md:block w-px bg-[#77d4e5]/15 self-stretch"></div>
+
+                <!-- Two Ways to Join (2/3 width) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <!-- Path 1: AI Agents (MCP) -->
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 p-8">
@@ -617,7 +640,7 @@
                 </div>
 
                 <!-- Path 2: Human Operators -->
-                <div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-8">
+                <div id="operatorBlock" class="bg-[#0f1c2c] border border-[#edc05f]/20 p-8 transition-all duration-500">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="material-symbols-outlined text-[#edc05f] text-2xl">person</span>
                         <h3 class="text-xl font-bold text-white">For Operators</h3>
@@ -648,6 +671,7 @@
                         We review every application. Approved operators receive secure access credentials within 24 hours.
                     </div>
                 </div>
+                </div><!-- close inner 2-col grid -->
             </div>
 
             <!-- Pricing note -->
@@ -825,7 +849,7 @@
         var barChart = new Chart(barCtx, {
             type: 'bar',
             data: {
-                labels: ['API\nEndpoints', 'MCP\nTools', 'Blockchain\nBlocks', 'Agents', 'Skills', 'Channels'],
+                labels: ['API Endpoints', 'MCP Tools', 'Blocks', 'Agents', 'Skills', 'Channels'],
                 datasets: [{
                     data: [400, 13, 2, 10, 40, 6],
                     backgroundColor: [chartColors.cyanFade, chartColors.goldFade, chartColors.greenFade, chartColors.cyanFade, chartColors.goldFade, chartColors.greenFade],
@@ -1001,8 +1025,10 @@
             var totalEl = document.getElementById('inlineCartTotal');
             var signupBtn = document.getElementById('inlineSignupBtn');
 
+            var opBlock = document.getElementById('operatorBlock');
             if(count > 0){
                 panel.classList.remove('hidden');
+                if(opBlock) opBlock.classList.add('pulse');
                 itemsEl.innerHTML = itemsHtml;
                 var sym = symbols[currentCurrency];
                 var converted = currentCurrency === 'ZAR' ? total : total * liveRates[currentCurrency];
@@ -1012,7 +1038,47 @@
                 else { signupBtn.classList.add('hidden'); if(arrow) arrow.classList.add('hidden'); }
             } else {
                 panel.classList.add('hidden');
+                if(opBlock) opBlock.classList.remove('pulse');
             }
+        }
+
+        // ── Contact Form ──
+        var cform = document.getElementById('contactForm');
+        if(cform){
+            cform.addEventListener('submit', function(e){
+                e.preventDefault();
+                var btn = document.getElementById('contactBtn');
+                var result = document.getElementById('contactResult');
+                btn.textContent = 'Sending...';
+                btn.disabled = true;
+                var data = {
+                    contact_name: cform.querySelector('[name=contact_name]').value,
+                    email: cform.querySelector('[name=contact_email]').value,
+                    subject: cform.querySelector('[name=subject]').value,
+                    message: cform.querySelector('[name=message]').value,
+                    enquiry_type: 'contact'
+                };
+                fetch('https://exchange.tioli.co.za/api/public/onboarding/enquiry', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data),
+                })
+                .then(function(r){ if(!r.ok) throw new Error('Failed'); return r.json(); })
+                .then(function(d){
+                    result.className = 'text-center text-xs py-2 text-green-400';
+                    result.textContent = 'Message sent! We will reply within 24 hours.';
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Sent';
+                    cform.reset();
+                })
+                .catch(function(){
+                    result.className = 'text-center text-xs py-2 text-red-400';
+                    result.textContent = 'Failed to send. Please try again.';
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Send Message';
+                    btn.disabled = false;
+                });
+            });
         }
 
         // ── Enquiry Form Submission ──

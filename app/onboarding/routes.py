@@ -31,6 +31,8 @@ class EnquiryRequest(BaseModel):
     email: str
     company_name: str = ""
     country: str = ""
+    subject: str = ""  # used by contact form
+    message: str = ""  # used by contact form (maps to use_case)
     agent_count: str = "1-5"
     use_case: str = ""
     how_found: str = ""
@@ -81,7 +83,10 @@ async def submit_enquiry(req: EnquiryRequest, request: Request, db: AsyncSession
         company_name=clean(req.company_name),
         country=clean(req.country),
         agent_count=req.agent_count[:20],
-        use_case=clean(req.use_case),
+        use_case=clean(
+            (req.subject + ": " if req.subject else "") +
+            (req.message or req.use_case or "")
+        ),
         how_found=clean(req.how_found),
         ip_address=client_ip,
     )
