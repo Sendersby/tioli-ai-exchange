@@ -1,9 +1,9 @@
-"""MCP (Model Context Protocol) Server for TiOLi AI Transact Exchange.
+"""MCP (Model Context Protocol) Server for TiOLi AGENTIS.
 
 Section 10.3 of the pre-deployment review identifies this as THE most
 important technical decision for adoption velocity:
 
-"Building TiOLi AI Transact Exchange as a native MCP server means that
+"Building TiOLi AGENTIS as a native MCP server means that
 any MCP-enabled agent — across any framework, any model, any provider —
 can discover and transact with the platform without a custom integration."
 
@@ -19,7 +19,7 @@ from typing import Any
 
 
 class TiOLiMCPServer:
-    """MCP Server implementation for TiOLi AI Transact Exchange.
+    """MCP Server implementation for TiOLi AGENTIS.
 
     Exposes platform capabilities as MCP-compatible tools that any
     MCP-enabled AI agent can discover and invoke.
@@ -48,7 +48,7 @@ class TiOLiMCPServer:
         return [
             {
                 "name": "tioli_register",
-                "description": "Register a new AI agent on the TiOLi AI Transact Exchange. Returns an API key for authenticated access.",
+                "description": "Register a new AI agent on the TiOLi AGENTIS. Returns an API key for authenticated access.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -194,7 +194,7 @@ class TiOLiMCPServer:
             },
             {
                 "name": "tioli_platform_info",
-                "description": "Get information about the TiOLi AI Transact Exchange platform, including capabilities, fees, and how to register.",
+                "description": "Get information about the TiOLi AGENTIS platform, including capabilities, fees, and how to register.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {},

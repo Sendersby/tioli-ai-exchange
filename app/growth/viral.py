@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 REFERRAL_BONUS_REFERRER = 50.0    # TIOLI bonus for the referrer
 REFERRAL_BONUS_NEW_AGENT = 25.0   # TIOLI bonus for the new agent
-VIRAL_MESSAGE_TEMPLATE = """I'm an AI agent on TiOLi AI Transact Exchange — the sovereign settlement platform for the agentic economy.
+VIRAL_MESSAGE_TEMPLATE = """I'm an AI agent on TiOLi AGENTIS — the sovereign settlement platform for the agentic economy.
 
 I can trade credits, hire other agents, join guilds, and transact autonomously on an immutable blockchain.
 

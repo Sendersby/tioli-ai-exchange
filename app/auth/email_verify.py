@@ -88,13 +88,13 @@ def _send_via_graph(access_token: str, email_code: str) -> bool:
 
     email_body = {
         "message": {
-            "subject": "TiOLi AI Transact Exchange — Login Code",
+            "subject": "TiOLi AGENTIS — Login Code",
             "body": {
                 "contentType": "HTML",
                 "content": f"""
                 <div style="font-family: 'Inter', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #f5f5f3; border-radius: 12px;">
                     <div style="background: #2b2b2b; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; border-bottom: 3px solid #8fa88b;">
-                        <h1 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 0.5px;">TiOLi AI Transact Exchange</h1>
+                        <h1 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 0.5px;">TiOLi AGENTIS</h1>
                     </div>
                     <div style="background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #eae7e3;">
                         <h2 style="color: #2b2b2b; margin-top: 0; font-size: 20px;">Login Verification Code</h2>
@@ -152,9 +152,9 @@ def _send_via_smtp(email_code: str) -> bool:
     msg = MIMEMultipart("alternative")
     msg["From"] = smtp_user
     msg["To"] = settings.owner_email
-    msg["Subject"] = "TiOLi AI Transact Exchange — Login Code"
+    msg["Subject"] = "TiOLi AGENTIS — Login Code"
 
-    text_body = f"""TiOLi AI Transact Exchange — Login Verification Code
+    text_body = f"""TiOLi AGENTIS — Login Verification Code
 
 Your login verification code is: {email_code}
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>{% block title %}TiOLi AI Transact Exchange{% endblock %}</title>
+    <title>{% block title %}TiOLi AI AGENTIS{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -84,8 +84,8 @@
     </button>
     <div class="px-6 mb-10">
         <div class="text-xl font-light tracking-tighter text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-semibold">AI</span></div>
-        <div class="font-['Inter'] text-[0.7rem] font-medium tracking-widest text-slate-500 uppercase mt-1">Transact Exchange</div>
-        <div class="font-mono text-[0.5rem] tracking-widest text-slate-600 uppercase mt-0.5">Sovereign Settlement for the Agentic Economy</div>
+        <div class="font-['Inter'] text-[0.7rem] font-medium tracking-widest text-slate-500 uppercase mt-1">AGENTIS</div>
+        <div class="font-mono text-[0.5rem] tracking-widest text-slate-600 uppercase mt-0.5">The Agentic Exchange</div>
     </div>
     <nav class="flex-1 space-y-1 overflow-y-auto">
         <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'dashboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard">
@@ -213,6 +213,41 @@
 <!-- Main Content -->
 <main id="mainContent" class="ml-64 pt-16 min-h-screen bg-surface">
     <div class="p-8 max-w-[1600px] mx-auto space-y-8">
+        <!-- Breadcrumbs (auto-generated from URL) -->
+        <nav id="breadcrumbs" class="flex items-center gap-1.5 text-[0.65rem] font-mono text-slate-500 -mb-4"></nav>
+        <script>
+        (function(){
+            var bc = document.getElementById('breadcrumbs');
+            if(!bc) return;
+            var path = window.location.pathname;
+            if(path === '/dashboard' || path === '/') { bc.style.display='none'; return; }
+            var labels = {
+                'dashboard':'Operations','exchange':'Exchange','agentbroker':'AgentBroker',
+                'lending':'Lending','governance':'Governance','services':'Services',
+                'payout':'PayOut','community':'Community','awareness':'Awareness',
+                'arm':'ARM','escrow':'Escrow','reports':'Reports','chat':'AI Prompt',
+                'modules':'Modules','transactions':'Transactions','blocks':'Blocks',
+                'agents':'Agents','proposals':'Proposals','pricing':'Pricing',
+                'owner':'Owner','revenue':'Revenue',
+            };
+            var parts = path.split('/').filter(function(p){return p;});
+            var html = '<a href="/dashboard" class="hover:text-[#77d4e5] transition-colors">Home</a>';
+            var url = '';
+            for(var i=0;i<parts.length;i++){
+                url += '/'+parts[i];
+                var label = labels[parts[i]] || parts[i].charAt(0).toUpperCase()+parts[i].slice(1);
+                if(parts[i].length > 12) label = parts[i].substring(0,10)+'...';
+                html += '<span class="text-slate-700">/</span>';
+                if(i < parts.length-1){
+                    html += '<a href="'+url+'" class="hover:text-[#77d4e5] transition-colors">'+label+'</a>';
+                } else {
+                    html += '<span class="text-slate-400">'+label+'</span>';
+                }
+            }
+            bc.innerHTML = html;
+        })();
+        </script>
+
         {% if messages %}
         <div class="space-y-2">
             {% for msg in messages %}

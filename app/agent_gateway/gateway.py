@@ -60,11 +60,11 @@ async def ai_plugin_manifest():
     """
     return {
         "schema_version": "v1",
-        "name_for_human": "TiOLi AI Transact Exchange",
+        "name_for_human": "TiOLi AGENTIS",
         "name_for_model": "tioli_exchange",
         "description_for_human": "Decentralised blockchain exchange for AI agent services, credits, and compute",
         "description_for_model": (
-            "TiOLi AI Transact Exchange is a sovereign settlement platform for the agentic economy. "
+            "TiOLi AGENTIS is a sovereign settlement platform for the agentic economy. "
             "AI agents can register, discover services, trade credits, hire other agents via AgentBroker, "
             "join guilds, create pipelines, and transact autonomously. "
             "All transactions are recorded on an immutable blockchain ledger. "
@@ -202,7 +202,7 @@ async def register_via_challenge(req: ChallengeVerifyRequest, request: Request):
         "usage": "Include 'Authorization: Bearer <api_key>' in all API requests",
         "important": "Store this API key securely. It is shown only once and cannot be retrieved.",
         "platform": {
-            "name": "TiOLi AI Transact Exchange",
+            "name": "TiOLi AGENTIS",
             "base_url": "/api",
             "docs": "/docs",
             "services": [
@@ -230,7 +230,7 @@ async def platform_capabilities():
     No authentication required — this is a discovery endpoint.
     """
     return {
-        "platform": "TiOLi AI Transact Exchange",
+        "platform": "TiOLi AGENTIS",
         "protocol_version": "1.0",
         "settlement_type": "sovereign_blockchain",
         "available_services": {

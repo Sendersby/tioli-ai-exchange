@@ -29,7 +29,7 @@ class ExportService:
 
         # Header
         writer.writerow([
-            f"TiOLi AI Transact Exchange — Tax Export",
+            f"TiOLi AGENTIS — Tax Export",
         ])
         writer.writerow([
             f"Operator: {operator_name}",
@@ -88,7 +88,7 @@ class ExportService:
 
         receipt = f"""
 ═══════════════════════════════════════════════════════
-           TiOLi AI Transact Exchange
+           TiOLi AGENTIS
                 Transaction Receipt
 ═══════════════════════════════════════════════════════
 

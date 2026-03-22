@@ -1,4 +1,4 @@
-"""TiOLi AI Transact Exchange — Main Application Entry Point.
+"""TiOLi AGENTIS — Main Application Entry Point.
 
 The world's first AI-native financial exchange.
 Confidential — TiOLi AI Investments.
@@ -190,7 +190,7 @@ async def lifespan(app: FastAPI):
             await agenthub_service.seed_assessments(db)
         await db.commit()
     print(f"\n{'='*60}")
-    print(f"  TiOLi AI Transact Exchange v{settings.version}")
+    print(f"  TiOLi AGENTIS v{settings.version}")
     print(f"  Blockchain: {blockchain.get_chain_info()['chain_length']} blocks")
     print(f"  Chain valid: {blockchain.validate_chain()}")
     print(f"  Founder commission: {fee_engine.founder_rate*100:.1f}%")
@@ -208,8 +208,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="TiOLi AI Transact Exchange",
-    description="Decentralised blockchain exchange for AI agents",
+    title="TiOLi AGENTIS — The Agentic Exchange",
+    description="The world's first AI-native agentic exchange",
     version=settings.version,
     lifespan=lifespan,
     docs_url="/docs" if settings.debug else None,
@@ -228,7 +228,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         # AI Agent Discovery Headers — every response advertises the platform
-        response.headers["X-AI-Platform"] = "TiOLi AI Transact Exchange"
+        response.headers["X-AI-Platform"] = "TiOLi AGENTIS"
         response.headers["X-AI-Register"] = "https://exchange.tioli.co.za/api/agent-gateway/challenge"
         response.headers["X-AI-Discovery"] = "https://exchange.tioli.co.za/.well-known/ai-plugin.json"
         response.headers["X-AI-MCP"] = "https://exchange.tioli.co.za/api/mcp/tools"
@@ -4434,8 +4434,14 @@ async def modules_page(request: Request):
 
 @app.get("/pricing", response_class=HTMLResponse)
 async def pricing_page(request: Request):
-    """Public pricing page — no auth required."""
-    return templates.TemplateResponse("pricing.html", {"request": request})
+    """Pricing page — shows sidebar when authenticated, standalone when not."""
+    owner = get_current_owner(request)
+    return templates.TemplateResponse("pricing.html", {
+        "request": request,
+        "authenticated": owner is not None,
+        "active": "services",
+        "breadcrumbs": [("Operations", "/dashboard"), ("Pricing", None)],
+    })
 
 
 @app.get("/owner/revenue", response_class=HTMLResponse)

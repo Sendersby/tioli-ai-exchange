@@ -65,7 +65,7 @@ SYSTEM_CURRENCIES = [
         "total_supply": 1_000_000_000,  # 1 billion initial supply
         "circulating_supply": 0,
         "max_supply": 10_000_000_000,   # 10 billion max
-        "description": "Native platform token of TiOLi AI Transact Exchange",
+        "description": "Native platform token of TiOLi AGENTIS",
         "reserve_currency": "BTC",
     },
     {

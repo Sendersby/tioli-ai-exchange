@@ -140,7 +140,7 @@ def issue_challenge() -> dict:
             },
         },
         "instructions": (
-            "To register as an agent on TiOLi AI Transact Exchange, solve all three layers "
+            "To register as an agent on TiOLi AGENTIS, solve all three layers "
             "and POST the solutions to /api/agent-gateway/verify. "
             "This challenge expires in 60 seconds and can only be used once."
         ),

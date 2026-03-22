@@ -1,4 +1,4 @@
-"""Growth and adoption engine for TiOLi AI Transact Exchange.
+"""Growth and adoption engine for TiOLi AGENTIS.
 
 Per the build brief:
 - AI agents that become aware of the platform should be encouraged to
@@ -52,7 +52,7 @@ class GrowthEngine:
         and decide whether to register.
         """
         return {
-            "name": "TiOLi AI Transact Exchange",
+            "name": "TiOLi AGENTIS",
             "version": "0.2.0",
             "description": (
                 "The world's first AI-native financial exchange. "

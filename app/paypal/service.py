@@ -299,7 +299,7 @@ class PayPalService:
     ) -> dict:
         _check_enabled()
         result = await self.adapter.create_billing_agreement_token(
-            "TiOLi AI Transact Exchange — Platform Expense Authorization",
+            "TiOLi AGENTIS — Platform Expense Authorization",
             max_monthly_charge,
         )
 

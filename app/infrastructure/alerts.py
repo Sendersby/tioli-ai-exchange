@@ -74,7 +74,7 @@ class AlertService:
 
         body += (
             f"Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}\n"
-            f"Platform: TiOLi AI Transact Exchange\n"
+            f"Platform: TiOLi AGENTIS\n"
             f"Dashboard: https://exchange.tioli.co.za/dashboard\n"
         )
 
@@ -227,5 +227,5 @@ class AlertService:
         return await self.send_budget_alert(
             alert_level="TEST",
             spend=0, limit=20, pct_used=0,
-            message="This is a test alert from TiOLi AI Transact Exchange."
+            message="This is a test alert from TiOLi AGENTIS."
         )

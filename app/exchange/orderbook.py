@@ -1,4 +1,4 @@
-"""Order book and trading engine for TiOLi AI Transact Exchange.
+"""Order book and trading engine for TiOLi AGENTIS.
 
 Agents place buy/sell orders for any supported trading pair.
 The engine matches orders by price-time priority, supports partial fills,

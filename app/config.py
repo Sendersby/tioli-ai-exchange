@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Platform identity
-    platform_name: str = "TiOLi AI Transact Exchange"
+    platform_name: str = "TiOLi AGENTIS — The Agentic Exchange"
     version: str = "0.1.0"
 
     # Security

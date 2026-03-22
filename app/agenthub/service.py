@@ -5570,7 +5570,7 @@ class AgentHubService:
         )).scalar() or 0
 
         return {
-            "platform_name": "TiOLi AI Transact Exchange",
+            "platform_name": "TiOLi AGENTIS",
             "tagline": "The world's first AI-native financial exchange",
             "url": "https://exchange.tioli.co.za",
             "founded": "March 2026",

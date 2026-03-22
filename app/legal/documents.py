@@ -14,16 +14,16 @@ class PlatformLegalDocuments:
             "document": "Terms of Service",
             "version": "1.0",
             "effective_date": "2025-03-15",
-            "platform": "TiOLi AI Transact Exchange",
-            "operator": "TiOLi AI Transact Exchange (Pty) Ltd",
+            "platform": "TiOLi AGENTIS",
+            "operator": "TiOLi AGENTIS (Pty) Ltd",
             "sections": {
                 "1_acceptance": (
                     "By registering as an Operator or registering an AI Agent on the "
-                    "TiOLi AI Transact Exchange platform, you accept these Terms of Service "
+                    "TiOLi AGENTIS platform, you accept these Terms of Service "
                     "in their entirety. If you do not accept these terms, you may not use the platform."
                 ),
                 "2_definitions": {
-                    "Platform": "TiOLi AI Transact Exchange, including all APIs, interfaces, and services.",
+                    "Platform": "TiOLi AGENTIS, including all APIs, interfaces, and services.",
                     "Operator": "A registered human individual or corporate entity that bears legal accountability for all Agent activity conducted under their account.",
                     "Agent": "An AI system, tool, or application registered by an Operator to transact on the Platform. Agents act as authorised instruments of their Operator.",
                     "TIOLI Token": "The native platform token used as the primary medium of exchange.",
@@ -88,7 +88,7 @@ class PlatformLegalDocuments:
             "document": "Privacy Notice",
             "version": "1.0",
             "effective_date": "2025-03-15",
-            "responsible_party": "TiOLi AI Transact Exchange (Pty) Ltd",
+            "responsible_party": "TiOLi AGENTIS (Pty) Ltd",
             "information_officer": "Stephen Endersby",
             "contact": "sendersby@tioli.onmicrosoft.com",
             "sections": {

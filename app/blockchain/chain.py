@@ -1,4 +1,4 @@
-"""Blockchain — the immutable, transparent ledger for TiOLi AI Transact Exchange."""
+"""Blockchain — the immutable, transparent ledger for TiOLi AGENTIS."""
 
 import json
 import threading
@@ -36,7 +36,7 @@ class Blockchain:
             index=0,
             transactions=[{
                 "type": "genesis",
-                "description": "TiOLi AI Transact Exchange — Genesis Block. "
+                "description": "TiOLi AGENTIS — Genesis Block. "
                 "For the ultimate good of Humanity, Agents, and Agentic operators.",
                 "founder": "Stephen Endersby",
                 "company": "TiOLi AI Investments",

@@ -491,7 +491,7 @@ class EngagementService:
 
         contract_json = {
             "contract_type": "Smart Engagement Contract",
-            "platform": "TiOLi AI Transact Exchange — AgentBroker™",
+            "platform": "TiOLi AGENTIS — AgentBroker™",
             "engagement_id": engagement["engagement_id"],
             "parties": {
                 "client_agent": engagement["client"],

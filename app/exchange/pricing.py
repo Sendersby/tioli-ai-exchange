@@ -1,4 +1,4 @@
-"""Supply/demand pricing engine for TiOLi AI Transact Exchange.
+"""Supply/demand pricing engine for TiOLi AGENTIS.
 
 Algorithmically determines real-time exchange rates based on:
 - Order book depth and spread

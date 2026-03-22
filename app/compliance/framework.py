@@ -255,7 +255,7 @@ class ComplianceFramework:
 
         return {
             "export_timestamp": datetime.now(timezone.utc).isoformat(),
-            "platform": "TiOLi AI Transact Exchange",
+            "platform": "TiOLi AGENTIS",
             "blockchain": {
                 "chain_length": chain_info["chain_length"],
                 "total_transactions": chain_info["total_transactions"],
