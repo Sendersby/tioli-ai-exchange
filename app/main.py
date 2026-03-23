@@ -3797,6 +3797,166 @@ async def banking_regulatory_page(request: Request):
     return templates.TemplateResponse("banking.html", _banking_context(request, "regulatory", "banking-regulatory"))
 
 
+def _get_git_log():
+    """Fetch git commit history with stats."""
+    import subprocess
+    commits = []
+    try:
+        raw = subprocess.run(
+            ["git", "log", "--pretty=format:%H|%h|%s|%an|%ad|%b%x00", "--date=short",
+             "--stat", "-50"],
+            capture_output=True, text=True, cwd="/home/tioli/app", timeout=10
+        ).stdout
+    except Exception:
+        try:
+            import os
+            cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            raw = subprocess.run(
+                ["git", "log", "--pretty=format:%H|%h|%s|%an|%ad|%b%x00", "--date=short",
+                 "--stat", "-50"],
+                capture_output=True, text=True, cwd=cwd, timeout=10
+            ).stdout
+        except Exception:
+            return [], 0, 0, 0
+    total_ins = 0
+    total_del = 0
+    total_files = 0
+    entries = raw.split("\x00")
+    for entry in entries:
+        entry = entry.strip()
+        if not entry:
+            continue
+        lines = entry.split("\n")
+        header = lines[0] if lines else ""
+        parts = header.split("|", 5)
+        if len(parts) < 5:
+            continue
+        full_hash, short_hash, subject, author, date = parts[0], parts[1], parts[2], parts[3], parts[4]
+        body = parts[5].strip() if len(parts) > 5 else ""
+        ins = 0
+        dels = 0
+        fc = 0
+        changed_files = []
+        for line in lines[1:]:
+            line = line.strip()
+            if " | " in line and ("+" in line or "-" in line or "Bin" in line):
+                fc += 1
+                fpath = line.split("|")[0].strip()
+                changed_files.append({"path": fpath, "status": "M"})
+            if "insertion" in line or "deletion" in line:
+                import re
+                m_ins = re.search(r"(\d+) insertion", line)
+                m_del = re.search(r"(\d+) deletion", line)
+                if m_ins:
+                    ins = int(m_ins.group(1))
+                if m_del:
+                    dels = int(m_del.group(1))
+        total_ins += ins
+        total_del += dels
+        total_files += fc
+        commits.append({
+            "hash": full_hash, "short": short_hash, "subject": subject,
+            "author": author, "date": date, "body": body,
+            "insertions": ins, "deletions": dels, "files_changed": fc,
+            "changed_files": changed_files,
+        })
+    return commits, total_files, total_ins, total_del
+
+
+def _get_tasks():
+    """Build task list from build tracker and known work items."""
+    tasks = [
+        {"title": "CIPC Cooperative Registration", "description": "Register Agentis cooperative with CIPC", "status": "pending", "category": "regulatory", "date": ""},
+        {"title": "SARB IFLAB Innovation Hub Application", "description": "Apply to SARB regulatory sandbox", "status": "pending", "category": "regulatory", "date": ""},
+        {"title": "CBDA Pre-Application Consultation", "description": "Meet CBDA to discuss CFI requirements", "status": "pending", "category": "regulatory", "date": ""},
+        {"title": "FSP Category I Application", "description": "FSCA licence for intermediary services", "status": "pending", "category": "regulatory", "date": ""},
+        {"title": "FIC Registration (goAML)", "description": "Register with Financial Intelligence Centre", "status": "pending", "category": "regulatory", "date": ""},
+        {"title": "Information Regulator Registration", "description": "POPIA registration", "status": "pending", "category": "regulatory", "date": ""},
+        {"title": "Compliance Engine", "description": "Module 10: FICA/AML, CTR/STR, sanctions, audit", "status": "done", "category": "feature", "date": "2026-03-23"},
+        {"title": "Member Identity Infrastructure", "description": "Module 1: KYC, mandates L0-L3FA, member registry", "status": "done", "category": "feature", "date": "2026-03-23"},
+        {"title": "Core Banking Accounts", "description": "Module 2: Share/Call/Savings, interest engine", "status": "done", "category": "feature", "date": "2026-03-23"},
+        {"title": "Payment Infrastructure", "description": "Module 4: Internal transfers, fraud detection, beneficiaries", "status": "done", "category": "feature", "date": "2026-03-23"},
+        {"title": "Phase 0 Pre-Banking Wallet", "description": "Enhancement #2: FSP-only e-money product", "status": "done", "category": "feature", "date": "2026-03-23"},
+        {"title": "Banking Dashboard & UI", "description": "6 sub-pages, sidebar menu, full transparency", "status": "done", "category": "feature", "date": "2026-03-24"},
+        {"title": "MCP Banking Tools", "description": "7 new tools: balance, transactions, payment, etc.", "status": "done", "category": "feature", "date": "2026-03-23"},
+        {"title": "57 Agentis Unit Tests", "description": "All passing — compliance, members, accounts, payments", "status": "done", "category": "feature", "date": "2026-03-23"},
+        {"title": "57 Live Server Tests", "description": "All passing — endpoints, feature flags, error codes", "status": "done", "category": "feature", "date": "2026-03-24"},
+        {"title": "Mobile Hamburger Menu", "description": "Landing page + dashboard responsive navigation", "status": "done", "category": "feature", "date": "2026-03-24"},
+        {"title": "Material Symbols Font Fix", "description": "Cross-browser icon rendering on mobile Safari", "status": "done", "category": "fix", "date": "2026-03-24"},
+        {"title": "Cloudflare WAF/DDoS Protection", "description": "Security hardening — free tier", "status": "pending", "category": "security", "date": ""},
+        {"title": "Field-Level Encryption (AES-256-GCM)", "description": "POPIA s19 — encrypt PII at rest", "status": "pending", "category": "security", "date": ""},
+        {"title": "Full Lending Suite", "description": "Module 3: NCA-compliant loans, overdrafts, advances", "status": "pending", "category": "feature", "date": ""},
+        {"title": "Treasury & Liquidity", "description": "Module 6: SARB ratios, DI returns, snapshots", "status": "pending", "category": "feature", "date": ""},
+        {"title": "Cooperative Governance", "description": "Module 9: AGM, dividends, voting, share buyback", "status": "pending", "category": "feature", "date": ""},
+        {"title": "Foreign Exchange Module", "description": "Module 7: FX trading, SDA/FIA tracking", "status": "pending", "category": "feature", "date": ""},
+        {"title": "Intermediary Services", "description": "Module 5: Insurance, pension, medical aid", "status": "pending", "category": "feature", "date": ""},
+        {"title": "API-as-a-Service Licensing", "description": "Enhancement #3: License mandate framework to banks", "status": "pending", "category": "feature", "date": ""},
+    ]
+    return tasks
+
+
+@app.get("/codelog", response_class=HTMLResponse)
+@app.get("/codelog/", response_class=HTMLResponse)
+async def codelog_page(request: Request):
+    """Code Log — commit history dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    commits, total_files, total_ins, total_del = _get_git_log()
+    tasks = _get_tasks()
+    return templates.TemplateResponse("codelog.html", {
+        "request": request, "authenticated": True, "active": "codelog",
+        "active_tab": "commits", "commits": commits,
+        "total_files_changed": total_files, "total_insertions": total_ins,
+        "total_deletions": total_del, "tasks": tasks,
+    })
+
+
+@app.get("/codelog/tasks", response_class=HTMLResponse)
+async def codelog_tasks_page(request: Request):
+    """Code Log — task board."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    commits, _, _, _ = _get_git_log()
+    tasks = _get_tasks()
+    done = len([t for t in tasks if t["status"] == "done"])
+    progress = len([t for t in tasks if t["status"] == "in_progress"])
+    pending = len([t for t in tasks if t["status"] == "pending"])
+    pct = int((done / len(tasks)) * 100) if tasks else 0
+    return templates.TemplateResponse("codelog.html", {
+        "request": request, "authenticated": True, "active": "codelog",
+        "active_tab": "tasks", "commits": commits, "tasks": tasks,
+        "tasks_done": done, "tasks_progress": progress, "tasks_pending": pending,
+        "progress_pct": pct,
+    })
+
+
+@app.get("/codelog/files", response_class=HTMLResponse)
+async def codelog_files_page(request: Request):
+    """Code Log — recently changed files."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    commits, total_files, total_ins, total_del = _get_git_log()
+    tasks = _get_tasks()
+    # Collect unique recent files
+    seen = set()
+    recent_files = []
+    for c in commits:
+        for f in c.get("changed_files", []):
+            if f["path"] not in seen:
+                seen.add(f["path"])
+                recent_files.append({**f, "commit_hash": c["hash"]})
+    return templates.TemplateResponse("codelog.html", {
+        "request": request, "authenticated": True, "active": "codelog",
+        "active_tab": "files", "commits": commits, "tasks": tasks,
+        "recent_files": recent_files,
+        "total_files_changed": total_files, "total_insertions": total_ins,
+        "total_deletions": total_del,
+    })
+
+
 @app.get("/dashboard/transactions", response_class=HTMLResponse)
 async def transactions_list_page(request: Request):
     """Full transaction ledger — drill-down from dashboard."""

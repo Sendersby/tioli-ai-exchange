@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Code Log & Tasks — TiOLi AI AGENTIS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-primary font-headline">Code Log & Tasks</h1>
+            <p class="text-on-surface-variant mt-1">Build history, development progress, and task tracking</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-full text-xs font-label" style="background: rgba(119,212,229,0.15); color: #77d4e5;">
+                {{ commits|length }} commits
+            </span>
+            <span class="px-3 py-1 rounded-full text-xs font-label" style="background: rgba(237,192,95,0.15); color: #edc05f;">
+                {{ tasks|length }} tasks
+            </span>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex gap-1 mb-6 border-b border-outline-variant overflow-x-auto pb-px">
+        {% set tabs = [
+            ("commits", "Code Log", "history", "/codelog"),
+            ("tasks", "Task Board", "checklist", "/codelog/tasks"),
+            ("files", "Changed Files", "description", "/codelog/files"),
+        ] %}
+        {% for tab_id, tab_name, tab_icon, tab_url in tabs %}
+        <a href="{{ tab_url }}"
+           class="flex items-center gap-2 px-4 py-3 text-sm font-label whitespace-nowrap border-b-2 transition-colors
+                  {% if active_tab == tab_id %}border-primary text-primary{% else %}border-transparent text-on-surface-variant hover:text-on-surface{% endif %}">
+            <span class="material-symbols-outlined text-lg">{{ tab_icon }}</span>
+            {{ tab_name }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- ═══ COMMITS TAB ═══ -->
+    {% if active_tab == 'commits' %}
+    <div>
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums">{{ commits|length }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Total Commits</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums">{{ total_files_changed }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Files Changed</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums" style="color:#4ade80;">+{{ total_insertions }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Lines Added</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums" style="color:#f87171;">-{{ total_deletions }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Lines Removed</div>
+            </div>
+        </div>
+
+        <!-- Commit Log -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Commit History</h2>
+            </div>
+            <div class="divide-y divide-outline-variant/10">
+                {% for c in commits %}
+                <div class="px-5 py-4 hover:bg-surface-container-low/50 transition-colors cursor-pointer"
+                     onclick="this.querySelector('.commit-detail').classList.toggle('hidden')">
+                    <div class="flex items-start gap-3">
+                        <span class="font-mono text-[0.7rem] text-primary flex-shrink-0 mt-0.5">{{ c.hash[:7] }}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm text-on-surface font-medium">{{ c.subject }}</div>
+                            <div class="flex items-center gap-3 mt-1">
+                                <span class="text-[0.65rem] text-on-surface-variant font-mono">{{ c.date }}</span>
+                                <span class="text-[0.65rem] text-on-surface-variant">{{ c.author }}</span>
+                                {% if c.files_changed %}
+                                <span class="text-[0.6rem] font-mono">
+                                    <span style="color:#4ade80;">+{{ c.insertions }}</span>
+                                    <span style="color:#f87171;">-{{ c.deletions }}</span>
+                                    <span class="text-on-surface-variant">{{ c.files_changed }}f</span>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-on-surface-variant text-sm flex-shrink-0">expand_more</span>
+                    </div>
+                    {% if c.body %}
+                    <div class="commit-detail hidden mt-3 ml-16 text-xs text-on-surface-variant whitespace-pre-wrap font-mono bg-surface-container-lowest p-3 rounded border border-outline-variant/10">{{ c.body }}</div>
+                    {% endif %}
+                    {% if c.changed_files %}
+                    <div class="commit-detail hidden mt-3 ml-16 space-y-1">
+                        {% for f in c.changed_files %}
+                        <div class="text-[0.7rem] font-mono text-on-surface-variant flex items-center gap-2">
+                            <span class="{% if f.status == 'A' %}text-green-400{% elif f.status == 'M' %}text-tertiary{% elif f.status == 'D' %}text-error{% else %}text-on-surface-variant{% endif %}">{{ f.status }}</span>
+                            <span>{{ f.path }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ═══ TASKS TAB ═══ -->
+    {% if active_tab == 'tasks' %}
+    <div>
+        <!-- Task Summary -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold tabular-nums" style="color:#4ade80;">{{ tasks_done }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Completed</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-tertiary tabular-nums">{{ tasks_progress }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">In Progress</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface-variant tabular-nums">{{ tasks_pending }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Pending</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums">{{ tasks|length }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Total Tasks</div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5 mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-on-surface font-medium">Overall Progress</span>
+                <span class="text-sm font-mono tabular-nums" style="color:#4ade80;">{{ progress_pct }}%</span>
+            </div>
+            <div class="w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all" style="width:{{ progress_pct }}%; background: linear-gradient(90deg, #77d4e5, #4ade80);"></div>
+            </div>
+        </div>
+
+        <!-- Task List -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Task Board</h2>
+            </div>
+            <div class="divide-y divide-outline-variant/10">
+                {% for t in tasks %}
+                <div class="px-5 py-4 flex items-start gap-4">
+                    {% if t.status == 'done' %}
+                    <span class="material-symbols-outlined text-xl flex-shrink-0" style="color:#4ade80;">check_circle</span>
+                    {% elif t.status == 'in_progress' %}
+                    <span class="material-symbols-outlined text-xl text-tertiary flex-shrink-0">pending</span>
+                    {% else %}
+                    <span class="material-symbols-outlined text-xl text-on-surface-variant flex-shrink-0">radio_button_unchecked</span>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm text-on-surface font-medium {% if t.status == 'done' %}line-through opacity-60{% endif %}">{{ t.title }}</div>
+                        {% if t.description %}
+                        <p class="text-xs text-on-surface-variant mt-0.5">{{ t.description }}</p>
+                        {% endif %}
+                        {% if t.category %}
+                        <span class="inline-block mt-1 px-2 py-0.5 text-[0.55rem] rounded font-mono uppercase
+                               {% if t.category == 'feature' %}bg-primary/10 text-primary
+                               {% elif t.category == 'fix' %}bg-error/10 text-error
+                               {% elif t.category == 'security' %}bg-tertiary/10 text-tertiary
+                               {% elif t.category == 'regulatory' %}bg-secondary/10 text-secondary
+                               {% else %}bg-surface-container-lowest text-on-surface-variant{% endif %}">{{ t.category }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-[0.6rem] font-mono text-on-surface-variant flex-shrink-0">{{ t.date }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ═══ FILES TAB ═══ -->
+    {% if active_tab == 'files' %}
+    <div>
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Recently Changed Files</h2>
+                <p class="text-xs text-on-surface-variant mt-1">Files modified in the last {{ commits|length }} commits</p>
+            </div>
+            <div class="divide-y divide-outline-variant/10">
+                {% for f in recent_files %}
+                <div class="px-5 py-3 flex items-center gap-3 hover:bg-surface-container-low/50">
+                    <span class="text-[0.65rem] font-mono w-4 text-center flex-shrink-0
+                           {% if f.status == 'A' %}text-green-400{% elif f.status == 'M' %}text-tertiary{% elif f.status == 'D' %}text-error{% else %}text-on-surface-variant{% endif %}">
+                        {{ f.status }}
+                    </span>
+                    <span class="text-sm font-mono text-on-surface truncate">{{ f.path }}</span>
+                    <span class="text-[0.6rem] font-mono text-on-surface-variant flex-shrink-0 ml-auto">{{ f.commit_hash[:7] }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

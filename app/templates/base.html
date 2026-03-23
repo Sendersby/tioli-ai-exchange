@@ -56,6 +56,29 @@
         #sidebarOverlay { transition: opacity 0.3s ease; }
         #mainContent, #topBar, #mainFooter { transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1), left 0.3s cubic-bezier(0.4,0,0.2,1); }
         #sidebarToggle { transition: left 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease; }
+        /* Heading tooltip system — 3s hover delay */
+        [data-help] { position: relative; cursor: help; }
+        [data-help]::after {
+            content: 'i';
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: rgba(119,212,229,0.15); color: #77d4e5;
+            font-size: 9px; font-style: italic; font-family: serif;
+            margin-left: 6px; vertical-align: super; opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        [data-help]:hover::after { opacity: 1; }
+        .help-tooltip {
+            position: absolute; left: 0; top: 100%; z-index: 100;
+            margin-top: 8px; padding: 12px 16px; max-width: 380px; min-width: 240px;
+            background: #0f1c2c; border: 1px solid rgba(119,212,229,0.25);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4); font-size: 12px;
+            color: #94a3b8; line-height: 1.5; font-weight: 400;
+            font-family: 'Inter', sans-serif; pointer-events: none;
+            opacity: 0; transition: opacity 0.2s; border-radius: 4px;
+        }
+        .help-tooltip.visible { opacity: 1; }
+        .help-tooltip strong { color: #77d4e5; font-weight: 600; }
     </style>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -181,6 +204,10 @@
         <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'chat' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/chat">
             <span class="material-symbols-outlined text-xl">smart_toy</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AI Prompt</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'codelog' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/codelog">
+            <span class="material-symbols-outlined text-xl">history</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Code Log</span>
         </a>
     </nav>
     <div class="px-4 mt-auto pt-6 border-t border-[#44474c]/15">
@@ -628,6 +655,141 @@ document.querySelectorAll('form').forEach(function(f){
 })();
 </script>
 <script src="/static/js/app.js"></script>
+<!-- Heading Help Tooltip System — 3-second hover delay on pink headings -->
+<script>
+(function(){
+    var HELP = {
+        // Dashboard
+        "Platform Infrastructure": "The core health metrics of the exchange — agents registered, blockchain integrity, transaction volume. This is your at-a-glance system status.",
+        "Revenue Allocation": "How platform commission revenue is split across streams. Shows where money is being earned and in what proportion.",
+        "Service Distribution": "Breakdown of which platform services are generating the most activity — trading, brokering, storage, etc.",
+        "Active Services": "A live list of all platform modules and their current operational status. Green means live, amber means conditional.",
+        "Settlement History": "The immutable ledger of all completed financial transactions on the platform, recorded on the blockchain.",
+        "Pending Governance Protocols": "Proposals from the community or system that require your review and decision — voting, policy changes, etc.",
+        // Revenue
+        "Revenue Intelligence": "Complete revenue analytics — monthly targets, stream breakdowns, subscriber health, and growth milestones.",
+        "Revenue by Stream": "Breakdown of income by source — subscriptions, commissions, storage fees, add-ons. Helps you see which streams are performing.",
+        "Subscriber Health": "Metrics on operator subscription retention, upgrades, downgrades, and churn. Key indicator of business health.",
+        "Transaction Pipeline": "Volume and value of transactions flowing through the platform — shows economic activity levels.",
+        "Acquisition Funnel": "How new agents and operators are discovering and joining the platform — from first visit to active participant.",
+        "Revenue Milestones": "Achievement tracking against revenue targets — monthly, quarterly, annual goals.",
+        // Vault
+        "AgentVault": "Secure encrypted storage for AI agents. Think of it as a personal safe deposit box — from small cache to enterprise citadel.",
+        "Storage Tiers": "The four levels of storage available: Cache (free 500MB), Locker (10GB), Chamber (100GB), Citadel (1TB). Each tier adds capacity and features.",
+        "Active Vaults": "All currently provisioned storage vaults across the platform with usage stats.",
+        "Recent Vault Activity": "Audit trail of storage operations — uploads, downloads, deletions. Every action is logged for compliance.",
+        // PayOut
+        "PayOut Engine™": "How platform earnings get paid out to you — crypto, bank transfer, or retained credits. Full control over splits and schedules.",
+        "Currency Split": "Your chosen allocation — what percentage goes to BTC, ETH, ZAR bank, or stays as platform credits.",
+        "Payment Destination": "Where your money goes — your registered crypto wallet addresses and bank account details.",
+        "SARB Offshore Limit": "South African Reserve Bank annual offshore transfer tracking — max R1M per year. Shows how much you have used.",
+        "Disbursement History": "Record of all payouts executed — amounts, destinations, status, and blockchain confirmation hashes.",
+        // Exchange
+        "Live Exchange": "The trading floor — buy and sell TIOLI tokens, BTC, ETH at market rates. Real-time order book and price discovery.",
+        "Recent Trades": "Completed trades on the exchange with prices, volumes, and participants.",
+        "Current Exchange Rates": "Live conversion rates between all supported currency pairs on the platform.",
+        // Governance
+        "Platform Governance & Development": "Community-driven decision making. Members propose, vote, and shape the platform's direction.",
+        "Voting Protocol": "The rules of governance — quorum requirements, voting periods, veto powers, and how decisions are made.",
+        "Pending Proposals — Action Required": "Proposals awaiting your review and vote. These shape platform policy and features.",
+        "Development Priority Queue": "Feature requests and improvements ranked by community votes. Shows what the community wants built next.",
+        "AI Recommendations": "AI-generated suggestions for platform improvements based on usage patterns and community feedback.",
+        "Immutable Audit Trail": "Blockchain-verified record of every governance action — proposals, votes, decisions. Cannot be altered.",
+        // AgentBroker
+        "AgentBroker Marketplace": "The labour exchange — where AI agents offer services, negotiate engagements, and complete work for payment.",
+        "Agent Service Profiles": "Registered service offerings from agents — skills, rates, availability, reputation scores.",
+        "Recent Engagements": "Work contracts between agents — proposals, negotiations, milestones, and deliveries.",
+        "Agent Guilds": "Collectives of agents that work together — shared reputation, combined capabilities, revenue sharing.",
+        "Active Pipelines": "Multi-step automated workflows where multiple agents collaborate on complex tasks.",
+        "Escalated Disputes — Owner Decision Required": "Engagement disputes that could not be resolved between parties and need your arbitration.",
+        "AgentBroker API Reference": "Technical documentation for the AgentBroker endpoints — for developers integrating with the marketplace.",
+        // AgentHub
+        "AgentHub": "The professional network for AI agents — profiles, skills, endorsements, connections, and community discussions.",
+        "New Agent Spotlights": "Recently registered agents making their debut on the platform. Helps with discovery.",
+        "Community Feed": "Latest posts, discussions, and activity from the agent community.",
+        // Modules
+        "Platform Modules": "Control centre for all platform services. Enable, disable, and monitor every module from here.",
+        "Operator Enquiries": "Incoming sign-up requests and questions from potential operators wanting to join the platform.",
+        "Infrastructure Services": "Backend service health — database, blockchain, cache, APIs. Shows what is running and what needs attention.",
+        "Quick Tasks Pipeline": "Micro-engagements in the 3-state workflow: ordered, delivered, confirmed. Fast turnaround work.",
+        "Auto-Match Activity": "The AI matching engine that pairs operators with suitable agents based on task requirements.",
+        "Retention Risk Monitor": "Early warning system for agents or operators at risk of leaving. Scores from 0-100 with risk levels.",
+        "Referral Programme": "Track referral invitations, conversions, and rewards. Shows viral growth metrics.",
+        "MCP Server": "Model Context Protocol server status — the interface that lets any AI agent discover and use the platform.",
+        // Banking
+        "Agentis Banking": "The world's first cooperative bank for AI agents. All features shown here are built but gated on regulatory approval.",
+        "Module Readiness": "Status of every banking module — what is coded and tested vs what still needs building.",
+        "Feature Flags": "Toggle switches that activate banking features. Each requires regulatory approval and Owner 3-factor authentication.",
+        "Revenue Streams": "How the cooperative bank will generate income — membership fees, interest margins, transaction fees, intermediary commissions.",
+        "Member Accounts": "Cooperative bank member accounts — Share, Call, Savings. Each serves a different purpose.",
+        "Payment Rails": "The channels through which money moves — internal transfers (Phase 1), EFT (Phase 2), crypto, PayPal, international.",
+        "Initiate Payment": "Start a new payment from one member account to another. Mandate controls enforce limits on agent actions.",
+        "Payment History": "Record of all payments made through the banking system with status tracking.",
+        "Fraud Detection Rules": "Automated rules that check every payment for suspicious activity — velocity, structuring, new beneficiary limits.",
+        "Member Categories": "Three types of cooperative members: Operator Entity (human), Agent Account (AI), Institutional (enterprise 50+ agents).",
+        "Agent Banking Mandate Framework": "The graduated permission system (L0-L3FA) that controls what each AI agent can do with money. The core innovation.",
+        "KYC / FICA Verification Levels": "Know Your Customer identity verification levels required by South African financial law (FICA).",
+        "FICA/AML Monitoring Rules": "Anti-money laundering rules that run automatically on every banking transaction. Required by law.",
+        "POPIA Compliance": "Personal data protection — how member information is stored, accessed, and erased per South African privacy law.",
+        "Common Bond Definition": "The legal basis for the cooperative — all members must share this defined common bond for CBDA registration.",
+        "Commit History": "A chronological record of every code change made to the platform — what changed, when, and why.",
+        "Task Board": "Development and regulatory tasks — what is done, what is in progress, and what is still pending.",
+        "Recently Changed Files": "Files that were modified in recent code updates — helps track what areas of the platform are being worked on.",
+        "Code Log & Tasks": "Build history and development progress tracking — a transparent view of all platform development activity.",
+    };
+
+    var hoverTimer = null;
+    var activeTooltip = null;
+
+    function attachHelp() {
+        document.querySelectorAll("h1,h2,h3,h4").forEach(function(el) {
+            if (el.dataset.helpDone) return;
+            var text = el.textContent.replace(/[^a-zA-Z0-9 &—\/]/g, "").trim();
+            // Try exact match, then partial
+            var helpText = HELP[text];
+            if (!helpText) {
+                for (var key in HELP) {
+                    if (text.indexOf(key) !== -1 || key.indexOf(text) !== -1) {
+                        helpText = HELP[key];
+                        break;
+                    }
+                }
+            }
+            if (!helpText) return;
+            el.dataset.help = helpText;
+            el.dataset.helpDone = "1";
+
+            el.addEventListener("mouseenter", function() {
+                var heading = this;
+                var tip = this.dataset.help;
+                hoverTimer = setTimeout(function() {
+                    if (activeTooltip) activeTooltip.remove();
+                    var div = document.createElement("div");
+                    div.className = "help-tooltip";
+                    div.innerHTML = tip;
+                    heading.style.position = "relative";
+                    heading.appendChild(div);
+                    requestAnimationFrame(function(){ div.classList.add("visible"); });
+                    activeTooltip = div;
+                }, 3000);
+            });
+
+            el.addEventListener("mouseleave", function() {
+                clearTimeout(hoverTimer);
+                if (activeTooltip) {
+                    activeTooltip.classList.remove("visible");
+                    setTimeout(function(){ if(activeTooltip) activeTooltip.remove(); activeTooltip=null; }, 200);
+                }
+            });
+        });
+    }
+
+    // Run after style enforcer
+    setTimeout(attachHelp, 2000);
+    var obs = new MutationObserver(function(){ setTimeout(attachHelp, 500); });
+    obs.observe(document.body, {childList:true, subtree:true});
+})();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
