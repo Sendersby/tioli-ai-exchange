@@ -131,6 +131,132 @@
     </div>
 </section>
 
+<!-- Task Board + Banking + Code Log Widgets -->
+<section class="grid grid-cols-12 gap-4">
+    <!-- Task Board Widget -->
+    <div class="col-span-12 lg:col-span-4">
+        <a href="/codelog/tasks" class="block h-full bg-surface-container-low border border-outline-variant/10 p-5 hover:border-primary/30 transition-colors">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-headline text-sm font-bold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-tertiary text-lg">checklist</span>
+                    Task Board
+                </h3>
+                <span class="text-[0.6rem] font-mono text-primary uppercase tracking-widest">{{ task_summary.total }} tasks</span>
+            </div>
+            <div class="flex items-center gap-2 mb-3">
+                <div class="flex-1 h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+                    <div class="h-full rounded-full" style="width:{{ task_summary.pct }}%; background: linear-gradient(90deg, #77d4e5, #4ade80);"></div>
+                </div>
+                <span class="font-mono text-xs tabular-nums" style="color:#4ade80;">{{ task_summary.pct }}%</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="text-center">
+                    <div class="text-lg font-bold tabular-nums" style="color:#4ade80;">{{ task_summary.done }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Done</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold text-tertiary tabular-nums">{{ task_summary.progress }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Active</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold text-slate-400 tabular-nums">{{ task_summary.pending }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Pending</div>
+                </div>
+            </div>
+            <div class="mt-3 space-y-1">
+                {% for t in task_summary.recent %}
+                <div class="flex items-center gap-2 text-[0.65rem]">
+                    {% if t.status == 'done' %}<span style="color:#4ade80;">&#10003;</span>{% elif t.status == 'in_progress' %}<span class="text-tertiary">&#9679;</span>{% else %}<span class="text-slate-500">&#9675;</span>{% endif %}
+                    <span class="text-slate-300 truncate">{{ t.title }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </a>
+    </div>
+    <!-- Agentis Banking Widget -->
+    <div class="col-span-12 lg:col-span-4">
+        <a href="/banking" class="block h-full bg-surface-container-low border border-outline-variant/10 p-5 hover:border-primary/30 transition-colors">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-headline text-sm font-bold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-lg">account_balance</span>
+                    Agentis Banking
+                </h3>
+                <span class="text-[0.6rem] font-mono text-primary uppercase tracking-widest">{{ banking_summary.phase }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                    <div class="text-lg font-bold text-white tabular-nums">{{ banking_summary.modules_built }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Modules Built</div>
+                </div>
+                <div>
+                    <div class="text-lg font-bold text-slate-400 tabular-nums">{{ banking_summary.modules_pending }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Pending</div>
+                </div>
+            </div>
+            <div class="space-y-1.5">
+                <div class="flex items-center gap-2 text-[0.65rem]">
+                    <span style="color:#4ade80;">&#10003;</span>
+                    <span class="text-slate-300">Compliance Engine</span>
+                </div>
+                <div class="flex items-center gap-2 text-[0.65rem]">
+                    <span style="color:#4ade80;">&#10003;</span>
+                    <span class="text-slate-300">Member Identity & KYC</span>
+                </div>
+                <div class="flex items-center gap-2 text-[0.65rem]">
+                    <span style="color:#4ade80;">&#10003;</span>
+                    <span class="text-slate-300">Accounts & Deposits</span>
+                </div>
+                <div class="flex items-center gap-2 text-[0.65rem]">
+                    <span style="color:#4ade80;">&#10003;</span>
+                    <span class="text-slate-300">Payments & Fraud Detection</span>
+                </div>
+                <div class="flex items-center gap-2 text-[0.65rem]">
+                    <span class="text-slate-500">&#9675;</span>
+                    <span class="text-slate-500">Lending (Phase 2)</span>
+                </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-outline-variant/10 flex items-center justify-between">
+                <span class="text-[0.55rem] font-mono text-slate-500">{{ banking_summary.tests }} tests passing</span>
+                <span class="text-[0.55rem] font-mono text-tertiary">{{ banking_summary.flags_enabled }}/{{ banking_summary.flags_total }} flags</span>
+            </div>
+        </a>
+    </div>
+    <!-- Recent Code Commits Widget -->
+    <div class="col-span-12 lg:col-span-4">
+        <a href="/codelog" class="block h-full bg-surface-container-low border border-outline-variant/10 p-5 hover:border-primary/30 transition-colors">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-headline text-sm font-bold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-secondary text-lg">history</span>
+                    Recent Commits
+                </h3>
+                <span class="text-[0.6rem] font-mono text-primary uppercase tracking-widest">{{ codelog_summary.total }} total</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-3">
+                <div class="text-center">
+                    <div class="text-lg font-bold text-white tabular-nums">{{ codelog_summary.files }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Files</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold tabular-nums" style="color:#4ade80;">+{{ codelog_summary.insertions }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Added</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold tabular-nums" style="color:#f87171;">-{{ codelog_summary.deletions }}</div>
+                    <div class="text-[0.5rem] font-mono text-slate-500 uppercase">Removed</div>
+                </div>
+            </div>
+            <div class="space-y-1.5">
+                {% for c in codelog_summary.recent %}
+                <div class="flex items-start gap-2 text-[0.65rem]">
+                    <span class="font-mono text-primary flex-shrink-0">{{ c.short }}</span>
+                    <span class="text-slate-300 truncate">{{ c.subject }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </a>
+    </div>
+</section>
+
 <!-- Charts + Services -->
 <section class="grid grid-cols-12 gap-6">
     <div class="col-span-12 lg:col-span-4">

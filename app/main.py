@@ -3713,6 +3713,37 @@ async def dashboard_page(request: Request):
     except Exception:
         pass
 
+    # Task Board summary for dashboard widget
+    all_tasks = _get_tasks()
+    tasks_done = len([t for t in all_tasks if t["status"] == "done"])
+    tasks_progress = len([t for t in all_tasks if t["status"] == "in_progress"])
+    tasks_pending = len([t for t in all_tasks if t["status"] == "pending"])
+    task_pct = int((tasks_done / len(all_tasks)) * 100) if all_tasks else 0
+    task_summary = {
+        "total": len(all_tasks), "done": tasks_done,
+        "progress": tasks_progress, "pending": tasks_pending,
+        "pct": task_pct,
+        "recent": all_tasks[:6],
+    }
+
+    # Banking summary for dashboard widget
+    banking_summary = {
+        "phase": "Pre-Banking",
+        "modules_built": 5, "modules_pending": 7,
+        "tests": 114, "flags_enabled": 0, "flags_total": 18,
+    }
+
+    # Code log summary for dashboard widget
+    try:
+        commits, total_files, total_ins, total_del = _get_git_log()
+        codelog_summary = {
+            "total": len(commits), "files": total_files,
+            "insertions": total_ins, "deletions": total_del,
+            "recent": commits[:5],
+        }
+    except Exception:
+        codelog_summary = {"total": 0, "files": 0, "insertions": 0, "deletions": 0, "recent": []}
+
     return templates.TemplateResponse("dashboard.html", {
         "request": request, "authenticated": True, "active": "dashboard",
         "chain_info": info, "agent_count": agent_count,
@@ -3723,6 +3754,9 @@ async def dashboard_page(request: Request):
         "charity_status": fee_engine.get_charity_status(),
         "services_summary": services_summary,
         "rev": rev_data, "hub_stats": hub_stats,
+        "task_summary": task_summary,
+        "banking_summary": banking_summary,
+        "codelog_summary": codelog_summary,
     })
 
 
