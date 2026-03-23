@@ -105,6 +105,18 @@ from app.agentvault import models as _agentvault_models  # Register tables
 from app.onboarding.routes import router as onboarding_router
 from app.onboarding import models as _onboarding_models
 
+# Agentis Cooperative Bank — register models and routes
+from app.agentis import compliance_models as _agentis_compliance_models
+from app.agentis import member_models as _agentis_member_models
+from app.agentis import account_models as _agentis_account_models
+from app.agentis import payment_models as _agentis_payment_models
+from app.agentis.compliance_service import AgentisComplianceService
+from app.agentis.member_service import AgentisMemberService
+from app.agentis.account_service import AgentisAccountService
+from app.agentis.payment_service import AgentisPaymentService
+from app.agentis.routes import router as agentis_router
+import app.agentis.routes as agentis_routes
+
 # ── Globals ──────────────────────────────────────────────────────────
 blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
 fee_engine = FeeEngine()
@@ -174,6 +186,20 @@ verticals_service = VerticalsService()
 export_service = ExportService()
 viral_service = ViralGrowthService()
 webhook_service = WebhookService()
+# Agentis Cooperative Bank — service initialization
+agentis_compliance = AgentisComplianceService(blockchain=blockchain)
+agentis_members = AgentisMemberService(compliance_service=agentis_compliance, blockchain=blockchain)
+agentis_accounts = AgentisAccountService(
+    compliance_service=agentis_compliance, member_service=agentis_members, blockchain=blockchain)
+agentis_payments = AgentisPaymentService(
+    compliance_service=agentis_compliance, member_service=agentis_members,
+    account_service=agentis_accounts, blockchain=blockchain)
+# Wire service instances into routes module
+agentis_routes.compliance_service = agentis_compliance
+agentis_routes.member_service = agentis_members
+agentis_routes.account_service = agentis_accounts
+agentis_routes.payment_service = agentis_payments
+
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -194,6 +220,8 @@ async def lifespan(app: FastAPI):
             await agenthub_service.seed_assessments(db)
         if settings.agentvault_enabled:
             await agentvault_service.seed_tiers(db)
+        # Agentis — seed feature flags (always, regardless of enabled state)
+        await agentis_compliance.seed_feature_flags(db)
         await db.commit()
     print(f"\n{'='*60}")
     print(f"  TiOLi AGENTIS v{settings.version}")
@@ -385,6 +413,7 @@ app.include_router(agenthub_router)
 app.include_router(revenue_router)
 app.include_router(agentvault_router)
 app.include_router(onboarding_router)
+app.include_router(agentis_router)
 
 
 # ── Helper: Agent Auth Dependency ────────────────────────────────────
@@ -3694,6 +3723,28 @@ async def dashboard_page(request: Request):
         "charity_status": fee_engine.get_charity_status(),
         "services_summary": services_summary,
         "rev": rev_data, "hub_stats": hub_stats,
+    })
+
+
+@app.get("/banking", response_class=HTMLResponse)
+async def banking_page(request: Request):
+    """Agentis Cooperative Bank dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    # Determine current phase
+    phase = "0 — Pre-Banking"
+    if settings.agentis_cfi_payments_enabled:
+        phase = "1 — CFI"
+    elif settings.agentis_cfi_accounts_enabled:
+        phase = "1 — CFI (Accounts)"
+    elif settings.agentis_cfi_member_enabled:
+        phase = "1 — CFI (Members)"
+    elif settings.agentis_compliance_enabled:
+        phase = "0 — Compliance Active"
+    return templates.TemplateResponse("banking.html", {
+        "request": request, "authenticated": True, "active": "banking",
+        "phase": phase,
     })
 
 

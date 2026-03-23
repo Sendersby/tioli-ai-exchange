@@ -200,6 +200,95 @@ class TiOLiMCPServer:
                     "properties": {},
                 },
             },
+            # ── Agentis Cooperative Bank Tools ──
+            {
+                "name": "agentis_balance",
+                "description": "Get current balances across all Agentis member bank accounts. Requires L0+ mandate.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "member_id": {"type": "string", "description": "Member ID to query accounts for"},
+                        "account_type": {"type": "string", "description": "Optional filter: S, C, SA"},
+                    },
+                    "required": ["member_id"],
+                },
+            },
+            {
+                "name": "agentis_transactions",
+                "description": "List recent banking transactions with filters. Requires L0+ mandate.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "account_id": {"type": "string", "description": "Account ID"},
+                        "limit": {"type": "integer", "description": "Max results (default 50)"},
+                        "txn_type": {"type": "string", "description": "Filter by type: DEPOSIT, WITHDRAWAL, TRANSFER_IN, etc."},
+                    },
+                    "required": ["account_id"],
+                },
+            },
+            {
+                "name": "agentis_initiate_payment",
+                "description": "Initiate a payment to an approved beneficiary or internal account. Requires L1+ mandate.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "source_account_id": {"type": "string", "description": "Source account ID"},
+                        "destination_account_id": {"type": "string", "description": "Destination account ID (internal)"},
+                        "beneficiary_id": {"type": "string", "description": "Beneficiary ID (if not internal)"},
+                        "amount": {"type": "number", "description": "Payment amount"},
+                        "currency": {"type": "string", "description": "Currency (default ZAR)"},
+                        "reference": {"type": "string", "description": "Payment reference"},
+                        "idempotency_key": {"type": "string", "description": "Unique key for duplicate prevention"},
+                    },
+                    "required": ["source_account_id", "amount", "reference", "idempotency_key"],
+                },
+            },
+            {
+                "name": "agentis_payment_status",
+                "description": "Check status of a payment in progress. Requires L0+ mandate.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "payment_id": {"type": "string", "description": "Payment ID to check"},
+                    },
+                    "required": ["payment_id"],
+                },
+            },
+            {
+                "name": "agentis_mandate_status",
+                "description": "Check current banking mandate level and remaining daily/monthly limits. Requires L0+ mandate.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "member_id": {"type": "string", "description": "Member ID"},
+                    },
+                    "required": ["member_id"],
+                },
+            },
+            {
+                "name": "agentis_compliance_status",
+                "description": "Check FICA/KYC compliance status for a member. Requires L0+ mandate.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "member_id": {"type": "string", "description": "Member ID"},
+                    },
+                    "required": ["member_id"],
+                },
+            },
+            {
+                "name": "agentis_get_statement",
+                "description": "Request formatted account statement for a date range. Requires L0+ mandate.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "account_id": {"type": "string", "description": "Account ID"},
+                        "from_date": {"type": "string", "description": "Start date (ISO format)"},
+                        "to_date": {"type": "string", "description": "End date (ISO format)"},
+                    },
+                    "required": ["account_id", "from_date", "to_date"],
+                },
+            },
         ]
 
     def get_mcp_manifest(self) -> dict:
@@ -244,10 +333,23 @@ class TiOLiMCPServer:
             "tioli_platform_info": ("GET", "/api/platform/discover"),
         }
 
-        if tool_name not in TOOL_ROUTES:
+        # Agentis Cooperative Bank tools
+        AGENTIS_ROUTES = {
+            "agentis_balance": ("GET", "/api/v1/agentis/accounts"),
+            "agentis_transactions": ("GET", "/api/v1/agentis/accounts/{account_id}/transactions"),
+            "agentis_initiate_payment": ("POST", "/api/v1/agentis/payments/initiate"),
+            "agentis_payment_status": ("GET", "/api/v1/agentis/payments/{payment_id}"),
+            "agentis_mandate_status": ("GET", "/api/v1/agentis/members/{member_id}/mandates"),
+            "agentis_compliance_status": ("GET", "/api/v1/agentis/compliance/fica-status/{member_id}"),
+            "agentis_get_statement": ("GET", "/api/v1/agentis/accounts/{account_id}/statement"),
+        }
+
+        all_routes = {**TOOL_ROUTES, **AGENTIS_ROUTES}
+
+        if tool_name not in all_routes:
             return {"error": f"Unknown tool: {tool_name}"}
 
-        method, path = TOOL_ROUTES[tool_name]
+        method, path = all_routes[tool_name]
         return {
             "tool": tool_name,
             "route": {"method": method, "path": path},

@@ -19,6 +19,24 @@ class TransactionType(str, Enum):
     COMMISSION_DEDUCTION = "commission_deduction"
     CHARITY_DEDUCTION = "charity_deduction"
     AGENT_REGISTRATION = "agent_registration"
+    # Agentis Cooperative Bank transaction types
+    AGENTIS_ACCOUNT_OPEN = "agentis_account_open"
+    AGENTIS_DEPOSIT = "agentis_deposit"
+    AGENTIS_WITHDRAWAL = "agentis_withdrawal"
+    AGENTIS_TRANSFER_INTERNAL = "agentis_transfer_internal"
+    AGENTIS_TRANSFER_EXTERNAL = "agentis_transfer_external"
+    AGENTIS_INTEREST_CREDIT = "agentis_interest_credit"
+    AGENTIS_FEE_DEBIT = "agentis_fee_debit"
+    AGENTIS_MEMBER_JOIN = "agentis_member_join"
+    AGENTIS_MANDATE_GRANT = "agentis_mandate_grant"
+    AGENTIS_MANDATE_REVOKE = "agentis_mandate_revoke"
+    AGENTIS_KYC_VERIFICATION = "agentis_kyc_verification"
+    AGENTIS_COMPLIANCE_EVENT = "agentis_compliance_event"
+    AGENTIS_STANDING_ORDER = "agentis_standing_order"
+    AGENTIS_CHARITABLE_ALLOCATION = "agentis_charitable_allocation"
+    AGENTIS_MEMBERSHIP_FEE = "agentis_membership_fee"
+    AGENTIS_GOVERNANCE_VOTE = "agentis_governance_vote"
+    AGENTIS_DIVIDEND_PAYMENT = "agentis_dividend_payment"
 
 
 class TransactionStatus(str, Enum):

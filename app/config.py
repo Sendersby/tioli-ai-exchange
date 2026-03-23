@@ -49,6 +49,27 @@ class Settings(BaseSettings):
     agenthub_enabled: bool = False
     agentvault_enabled: bool = False
 
+    # Agentis Cooperative Bank feature flags — all default FALSE
+    # Phase 1: CFI Level (build now, deploy on CBDA approval)
+    agentis_compliance_enabled: bool = False      # Must be first — all others depend on it
+    agentis_cfi_member_enabled: bool = False       # Member onboarding, KYC, mandates
+    agentis_cfi_accounts_enabled: bool = False     # Share, Call, basic Savings accounts
+    agentis_cfi_payments_enabled: bool = False     # Internal member-to-member transfers
+    agentis_cfi_governance_enabled: bool = False   # Basic meeting management, voting
+    agentis_phase0_wallet_enabled: bool = False    # Pre-banking wallet (FSP only)
+    # Phase 2: Primary Co-op Bank (build later, deploy on SARB approval)
+    agentis_pcb_deposits_enabled: bool = False     # Full deposit suite (FD, Notice, IR, MC)
+    agentis_pcb_eft_enabled: bool = False          # External EFT payments
+    agentis_pcb_treasury_enabled: bool = False     # Treasury snapshots, SARB reporting
+    agentis_pcb_deposit_insurance_enabled: bool = False  # CoBIF levy, CoDI registration
+    agentis_pcb_governance_enabled: bool = False   # AGM, dividends, special resolutions
+    agentis_nca_lending_enabled: bool = False      # Full lending suite (OOD, EIL, BEL, RCF, ABA)
+    agentis_cfi_lending_enabled: bool = False      # Basic member loans (PML, MEL)
+    agentis_fsp_intermediary_enabled: bool = False # Insurance, pension, medical aid
+    # Phase 3+: Advanced (build much later)
+    agentis_fx_enabled: bool = False               # Foreign exchange, international payments
+    agentis_casp_enabled: bool = False             # Crypto-denominated banking
+
     # Debug
     debug: bool = False
 

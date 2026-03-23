@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}Agentis Banking — TiOLi AI AGENTIS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Banking Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-primary font-headline">Agentis Banking</h1>
+            <p class="text-on-surface-variant mt-1">The World's First Agentic Cooperative Bank</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-full text-xs font-label"
+                  style="background: rgba(119,212,229,0.15); color: #77d4e5;">
+                <span class="material-symbols-outlined text-sm align-middle">verified</span>
+                Phase {{ phase }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex gap-1 mb-6 border-b border-outline-variant overflow-x-auto pb-px">
+        {% set tabs = [
+            ("overview", "Overview", "dashboard"),
+            ("accounts", "Accounts", "account_balance"),
+            ("payments", "Payments", "payments"),
+            ("compliance", "Compliance", "shield"),
+            ("regulatory", "Regulatory Timeline", "gavel"),
+        ] %}
+        {% for tab_id, tab_name, tab_icon in tabs %}
+        <button onclick="showTab('{{ tab_id }}')" id="tab-{{ tab_id }}"
+                class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-label whitespace-nowrap
+                       border-b-2 transition-colors
+                       {% if loop.first %}border-primary text-primary{% else %}border-transparent text-on-surface-variant hover:text-on-surface{% endif %}">
+            <span class="material-symbols-outlined text-lg">{{ tab_icon }}</span>
+            {{ tab_name }}
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- ═══ OVERVIEW TAB ═══ -->
+    <div id="panel-overview" class="tab-panel">
+
+        <!-- Account Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-primary text-xl">savings</span>
+                    <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Total Deposits</span>
+                </div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums" id="total-deposits">R 0.00</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-secondary text-xl">stars</span>
+                    <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Share Capital</span>
+                </div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums" id="share-capital">R 0.00</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-tertiary text-xl">groups</span>
+                    <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Members</span>
+                </div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums" id="member-count">0</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
+                    <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Active Mandates</span>
+                </div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums" id="mandate-count">0</div>
+            </div>
+        </div>
+
+        <!-- Feature Flags Status -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Feature Flags</h2>
+                <p class="text-xs text-on-surface-variant mt-1">All features gated on regulatory approval. Owner 3FA required to enable.</p>
+            </div>
+            <div class="p-5" id="feature-flags-container">
+                <div class="text-on-surface-variant text-sm">Loading feature flags...</div>
+            </div>
+        </div>
+
+        <!-- Recent Compliance Events -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Compliance Events</h2>
+            </div>
+            <div class="p-5" id="compliance-events-container">
+                <div class="text-on-surface-variant text-sm">No compliance events yet.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ ACCOUNTS TAB ═══ -->
+    <div id="panel-accounts" class="tab-panel hidden">
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Member Accounts</h2>
+                <button onclick="document.getElementById('open-account-modal').classList.remove('hidden')"
+                        class="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-label hover:opacity-90">
+                    Open Account
+                </button>
+            </div>
+            <div class="p-5" id="accounts-list-container">
+                <div class="text-on-surface-variant text-sm">No accounts yet. Open a Share Account to begin.</div>
+            </div>
+        </div>
+
+        <!-- Account Product Info -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% set products = [
+                ("Share Account (S)", "R100 minimum", "Membership share capital. Non-withdrawable. Earns patronage dividend.", "0%"),
+                ("Call Account (C)", "R50 minimum", "Instant-access operating account. Unlimited transactions. R15/month.", "0.5-1%"),
+                ("Savings Account (SA)", "R200 minimum", "Interest-bearing savings. 4 free withdrawals/month. R0/month.", "2-5%"),
+            ] %}
+            {% for name, min_bal, desc, rate in products %}
+            <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/20">
+                <h3 class="text-sm font-bold text-primary font-label">{{ name }}</h3>
+                <p class="text-xs text-on-surface-variant mt-1">{{ min_bal }}</p>
+                <p class="text-xs text-on-surface mt-2">{{ desc }}</p>
+                <div class="mt-3 text-xs text-tertiary">Interest: {{ rate }} p.a.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ═══ PAYMENTS TAB ═══ -->
+    <div id="panel-payments" class="tab-panel hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Payment Form -->
+            <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+                <div class="px-5 py-4 border-b border-outline-variant/20">
+                    <h2 class="text-lg font-bold text-on-surface font-headline">Initiate Payment</h2>
+                    <p class="text-xs text-on-surface-variant mt-1">Phase 1: Internal member-to-member transfers only. R0 fee.</p>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <label class="block text-xs text-on-surface-variant font-label mb-1">Source Account</label>
+                        <select id="pay-source" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface">
+                            <option>Select account...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-on-surface-variant font-label mb-1">Destination Account ID</label>
+                        <input id="pay-dest" type="text" placeholder="Account ID or beneficiary"
+                               class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface"/>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-on-surface-variant font-label mb-1">Amount (ZAR)</label>
+                            <input id="pay-amount" type="number" step="0.01" min="0.01"
+                                   class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-on-surface-variant font-label mb-1">Reference</label>
+                            <input id="pay-ref" type="text"
+                                   class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface"/>
+                        </div>
+                    </div>
+                    <button onclick="initiatePayment()"
+                            class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg text-sm font-label font-bold hover:opacity-90">
+                        Initiate Payment
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+                <div class="px-5 py-4 border-b border-outline-variant/20">
+                    <h2 class="text-lg font-bold text-on-surface font-headline">Recent Payments</h2>
+                </div>
+                <div class="p-5" id="payments-list-container">
+                    <div class="text-on-surface-variant text-sm">No payments yet.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Beneficiaries & Standing Orders -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+                <div class="px-5 py-4 border-b border-outline-variant/20">
+                    <h2 class="text-lg font-bold text-on-surface font-headline">Beneficiaries</h2>
+                </div>
+                <div class="p-5" id="beneficiaries-container">
+                    <div class="text-on-surface-variant text-sm">No beneficiaries added.</div>
+                </div>
+            </div>
+            <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+                <div class="px-5 py-4 border-b border-outline-variant/20">
+                    <h2 class="text-lg font-bold text-on-surface font-headline">Standing Orders</h2>
+                </div>
+                <div class="p-5" id="standing-orders-container">
+                    <div class="text-on-surface-variant text-sm">No standing orders.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ COMPLIANCE TAB ═══ -->
+    <div id="panel-compliance" class="tab-panel hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-error text-xl">report</span>
+                    <h3 class="text-sm font-bold text-on-surface font-label">CTR Reports</h3>
+                </div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums" id="ctr-count">0</div>
+                <p class="text-xs text-on-surface-variant mt-1">Currency Transaction Reports</p>
+            </div>
+            <div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-tertiary text-xl">warning</span>
+                    <h3 class="text-sm font-bold text-on-surface font-label">STR Reports</h3>
+                </div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums" id="str-count">0</div>
+                <p class="text-xs text-on-surface-variant mt-1">Suspicious Transaction Reports</p>
+            </div>
+            <div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-secondary text-xl">gpp_good</span>
+                    <h3 class="text-sm font-bold text-on-surface font-label">Sanctions Alerts</h3>
+                </div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums" id="sanctions-count">0</div>
+                <p class="text-xs text-on-surface-variant mt-1">Pending sanctions reviews</p>
+            </div>
+        </div>
+
+        <!-- Pending Reviews -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Pending Reviews</h2>
+                <p class="text-xs text-on-surface-variant mt-1">FICA monitoring events requiring compliance officer review</p>
+            </div>
+            <div class="p-5" id="pending-reviews-container">
+                <div class="text-on-surface-variant text-sm">No pending reviews.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ REGULATORY TIMELINE TAB ═══ -->
+    <div id="panel-regulatory" class="tab-panel hidden">
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6 p-5">
+            <h2 class="text-lg font-bold text-primary font-headline mb-1">Common Bond Definition</h2>
+            <p class="text-sm text-on-surface">
+                "Members of the TiOLi AI platform who operate registered AI agents for commercial purposes"
+            </p>
+            <p class="text-xs text-on-surface-variant mt-2">Enhancement #4 — Strengthened for CBDA defensibility</p>
+        </div>
+
+        <div class="space-y-4" id="regulatory-timeline-container">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Enhancement Notes -->
+        <div class="mt-8 bg-surface-container-low rounded-xl border border-outline-variant/20 p-5">
+            <h3 class="text-sm font-bold text-tertiary font-label mb-3">Strategic Enhancements</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-on-surface-variant">
+                <div>
+                    <span class="text-primary font-bold">#1 SARB IFLAB</span> — Apply to regulatory sandbox
+                </div>
+                <div>
+                    <span class="text-primary font-bold">#2 Phase 0</span> — Pre-banking wallet (FSP only)
+                </div>
+                <div>
+                    <span class="text-primary font-bold">#3 API Licensing</span> — License mandate framework to banks
+                </div>
+                <div>
+                    <span class="text-primary font-bold">#6 BaaS Review</span> — Revisit at PCB phase
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function showTab(tabId) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('border-primary', 'text-primary');
+        b.classList.add('border-transparent', 'text-on-surface-variant');
+    });
+    document.getElementById('panel-' + tabId).classList.remove('hidden');
+    const btn = document.getElementById('tab-' + tabId);
+    btn.classList.add('border-primary', 'text-primary');
+    btn.classList.remove('border-transparent', 'text-on-surface-variant');
+}
+
+async function loadBankingData() {
+    try {
+        // Load feature flags
+        const flagsResp = await fetch('/api/v1/agentis/compliance/feature-flags');
+        if (flagsResp.ok) {
+            const flags = await flagsResp.json();
+            renderFeatureFlags(flags);
+        }
+        // Load regulatory timeline
+        const regResp = await fetch('/api/v1/agentis/regulatory/timeline');
+        if (regResp.ok) {
+            const timeline = await regResp.json();
+            renderTimeline(timeline.milestones);
+        }
+    } catch (e) {
+        console.log('Banking data load:', e.message);
+    }
+}
+
+function renderFeatureFlags(flags) {
+    const container = document.getElementById('feature-flags-container');
+    if (!flags || flags.length === 0) {
+        container.innerHTML = '<div class="text-on-surface-variant text-sm">No feature flags configured yet.</div>';
+        return;
+    }
+    let html = '<div class="space-y-2">';
+    for (const f of flags) {
+        const enabled = f.is_enabled;
+        const dot = enabled
+            ? '<span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>'
+            : '<span class="w-2 h-2 rounded-full bg-outline-variant inline-block"></span>';
+        const badge = enabled
+            ? '<span class="px-2 py-0.5 text-xs rounded-full bg-green-900/30 text-green-400">ENABLED</span>'
+            : '<span class="px-2 py-0.5 text-xs rounded-full bg-surface-container-lowest text-on-surface-variant">DISABLED</span>';
+        html += `<div class="flex items-center justify-between py-2 px-3 rounded-lg bg-surface-container-low">
+            <div class="flex items-center gap-3">
+                ${dot}
+                <div>
+                    <span class="text-sm font-mono text-on-surface">${f.flag_name}</span>
+                    <p class="text-xs text-on-surface-variant">${f.description || ''}</p>
+                </div>
+            </div>
+            ${badge}
+        </div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderTimeline(milestones) {
+    const container = document.getElementById('regulatory-timeline-container');
+    let html = '';
+    for (const m of milestones) {
+        const statusColor = m.status === 'completed' ? 'bg-green-400' :
+                           m.status === 'in_progress' ? 'bg-tertiary' : 'bg-outline-variant';
+        html += `<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full ${statusColor} flex items-center justify-center text-sm font-bold text-surface">
+                    ${m.step}
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-bold text-on-surface font-label">${m.name}</h3>
+                    <p class="text-xs text-on-surface-variant mt-1">${m.description}</p>
+                    <div class="flex gap-4 mt-2 text-xs">
+                        <span class="text-primary">Duration: ${m.estimated_duration}</span>
+                        <span class="text-on-surface-variant">Status: ${m.status.toUpperCase()}</span>
+                    </div>
+                    ${m.enables_flags ? `<div class="mt-2 flex flex-wrap gap-1">
+                        ${m.enables_flags.map(f => `<span class="px-2 py-0.5 text-xs rounded bg-surface-container-lowest text-primary font-mono">${f}</span>`).join('')}
+                    </div>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', loadBankingData);
+</script>
+{% endblock %}

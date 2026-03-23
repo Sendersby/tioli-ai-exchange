@@ -168,8 +168,16 @@
 </aside>
 
 <!-- Top Bar -->
-<header id="topBar" class="fixed top-0 right-0 left-64 h-16 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-8">
-    <div class="flex items-center gap-6">
+<header id="topBar" class="fixed top-0 right-0 left-0 md:left-64 h-14 md:h-16 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-3 md:px-8">
+    <!-- Mobile: hamburger + branding -->
+    <div class="flex items-center gap-3 md:hidden">
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-primary p-1">
+            <span class="material-symbols-outlined text-2xl">menu</span>
+        </button>
+        <div class="text-sm font-light tracking-tighter text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-semibold text-xs">AI</span></div>
+    </div>
+    <!-- Desktop: search + date (hidden on mobile) -->
+    <div class="hidden md:flex items-center gap-6">
         <div class="relative" id="globalSearchWrap">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm">search</span>
             <input id="globalSearchInput" class="bg-surface-container-lowest border border-[#44474c]/20 text-[0.7rem] font-mono tracking-widest w-56 pl-10 pr-3 py-2 focus:ring-1 focus:ring-primary focus:border-primary rounded-sm" placeholder="Search platform..." type="text" autocomplete="off"/>
@@ -177,12 +185,18 @@
         </div>
         <span class="font-mono text-[0.65rem] text-slate-500 uppercase tracking-widest" id="clockDate"></span>
     </div>
-    <div class="flex items-center gap-6">
-        <div class="flex flex-col items-end">
+    <!-- Right side controls -->
+    <div class="flex items-center gap-3 md:gap-6">
+        <!-- Live counter (hidden on small mobile, visible on tablet+) -->
+        <div class="hidden sm:flex flex-col items-end">
             <span class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-wider">Live since 15/03/2026</span>
             <div class="font-mono text-[0.7rem] tabular-nums" id="clockCounter"></div>
         </div>
-        <div class="flex items-center gap-3 border-l border-[#44474c]/30 pl-6">
+        <div class="flex items-center gap-2 md:gap-3 border-l border-[#44474c]/30 pl-3 md:pl-6">
+            <!-- Mobile: search icon opens search -->
+            <button onclick="document.getElementById('mobileSearchPanel').classList.toggle('hidden')" class="md:hidden text-slate-400 hover:text-primary">
+                <span class="material-symbols-outlined">search</span>
+            </button>
             <!-- Notifications Bell -->
             <div class="relative">
                 <button onclick="document.getElementById('notifPanel').classList.toggle('hidden')" class="text-slate-400 hover:text-primary transition-transform active:scale-95 relative">
@@ -213,10 +227,18 @@
         </div>
     </div>
 </header>
+<!-- Mobile search panel (slides down below top bar) -->
+<div id="mobileSearchPanel" class="hidden md:hidden fixed top-14 left-0 right-0 z-[39] bg-[#0f1c2c] border-b border-[#44474c]/20 p-3">
+    <div class="relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm">search</span>
+        <input id="mobileSearchInput" class="w-full bg-surface-container-lowest border border-[#44474c]/20 text-[0.8rem] font-mono pl-10 pr-3 py-2.5 focus:ring-1 focus:ring-primary focus:border-primary rounded-sm" placeholder="Search platform..." type="text" autocomplete="off"
+               oninput="document.getElementById('globalSearchInput').value=this.value; document.getElementById('globalSearchInput').dispatchEvent(new Event('input'));"/>
+    </div>
+</div>
 
 <!-- Main Content -->
-<main id="mainContent" class="ml-64 pt-16 min-h-screen bg-surface">
-    <div class="p-8 max-w-[1600px] mx-auto space-y-8">
+<main id="mainContent" class="ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen bg-surface">
+    <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-6 md:space-y-8">
         <!-- Breadcrumbs (auto-generated from URL) -->
         <nav id="breadcrumbs" class="flex items-center gap-1.5 text-[0.65rem] font-mono text-slate-500 -mb-4"></nav>
         <script>
@@ -282,7 +304,7 @@
 {% endif %}
 
 <!-- Footer -->
-<footer id="mainFooter" class="{% if authenticated %}ml-64{% endif %}" style="background-color:#061423 !important;background:#061423 !important;border-top:1px solid rgba(68,71,76,0.15);padding:0.75rem 1.5rem;text-align:center;">
+<footer id="mainFooter" class="{% if authenticated %}ml-0 md:ml-64{% endif %}" style="background-color:#061423 !important;background:#061423 !important;border-top:1px solid rgba(68,71,76,0.15);padding:0.75rem 1.5rem;text-align:center;">
     <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:#64748b;letter-spacing:0.03em;">
         TiOLi AI Investments &nbsp;|&nbsp; Version: 1.0 &nbsp;|&nbsp; <span id="footerDate" style="color:#64748b;"></span> &nbsp;|&nbsp; Copyright &copy; <span id="footerYear" style="color:#64748b;"></span> TiOLi AI Investments. All rights reserved.
     </span>
@@ -463,11 +485,13 @@ document.querySelectorAll('form').forEach(function(f){
         sidebar.classList.add('collapsed');
         if(icon) icon.textContent = 'menu';
         if(overlay) overlay.classList.add('hidden');
-        if(reveal) reveal.classList.remove('hidden');
         if(!isMobile()){
+            if(reveal) reveal.classList.remove('hidden');
             if(topBar) topBar.style.left = '0';
             if(main) main.style.marginLeft = '0';
             if(footer) footer.style.marginLeft = '0';
+        } else {
+            if(reveal) reveal.classList.add('hidden');
         }
         if(save !== false) localStorage.setItem(KEY, '1');
     }
@@ -478,9 +502,10 @@ document.querySelectorAll('form').forEach(function(f){
         if(reveal) reveal.classList.add('hidden');
         if(isMobile()){
             if(overlay) overlay.classList.remove('hidden');
-            if(topBar) topBar.style.left = '0';
-            if(main) main.style.marginLeft = '0';
-            if(footer) footer.style.marginLeft = '0';
+            // Mobile: sidebar overlays, content stays put
+            if(topBar) topBar.style.left = '';
+            if(main) main.style.marginLeft = '';
+            if(footer) footer.style.marginLeft = '';
         } else {
             if(overlay) overlay.classList.add('hidden');
             if(topBar) topBar.style.left = '16rem';
@@ -498,6 +523,10 @@ document.querySelectorAll('form').forEach(function(f){
     function handleResize(){
         if(isMobile()){
             collapse(false);
+            // Reset inline styles so Tailwind responsive classes take over
+            if(topBar) topBar.style.left = '';
+            if(main) main.style.marginLeft = '';
+            if(footer) footer.style.marginLeft = '';
         } else {
             var saved = localStorage.getItem(KEY);
             if(saved === '1') collapse(false);
