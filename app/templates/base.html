@@ -144,6 +144,36 @@
             <span class="material-symbols-outlined text-xl">payments</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Revenue</span>
         </a>
+        <!-- Agentis Cooperative Bank — separator + menu -->
+        <div class="mx-4 my-2 border-t border-[#77d4e5]/15"></div>
+        <div class="px-4 mb-1">
+            <span class="font-mono text-[0.55rem] text-[#77d4e5]/60 uppercase tracking-[0.2em]">Agentis Bank</span>
+        </div>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking">
+            <span class="material-symbols-outlined text-xl">account_balance</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Banking</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-accounts' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/accounts">
+            <span class="material-symbols-outlined text-xl">savings</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Accounts</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-payments' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/payments">
+            <span class="material-symbols-outlined text-xl">send_money</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Payments</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-members' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/members">
+            <span class="material-symbols-outlined text-xl">group</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Members</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-compliance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/compliance">
+            <span class="material-symbols-outlined text-xl">shield</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Compliance</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-regulatory' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/regulatory">
+            <span class="material-symbols-outlined text-xl">gavel</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Regulatory</span>
+        </a>
+        <div class="mx-4 my-2 border-t border-[#44474c]/15"></div>
         <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'modules' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/modules">
             <span class="material-symbols-outlined text-xl">extension</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Modules</span>

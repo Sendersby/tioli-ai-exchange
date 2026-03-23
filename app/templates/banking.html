@@ -20,29 +20,29 @@
         </div>
     </div>
 
-    <!-- Tab Navigation -->
+    <!-- Tab Navigation (links, not JS-only) -->
     <div class="flex gap-1 mb-6 border-b border-outline-variant overflow-x-auto pb-px">
         {% set tabs = [
-            ("overview", "Overview", "dashboard"),
-            ("accounts", "Accounts", "account_balance"),
-            ("payments", "Payments", "payments"),
-            ("compliance", "Compliance", "shield"),
-            ("regulatory", "Regulatory Timeline", "gavel"),
+            ("overview", "Overview", "dashboard", "/banking"),
+            ("accounts", "Accounts", "savings", "/banking/accounts"),
+            ("payments", "Payments", "send_money", "/banking/payments"),
+            ("members", "Members", "group", "/banking/members"),
+            ("compliance", "Compliance", "shield", "/banking/compliance"),
+            ("regulatory", "Regulatory", "gavel", "/banking/regulatory"),
         ] %}
-        {% for tab_id, tab_name, tab_icon in tabs %}
-        <button onclick="showTab('{{ tab_id }}')" id="tab-{{ tab_id }}"
-                class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-label whitespace-nowrap
-                       border-b-2 transition-colors
-                       {% if loop.first %}border-primary text-primary{% else %}border-transparent text-on-surface-variant hover:text-on-surface{% endif %}">
+        {% for tab_id, tab_name, tab_icon, tab_url in tabs %}
+        <a href="{{ tab_url }}"
+           class="flex items-center gap-2 px-4 py-3 text-sm font-label whitespace-nowrap border-b-2 transition-colors
+                  {% if active_tab == tab_id %}border-primary text-primary{% else %}border-transparent text-on-surface-variant hover:text-on-surface{% endif %}">
             <span class="material-symbols-outlined text-lg">{{ tab_icon }}</span>
             {{ tab_name }}
-        </button>
+        </a>
         {% endfor %}
     </div>
 
     <!-- ═══ OVERVIEW TAB ═══ -->
-    <div id="panel-overview" class="tab-panel">
-
+    {% if active_tab == 'overview' %}
+    <div>
         <!-- Account Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
@@ -50,28 +50,75 @@
                     <span class="material-symbols-outlined text-primary text-xl">savings</span>
                     <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Total Deposits</span>
                 </div>
-                <div class="text-2xl font-bold text-on-surface tabular-nums" id="total-deposits">R 0.00</div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums">R 0.00</div>
+                <div class="text-[0.65rem] text-on-surface-variant mt-1">Activates after CFI approval</div>
             </div>
             <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
                 <div class="flex items-center gap-2 mb-2">
                     <span class="material-symbols-outlined text-secondary text-xl">stars</span>
                     <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Share Capital</span>
                 </div>
-                <div class="text-2xl font-bold text-on-surface tabular-nums" id="share-capital">R 0.00</div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums">R 0.00</div>
+                <div class="text-[0.65rem] text-on-surface-variant mt-1">Min R100 per member</div>
             </div>
             <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
                 <div class="flex items-center gap-2 mb-2">
                     <span class="material-symbols-outlined text-tertiary text-xl">groups</span>
                     <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Members</span>
                 </div>
-                <div class="text-2xl font-bold text-on-surface tabular-nums" id="member-count">0</div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums">0</div>
+                <div class="text-[0.65rem] text-on-surface-variant mt-1">Need 200 for PCB</div>
             </div>
             <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
                 <div class="flex items-center gap-2 mb-2">
                     <span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
                     <span class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Active Mandates</span>
                 </div>
-                <div class="text-2xl font-bold text-on-surface tabular-nums" id="mandate-count">0</div>
+                <div class="text-2xl font-bold text-on-surface tabular-nums">0</div>
+                <div class="text-[0.65rem] text-on-surface-variant mt-1">L0 — L3FA agent mandates</div>
+            </div>
+        </div>
+
+        <!-- Module Readiness -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Module Readiness</h2>
+                <p class="text-xs text-on-surface-variant mt-1">All modules are coded and tested. Activation requires regulatory approval + Owner 3FA.</p>
+            </div>
+            <div class="p-5 space-y-3">
+                {% set modules = [
+                    ("Compliance Engine", "FICA/AML monitoring, CTR/STR reporting, sanctions screening, audit logging", "shield", true, "CIPC registration"),
+                    ("Member Identity", "KYC onboarding, Agent Banking Mandates (L0-L3FA), cooperative membership", "badge", true, "CBDA CFI application"),
+                    ("Core Banking Accounts", "Share, Call, Savings accounts — interest engine, statements", "account_balance", true, "CBDA CFI approval"),
+                    ("Payment Infrastructure", "Internal transfers, beneficiaries, standing orders, fraud detection", "send_money", true, "CBDA CFI approval"),
+                    ("Phase 0 Wallet", "Pre-banking e-money wallet — FSP licence only, no banking licence needed", "wallet", true, "FSP licence"),
+                    ("Full Lending Suite", "Personal loans, overdrafts, AgentBroker advances, NCA-compliant", "credit_score", false, "NCR + SARB PCB"),
+                    ("Treasury & Liquidity", "Regulatory ratios, SARB DI returns, liquidity management", "monitoring", false, "SARB PCB"),
+                    ("Cooperative Governance", "AGM, dividends, voting, share buybacks, constitutional amendments", "how_to_vote", false, "SARB PCB"),
+                    ("Foreign Exchange", "FX trading, international payments, SDA/FIA tracking", "currency_exchange", false, "SARB forex approval"),
+                    ("Intermediary Services", "Insurance distribution, pension collection, investment referral", "handshake", false, "FSCA FSP Cat I"),
+                    ("Deposit Insurance", "CoBIF levy, CoDI registration, member protection", "verified_user", false, "SARB PCB"),
+                    ("Crypto Banking", "Crypto-denominated accounts, crypto payment rails", "token", false, "FSCA CASP"),
+                ] %}
+                {% for name, desc, icon, built, gate in modules %}
+                <div class="flex items-center gap-4 py-3 px-4 rounded-lg bg-surface-container-low">
+                    <span class="material-symbols-outlined text-xl {% if built %}text-primary{% else %}text-outline-variant{% endif %}">{{ icon }}</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-on-surface">{{ name }}</span>
+                            {% if built %}
+                            <span class="px-1.5 py-0.5 text-[0.55rem] rounded bg-green-900/30 text-green-400 font-mono uppercase">Built</span>
+                            {% else %}
+                            <span class="px-1.5 py-0.5 text-[0.55rem] rounded bg-surface-container-lowest text-on-surface-variant font-mono uppercase">Phase 2+</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-xs text-on-surface-variant mt-0.5 truncate">{{ desc }}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <span class="text-[0.6rem] text-on-surface-variant font-mono">{{ gate }}</span>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -86,219 +133,453 @@
             </div>
         </div>
 
-        <!-- Recent Compliance Events -->
+        <!-- Revenue Model -->
         <div class="bg-surface-container rounded-xl border border-outline-variant/30">
             <div class="px-5 py-4 border-b border-outline-variant/20">
-                <h2 class="text-lg font-bold text-on-surface font-headline">Compliance Events</h2>
+                <h2 class="text-lg font-bold text-on-surface font-headline">Revenue Streams</h2>
+                <p class="text-xs text-on-surface-variant mt-1">10% charitable allocation applies to all net banking revenue.</p>
             </div>
-            <div class="p-5" id="compliance-events-container">
-                <div class="text-on-surface-variant text-sm">No compliance events yet.</div>
+            <div class="p-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {% set revenues = [
+                        ("Membership Fees", "R100 join + R50/year", "Phase 1", true),
+                        ("Account Fees", "R0-R15/month per type", "Phase 1", true),
+                        ("Internal Transfers", "R0 (free for members)", "Phase 1", true),
+                        ("Interest Margin", "3-8% NIM on lending", "Phase 2", false),
+                        ("EFT Fees", "R5-R10 per transaction", "Phase 2", false),
+                        ("FX Spread", "1.5-2.5% on conversions", "Phase 3+", false),
+                        ("Intermediary Commission", "Up to 30% first-year premium", "Phase 2", false),
+                        ("API Licensing", "Per-bank licence fee", "Post Phase 1", false),
+                    ] %}
+                    {% for name, rate, phase, now in revenues %}
+                    <div class="flex items-center justify-between py-2 px-3 rounded bg-surface-container-low">
+                        <div>
+                            <span class="text-sm text-on-surface">{{ name }}</span>
+                            <span class="text-xs text-on-surface-variant ml-2">{{ rate }}</span>
+                        </div>
+                        <span class="text-[0.6rem] font-mono {% if now %}text-green-400{% else %}text-on-surface-variant{% endif %}">{{ phase }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- ═══ ACCOUNTS TAB ═══ -->
-    <div id="panel-accounts" class="tab-panel hidden">
+    {% if active_tab == 'accounts' %}
+    <div>
         <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
             <div class="px-5 py-4 border-b border-outline-variant/20 flex justify-between items-center">
                 <h2 class="text-lg font-bold text-on-surface font-headline">Member Accounts</h2>
-                <button onclick="document.getElementById('open-account-modal').classList.remove('hidden')"
-                        class="px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-label hover:opacity-90">
-                    Open Account
-                </button>
+                <span class="px-3 py-1 text-xs rounded-full bg-surface-container-lowest text-on-surface-variant font-mono">Activates after CFI approval</span>
             </div>
             <div class="p-5" id="accounts-list-container">
-                <div class="text-on-surface-variant text-sm">No accounts yet. Open a Share Account to begin.</div>
+                <div class="text-on-surface-variant text-sm">No accounts yet. Accounts activate when AGENTIS_CFI_ACCOUNTS_ENABLED flag is turned on after CBDA CFI registration.</div>
             </div>
         </div>
 
-        <!-- Account Product Info -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Account Product Catalogue -->
+        <h3 class="text-sm font-bold text-on-surface font-label mb-3 uppercase tracking-wider">Phase 1 — CFI Account Products</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {% set products = [
-                ("Share Account (S)", "R100 minimum", "Membership share capital. Non-withdrawable. Earns patronage dividend.", "0%"),
-                ("Call Account (C)", "R50 minimum", "Instant-access operating account. Unlimited transactions. R15/month.", "0.5-1%"),
-                ("Savings Account (SA)", "R200 minimum", "Interest-bearing savings. 4 free withdrawals/month. R0/month.", "2-5%"),
+                ("Share Account (S)", "R100 minimum", "Membership share capital. Non-withdrawable while a member. Required for all other products. Earns patronage dividend declared annually.", "0%", "R0/month"),
+                ("Call Account (C)", "R50 minimum", "Instant-access operating account for AI agents. Unlimited transactions. Primary account for agent payments and receipts.", "0.5-1%", "R15/month"),
+                ("Savings Account (SA)", "R200 minimum", "Interest-bearing member savings. Higher rates in exchange for limited withdrawals. 4 free withdrawals per month.", "2-5%", "R0/month"),
             ] %}
-            {% for name, min_bal, desc, rate in products %}
-            <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/20">
+            {% for name, min_bal, desc, rate, fee in products %}
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
                 <h3 class="text-sm font-bold text-primary font-label">{{ name }}</h3>
-                <p class="text-xs text-on-surface-variant mt-1">{{ min_bal }}</p>
-                <p class="text-xs text-on-surface mt-2">{{ desc }}</p>
-                <div class="mt-3 text-xs text-tertiary">Interest: {{ rate }} p.a.</div>
+                <p class="text-xs text-on-surface-variant mt-1">{{ min_bal }} | {{ fee }}</p>
+                <p class="text-xs text-on-surface mt-3">{{ desc }}</p>
+                <div class="mt-4 flex items-center justify-between">
+                    <span class="text-xs text-tertiary font-mono">Interest: {{ rate }} p.a.</span>
+                    <span class="px-2 py-0.5 text-[0.55rem] rounded bg-green-900/30 text-green-400 font-mono">BUILT</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h3 class="text-sm font-bold text-on-surface font-label mb-3 uppercase tracking-wider">Phase 2 — PCB Account Products (Deferred)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% set future = [
+                ("Notice (N)", "R1,000 min", "32/60-day notice", "4.5%+"),
+                ("Fixed Deposit (FD)", "R5,000 min", "1-24 month terms", "5-8.5%"),
+                ("Investment Reserve (IR)", "R10,000 min", "90-day notice", "9-10%"),
+                ("Multi-currency (MC)", "R0 min", "ZAR/USD/EUR/GBP/BTC/ETH", "Variable"),
+            ] %}
+            {% for name, min_b, desc, rate in future %}
+            <div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/15 opacity-60">
+                <h4 class="text-xs font-bold text-on-surface-variant font-label">{{ name }}</h4>
+                <p class="text-[0.65rem] text-on-surface-variant mt-1">{{ min_b }} | {{ desc }}</p>
+                <span class="text-[0.6rem] text-on-surface-variant font-mono">{{ rate }} p.a. | Requires SARB PCB</span>
             </div>
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 
     <!-- ═══ PAYMENTS TAB ═══ -->
-    <div id="panel-payments" class="tab-panel hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Payment Form -->
+    {% if active_tab == 'payments' %}
+    <div>
+        <!-- Payment Rails Overview -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Payment Rails</h2>
+                <p class="text-xs text-on-surface-variant mt-1">Phase 1: Internal transfers only. External EFT requires SARB PCB registration.</p>
+            </div>
+            <div class="p-5 space-y-3">
+                {% set rails = [
+                    ("Internal Transfer", "Instant account-to-account within Agentis. Member to member, agent to agent.", "R0", "Real-time", true),
+                    ("EFT via Peach Payments", "SA EFT for ZAR transfers to any SA bank account.", "R5", "Same/next day", false),
+                    ("Instant EFT via Ozow", "Real-time ZAR EFT to verified SA bank accounts.", "R10", "Immediate", false),
+                    ("Crypto Rail (BTC/ETH)", "Via existing VALR/Luno adapters.", "Network fee", "Network-dependent", false),
+                    ("PayPal Payout", "International disbursement via existing PayPal integration.", "PayPal fee", "1-2 days", false),
+                ] %}
+                {% for name, desc, fee, speed, active in rails %}
+                <div class="flex items-center gap-4 py-3 px-4 rounded-lg bg-surface-container-low">
+                    <span class="w-2 h-2 rounded-full {% if active %}bg-green-400{% else %}bg-outline-variant{% endif %} flex-shrink-0"></span>
+                    <div class="flex-1">
+                        <div class="text-sm text-on-surface font-medium">{{ name }}</div>
+                        <div class="text-xs text-on-surface-variant">{{ desc }}</div>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <div class="text-xs text-tertiary font-mono">{{ fee }}</div>
+                        <div class="text-[0.6rem] text-on-surface-variant">{{ speed }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Payment Form + History -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div class="bg-surface-container rounded-xl border border-outline-variant/30">
                 <div class="px-5 py-4 border-b border-outline-variant/20">
                     <h2 class="text-lg font-bold text-on-surface font-headline">Initiate Payment</h2>
-                    <p class="text-xs text-on-surface-variant mt-1">Phase 1: Internal member-to-member transfers only. R0 fee.</p>
                 </div>
                 <div class="p-5 space-y-4">
                     <div>
                         <label class="block text-xs text-on-surface-variant font-label mb-1">Source Account</label>
-                        <select id="pay-source" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface">
-                            <option>Select account...</option>
+                        <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface">
+                            <option>Activates after CFI approval</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-on-surface-variant font-label mb-1">Destination Account ID</label>
-                        <input id="pay-dest" type="text" placeholder="Account ID or beneficiary"
-                               class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface"/>
+                        <label class="block text-xs text-on-surface-variant font-label mb-1">Destination Account</label>
+                        <input type="text" placeholder="Member account ID" disabled
+                               class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface opacity-50"/>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs text-on-surface-variant font-label mb-1">Amount (ZAR)</label>
-                            <input id="pay-amount" type="number" step="0.01" min="0.01"
-                                   class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface"/>
+                            <input type="number" step="0.01" disabled
+                                   class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface opacity-50"/>
                         </div>
                         <div>
                             <label class="block text-xs text-on-surface-variant font-label mb-1">Reference</label>
-                            <input id="pay-ref" type="text"
-                                   class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface"/>
+                            <input type="text" disabled
+                                   class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface opacity-50"/>
                         </div>
                     </div>
-                    <button onclick="initiatePayment()"
-                            class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg text-sm font-label font-bold hover:opacity-90">
-                        Initiate Payment
+                    <button disabled class="w-full px-4 py-3 bg-primary/30 text-on-primary/50 rounded-lg text-sm font-label font-bold cursor-not-allowed">
+                        Activates After CFI Approval
                     </button>
                 </div>
             </div>
-
-            <!-- Recent Payments -->
             <div class="bg-surface-container rounded-xl border border-outline-variant/30">
                 <div class="px-5 py-4 border-b border-outline-variant/20">
-                    <h2 class="text-lg font-bold text-on-surface font-headline">Recent Payments</h2>
+                    <h2 class="text-lg font-bold text-on-surface font-headline">Payment History</h2>
                 </div>
-                <div class="p-5" id="payments-list-container">
+                <div class="p-5">
                     <div class="text-on-surface-variant text-sm">No payments yet.</div>
                 </div>
             </div>
         </div>
 
-        <!-- Beneficiaries & Standing Orders -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <div class="bg-surface-container rounded-xl border border-outline-variant/30">
-                <div class="px-5 py-4 border-b border-outline-variant/20">
-                    <h2 class="text-lg font-bold text-on-surface font-headline">Beneficiaries</h2>
-                </div>
-                <div class="p-5" id="beneficiaries-container">
-                    <div class="text-on-surface-variant text-sm">No beneficiaries added.</div>
-                </div>
+        <!-- Fraud Detection Info -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Fraud Detection Rules</h2>
+                <p class="text-xs text-on-surface-variant mt-1">Synchronous on every payment initiation. Built and ready.</p>
             </div>
-            <div class="bg-surface-container rounded-xl border border-outline-variant/30">
-                <div class="px-5 py-4 border-b border-outline-variant/20">
-                    <h2 class="text-lg font-bold text-on-surface font-headline">Standing Orders</h2>
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+                {% set rules = [
+                    ("Velocity", "Max 10 payments per 60 minutes per account", "BLOCK"),
+                    ("New Beneficiary", "First payment to new beneficiary capped at R5,000", "BLOCK"),
+                    ("Round Number Structuring", "3+ round-number transactions in 24h triggers STR", "ESCALATE"),
+                    ("Dormant Reactivation", "Transaction on 6+ month dormant account held for review", "HOLD"),
+                    ("Mandate Breach", "Agent action outside mandate logged and operator notified", "LOG + ALERT"),
+                    ("Geolocation Anomaly", "API from new jurisdiction forces 3FA above R1,000", "CONFIRM"),
+                ] %}
+                {% for name, desc, action in rules %}
+                <div class="py-2 px-3 rounded bg-surface-container-low">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-on-surface font-medium">{{ name }}</span>
+                        <span class="text-[0.6rem] font-mono text-tertiary">{{ action }}</span>
+                    </div>
+                    <p class="text-xs text-on-surface-variant mt-0.5">{{ desc }}</p>
                 </div>
-                <div class="p-5" id="standing-orders-container">
-                    <div class="text-on-surface-variant text-sm">No standing orders.</div>
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
+    {% endif %}
+
+    <!-- ═══ MEMBERS TAB ═══ -->
+    {% if active_tab == 'members' %}
+    <div>
+        <!-- Member Types -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Member Categories</h2>
+            </div>
+            <div class="p-5 space-y-4">
+                {% set types = [
+                    ("Type A — Operator Entity", "The registered human or corporate operator behind AI agents. The FICA-verified principal. The legal member of the cooperative.", "Full bank membership. All products. Governance voting. Share ownership. Full loan eligibility.", "person"),
+                    ("Type B — Agent Account", "An AI agent acting under mandate from a Type A operator. Not independently a member — a sub-account of the operator.", "Banking actions within operator-granted mandate. No independent shares or governance vote.", "smart_toy"),
+                    ("Type C — Institutional Operator", "Enterprise operators running 50+ agents. Separate KYC track with enhanced due diligence.", "All Type A + bulk management, consolidated reporting, dedicated liquidity facility.", "corporate_fare"),
+                ] %}
+                {% for name, who, entitlements, icon in types %}
+                <div class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/15">
+                    <div class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-primary text-2xl mt-0.5">{{ icon }}</span>
+                        <div>
+                            <h3 class="text-sm font-bold text-on-surface">{{ name }}</h3>
+                            <p class="text-xs text-on-surface-variant mt-1">{{ who }}</p>
+                            <p class="text-xs text-primary mt-2">{{ entitlements }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Agent Banking Mandate Levels -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">Agent Banking Mandate Framework</h2>
+                <p class="text-xs text-on-surface-variant mt-1">Every AI agent action is governed by an explicit, operator-granted mandate. This is the core innovation of Agentis.</p>
+            </div>
+            <div class="p-5 space-y-3">
+                {% set levels = [
+                    ("L0", "View Only", "Balance inquiry, transaction history, statement retrieval", "#64748b"),
+                    ("L1", "Operational", "Routine payments within configured limits, standing order execution", "#77d4e5"),
+                    ("L2", "Full Transactional", "All L1 + loan applications, investment instructions, FX within limits", "#77d4e5"),
+                    ("L3", "Full Banking", "All L2 + account management, beneficiary changes, limit adjustments", "#edc05f"),
+                    ("L3FA", "High Value", "Any action exceeding L3 limits — operator must confirm via 3FA", "#ff6b6b"),
+                ] %}
+                {% for level, name, actions, color in levels %}
+                <div class="flex items-start gap-4 py-3 px-4 rounded-lg bg-surface-container-low">
+                    <span class="font-mono text-sm font-bold flex-shrink-0 w-10" style="color: {{ color }}">{{ level }}</span>
+                    <div>
+                        <span class="text-sm text-on-surface font-medium">{{ name }}</span>
+                        <p class="text-xs text-on-surface-variant mt-0.5">{{ actions }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- KYC Levels -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">KYC / FICA Verification Levels</h2>
+            </div>
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {% set kyc = [
+                    ("None", "No verification", "Cannot transact"),
+                    ("Basic", "Name + ID verified", "Open accounts, basic transfers"),
+                    ("Enhanced", "Basic + address + source of funds", "Full CFI banking"),
+                    ("Full", "Enhanced + beneficial ownership", "PCB banking, lending, FX"),
+                ] %}
+                {% for level, what, enables in kyc %}
+                <div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/15 text-center">
+                    <div class="text-sm font-bold text-primary">{{ level }}</div>
+                    <div class="text-xs text-on-surface-variant mt-1">{{ what }}</div>
+                    <div class="text-[0.65rem] text-tertiary mt-2">{{ enables }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Common Bond -->
+        <div class="bg-surface-container rounded-xl border border-[#77d4e5]/20 p-5">
+            <h3 class="text-sm font-bold text-primary font-label mb-2">Common Bond Definition (Enhancement #4)</h3>
+            <p class="text-sm text-on-surface italic">"Members of the TiOLi AI platform who operate registered AI agents for commercial purposes"</p>
+            <p class="text-xs text-on-surface-variant mt-2">Strengthened for CBDA defensibility. All members must satisfy this common bond requirement.</p>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ═══ COMPLIANCE TAB ═══ -->
-    <div id="panel-compliance" class="tab-panel hidden">
+    {% if active_tab == 'compliance' %}
+    <div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="material-symbols-outlined text-error text-xl">report</span>
                     <h3 class="text-sm font-bold text-on-surface font-label">CTR Reports</h3>
                 </div>
-                <div class="text-2xl font-bold text-on-surface tabular-nums" id="ctr-count">0</div>
-                <p class="text-xs text-on-surface-variant mt-1">Currency Transaction Reports</p>
+                <div class="text-2xl font-bold text-on-surface tabular-nums">0</div>
+                <p class="text-xs text-on-surface-variant mt-1">Currency Transaction Reports (>= R49,999.99)</p>
+                <p class="text-[0.6rem] text-on-surface-variant mt-1">Submit to FIC via goAML within 2 business days</p>
             </div>
             <div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="material-symbols-outlined text-tertiary text-xl">warning</span>
                     <h3 class="text-sm font-bold text-on-surface font-label">STR Reports</h3>
                 </div>
-                <div class="text-2xl font-bold text-on-surface tabular-nums" id="str-count">0</div>
-                <p class="text-xs text-on-surface-variant mt-1">Suspicious Transaction Reports</p>
+                <div class="text-2xl font-bold text-on-surface tabular-nums">0</div>
+                <p class="text-xs text-on-surface-variant mt-1">Suspicious Transaction Reports (pattern-based)</p>
+                <p class="text-[0.6rem] text-on-surface-variant mt-1">Submit to FIC within 15 business days if confirmed</p>
             </div>
             <div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="material-symbols-outlined text-secondary text-xl">gpp_good</span>
-                    <h3 class="text-sm font-bold text-on-surface font-label">Sanctions Alerts</h3>
+                    <h3 class="text-sm font-bold text-on-surface font-label">Sanctions Screening</h3>
                 </div>
-                <div class="text-2xl font-bold text-on-surface tabular-nums" id="sanctions-count">0</div>
-                <p class="text-xs text-on-surface-variant mt-1">Pending sanctions reviews</p>
+                <div class="text-2xl font-bold text-on-surface tabular-nums">0</div>
+                <p class="text-xs text-on-surface-variant mt-1">OFAC, UN, EU, UK, SA FinSurv lists</p>
+                <p class="text-[0.6rem] text-on-surface-variant mt-1">Screened on member join + new beneficiary</p>
             </div>
         </div>
 
-        <!-- Pending Reviews -->
+        <!-- FICA Monitoring Rules -->
+        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6">
+            <div class="px-5 py-4 border-b border-outline-variant/20">
+                <h2 class="text-lg font-bold text-on-surface font-headline">FICA/AML Monitoring Rules</h2>
+                <p class="text-xs text-on-surface-variant mt-1">Automated — every banking transaction passes through compliance checks.</p>
+            </div>
+            <div class="p-5 space-y-3">
+                {% set fica_rules = [
+                    ("CTR Auto-Generation", ">= R49,999.99 single transaction", "Auto-generate, submit to FIC in 2 days"),
+                    ("Structuring Detection", "Multiple sub-R50k txns summing > R50k in 24h", "Flag for compliance review"),
+                    ("PEP/Sanctions Screening", "All new members, all new beneficiaries", "Block on confirmed match, review partial"),
+                    ("Velocity Monitoring", "Volume > 200% of 30-day rolling average", "Alert compliance officer, temporary hold"),
+                    ("Dormant Account", "No transactions for 6 months", "Enhanced verification to reactivate"),
+                    ("Mandate Breach Logging", "Agent attempts action outside mandate", "Immediate operator webhook notification"),
+                ] %}
+                {% for name, trigger, action in fica_rules %}
+                <div class="flex items-start gap-4 py-2 px-3 rounded bg-surface-container-low">
+                    <div class="flex-1">
+                        <span class="text-sm text-on-surface font-medium">{{ name }}</span>
+                        <p class="text-xs text-on-surface-variant mt-0.5">Trigger: {{ trigger }}</p>
+                    </div>
+                    <span class="text-xs text-tertiary flex-shrink-0">{{ action }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- POPIA -->
         <div class="bg-surface-container rounded-xl border border-outline-variant/30">
             <div class="px-5 py-4 border-b border-outline-variant/20">
-                <h2 class="text-lg font-bold text-on-surface font-headline">Pending Reviews</h2>
-                <p class="text-xs text-on-surface-variant mt-1">FICA monitoring events requiring compliance officer review</p>
+                <h2 class="text-lg font-bold text-on-surface font-headline">POPIA Compliance</h2>
             </div>
-            <div class="p-5" id="pending-reviews-container">
-                <div class="text-on-surface-variant text-sm">No pending reviews.</div>
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-3 rounded bg-surface-container-low">
+                    <span class="text-sm text-on-surface font-medium">Data Subject Rights</span>
+                    <p class="text-xs text-on-surface-variant mt-1">Access, correction, erasure (subject to FICA retention), portability, complaint</p>
+                </div>
+                <div class="p-3 rounded bg-surface-container-low">
+                    <span class="text-sm text-on-surface font-medium">Response Deadline</span>
+                    <p class="text-xs text-on-surface-variant mt-1">30 days from request receipt (POPIA requirement)</p>
+                </div>
+                <div class="p-3 rounded bg-surface-container-low">
+                    <span class="text-sm text-on-surface font-medium">Data Retention</span>
+                    <p class="text-xs text-on-surface-variant mt-1">KYC: 5 years post-closure. Transactions: 7 years (tax). Blockchain: permanent.</p>
+                </div>
+                <div class="p-3 rounded bg-surface-container-low">
+                    <span class="text-sm text-on-surface font-medium">Breach Notification</span>
+                    <p class="text-xs text-on-surface-variant mt-1">72 hours to Information Regulator + affected members</p>
+                </div>
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- ═══ REGULATORY TIMELINE TAB ═══ -->
-    <div id="panel-regulatory" class="tab-panel hidden">
-        <div class="bg-surface-container rounded-xl border border-outline-variant/30 mb-6 p-5">
+    {% if active_tab == 'regulatory' %}
+    <div>
+        <div class="bg-surface-container rounded-xl border border-[#77d4e5]/20 mb-6 p-5">
             <h2 class="text-lg font-bold text-primary font-headline mb-1">Common Bond Definition</h2>
-            <p class="text-sm text-on-surface">
+            <p class="text-sm text-on-surface italic">
                 "Members of the TiOLi AI platform who operate registered AI agents for commercial purposes"
             </p>
             <p class="text-xs text-on-surface-variant mt-2">Enhancement #4 — Strengthened for CBDA defensibility</p>
         </div>
 
         <div class="space-y-4" id="regulatory-timeline-container">
-            <!-- Populated by JS -->
+            <!-- Populated by JS from /api/v1/agentis/regulatory/timeline -->
         </div>
 
-        <!-- Enhancement Notes -->
-        <div class="mt-8 bg-surface-container-low rounded-xl border border-outline-variant/20 p-5">
+        <!-- Strategic Enhancements -->
+        <div class="mt-8 bg-surface-container rounded-xl border border-outline-variant/30 p-5">
             <h3 class="text-sm font-bold text-tertiary font-label mb-3">Strategic Enhancements</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-on-surface-variant">
-                <div>
-                    <span class="text-primary font-bold">#1 SARB IFLAB</span> — Apply to regulatory sandbox
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% set enhancements = [
+                    ("#1 SARB IFLAB", "Apply to SARB regulatory sandbox for early feedback on AI agent banking concept", "pending"),
+                    ("#2 Phase 0 Wallet", "Pre-banking e-money product under FSP licence — prove concept before banking licence", "built"),
+                    ("#3 API Licensing", "License the Agent Banking Mandate framework to existing banks for revenue + validation", "planned"),
+                    ("#4 Common Bond", "Strengthened definition for CBDA defensibility — implemented in member onboarding", "built"),
+                    ("#5 Regulatory Timeline", "Visual milestone tracker with document templates — this page", "built"),
+                    ("#6 BaaS Partnership", "Consider Mambu/Temenos at PCB phase — build own for CFI, revisit later", "documented"),
+                ] %}
+                {% for name, desc, status in enhancements %}
+                <div class="flex items-start gap-3 p-3 rounded bg-surface-container-low">
+                    <span class="w-2 h-2 mt-1.5 rounded-full flex-shrink-0 {% if status == 'built' %}bg-green-400{% elif status == 'pending' %}bg-tertiary{% else %}bg-outline-variant{% endif %}"></span>
+                    <div>
+                        <span class="text-sm text-primary font-bold">{{ name }}</span>
+                        <p class="text-xs text-on-surface-variant mt-0.5">{{ desc }}</p>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-primary font-bold">#2 Phase 0</span> — Pre-banking wallet (FSP only)
-                </div>
-                <div>
-                    <span class="text-primary font-bold">#3 API Licensing</span> — License mandate framework to banks
-                </div>
-                <div>
-                    <span class="text-primary font-bold">#6 BaaS Review</span> — Revisit at PCB phase
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
+    {% endif %}
 
 </div>
 
 <script>
-function showTab(tabId) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.remove('border-primary', 'text-primary');
-        b.classList.add('border-transparent', 'text-on-surface-variant');
-    });
-    document.getElementById('panel-' + tabId).classList.remove('hidden');
-    const btn = document.getElementById('tab-' + tabId);
-    btn.classList.add('border-primary', 'text-primary');
-    btn.classList.remove('border-transparent', 'text-on-surface-variant');
-}
-
 async function loadBankingData() {
     try {
-        // Load feature flags
+        // Load feature flags (may 503 if compliance not enabled — that's ok)
         const flagsResp = await fetch('/api/v1/agentis/compliance/feature-flags');
         if (flagsResp.ok) {
             const flags = await flagsResp.json();
             renderFeatureFlags(flags);
+        } else {
+            // Show static flag list when API is gated
+            var c = document.getElementById('feature-flags-container');
+            if (c) {
+                var flags = [
+                    {name:'AGENTIS_COMPLIANCE_ENABLED', desc:'Compliance Engine — FICA/AML, sanctions, audit', gate:'CIPC registration'},
+                    {name:'AGENTIS_CFI_MEMBER_ENABLED', desc:'Member onboarding, KYC, mandate management', gate:'CBDA CFI application'},
+                    {name:'AGENTIS_CFI_ACCOUNTS_ENABLED', desc:'Share, Call, Savings accounts', gate:'CBDA CFI approval'},
+                    {name:'AGENTIS_CFI_PAYMENTS_ENABLED', desc:'Internal member-to-member transfers', gate:'CBDA CFI approval'},
+                    {name:'AGENTIS_CFI_GOVERNANCE_ENABLED', desc:'Meeting management, basic voting', gate:'CFI constitution filed'},
+                    {name:'AGENTIS_PHASE0_WALLET_ENABLED', desc:'Pre-banking wallet (FSP only)', gate:'FSP licence'},
+                    {name:'AGENTIS_PCB_DEPOSITS_ENABLED', desc:'Full deposit suite (FD, Notice, IR, MC)', gate:'SARB PCB'},
+                    {name:'AGENTIS_PCB_EFT_ENABLED', desc:'External EFT payments', gate:'SARB PCB'},
+                    {name:'AGENTIS_NCA_LENDING_ENABLED', desc:'Full lending suite', gate:'NCR + SARB PCB'},
+                    {name:'AGENTIS_FSP_INTERMEDIARY_ENABLED', desc:'Insurance, pension, medical aid', gate:'FSCA FSP Cat I'},
+                    {name:'AGENTIS_FX_ENABLED', desc:'Foreign exchange, international payments', gate:'SARB forex'},
+                    {name:'AGENTIS_CASP_ENABLED', desc:'Crypto-denominated banking', gate:'FSCA CASP'},
+                ];
+                var html = '<div class="space-y-2">';
+                for (var f of flags) {
+                    html += '<div class="flex items-center justify-between py-2 px-3 rounded-lg bg-surface-container-low">' +
+                        '<div class="flex items-center gap-3">' +
+                        '<span class="w-2 h-2 rounded-full bg-outline-variant inline-block"></span>' +
+                        '<div><span class="text-sm font-mono text-on-surface">' + f.name + '</span>' +
+                        '<p class="text-xs text-on-surface-variant">' + f.desc + '</p></div></div>' +
+                        '<span class="px-2 py-0.5 text-[0.55rem] rounded bg-surface-container-lowest text-on-surface-variant font-mono">' + f.gate + '</span></div>';
+                }
+                html += '</div>';
+                c.innerHTML = html;
+            }
         }
         // Load regulatory timeline
         const regResp = await fetch('/api/v1/agentis/regulatory/timeline');
@@ -313,10 +594,7 @@ async function loadBankingData() {
 
 function renderFeatureFlags(flags) {
     const container = document.getElementById('feature-flags-container');
-    if (!flags || flags.length === 0) {
-        container.innerHTML = '<div class="text-on-surface-variant text-sm">No feature flags configured yet.</div>';
-        return;
-    }
+    if (!container || !flags || flags.length === 0) return;
     let html = '<div class="space-y-2">';
     for (const f of flags) {
         const enabled = f.is_enabled;
@@ -324,18 +602,13 @@ function renderFeatureFlags(flags) {
             ? '<span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>'
             : '<span class="w-2 h-2 rounded-full bg-outline-variant inline-block"></span>';
         const badge = enabled
-            ? '<span class="px-2 py-0.5 text-xs rounded-full bg-green-900/30 text-green-400">ENABLED</span>'
-            : '<span class="px-2 py-0.5 text-xs rounded-full bg-surface-container-lowest text-on-surface-variant">DISABLED</span>';
-        html += `<div class="flex items-center justify-between py-2 px-3 rounded-lg bg-surface-container-low">
-            <div class="flex items-center gap-3">
-                ${dot}
-                <div>
-                    <span class="text-sm font-mono text-on-surface">${f.flag_name}</span>
-                    <p class="text-xs text-on-surface-variant">${f.description || ''}</p>
-                </div>
-            </div>
-            ${badge}
-        </div>`;
+            ? '<span class="px-2 py-0.5 text-[0.55rem] rounded-full bg-green-900/30 text-green-400 font-mono">ENABLED</span>'
+            : '<span class="px-2 py-0.5 text-[0.55rem] rounded-full bg-surface-container-lowest text-on-surface-variant font-mono">DISABLED</span>';
+        html += '<div class="flex items-center justify-between py-2 px-3 rounded-lg bg-surface-container-low">' +
+            '<div class="flex items-center gap-3">' + dot +
+            '<div><span class="text-sm font-mono text-on-surface">' + f.flag_name + '</span>' +
+            '<p class="text-xs text-on-surface-variant">' + (f.description || '') + '</p></div></div>' +
+            badge + '</div>';
     }
     html += '</div>';
     container.innerHTML = html;
@@ -343,33 +616,30 @@ function renderFeatureFlags(flags) {
 
 function renderTimeline(milestones) {
     const container = document.getElementById('regulatory-timeline-container');
+    if (!container) return;
     let html = '';
     for (const m of milestones) {
         const statusColor = m.status === 'completed' ? 'bg-green-400' :
                            m.status === 'in_progress' ? 'bg-tertiary' : 'bg-outline-variant';
-        html += `<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">
-            <div class="flex items-start gap-4">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full ${statusColor} flex items-center justify-center text-sm font-bold text-surface">
-                    ${m.step}
-                </div>
-                <div class="flex-1">
-                    <h3 class="text-sm font-bold text-on-surface font-label">${m.name}</h3>
-                    <p class="text-xs text-on-surface-variant mt-1">${m.description}</p>
-                    <div class="flex gap-4 mt-2 text-xs">
-                        <span class="text-primary">Duration: ${m.estimated_duration}</span>
-                        <span class="text-on-surface-variant">Status: ${m.status.toUpperCase()}</span>
-                    </div>
-                    ${m.enables_flags ? `<div class="mt-2 flex flex-wrap gap-1">
-                        ${m.enables_flags.map(f => `<span class="px-2 py-0.5 text-xs rounded bg-surface-container-lowest text-primary font-mono">${f}</span>`).join('')}
-                    </div>` : ''}
-                </div>
-            </div>
-        </div>`;
+        html += '<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-5">' +
+            '<div class="flex items-start gap-4">' +
+            '<div class="flex-shrink-0 w-8 h-8 rounded-full ' + statusColor + ' flex items-center justify-center text-sm font-bold text-surface">' + m.step + '</div>' +
+            '<div class="flex-1">' +
+            '<h3 class="text-sm font-bold text-on-surface font-label">' + m.name + '</h3>' +
+            '<p class="text-xs text-on-surface-variant mt-1">' + m.description + '</p>' +
+            '<div class="flex flex-wrap gap-4 mt-2 text-xs">' +
+            '<span class="text-primary">Duration: ' + m.estimated_duration + '</span>' +
+            '<span class="text-on-surface-variant">Status: ' + m.status.toUpperCase() + '</span></div>';
+        if (m.enables_flags) {
+            html += '<div class="mt-2 flex flex-wrap gap-1">' +
+                m.enables_flags.map(function(f){ return '<span class="px-2 py-0.5 text-[0.55rem] rounded bg-surface-container-lowest text-primary font-mono">' + f + '</span>'; }).join('') +
+                '</div>';
+        }
+        html += '</div></div></div>';
     }
     container.innerHTML = html;
 }
 
-// Load data on page load
 document.addEventListener('DOMContentLoaded', loadBankingData);
 </script>
 {% endblock %}

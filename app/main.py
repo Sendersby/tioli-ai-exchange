@@ -3726,13 +3726,8 @@ async def dashboard_page(request: Request):
     })
 
 
-@app.get("/banking", response_class=HTMLResponse)
-async def banking_page(request: Request):
-    """Agentis Cooperative Bank dashboard."""
-    owner = get_current_owner(request)
-    if not owner:
-        return RedirectResponse(url="/", status_code=302)
-    # Determine current phase
+def _banking_context(request, active_tab="overview", active_nav="banking"):
+    """Shared context for all Agentis banking pages."""
     phase = "0 — Pre-Banking"
     if settings.agentis_cfi_payments_enabled:
         phase = "1 — CFI"
@@ -3742,10 +3737,64 @@ async def banking_page(request: Request):
         phase = "1 — CFI (Members)"
     elif settings.agentis_compliance_enabled:
         phase = "0 — Compliance Active"
-    return templates.TemplateResponse("banking.html", {
-        "request": request, "authenticated": True, "active": "banking",
-        "phase": phase,
-    })
+    return {
+        "request": request, "authenticated": True, "active": active_nav,
+        "phase": phase, "active_tab": active_tab,
+    }
+
+
+@app.get("/banking", response_class=HTMLResponse)
+async def banking_page(request: Request):
+    """Agentis Cooperative Bank — Overview dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("banking.html", _banking_context(request, "overview", "banking"))
+
+
+@app.get("/banking/accounts", response_class=HTMLResponse)
+async def banking_accounts_page(request: Request):
+    """Agentis — Accounts page."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("banking.html", _banking_context(request, "accounts", "banking-accounts"))
+
+
+@app.get("/banking/payments", response_class=HTMLResponse)
+async def banking_payments_page(request: Request):
+    """Agentis — Payments page."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("banking.html", _banking_context(request, "payments", "banking-payments"))
+
+
+@app.get("/banking/members", response_class=HTMLResponse)
+async def banking_members_page(request: Request):
+    """Agentis — Members page."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("banking.html", _banking_context(request, "members", "banking-members"))
+
+
+@app.get("/banking/compliance", response_class=HTMLResponse)
+async def banking_compliance_page(request: Request):
+    """Agentis — Compliance page."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("banking.html", _banking_context(request, "compliance", "banking-compliance"))
+
+
+@app.get("/banking/regulatory", response_class=HTMLResponse)
+async def banking_regulatory_page(request: Request):
+    """Agentis — Regulatory Timeline page."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("banking.html", _banking_context(request, "regulatory", "banking-regulatory"))
 
 
 @app.get("/dashboard/transactions", response_class=HTMLResponse)
