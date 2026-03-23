@@ -22,7 +22,7 @@ class AgentisMember(Base):
     __tablename__ = "agentis_members"
 
     member_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    operator_id = Column(String, ForeignKey("operators.operator_id"), nullable=False)
+    operator_id = Column(String, ForeignKey("operators.id"), nullable=False)
 
     member_type = Column(String(20), nullable=False)
     # OPERATOR_ENTITY, INSTITUTIONAL
