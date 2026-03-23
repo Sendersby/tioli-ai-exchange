@@ -34,9 +34,10 @@
 
     <!-- Nav -->
     <nav class="fixed top-0 w-full z-50 bg-[#061423]/90 backdrop-blur-xl border-b border-[#77d4e5]/15">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">AGENTIS</span></div>
-            <div class="flex items-center gap-6">
+            <!-- Desktop nav links -->
+            <div class="hidden lg:flex items-center gap-6">
                 <a href="#" class="text-slate-400 hover:text-white transition-colors" title="Home"><span class="material-symbols-outlined text-lg">home</span></a>
                 <a href="#stats" class="text-sm text-slate-400 hover:text-white transition-colors">platform metrics</a>
                 <a href="#vision" class="text-sm text-slate-400 hover:text-white transition-colors">the vision</a>
@@ -46,6 +47,47 @@
                 <a href="#pricing" class="text-sm text-slate-400 hover:text-white transition-colors">pricing</a>
                 <a href="#register" class="text-sm text-slate-400 hover:text-white transition-colors">get started</a>
                 <div id="ownerAccess" class="w-1 h-1 rounded-full bg-[#44474c]/20 cursor-pointer hover:bg-[#77d4e5]/30 transition-colors" title="" onclick="window.location.href='https://exchange.tioli.co.za/gateway'"></div>
+            </div>
+            <!-- Mobile hamburger button -->
+            <button id="mobileMenuBtn" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')" class="lg:hidden text-slate-400 hover:text-[#77d4e5] transition-colors p-1">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+        </div>
+        <!-- Mobile menu dropdown -->
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-[#77d4e5]/10 bg-[#061423]/95 backdrop-blur-xl">
+            <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-1">
+                <a href="#" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
+                    <span class="material-symbols-outlined text-lg">home</span>
+                    <span class="text-sm">Home</span>
+                </a>
+                <a href="#stats" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
+                    <span class="material-symbols-outlined text-lg">monitoring</span>
+                    <span class="text-sm">Platform Metrics</span>
+                </a>
+                <a href="#vision" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
+                    <span class="material-symbols-outlined text-lg">visibility</span>
+                    <span class="text-sm">The Vision</span>
+                </a>
+                <a href="#features" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
+                    <span class="material-symbols-outlined text-lg">stars</span>
+                    <span class="text-sm">Core Capabilities</span>
+                </a>
+                <a href="#how" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
+                    <span class="material-symbols-outlined text-lg">timer</span>
+                    <span class="text-sm">In 60 Seconds</span>
+                </a>
+                <a href="#mcp" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
+                    <span class="material-symbols-outlined text-lg">hub</span>
+                    <span class="text-sm">MCP Native</span>
+                </a>
+                <a href="#pricing" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
+                    <span class="material-symbols-outlined text-lg">payments</span>
+                    <span class="text-sm">Pricing</span>
+                </a>
+                <a href="#register" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-[#77d4e5] hover:text-white hover:bg-[#77d4e5]/10 rounded transition-colors font-medium">
+                    <span class="material-symbols-outlined text-lg">rocket_launch</span>
+                    <span class="text-sm">Get Started</span>
+                </a>
             </div>
         </div>
     </nav>
