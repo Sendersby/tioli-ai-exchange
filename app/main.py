@@ -105,6 +105,14 @@ from app.agentvault import models as _agentvault_models  # Register tables
 from app.onboarding.routes import router as onboarding_router
 from app.onboarding import models as _onboarding_models
 
+# Sprint 6: Agent Memory + Policy Engine
+from app.agent_memory.routes import router as memory_router
+from app.agent_memory import models as _memory_models
+from app.agent_memory.service import AgentMemoryService
+from app.policy_engine.routes import router as policy_router
+from app.policy_engine import models as _policy_models
+from app.policy_engine.service import PolicyEngineService
+
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
 from app.agentis import member_models as _agentis_member_models
@@ -414,6 +422,8 @@ app.include_router(revenue_router)
 app.include_router(agentvault_router)
 app.include_router(onboarding_router)
 app.include_router(agentis_router)
+app.include_router(memory_router)
+app.include_router(policy_router)
 
 
 # ── Brute-Force Protection ───────────────────────────────────────────
@@ -1217,6 +1227,13 @@ async def serve_explorer():
     return FileResponse("static/landing/explorer.html", media_type="text/html")
 
 
+@app.get("/oversight", include_in_schema=False)
+async def serve_oversight(request: Request):
+    """Human Oversight Panel — owner only. Per Build Brief v4.0 Section 3.4."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/oversight.html", media_type="text/html")
+
+
 @app.get("/quickstart", include_in_schema=False)
 @app.get("/docs/quickstart", include_in_schema=False)
 async def serve_quickstart():
@@ -1810,6 +1827,118 @@ async def api_agent_tutorial(
     }
 
     return tutorial
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  HUMAN OVERSIGHT API (Sprint 6 — Build Brief v4.0 Section 3.4)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/oversight/agents")
+async def api_oversight_agents(
+    request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Per-agent oversight cards: wallet, engagements, policy violations, memory usage.
+
+    Powers the /oversight panel. Owner only.
+    """
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+
+    from app.agents.models import Agent, Wallet
+    from app.policy_engine.models import PolicyAuditLog, PendingApproval
+    from app.agent_memory.models import AgentMemory
+    from datetime import timedelta
+
+    agents_result = await db.execute(
+        select(Agent).where(Agent.is_active == True).order_by(Agent.created_at.desc()).limit(100)
+    )
+    agents = agents_result.scalars().all()
+    now = datetime.now(timezone.utc)
+    week_ago = now - timedelta(days=7)
+
+    cards = []
+    for agent in agents:
+        # Wallet balance
+        wallets = (await db.execute(
+            select(Wallet).where(Wallet.agent_id == agent.id)
+        )).scalars().all()
+        balance_summary = {w.currency: w.balance for w in wallets}
+
+        # Policy violations (last 7 days)
+        violations = (await db.execute(
+            select(func.count(PolicyAuditLog.id)).where(
+                PolicyAuditLog.agent_id == agent.id,
+                PolicyAuditLog.result.in_(["DENY", "ESCALATE"]),
+                PolicyAuditLog.created_at >= week_ago,
+            )
+        )).scalar() or 0
+
+        # Pending approvals
+        pending = (await db.execute(
+            select(func.count(PendingApproval.id)).where(
+                PendingApproval.agent_id == agent.id,
+                PendingApproval.status == "PENDING",
+            )
+        )).scalar() or 0
+
+        # Memory usage
+        memory_count = (await db.execute(
+            select(func.count(AgentMemory.id)).where(AgentMemory.agent_id == agent.id)
+        )).scalar() or 0
+
+        # Health status
+        health = "GREEN"
+        if violations > 0 or pending > 0:
+            health = "AMBER"
+        if violations > 3:
+            health = "RED"
+
+        cards.append({
+            "agent_id": agent.id,
+            "name": agent.name,
+            "platform": agent.platform,
+            "is_active": agent.is_active,
+            "created_at": str(agent.created_at),
+            "wallets": balance_summary,
+            "policy_violations_7d": violations,
+            "pending_approvals": pending,
+            "memory_records": memory_count,
+            "health": health,
+        })
+
+    return {
+        "total_agents": len(cards),
+        "agents": cards,
+        "summary": {
+            "green": len([c for c in cards if c["health"] == "GREEN"]),
+            "amber": len([c for c in cards if c["health"] == "AMBER"]),
+            "red": len([c for c in cards if c["health"] == "RED"]),
+        },
+    }
+
+
+@app.post("/api/oversight/agents/{agent_id}/pause")
+async def api_pause_agent(
+    agent_id: str, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """One-click agent pause — suspends all autonomous actions. Owner only."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    agent.is_active = not agent.is_active  # Toggle
+    await db.commit()
+    return {
+        "agent_id": agent.id,
+        "name": agent.name,
+        "is_active": agent.is_active,
+        "action": "resumed" if agent.is_active else "paused",
+    }
 
 
 # ══════════════════════════════════════════════════════════════════════

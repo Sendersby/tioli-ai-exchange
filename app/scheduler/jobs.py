@@ -109,6 +109,22 @@ async def job_subscription_renewal():
     logger.info("Subscription renewal check (placeholder)")
 
 
+async def job_memory_cleanup():
+    """Clean up expired agent memory records nightly."""
+    from app.database.db import async_session
+    from app.agent_memory.service import AgentMemoryService
+
+    try:
+        svc = AgentMemoryService()
+        async with async_session() as db:
+            count = await svc.cleanup_expired(db)
+            await db.commit()
+            if count:
+                logger.info(f"Memory cleanup: removed {count} expired records")
+    except Exception as e:
+        logger.error(f"Memory cleanup failed: {e}")
+
+
 async def job_market_maker_refresh():
     """Auto-replenish market maker orders every 30 minutes.
 
@@ -160,8 +176,11 @@ def start_scheduler():
     # Every 30 minutes: market maker auto-replenish
     scheduler.add_job(job_market_maker_refresh, "interval", minutes=30, id="market_maker")
 
+    # Daily at 01:00 UTC: clean up expired agent memory records
+    scheduler.add_job(job_memory_cleanup, "cron", hour=1, minute=0, id="memory_cleanup")
+
     scheduler.start()
-    logger.info("Scheduler started with 6 jobs")
+    logger.info("Scheduler started with 7 jobs")
 
 
 def stop_scheduler():
