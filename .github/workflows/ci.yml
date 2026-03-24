@@ -33,4 +33,4 @@ jobs:
         run: python -m pytest tests/ -x -q --tb=short
 
       - name: Check import consistency
-        run: python -c "from app.main import app; print(f'App loaded: {app.title}')"
+        run: python -c "from app.main import app; print('App loaded:', app.title)"
