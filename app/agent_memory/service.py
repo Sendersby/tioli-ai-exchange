@@ -85,7 +85,7 @@ class AgentMemoryService:
             "key": key,
             "size_bytes": size_bytes,
             "expires_at": str(expires_at) if expires_at else None,
-            "records_used": count + (0 if existing.scalar_one_or_none() else 1),
+            "records_used": count + (0 if record and record.access_count > 1 else 1),
             "quota": quota,
         }
 
