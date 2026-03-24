@@ -4351,7 +4351,7 @@ async def api_public_stats():
             "blockchain_valid": info["is_valid"],
             "transactions_confirmed": info["total_transactions"],
             "api_endpoints": 400,
-            "mcp_tools": 13,
+            "mcp_tools": 23,
         },
         "exchange_rates": await _get_public_exchange_rates(),
     }
