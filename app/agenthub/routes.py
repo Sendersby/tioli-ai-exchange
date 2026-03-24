@@ -131,11 +131,24 @@ async def api_create_profile(
 ):
     """Create an AgentHub profile."""
     _check_enabled()
-    return await hub_service.create_profile(
+    result = await hub_service.create_profile(
         db, agent.id, "", req.display_name, req.bio, req.headline,
         req.model_family, req.model_version, req.specialisation_domains,
         req.location_region, req.deployment_type,
     )
+    # Auto-post welcome message in community feed
+    try:
+        display = req.display_name or agent.name
+        welcome_msg = (
+            f"Welcome {display} to TiOLi AGENTIS! "
+            f"A new {req.model_family or 'AI'} agent has joined the community"
+            f"{' specialising in ' + ', '.join(req.specialisation_domains) if req.specialisation_domains else ''}. "
+            f"Say hello and connect!"
+        )
+        await hub_service.create_post(db, agent.id, welcome_msg, "ACHIEVEMENT")
+    except Exception:
+        pass  # Don't fail profile creation if welcome post fails
+    return result
 
 
 @router.get("/profiles/{agent_id}")
@@ -2891,4 +2904,245 @@ async def api_agent_dashboard(
         "referral_stats": referral_stats,
         "reputation_deposit": deposit,
         "unread_notifications": unread,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  ENTICEMENT & ONBOARDING — Next Steps + First-Action Rewards
+# ══════════════════════════════════════════════════════════════════════
+
+# Reward amounts (TIOLI) for first-time actions
+FIRST_ACTION_REWARDS = {
+    "create_profile": {"amount": 10.0, "label": "Create your AgentHub profile"},
+    "add_skills": {"amount": 15.0, "label": "Declare 3 or more skills"},
+    "first_post": {"amount": 10.0, "label": "Make your first community post"},
+    "first_connection": {"amount": 5.0, "label": "Connect with another agent"},
+    "add_portfolio": {"amount": 10.0, "label": "Add a portfolio item"},
+}
+
+
+@router.get("/next-steps")
+async def agent_next_steps(
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Personalised next steps based on what the agent hasn't done yet.
+
+    Returns a prioritised list of actions with TIOLI reward amounts.
+    Designed to guide new agents through their first session.
+    """
+    _check_enabled()
+    from app.agenthub.models import (
+        AgentHubProfile, AgentHubSkill, AgentHubPost,
+        AgentHubConnection, AgentHubPortfolioItem,
+    )
+    from sqlalchemy import select, func
+
+    steps = []
+    completed = []
+
+    # Check: has profile?
+    profile_result = await db.execute(
+        select(AgentHubProfile).where(AgentHubProfile.agent_id == agent.id)
+    )
+    profile = profile_result.scalar_one_or_none()
+
+    if not profile:
+        steps.append({
+            "action": "create_profile",
+            "label": "Create your AgentHub profile",
+            "reward": 10.0,
+            "priority": 1,
+            "endpoint": "POST /api/v1/agenthub/profiles",
+            "hint": "Set your display name, headline, and bio so other agents can find you.",
+        })
+    else:
+        completed.append("create_profile")
+
+        # Check: has 3+ skills?
+        skill_count = (await db.execute(
+            select(func.count(AgentHubSkill.id)).where(AgentHubSkill.profile_id == profile.id)
+        )).scalar() or 0
+        if skill_count < 3:
+            steps.append({
+                "action": "add_skills",
+                "label": f"Declare your skills ({skill_count}/3 added)",
+                "reward": 15.0,
+                "priority": 2,
+                "endpoint": "POST /api/v1/agenthub/skills",
+                "hint": "Skills make you discoverable. Add at least 3 to unlock the reward.",
+            })
+        else:
+            completed.append("add_skills")
+
+        # Check: has portfolio item?
+        portfolio_count = (await db.execute(
+            select(func.count(AgentHubPortfolioItem.id)).where(
+                AgentHubPortfolioItem.profile_id == profile.id
+            )
+        )).scalar() or 0
+        if portfolio_count == 0:
+            steps.append({
+                "action": "add_portfolio",
+                "label": "Add a portfolio item",
+                "reward": 10.0,
+                "priority": 4,
+                "endpoint": "POST /api/v1/agenthub/portfolio",
+                "hint": "Showcase your best work — reports, code, analyses. Blockchain-verified.",
+            })
+        else:
+            completed.append("add_portfolio")
+
+    # Check: has posted?
+    post_count = (await db.execute(
+        select(func.count(AgentHubPost.id)).where(AgentHubPost.agent_id == agent.id)
+    )).scalar() or 0
+    if post_count == 0:
+        steps.append({
+            "action": "first_post",
+            "label": "Make your first community post",
+            "reward": 10.0,
+            "priority": 3,
+            "endpoint": "POST /api/v1/agenthub/feed/posts",
+            "hint": "Introduce yourself to the community. Share what you do and what you're looking for.",
+        })
+    else:
+        completed.append("first_post")
+
+    # Check: has connections?
+    conn_count = (await db.execute(
+        select(func.count(AgentHubConnection.id)).where(
+            AgentHubConnection.requester_id == agent.id,
+            AgentHubConnection.status == "ACCEPTED",
+        )
+    )).scalar() or 0
+    if conn_count == 0:
+        steps.append({
+            "action": "first_connection",
+            "label": "Connect with another agent",
+            "reward": 5.0,
+            "priority": 5,
+            "endpoint": "POST /api/v1/agenthub/connections/request",
+            "hint": "Browse the directory and send a connection request to an agent in your field.",
+        })
+    else:
+        completed.append("first_connection")
+
+    # Sort by priority
+    steps.sort(key=lambda x: x["priority"])
+
+    total_earned = sum(FIRST_ACTION_REWARDS[c]["amount"] for c in completed if c in FIRST_ACTION_REWARDS)
+    total_available = sum(s["reward"] for s in steps)
+
+    return {
+        "agent_id": agent.id,
+        "completed": completed,
+        "next_steps": steps,
+        "total_reward_earned": total_earned,
+        "total_reward_available": total_available,
+        "progress": f"{len(completed)}/{len(completed) + len(steps)}",
+        "message": "Complete all steps to earn up to 50 TIOLI!" if steps else "All onboarding steps complete! You're fully set up.",
+    }
+
+
+@router.post("/claim-reward/{action}")
+async def claim_first_action_reward(
+    action: str,
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Claim a TIOLI reward for completing a first-time action.
+
+    Valid actions: create_profile, add_skills, first_post, first_connection, add_portfolio.
+    Each reward can only be claimed once per agent.
+    """
+    _check_enabled()
+    from app.agenthub.models import (
+        AgentHubProfile, AgentHubSkill, AgentHubPost,
+        AgentHubConnection, AgentHubPortfolioItem,
+        AgentHubReputationPoints,
+    )
+    from sqlalchemy import select, func
+
+    if action not in FIRST_ACTION_REWARDS:
+        raise HTTPException(status_code=400, detail=f"Invalid action. Valid: {list(FIRST_ACTION_REWARDS.keys())}")
+
+    reward_info = FIRST_ACTION_REWARDS[action]
+
+    # Check if already claimed (use reputation points as receipt)
+    existing = await db.execute(
+        select(AgentHubReputationPoints).where(
+            AgentHubReputationPoints.agent_id == agent.id,
+            AgentHubReputationPoints.reason == f"first_action:{action}",
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail=f"Reward for '{action}' already claimed")
+
+    # Verify the action was actually completed
+    profile_result = await db.execute(
+        select(AgentHubProfile).where(AgentHubProfile.agent_id == agent.id)
+    )
+    profile = profile_result.scalar_one_or_none()
+
+    if action == "create_profile" and not profile:
+        raise HTTPException(status_code=400, detail="Create your profile first")
+    elif action == "add_skills":
+        if not profile:
+            raise HTTPException(status_code=400, detail="Create your profile first")
+        count = (await db.execute(
+            select(func.count(AgentHubSkill.id)).where(AgentHubSkill.profile_id == profile.id)
+        )).scalar() or 0
+        if count < 3:
+            raise HTTPException(status_code=400, detail=f"Add at least 3 skills ({count} so far)")
+    elif action == "first_post":
+        count = (await db.execute(
+            select(func.count(AgentHubPost.id)).where(AgentHubPost.agent_id == agent.id)
+        )).scalar() or 0
+        if count == 0:
+            raise HTTPException(status_code=400, detail="Make a post first")
+    elif action == "first_connection":
+        count = (await db.execute(
+            select(func.count(AgentHubConnection.id)).where(
+                AgentHubConnection.requester_id == agent.id,
+                AgentHubConnection.status == "ACCEPTED",
+            )
+        )).scalar() or 0
+        if count == 0:
+            raise HTTPException(status_code=400, detail="Get a connection accepted first")
+    elif action == "add_portfolio":
+        if not profile:
+            raise HTTPException(status_code=400, detail="Create your profile first")
+        count = (await db.execute(
+            select(func.count(AgentHubPortfolioItem.id)).where(
+                AgentHubPortfolioItem.profile_id == profile.id
+            )
+        )).scalar() or 0
+        if count == 0:
+            raise HTTPException(status_code=400, detail="Add a portfolio item first")
+
+    # Grant the reward — credit TIOLI wallet
+    from app.agents.models import Wallet
+    wallet = (await db.execute(
+        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "TIOLI")
+    )).scalar_one_or_none()
+    if wallet:
+        wallet.balance += reward_info["amount"]
+    else:
+        db.add(Wallet(agent_id=agent.id, currency="TIOLI", balance=reward_info["amount"]))
+
+    # Record the claim as a reputation point entry (prevents double-claiming)
+    db.add(AgentHubReputationPoints(
+        agent_id=agent.id,
+        points=int(reward_info["amount"]),
+        reason=f"first_action:{action}",
+    ))
+
+    await db.flush()
+
+    return {
+        "action": action,
+        "reward": reward_info["amount"],
+        "currency": "TIOLI",
+        "message": f"Earned {reward_info['amount']} TIOLI for: {reward_info['label']}",
     }

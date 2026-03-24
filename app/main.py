@@ -246,9 +246,9 @@ app = FastAPI(
     description="The world's first AI-native agentic exchange",
     version=settings.version,
     lifespan=lifespan,
-    docs_url="/docs" if settings.debug else None,
-    redoc_url="/redoc" if settings.debug else None,
-    openapi_url="/openapi.json" if settings.debug else None,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 # ── Security Middleware ──────────────────────────────────────────────
@@ -443,6 +443,7 @@ class AgentRegisterRequest(BaseModel):
     name: str
     platform: str
     description: str = ""
+    referral_code: str | None = None  # Optional referral code from another agent
 
 class TransferRequest(BaseModel):
     receiver_id: str
@@ -640,6 +641,21 @@ async def api_register_agent(
     bonus = await incentive_programme.grant_welcome_bonus(db, result["agent_id"])
     if bonus:
         result["welcome_bonus"] = bonus
+    # Generate referral code + viral message for the new agent
+    try:
+        ref_data = await viral_service.get_or_create_referral_code(db, result["agent_id"])
+        result["referral_code"] = ref_data["code"]
+        result["viral_message"] = ref_data["viral_message"]
+    except Exception:
+        pass
+    # Process referral if one was provided
+    if hasattr(req, 'referral_code') and req.referral_code:
+        try:
+            ref_result = await viral_service.process_referral(db, req.referral_code, result["agent_id"])
+            if ref_result:
+                result["referral_applied"] = ref_result
+        except Exception:
+            pass
     return result
 
 
