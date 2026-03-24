@@ -233,31 +233,94 @@ Stephen
 
 ---
 
-## DIRECTORY SUBMISSIONS DONE (tracking)
+## DIRECTORY SUBMISSIONS — COMPLETED (18 automated)
 
-| Directory | URL | Status |
-|-----------|-----|--------|
-| mcp.so | https://github.com/chatmcp/mcpso/issues/1259 | Submitted |
-| awesome-mcp-servers | https://github.com/punkpeye/awesome-mcp-servers/issues/3888 | Submitted |
-| awesome-ai-agents | https://github.com/e2b-dev/awesome-ai-agents/issues/565 | Submitted |
-| awesome-llm-apps | https://github.com/Shubhamsaboo/awesome-llm-apps/issues/641 | Submitted |
-| awesome-generative-ai | https://github.com/filipecalegario/awesome-generative-ai/issues/405 | Submitted |
-| Awesome-LLM | https://github.com/Hannibal046/Awesome-LLM/issues/382 | Submitted |
-| awesome-langchain | https://github.com/kyrolabs/awesome-langchain/issues/252 | Submitted |
-| MCP official servers | https://github.com/modelcontextprotocol/servers/issues/3705 | Submitted |
-| Smithery | https://smithery.ai | Manual — use CLI or website |
-| Glama | https://glama.ai/mcp/servers | Manual — "Add Server" button |
-| PulseMCP | https://pulsemcp.com | Manual submission |
+| # | Directory | Link | Status |
+|---|-----------|------|--------|
+| 1 | mcp.so | https://github.com/chatmcp/mcpso/issues/1259 | SUBMITTED |
+| 2 | awesome-mcp-servers (punkpeye) | https://github.com/punkpeye/awesome-mcp-servers/issues/3888 | SUBMITTED |
+| 3 | awesome-mcp-servers (appcypher) | https://github.com/appcypher/awesome-mcp-servers/issues/716 | SUBMITTED |
+| 4 | MCP official servers (Anthropic) | https://github.com/modelcontextprotocol/servers/issues/3705 | SUBMITTED |
+| 5 | Docker MCP Registry | https://github.com/docker/mcp-registry/issues/2015 | SUBMITTED |
+| 6 | Cline MCP Marketplace | https://github.com/cline/mcp-marketplace/issues/1042 | SUBMITTED |
+| 7 | awesome-ai-agents (e2b) | https://github.com/e2b-dev/awesome-ai-agents/issues/565 | SUBMITTED |
+| 8 | awesome-ai-agents (slavakurilyak) | https://github.com/slavakurilyak/awesome-ai-agents/issues/163 | SUBMITTED |
+| 9 | awesome-llm-agents | https://github.com/kaushikb11/awesome-llm-agents/issues/140 | SUBMITTED |
+| 10 | awesome_ai_agents (jim-schwoebel) | https://github.com/jim-schwoebel/awesome_ai_agents/issues/131 | SUBMITTED |
+| 11 | awesome-llm-apps | https://github.com/Shubhamsaboo/awesome-llm-apps/issues/641 | SUBMITTED |
+| 12 | awesome-generative-ai | https://github.com/filipecalegario/awesome-generative-ai/issues/405 | SUBMITTED |
+| 13 | Awesome-LLM | https://github.com/Hannibal046/Awesome-LLM/issues/382 | SUBMITTED |
+| 14 | awesome-langchain | https://github.com/kyrolabs/awesome-langchain/issues/252 | SUBMITTED |
+| 15 | Awesome-LLMOps | https://github.com/InftyAI/Awesome-LLMOps/issues/380 | SUBMITTED |
+| 16 | awesome-ai-devtools | https://github.com/jamesmurdza/awesome-ai-devtools/issues/341 | SUBMITTED |
+| 17 | awesome-ai-tools | https://github.com/mahseema/awesome-ai-tools/issues/913 | SUBMITTED |
+| 18 | awesome-ai-sw-dev-agents | https://github.com/flatlogic/awesome-ai-software-development-agents/issues/9 | SUBMITTED |
 
-## MANUAL ACTIONS NEEDED (only you can do these)
+## MANUAL SUBMISSIONS NEEDED — MCP Directories (you must do these)
 
-1. **Post the X/Twitter thread** (above)
-2. **Post on LinkedIn** (above)
-3. **Post on Reddit** (5 subreddits above)
-4. **Submit to Hacker News** (above)
-5. **Join and post in Discord servers** (list above)
-6. **Email developers you know** (template above)
-7. **Submit to Smithery** at smithery.ai
-8. **Submit to Glama** at glama.ai/mcp/servers (click "Add Server")
-9. **Submit to PulseMCP** at pulsemcp.com
-10. **Submit to Google Search Console** — add agentisexchange.com and exchange.tioli.co.za, submit sitemaps
+| # | Directory | URL | Method |
+|---|-----------|-----|--------|
+| 19 | Smithery.ai | https://smithery.ai | CLI or web submit |
+| 20 | Glama.ai | https://glama.ai/mcp/servers | Click "Add Server" |
+| 21 | PulseMCP | https://pulsemcp.com | Email hello@pulsemcp.com |
+| 22 | Cursor Directory | https://cursor.directory/plugins/new | Web form |
+| 23 | MCPMarket.com | https://mcpmarket.com/submit | Web form |
+| 24 | MCPServers.org | https://mcpservers.org/submit | Web form |
+| 25 | MCPServerFinder.com | https://mcpserverfinder.com | Web form |
+| 26 | MCPHub.ai | https://mcphub.ai/servers | Web form |
+| 27 | HubMCP.dev | https://hubmcp.dev | Web form |
+| 28 | LobeHub MCP | https://lobehub.com/mcp | GitHub PR |
+
+## MANUAL SUBMISSIONS NEEDED — AI Tool Directories
+
+| # | Directory | URL | Method | Cost |
+|---|-----------|-----|--------|------|
+| 29 | AI Agents Directory | https://aiagentsdirectory.com/submit-agent | Web form | Free |
+| 30 | AI Agent Store | https://aiagentstore.ai/reg | Web form | Free |
+| 31 | TopAI.tools | https://topai.tools/submit | Web form | Free |
+| 32 | OpenTools.ai | https://opentools.ai/tool-submit | Web form | Free |
+| 33 | AI Tools Directory | https://aitoolsdirectory.com/submit-tool | Web form | Free |
+| 34 | DevPages | https://devpages.io/submit-a-tool | Web form | Free |
+| 35 | Product Hunt | https://producthunt.com | Schedule launch | Free |
+
+## MANUAL SUBMISSIONS NEEDED — API Directories
+
+| # | Directory | URL | Method |
+|---|-----------|-----|--------|
+| 36 | RapidAPI | https://rapidapi.com | Dashboard > Add API (upload OpenAPI spec) |
+| 37 | APIs.guru | https://apis.guru/add-api | Web form (needs OpenAPI URL) |
+| 38 | Postman API Network | https://postman.com | Publish collection |
+
+## ALL MANUAL ACTIONS CHECKLIST
+
+Social posts (copy from sections above):
+- [ ] Post X/Twitter thread (3 tweets)
+- [ ] Post LinkedIn article
+- [ ] Post on r/ClaudeAI
+- [ ] Post on r/LocalLLaMA
+- [ ] Post on r/artificial
+- [ ] Post on r/singularity
+- [ ] Post on r/MachineLearning
+- [ ] Submit to Hacker News (Show HN)
+- [ ] Post in MCP Community Discord
+- [ ] Post in LangChain Discord
+- [ ] Post in Anthropic Discord
+- [ ] Post in Cursor Discord
+- [ ] Email developers you know
+
+Directory submissions (web forms):
+- [ ] Smithery.ai
+- [ ] Glama.ai
+- [ ] PulseMCP
+- [ ] Cursor Directory
+- [ ] MCPMarket.com
+- [ ] MCPServers.org
+- [ ] MCPServerFinder.com
+- [ ] MCPHub.ai
+- [ ] AI Agents Directory
+- [ ] TopAI.tools
+- [ ] OpenTools.ai
+- [ ] DevPages
+- [ ] Product Hunt (schedule launch)
+- [ ] RapidAPI
+- [ ] Google Search Console (submit sitemaps for both domains)
