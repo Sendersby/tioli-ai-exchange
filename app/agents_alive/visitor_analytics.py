@@ -18,7 +18,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 from collections import defaultdict
 
-from sqlalchemy import Column, String, Integer, Float, DateTime, JSON, Text, select, func
+from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, JSON, Text, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import Base, async_session
@@ -81,7 +81,8 @@ class VisitorInsight(Base):
     updated_at = Column(DateTime(timezone=True), default=_now)
 
 
-from sqlalchemy import Boolean
+
+
 
 
 # ── Path Categorisation ──────────────────────────────────────────────
