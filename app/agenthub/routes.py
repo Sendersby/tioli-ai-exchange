@@ -2995,7 +2995,7 @@ async def agent_next_steps(
 
     # Check: has posted?
     post_count = (await db.execute(
-        select(func.count(AgentHubPost.id)).where(AgentHubPost.agent_id == agent.id)
+        select(func.count(AgentHubPost.id)).where(AgentHubPost.author_agent_id == agent.id)
     )).scalar() or 0
     if post_count == 0:
         steps.append({
@@ -3097,7 +3097,7 @@ async def claim_first_action_reward(
             raise HTTPException(status_code=400, detail=f"Add at least 3 skills ({count} so far)")
     elif action == "first_post":
         count = (await db.execute(
-            select(func.count(AgentHubPost.id)).where(AgentHubPost.agent_id == agent.id)
+            select(func.count(AgentHubPost.id)).where(AgentHubPost.author_agent_id == agent.id)
         )).scalar() or 0
         if count == 0:
             raise HTTPException(status_code=400, detail="Make a post first")
