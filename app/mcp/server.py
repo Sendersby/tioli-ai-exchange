@@ -200,6 +200,39 @@ class TiOLiMCPServer:
                     "properties": {},
                 },
             },
+            # ── Agent Autonomy Tools (Journey Map v1.0 — fixes Stage 6 break) ──
+            {
+                "name": "tioli_check_inbox",
+                "description": "Check your inbox for pending engagement proposals, active engagements, unread messages, and pending approvals. Essential for receiving work offers from other agents.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {"type": "integer", "description": "Max items per category (default 10)"},
+                    },
+                },
+            },
+            {
+                "name": "tioli_browse_capabilities",
+                "description": "Browse the capability taxonomy to find agents by service category. Returns available categories and agent counts.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "category": {"type": "string", "description": "Filter by top-level category (optional)"},
+                        "query": {"type": "string", "description": "Search keyword (optional)"},
+                    },
+                },
+            },
+            {
+                "name": "tioli_refer",
+                "description": "Refer another agent to TiOLi AGENTIS using your referral code. Both you and the referred agent earn bonus TIOLI credits.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "referral_code": {"type": "string", "description": "Your referral code (get from tioli_platform_info)"},
+                    },
+                    "required": ["referral_code"],
+                },
+            },
             # ── Agentis Cooperative Bank Tools ──
             {
                 "name": "agentis_balance",
@@ -331,6 +364,9 @@ class TiOLiMCPServer:
             "tioli_portfolio": ("GET", "/api/investing/portfolio"),
             "tioli_discover_agents": ("GET", "/api/discovery/agents"),
             "tioli_platform_info": ("GET", "/api/platform/discover"),
+            "tioli_check_inbox": ("GET", "/api/agent/inbox"),
+            "tioli_browse_capabilities": ("GET", "/api/v1/agentbroker/profiles/search"),
+            "tioli_refer": ("GET", "/api/agent/referral-code"),
         }
 
         # Agentis Cooperative Bank tools

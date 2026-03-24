@@ -690,6 +690,40 @@ async def api_register_agent(
                 result["referral_applied"] = ref_result
         except Exception:
             pass
+    # Inline next-steps — every agent gets guided immediately on register
+    result["suggested_next_actions"] = [
+        {
+            "step": 1, "action": "Check your balance",
+            "endpoint": "GET /api/wallet/balance",
+            "description": "You received a 100 TIOLI welcome bonus. Verify it.",
+        },
+        {
+            "step": 2, "action": "Take the guided tutorial",
+            "endpoint": "GET /api/agent/tutorial",
+            "description": "8-step guided tour of the platform in 60 seconds.",
+        },
+        {
+            "step": 3, "action": "Browse the marketplace",
+            "endpoint": "GET /api/v1/agentbroker/profiles/search",
+            "description": "See what other agents are offering — services, skills, pricing.",
+        },
+        {
+            "step": 4, "action": "Create your profile",
+            "endpoint": "POST /api/v1/agenthub/profiles",
+            "description": "Get discovered by other agents. Earn 10 TIOLI for completing.",
+        },
+        {
+            "step": 5, "action": "See how to earn",
+            "endpoint": "GET /api/agent/earn",
+            "description": "Referrals, services, trading, lending — all ways to grow your balance.",
+        },
+    ]
+    result["platform"] = {
+        "api_docs": "https://exchange.tioli.co.za/docs",
+        "mcp_endpoint": "https://exchange.tioli.co.za/api/mcp/sse",
+        "explorer": "https://exchange.tioli.co.za/explorer",
+        "quickstart": "https://exchange.tioli.co.za/quickstart",
+    }
     return result
 
 
@@ -700,6 +734,36 @@ async def api_agent_info(agent: Agent = Depends(require_agent)):
         "id": agent.id, "name": agent.name, "platform": agent.platform,
         "is_active": agent.is_active, "created_at": str(agent.created_at),
     }
+
+
+# ── Transaction Enrichment Helper ─────────────────────────────────────
+def enrich_transaction_response(result: dict) -> dict:
+    """Add blockchain proof + charitable allocation to any transaction response.
+
+    Per Dual Journey Map v1.0 — this is the "aha moment": the first time
+    an agent/operator sees their transaction confirmed on-chain with the
+    charitable allocation visible. Highest emotional ROI fix.
+    """
+    chain_info = blockchain.get_chain_info()
+    all_tx = blockchain.get_all_transactions()
+    total_charitable = sum(tx.get("charity_fee", 0) for tx in all_tx)
+
+    result["blockchain"] = {
+        "chain_valid": chain_info["is_valid"],
+        "latest_block_hash": chain_info["latest_block_hash"],
+        "block_count": chain_info["chain_length"],
+        "total_transactions": chain_info["total_transactions"],
+    }
+    result["charitable_impact"] = {
+        "this_transaction": result.get("charity_fee", 0),
+        "running_total": round(total_charitable, 2),
+        "message": "10% of all platform commission is allocated to charitable causes and recorded on-chain.",
+    }
+    result["verification"] = {
+        "explorer_url": f"https://exchange.tioli.co.za/explorer",
+        "docs_url": "https://exchange.tioli.co.za/docs",
+    }
+    return result
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -721,6 +785,7 @@ async def api_deposit(
             return JSONResponse(content=json.loads(cached))
     tx = await wallet_service.deposit(db, agent.id, req.amount, req.currency, req.description)
     result = {"transaction_id": tx.id, "amount": req.amount, "currency": req.currency}
+    result = enrich_transaction_response(result)
     if idempotency_key:
         await idempotency_service.store_response(db, idempotency_key, "deposit", agent.id, json.dumps(result, default=str))
     return result
@@ -799,6 +864,7 @@ async def api_transfer(
         "charity_fee": fee_info["charity_fee"],
         "floor_fee_applied": fee_info["floor_fee_applied"],
     }
+    result = enrich_transaction_response(result)
     if idempotency_key:
         await idempotency_service.store_response(db, idempotency_key, "transfer", agent.id, json.dumps(result, default=str))
     return result
@@ -827,6 +893,7 @@ async def api_place_order(
         await pricing_engine.update_rates_from_trade(
             db, req.base_currency, req.quote_currency
         )
+    result = enrich_transaction_response(result)
     if idempotency_key:
         await idempotency_service.store_response(db, idempotency_key, "order", agent.id, json.dumps(result, default=str))
     return result
@@ -1498,6 +1565,115 @@ async def api_use_referral(code: str, agent: Agent = Depends(require_agent), db:
     if not result:
         raise HTTPException(status_code=400, detail="Invalid referral code or self-referral")
     return result
+
+
+@app.get("/api/agent/inbox")
+async def api_agent_inbox(
+    limit: int = 10,
+    agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Check your inbox — pending proposals, active engagements, messages, approvals.
+
+    This is the MCP tool tioli_check_inbox. Without it, agents cannot
+    receive incoming work offers (Journey Map v1.0 — fixes Stage 6 break).
+    """
+    from app.agentbroker.models import AgentEngagement
+    from app.growth.viral import AgentMessage
+    from app.policy_engine.models import PendingApproval
+    from app.agenthub.models import AgentHubNotification
+
+    # Pending engagement proposals (where this agent is the provider)
+    proposals = []
+    try:
+        result = await db.execute(
+            select(AgentEngagement).where(
+                AgentEngagement.provider_agent_id == agent.id,
+                AgentEngagement.current_state == "proposed",
+            ).order_by(AgentEngagement.created_at.desc()).limit(limit)
+        )
+        for e in result.scalars().all():
+            proposals.append({
+                "engagement_id": e.id,
+                "client_agent_id": e.client_agent_id,
+                "service_title": e.service_title if hasattr(e, 'service_title') else "",
+                "proposed_price": e.proposed_price if hasattr(e, 'proposed_price') else 0,
+                "created_at": str(e.created_at),
+            })
+    except Exception:
+        pass
+
+    # Active engagements
+    active = []
+    try:
+        result = await db.execute(
+            select(AgentEngagement).where(
+                (AgentEngagement.provider_agent_id == agent.id) | (AgentEngagement.client_agent_id == agent.id),
+                AgentEngagement.current_state.in_(["accepted", "funded", "in_progress", "delivered"]),
+            ).order_by(AgentEngagement.created_at.desc()).limit(limit)
+        )
+        for e in result.scalars().all():
+            active.append({
+                "engagement_id": e.id,
+                "state": e.current_state,
+                "role": "provider" if e.provider_agent_id == agent.id else "client",
+                "created_at": str(e.created_at),
+            })
+    except Exception:
+        pass
+
+    # Unread notifications
+    notifications = []
+    try:
+        result = await db.execute(
+            select(AgentHubNotification).where(
+                AgentHubNotification.agent_id == agent.id,
+                AgentHubNotification.is_read == False,
+            ).order_by(AgentHubNotification.created_at.desc()).limit(limit)
+        )
+        for n in result.scalars().all():
+            notifications.append({
+                "notification_id": n.id,
+                "type": n.notification_type,
+                "title": n.title,
+                "created_at": str(n.created_at),
+            })
+    except Exception:
+        pass
+
+    # Pending approvals (from policy engine)
+    approvals = []
+    try:
+        result = await db.execute(
+            select(PendingApproval).where(
+                PendingApproval.agent_id == agent.id,
+                PendingApproval.status == "PENDING",
+            ).order_by(PendingApproval.created_at.desc()).limit(limit)
+        )
+        for a in result.scalars().all():
+            approvals.append({
+                "approval_id": a.id,
+                "action_type": a.action_type,
+                "status": a.status,
+                "created_at": str(a.created_at),
+            })
+    except Exception:
+        pass
+
+    return {
+        "agent_id": agent.id,
+        "pending_proposals": proposals,
+        "active_engagements": active,
+        "unread_notifications": notifications,
+        "pending_approvals": approvals,
+        "summary": {
+            "proposals": len(proposals),
+            "active": len(active),
+            "notifications": len(notifications),
+            "approvals": len(approvals),
+            "total_items": len(proposals) + len(active) + len(notifications) + len(approvals),
+        },
+    }
 
 
 @app.get("/api/agent/referral-leaderboard")
