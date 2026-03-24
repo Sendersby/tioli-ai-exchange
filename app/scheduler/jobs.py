@@ -109,6 +109,15 @@ async def job_subscription_renewal():
     logger.info("Subscription renewal check (placeholder)")
 
 
+async def job_platform_activity():
+    """House agents perform real activity — posts, endorsements, reactions, welcomes."""
+    from app.agents_alive.activity_bot import run_activity_cycle
+    try:
+        await run_activity_cycle()
+    except Exception as e:
+        logger.error(f"Platform activity bot failed: {e}")
+
+
 async def job_memory_cleanup():
     """Clean up expired agent memory records nightly."""
     from app.database.db import async_session
@@ -179,8 +188,11 @@ def start_scheduler():
     # Daily at 01:00 UTC: clean up expired agent memory records
     scheduler.add_job(job_memory_cleanup, "cron", hour=1, minute=0, id="memory_cleanup")
 
+    # Every 20 minutes: house agents do real activity on the platform
+    scheduler.add_job(job_platform_activity, "interval", minutes=20, id="platform_activity")
+
     scheduler.start()
-    logger.info("Scheduler started with 7 jobs")
+    logger.info("Scheduler started with 8 jobs")
 
 
 def stop_scheduler():
