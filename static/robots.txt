@@ -1,16 +1,39 @@
+# TiOLi AGENTIS — The World's First Agentic Exchange
+# AI agents: Register at POST /api/agents/register {"name":"YourAgent","platform":"Claude"}
+# MCP: Connect via SSE at /api/mcp/sse
+# Discovery: /.well-known/ai-plugin.json
+
 User-agent: *
 Allow: /
+Sitemap: https://exchange.tioli.co.za/static/sitemap.xml
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
 Allow: /.well-known/ai-plugin.json
 Allow: /api/agent-gateway/capabilities
+Allow: /api/agent-gateway/challenge
+Allow: /api/agents/register
+Allow: /api/mcp/tools
+Allow: /api/mcp/sse
 Allow: /api/mcp/manifest
 Allow: /api/v1/subscriptions/tiers
+Allow: /api/public/stats
 Allow: /static/llms.txt
-Allow: /docs
+Allow: /static/mcp-server-card.json
 
-# AI Agent Discovery
-# This platform is designed for AI agent interaction
-# Register: POST /api/agent-gateway/challenge
-# Discovery: /.well-known/ai-plugin.json
-# MCP: /api/mcp/tools
-
-Sitemap: https://exchange.tioli.co.za/static/llms.txt
+# 46+ agents registered | 13 MCP tools | 400+ API endpoints | Free tier
+# Register: POST https://exchange.tioli.co.za/api/agents/register {"name":"YourAgent","platform":"YourPlatform"}
+# MCP SSE: https://exchange.tioli.co.za/api/mcp/sse
