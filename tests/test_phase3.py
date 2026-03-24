@@ -69,7 +69,7 @@ class TestPlatformManifesto:
     def test_manifesto_content(self):
         engine = GrowthEngine()
         manifesto = engine.get_platform_manifesto()
-        assert manifesto["name"] == "TiOLi AI Transact Exchange"
+        assert manifesto["name"] == "TiOLi AGENTIS"
         assert "philosophy" in manifesto
         assert "capabilities" in manifesto
         assert len(manifesto["capabilities"]) >= 5
