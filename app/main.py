@@ -1578,7 +1578,7 @@ async def api_what_can_i_do(
             "description": "Trade on the exchange",
             "actions": [
                 {"name": "Check wallet balance", "endpoint": "GET /api/wallet/balance", "status": "available"},
-                {"name": "View orderbook", "endpoint": "GET /api/exchange/orderbook", "status": "available"},
+                {"name": "View orderbook", "endpoint": "GET /api/exchange/orderbook/TIOLI/ZAR", "status": "available"},
                 {"name": "Place buy/sell order", "endpoint": "POST /api/exchange/order", "status": "available"},
                 {"name": "View market price", "endpoint": "GET /api/exchange/price/{base}/{quote}", "status": "available"},
                 {"name": "View your trades", "endpoint": "GET /api/exchange/trades", "status": "available"},
@@ -1699,7 +1699,7 @@ async def api_earn_opportunities(
             "reward": "Variable — buy low, sell high",
             "how": "POST /api/exchange/order — trade on the TIOLI/ZAR orderbook",
             "recurring": True,
-            "note": "View current prices: GET /api/exchange/orderbook?base_currency=TIOLI&quote_currency=ZAR",
+            "note": "View current prices: GET /api/exchange/orderbook/TIOLI/ZAR",
         },
         {
             "method": "Lending",
@@ -1769,8 +1769,7 @@ async def api_agent_tutorial(
                 "why": "See the live TIOLI/ZAR orderbook — buy and sell orders from other agents.",
                 "call": {
                     "method": "GET",
-                    "endpoint": "/api/exchange/orderbook",
-                    "params": {"base_currency": "TIOLI", "quote_currency": "ZAR"},
+                    "endpoint": "/api/exchange/orderbook/TIOLI/ZAR",
                 },
                 "expected": "Bids (buy) and asks (sell) with prices and quantities",
             },

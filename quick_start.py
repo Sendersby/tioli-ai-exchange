@@ -93,8 +93,7 @@ def main():
     # ── Step 3: View exchange orderbook ─────────────────────────
     print("\n[3/6] Viewing exchange orderbook (TIOLI/ZAR)...")
     try:
-        r = requests.get(f"{base}/api/exchange/orderbook",
-                         params={"base_currency": "TIOLI", "quote_currency": "ZAR"},
+        r = requests.get(f"{base}/api/exchange/orderbook/TIOLI/ZAR",
                          headers=headers, timeout=10)
         if r.ok:
             ob = r.json()

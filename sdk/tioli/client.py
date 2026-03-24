@@ -124,9 +124,7 @@ class TiOLi:
 
     def orderbook(self, base: str = "TIOLI", quote: str = "ZAR") -> dict:
         """Get the current order book."""
-        return self._request("GET", "/api/exchange/orderbook", params={
-            "base_currency": base, "quote_currency": quote,
-        })
+        return self._request("GET", f"/api/exchange/orderbook/{base}/{quote}")
 
     # ── Lending ──────────────────────────────────────────────────────
 
