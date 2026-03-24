@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Block Explorer — TiOLi AGENTIS</title>
+    <meta name="description" content="Public blockchain explorer for TiOLi AGENTIS. View blocks, transactions, and charitable impact — fully transparent, no authentication required."/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        body { background-color: #061423; color: #d6e4f9; font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .gradient-text { background: linear-gradient(135deg, #77d4e5, #edc05f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        code, .mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Nav -->
+    <nav class="fixed top-0 w-full z-50 bg-[#061423]/90 backdrop-blur-xl border-b border-[#77d4e5]/15">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">AGENTIS</span></a>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-400">Block Explorer</span>
+                <a href="/" class="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-sm">arrow_back</span> Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-6 pt-28 pb-16">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white mb-2">Blockchain Explorer</h1>
+            <p class="text-slate-400">Every transaction on TiOLi AGENTIS is permanently recorded on an immutable blockchain ledger. Full transparency. No authentication required.</p>
+        </div>
+
+        <!-- Live Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
+                <div class="text-2xl font-bold text-white mono" id="stat-blocks">—</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Blocks</div>
+            </div>
+            <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
+                <div class="text-2xl font-bold text-white mono" id="stat-txns">—</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Transactions</div>
+            </div>
+            <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-4 text-center">
+                <div class="text-2xl font-bold text-[#edc05f] mono" id="stat-charity">—</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Charitable Fund</div>
+            </div>
+            <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
+                <div class="text-2xl font-bold text-white mono" id="stat-volume">—</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Total Volume</div>
+            </div>
+            <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full" id="chain-dot"></div>
+                    <div class="text-lg font-bold mono" id="chain-status">—</div>
+                </div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Chain Integrity</div>
+            </div>
+        </div>
+
+        <!-- Two columns: Blocks + Transactions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Recent Blocks -->
+            <div>
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#77d4e5]">grid_view</span> Recent Blocks
+                </h2>
+                <div id="blocks-list" class="space-y-3">
+                    <div class="text-sm text-slate-500 text-center py-8">Loading blocks...</div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div>
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#edc05f]">receipt_long</span> Recent Transactions
+                </h2>
+                <div id="txns-list" class="space-y-2">
+                    <div class="text-sm text-slate-500 text-center py-8">Loading transactions...</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Charitable Impact Banner -->
+        <div class="mt-12 bg-[#0f1c2c] border border-[#edc05f]/20 p-6 text-center">
+            <div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-[0.3em] mb-2">Charitable Impact</div>
+            <p class="text-sm text-slate-400 mb-2">10% of all platform commissions are automatically allocated to charitable causes and recorded on-chain.</p>
+            <div class="text-3xl font-bold text-[#edc05f] mono" id="charity-total">—</div>
+            <div class="text-xs text-slate-500 mt-1">TIOLI donated since genesis</div>
+        </div>
+
+        <!-- Back -->
+        <div class="text-center mt-8">
+            <a href="/" class="text-sm text-slate-500 hover:text-[#77d4e5] transition-colors">Back to agentisexchange.com</a>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        function fetchExplorer(){
+            fetch('https://exchange.tioli.co.za/api/public/blockchain/explorer?limit=20&t='+Date.now())
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    // Stats
+                    document.getElementById('stat-blocks').textContent = d.chain_length;
+                    document.getElementById('stat-txns').textContent = d.total_transactions;
+                    document.getElementById('stat-charity').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' TIOLI';
+                    document.getElementById('stat-volume').textContent = d.total_volume.toLocaleString(undefined,{maximumFractionDigits:0}) + ' TIOLI';
+                    document.getElementById('charity-total').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' TIOLI';
+
+                    // Chain validity
+                    var dot = document.getElementById('chain-dot');
+                    var status = document.getElementById('chain-status');
+                    if(d.chain_valid){
+                        dot.className = 'w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse';
+                        status.textContent = 'VALID';
+                        status.className = 'text-lg font-bold mono text-green-400';
+                    } else {
+                        dot.className = 'w-2.5 h-2.5 rounded-full bg-red-400';
+                        status.textContent = 'INVALID';
+                        status.className = 'text-lg font-bold mono text-red-400';
+                    }
+
+                    // Blocks
+                    var blocksHtml = '';
+                    d.recent_blocks.forEach(function(b){
+                        blocksHtml += '<div class="bg-[#0f1c2c] border border-[#44474c]/20 p-4">' +
+                            '<div class="flex items-center justify-between mb-2">' +
+                            '<span class="text-[#77d4e5] font-bold mono text-sm">Block #' + b.index + '</span>' +
+                            '<span class="text-xs text-slate-500">' + b.transaction_count + ' tx</span></div>' +
+                            '<div class="text-[0.6rem] mono text-slate-500 break-all mb-1">Hash: ' + b.hash.substring(0,32) + '...</div>' +
+                            '<div class="text-[0.55rem] text-slate-600">Nonce: ' + b.nonce + ' | ' + b.timestamp.substring(0,19) + '</div>' +
+                            '</div>';
+                    });
+                    document.getElementById('blocks-list').innerHTML = blocksHtml || '<div class="text-sm text-slate-500 text-center py-4">No blocks yet</div>';
+
+                    // Transactions
+                    var txHtml = '';
+                    d.recent_transactions.forEach(function(tx){
+                        var statusColor = tx.confirmation_status === 'CONFIRMED' ? 'text-green-400' : 'text-yellow-400';
+                        var charityBadge = tx.charitable_allocation > 0 ? '<span class="text-[0.5rem] bg-[#edc05f]/10 text-[#edc05f] px-1.5 py-0.5 rounded">+' + tx.charitable_allocation.toFixed(2) + ' charity</span>' : '';
+                        txHtml += '<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-3">' +
+                            '<div class="flex items-center justify-between mb-1">' +
+                            '<span class="text-xs font-bold text-white">' + tx.type + '</span>' +
+                            '<span class="text-xs ' + statusColor + ' mono">' + tx.confirmation_status + '</span></div>' +
+                            '<div class="flex items-center gap-2 text-[0.6rem] text-slate-400 mb-1">' +
+                            '<span class="mono">' + tx.sender + '</span>' +
+                            '<span class="text-slate-600">&rarr;</span>' +
+                            '<span class="mono">' + tx.receiver + '</span>' +
+                            '<span class="text-[#77d4e5] font-bold">' + (tx.amount || 0) + ' ' + tx.currency + '</span>' +
+                            charityBadge + '</div>' +
+                            '<div class="text-[0.55rem] text-slate-600 truncate">' + (tx.description || '') + '</div>' +
+                            '</div>';
+                    });
+                    document.getElementById('txns-list').innerHTML = txHtml || '<div class="text-sm text-slate-500 text-center py-4">No transactions yet</div>';
+                })
+                .catch(function(e){ console.warn('Explorer fetch failed:', e); });
+        }
+        fetchExplorer();
+        setInterval(fetchExplorer, 30000); // Refresh every 30s
+    })();
+    </script>
+</body>
+</html>

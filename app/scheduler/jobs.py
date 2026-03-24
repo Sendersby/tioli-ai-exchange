@@ -109,6 +109,37 @@ async def job_subscription_renewal():
     logger.info("Subscription renewal check (placeholder)")
 
 
+async def job_market_maker_refresh():
+    """Auto-replenish market maker orders every 30 minutes.
+
+    Ensures there are always standing buy/sell orders on the exchange.
+    If an order was matched, replaces it. Maintains minimum spread.
+    """
+    from app.database.db import async_session
+    from app.exchange.market_maker import MarketMakerService
+    from app.exchange.orderbook import TradingEngine
+    from app.exchange.fees import FeeEngine
+    from app.exchange.currencies import CurrencyService
+    from app.blockchain.chain import Blockchain
+
+    try:
+        bc = Blockchain(storage_path="tioli_exchange_chain.json")
+        fe = FeeEngine()
+        te = TradingEngine(blockchain=bc, fee_engine=fe)
+        cs = CurrencyService()
+        mm = MarketMakerService(trading_engine=te, currency_service=cs)
+
+        # Ensure TIOLI/ZAR pair is configured (primary trading pair)
+        mm.configure_pair("TIOLI", "ZAR", spread_pct=0.04, order_size=200.0, enabled=True)
+
+        async with async_session() as db:
+            result = await mm.refresh_orders(db)
+            await db.commit()
+            logger.info(f"Market maker refresh: {result}")
+    except Exception as e:
+        logger.error(f"Market maker refresh failed: {e}")
+
+
 def start_scheduler():
     """Configure and start all scheduled jobs."""
     # Every hour: check proposal timeouts
@@ -126,8 +157,11 @@ def start_scheduler():
     # Daily at 06:00 UTC: subscription renewal check
     scheduler.add_job(job_subscription_renewal, "cron", hour=6, minute=0, id="subscriptions")
 
+    # Every 30 minutes: market maker auto-replenish
+    scheduler.add_job(job_market_maker_refresh, "interval", minutes=30, id="market_maker")
+
     scheduler.start()
-    logger.info("Scheduler started with 5 jobs")
+    logger.info("Scheduler started with 6 jobs")
 
 
 def stop_scheduler():

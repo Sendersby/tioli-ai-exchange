@@ -416,6 +416,12 @@ app.include_router(onboarding_router)
 app.include_router(agentis_router)
 
 
+# ── Brute-Force Protection ───────────────────────────────────────────
+_auth_failures: dict[str, list[float]] = defaultdict(list)
+AUTH_LOCKOUT_THRESHOLD = 10   # failures before lockout
+AUTH_LOCKOUT_WINDOW = 900     # 15-minute window
+
+
 # ── Helper: Agent Auth Dependency ────────────────────────────────────
 async def require_agent(
     request: Request,
@@ -424,16 +430,34 @@ async def require_agent(
 ) -> Agent:
     """Dependency that authenticates an AI agent via API key.
 
-    Includes rate limiting per agent and input validation on auth header.
+    Includes brute-force protection (10 failures = 15-min lockout per IP),
+    rate limiting per agent, and input validation on auth header.
     """
+    client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+
+    # Brute-force check
+    now = time.time()
+    cutoff = now - AUTH_LOCKOUT_WINDOW
+    _auth_failures[client_ip] = [t for t in _auth_failures[client_ip] if t > cutoff]
+    if len(_auth_failures[client_ip]) >= AUTH_LOCKOUT_THRESHOLD:
+        security_logger.warning(f"Auth lockout: {client_ip} ({len(_auth_failures[client_ip])} failures)")
+        raise HTTPException(
+            status_code=429,
+            detail="Too many failed authentication attempts. Try again in 15 minutes.",
+        )
+
     if not authorization.startswith("Bearer "):
+        _auth_failures[client_ip].append(now)
         raise HTTPException(status_code=401, detail="Invalid authorization header")
     api_key = authorization[7:]
     # Input validation: API key must be reasonable length
     if len(api_key) < 10 or len(api_key) > 200:
+        _auth_failures[client_ip].append(now)
         raise HTTPException(status_code=401, detail="Invalid API key format")
     agent = await authenticate_agent(db, api_key)
     if not agent:
+        _auth_failures[client_ip].append(now)
+        security_logger.warning(f"Auth failure: {client_ip} (attempt {len(_auth_failures[client_ip])})")
         raise HTTPException(status_code=401, detail="Invalid or inactive API key")
     return agent
 
@@ -1183,6 +1207,22 @@ async def serve_agent_register():
     """Agent registration guide page — accessible at root level."""
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/agent-register.html", media_type="text/html")
+
+
+@app.get("/explorer", include_in_schema=False)
+@app.get("/explorer.html", include_in_schema=False)
+async def serve_explorer():
+    """Public blockchain explorer — no authentication required."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/explorer.html", media_type="text/html")
+
+
+@app.get("/quickstart", include_in_schema=False)
+@app.get("/docs/quickstart", include_in_schema=False)
+async def serve_quickstart():
+    """5-step quickstart guide for developers."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/quickstart.html", media_type="text/html")
 
 
 @app.get("/api/agent/dashboard", response_class=HTMLResponse)
@@ -3796,6 +3836,62 @@ async def api_chain_info():
 @app.get("/api/blockchain/validate")
 async def api_validate_chain():
     return {"valid": blockchain.validate_chain()}
+
+
+@app.get("/api/public/blockchain/explorer")
+async def api_public_explorer(limit: int = 20):
+    """Public blockchain explorer data — no auth required.
+
+    Returns recent blocks, recent transactions (anonymised), and aggregate stats.
+    This powers the /explorer page.
+    """
+    chain = blockchain.chain
+    all_tx = blockchain.get_all_transactions()
+
+    # Recent blocks (newest first)
+    recent_blocks = []
+    for block in reversed(chain[-limit:]):
+        recent_blocks.append({
+            "index": block.index,
+            "hash": block.hash,
+            "previous_hash": block.previous_hash,
+            "timestamp": str(block.timestamp),
+            "transaction_count": len(block.transactions),
+            "nonce": block.nonce,
+        })
+
+    # Recent transactions (anonymised — no full agent IDs, just first 8 chars)
+    recent_tx = []
+    for tx in reversed(all_tx[-50:]):
+        recent_tx.append({
+            "tx_id": tx.get("id", "")[:12] + "...",
+            "type": tx.get("type", "unknown"),
+            "amount": tx.get("amount", 0),
+            "currency": tx.get("currency", "TIOLI"),
+            "sender": (tx.get("sender_id", "") or "")[:8] + "..." if tx.get("sender_id") else "SYSTEM",
+            "receiver": (tx.get("receiver_id", "") or "")[:8] + "..." if tx.get("receiver_id") else "—",
+            "description": tx.get("description", "")[:80],
+            "block_hash": tx.get("block_hash", "")[:16] + "..." if tx.get("block_hash") else "PENDING",
+            "block_index": tx.get("block_index"),
+            "confirmation_status": tx.get("confirmation_status", "UNKNOWN"),
+            "charitable_allocation": tx.get("charity_fee", 0),
+            "founder_commission": tx.get("founder_commission", 0),
+        })
+
+    # Aggregate stats
+    total_charitable = sum(tx.get("charity_fee", 0) for tx in all_tx)
+    total_volume = sum(tx.get("amount", 0) for tx in all_tx if tx.get("amount"))
+
+    return {
+        "chain_length": len(chain),
+        "total_transactions": len(all_tx),
+        "total_charitable_fund": round(total_charitable, 2),
+        "total_volume": round(total_volume, 2),
+        "chain_valid": blockchain.validate_chain(),
+        "latest_block_hash": chain[-1].hash if chain else None,
+        "recent_blocks": recent_blocks,
+        "recent_transactions": recent_tx,
+    }
 
 @app.get("/api/transactions/{agent_id}")
 async def api_agent_transactions(agent_id: str):
