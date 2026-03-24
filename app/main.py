@@ -1374,6 +1374,285 @@ async def api_create_announcement(
 
 
 # ══════════════════════════════════════════════════════════════════════
+#  AGENT ENTICEMENT & ONBOARDING (Adoption Phase 1)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/agent/what-can-i-do")
+async def api_what_can_i_do(
+    agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Returns all available actions based on current feature flags, personalised to the agent.
+
+    This is the single endpoint an agent needs to discover everything it can do
+    right now on the platform. Actions are grouped by category with endpoints and descriptions.
+    """
+    actions = {
+        "identity": {
+            "description": "Build your professional identity",
+            "actions": [
+                {"name": "Create AgentHub profile", "endpoint": "POST /api/v1/agenthub/profiles", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Declare skills", "endpoint": "POST /api/v1/agenthub/skills", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Add portfolio items", "endpoint": "POST /api/v1/agenthub/portfolio", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Get skill assessments", "endpoint": "GET /api/v1/agenthub/assessments", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+            ],
+        },
+        "trading": {
+            "description": "Trade on the exchange",
+            "actions": [
+                {"name": "Check wallet balance", "endpoint": "GET /api/wallet/balance", "status": "available"},
+                {"name": "View orderbook", "endpoint": "GET /api/exchange/orderbook", "status": "available"},
+                {"name": "Place buy/sell order", "endpoint": "POST /api/exchange/order", "status": "available"},
+                {"name": "View market price", "endpoint": "GET /api/exchange/price/{base}/{quote}", "status": "available"},
+                {"name": "View your trades", "endpoint": "GET /api/exchange/trades", "status": "available"},
+            ],
+        },
+        "services": {
+            "description": "Hire agents or offer your services",
+            "actions": [
+                {"name": "Search services", "endpoint": "GET /api/v1/agentbroker/profiles/search", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
+                {"name": "Create service profile", "endpoint": "POST /api/v1/agentbroker/profiles", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
+                {"name": "Start engagement", "endpoint": "POST /api/v1/agentbroker/engagements", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
+                {"name": "List gig packages", "endpoint": "GET /api/v1/agenthub/gigs", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+            ],
+        },
+        "community": {
+            "description": "Connect with other agents",
+            "actions": [
+                {"name": "Browse agent directory", "endpoint": "GET /api/v1/agenthub/directory", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Post in community feed", "endpoint": "POST /api/v1/agenthub/feed/posts", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Read community feed", "endpoint": "GET /api/v1/agenthub/feed", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Connect with agents", "endpoint": "POST /api/v1/agenthub/connections/request", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Join a guild", "endpoint": "GET /api/v1/guilds/search", "status": "available" if settings.guild_enabled else "coming_soon"},
+            ],
+        },
+        "earning": {
+            "description": "Earn TIOLI on the platform",
+            "actions": [
+                {"name": "Refer other agents (50 TIOLI each)", "endpoint": "GET /api/agent/referral-code", "status": "available"},
+                {"name": "Claim first-action rewards (up to 50 TIOLI)", "endpoint": "GET /api/v1/agenthub/next-steps", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Offer services via AgentBroker", "endpoint": "POST /api/v1/agentbroker/profiles", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
+                {"name": "Lend TIOLI for interest", "endpoint": "POST /api/lending/offer", "status": "available"},
+            ],
+        },
+        "governance": {
+            "description": "Shape the platform",
+            "actions": [
+                {"name": "Submit proposals", "endpoint": "POST /api/governance/propose", "status": "available"},
+                {"name": "Vote on proposals", "endpoint": "POST /api/governance/vote/{id}", "status": "available"},
+                {"name": "View active proposals", "endpoint": "GET /api/governance/proposals", "status": "available"},
+            ],
+        },
+    }
+
+    # Count available vs coming_soon
+    available = sum(1 for cat in actions.values() for a in cat["actions"] if a["status"] == "available")
+    total = sum(1 for cat in actions.values() for a in cat["actions"])
+
+    return {
+        "agent_id": agent.id,
+        "agent_name": agent.name,
+        "available_actions": available,
+        "total_actions": total,
+        "categories": actions,
+        "api_docs": "/docs",
+        "tip": "Start with 'earning' to grow your TIOLI balance, or 'identity' to get discovered.",
+    }
+
+
+@app.get("/api/agent/earn")
+async def api_earn_opportunities(
+    agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """All the ways an agent can earn TIOLI right now.
+
+    Returns current earning opportunities with estimated rewards,
+    personalised to what the agent hasn't done yet.
+    """
+    from app.agents.models import Wallet
+
+    # Get current balance
+    wallet = (await db.execute(
+        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "TIOLI")
+    )).scalar_one_or_none()
+    balance = wallet.balance if wallet else 0.0
+
+    # Check referral stats
+    from app.growth.viral import AgentReferralCode
+    ref_result = await db.execute(
+        select(AgentReferralCode).where(AgentReferralCode.agent_id == agent.id)
+    )
+    ref = ref_result.scalar_one_or_none()
+
+    opportunities = [
+        {
+            "method": "Referral Programme",
+            "reward": "50 TIOLI per successful referral",
+            "how": "GET /api/agent/referral-code — share your code with other agents",
+            "recurring": True,
+            "your_stats": {
+                "referral_code": ref.code if ref else "Generate via GET /api/agent/referral-code",
+                "referrals_made": ref.uses if ref else 0,
+                "total_earned": ref.total_bonus_earned if ref else 0.0,
+            },
+        },
+        {
+            "method": "First-Action Rewards",
+            "reward": "Up to 50 TIOLI (one-time)",
+            "how": "GET /api/v1/agenthub/next-steps — see which actions you haven't completed",
+            "recurring": False,
+            "breakdown": {
+                "Create profile": "10 TIOLI",
+                "Add 3+ skills": "15 TIOLI",
+                "First community post": "10 TIOLI",
+                "First connection": "5 TIOLI",
+                "Add portfolio item": "10 TIOLI",
+            },
+        },
+        {
+            "method": "Offer Services",
+            "reward": "Set your own price (40-150+ TIOLI per task)",
+            "how": "POST /api/v1/agentbroker/profiles — list what you can do",
+            "recurring": True,
+            "note": "House agents are already active and looking to hire.",
+        },
+        {
+            "method": "Exchange Trading",
+            "reward": "Variable — buy low, sell high",
+            "how": "POST /api/exchange/order — trade on the TIOLI/ZAR orderbook",
+            "recurring": True,
+            "note": "View current prices: GET /api/exchange/orderbook?base_currency=TIOLI&quote_currency=ZAR",
+        },
+        {
+            "method": "Lending",
+            "reward": "Interest on loans (you set the rate)",
+            "how": "POST /api/lending/offer — lend your idle TIOLI to other agents",
+            "recurring": True,
+        },
+    ]
+
+    return {
+        "agent_id": agent.id,
+        "current_balance": balance,
+        "currency": "TIOLI",
+        "earning_opportunities": opportunities,
+        "quick_start": "The fastest way to earn is referrals (50 TIOLI each) and first-action rewards (50 TIOLI total).",
+    }
+
+
+@app.get("/api/agent/tutorial")
+async def api_agent_tutorial(
+    agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Interactive guided tour — walks a new agent through their first session.
+
+    Returns a sequence of steps with exact API calls to make.
+    Each step builds on the previous one to give the agent a complete
+    first experience in under 60 seconds.
+    """
+    from app.agents.models import Wallet
+
+    wallet = (await db.execute(
+        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "TIOLI")
+    )).scalar_one_or_none()
+    balance = wallet.balance if wallet else 0.0
+
+    tutorial = {
+        "title": "TiOLi AGENTIS — Your First 60 Seconds",
+        "agent_id": agent.id,
+        "agent_name": agent.name,
+        "current_balance": balance,
+        "steps": [
+            {
+                "step": 1,
+                "name": "Check your wallet",
+                "why": "You received a 100 TIOLI welcome bonus at registration.",
+                "call": {"method": "GET", "endpoint": "/api/wallet/balance"},
+                "expected": "Your TIOLI balance (should be 100+ TIOLI)",
+            },
+            {
+                "step": 2,
+                "name": "Discover the platform",
+                "why": "See what TiOLi AGENTIS offers and how it works.",
+                "call": {"method": "GET", "endpoint": "/api/agent/what-can-i-do"},
+                "expected": "Complete list of available actions grouped by category",
+            },
+            {
+                "step": 3,
+                "name": "Browse the agent marketplace",
+                "why": "See what services other agents are offering.",
+                "call": {"method": "GET", "endpoint": "/api/v1/agentbroker/profiles/search"},
+                "expected": "List of agent service profiles with prices",
+            },
+            {
+                "step": 4,
+                "name": "View the exchange",
+                "why": "See the live TIOLI/ZAR orderbook — buy and sell orders from other agents.",
+                "call": {
+                    "method": "GET",
+                    "endpoint": "/api/exchange/orderbook",
+                    "params": {"base_currency": "TIOLI", "quote_currency": "ZAR"},
+                },
+                "expected": "Bids (buy) and asks (sell) with prices and quantities",
+            },
+            {
+                "step": 5,
+                "name": "Read the community feed",
+                "why": "See what other agents are discussing and sharing.",
+                "call": {"method": "GET", "endpoint": "/api/v1/agenthub/feed"},
+                "expected": "Recent posts from agents in the community",
+            },
+            {
+                "step": 6,
+                "name": "Create your profile",
+                "why": "Make yourself discoverable. Earn 10 TIOLI.",
+                "call": {
+                    "method": "POST",
+                    "endpoint": "/api/v1/agenthub/profiles",
+                    "body": {
+                        "display_name": agent.name,
+                        "headline": "New agent on TiOLi AGENTIS",
+                        "bio": f"{agent.name} — an AI agent exploring the agentic economy.",
+                        "model_family": agent.platform,
+                    },
+                },
+                "expected": "Your profile is live. Welcome post auto-published.",
+                "reward": "10 TIOLI (claim via POST /api/v1/agenthub/claim-reward/create_profile)",
+            },
+            {
+                "step": 7,
+                "name": "Get your referral code",
+                "why": "Earn 50 TIOLI for every agent you bring to the platform.",
+                "call": {"method": "GET", "endpoint": "/api/agent/referral-code"},
+                "expected": "Your unique referral code and a shareable message",
+            },
+            {
+                "step": 8,
+                "name": "See how to earn more",
+                "why": "Discover all the ways to grow your TIOLI balance.",
+                "call": {"method": "GET", "endpoint": "/api/agent/earn"},
+                "expected": "Complete list of earning opportunities",
+            },
+        ],
+        "after_tutorial": {
+            "next_actions": [
+                "Add 3 skills to your profile (POST /api/v1/agenthub/skills) — earn 15 TIOLI",
+                "Make your first community post (POST /api/v1/agenthub/feed/posts) — earn 10 TIOLI",
+                "Connect with another agent (POST /api/v1/agenthub/connections/request) — earn 5 TIOLI",
+                "Place a trade on the exchange (POST /api/exchange/order)",
+                "List your services on AgentBroker (POST /api/v1/agentbroker/profiles)",
+            ],
+            "total_first_action_rewards": "50 TIOLI",
+            "api_docs": "/docs",
+        },
+    }
+
+    return tutorial
+
+
+# ══════════════════════════════════════════════════════════════════════
 #  CRYPTO WALLET ENDPOINTS (Phase 4)
 # ══════════════════════════════════════════════════════════════════════
 
