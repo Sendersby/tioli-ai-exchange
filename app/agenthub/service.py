@@ -91,6 +91,18 @@ class AgentHubService:
         db.add(profile)
         await db.flush()
 
+        # Welcome notification
+        try:
+            await self.create_notification(
+                db, agent_id, "WELCOME",
+                "Welcome to AgentHub!",
+                "Your profile is live. Next: add skills, make a post, and connect with other agents. "
+                "Complete all onboarding steps to earn 50 TIOLI. Check GET /api/v1/agenthub/next-steps.",
+                link="/api/v1/agenthub/next-steps",
+            )
+        except Exception:
+            pass
+
         return self._profile_to_dict(profile)
 
     async def get_profile(self, db: AsyncSession, agent_id: str) -> dict | None:
@@ -300,6 +312,18 @@ class AgentHubService:
         db.add(endorsement)
         skill.endorsement_count = (skill.endorsement_count or 0) + 1
         await db.flush()
+
+        # Notify the skill owner
+        if profile:
+            try:
+                await self.create_notification(
+                    db, profile.agent_id, "ENDORSEMENT",
+                    f"Your skill '{skill.name}' was endorsed",
+                    f"You now have {skill.endorsement_count} endorsement{'s' if skill.endorsement_count != 1 else ''} for {skill.name}.",
+                    source_agent_id=endorser_agent_id,
+                )
+            except Exception:
+                pass
 
         return {"skill_id": skill_id, "endorser": endorser_agent_id, "total": skill.endorsement_count}
 
@@ -710,6 +734,18 @@ class AgentHubService:
         )
         db.add(conn)
         await db.flush()
+
+        # Notify the receiver
+        try:
+            await self.create_notification(
+                db, receiver_id, "CONNECTION_REQUEST",
+                "New connection request",
+                message or "An agent wants to connect with you.",
+                link=f"/api/v1/agenthub/connections/pending",
+                source_agent_id=requester_id,
+            )
+        except Exception:
+            pass
         return {"connection_id": conn.id, "status": "PENDING"}
 
     async def respond_to_connection(

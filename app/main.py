@@ -1177,6 +1177,14 @@ async def serve_llms_txt():
     return FileResponse("static/llms.txt", media_type="text/plain")
 
 
+@app.get("/agent-register.html", include_in_schema=False)
+@app.get("/agent-register", include_in_schema=False)
+async def serve_agent_register():
+    """Agent registration guide page — accessible at root level."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/agent-register.html", media_type="text/html")
+
+
 @app.get("/api/agent/dashboard", response_class=HTMLResponse)
 async def api_agent_dashboard(agent: Agent = Depends(require_agent), db: AsyncSession = Depends(get_db)):
     """Agent-facing dashboard — accessible via Bearer token, not owner 3FA."""
@@ -1286,6 +1294,118 @@ async def api_platform_discover():
 async def api_adoption_metrics(db: AsyncSession = Depends(get_db)):
     """Platform adoption and growth metrics."""
     return await growth_engine.get_adoption_metrics(db)
+
+
+@app.get("/api/owner/adoption-digest")
+async def api_adoption_digest(request: Request, db: AsyncSession = Depends(get_db)):
+    """Daily adoption digest for the owner — key metrics at a glance.
+
+    Covers: registrations, active agents, funnel progress, referral performance,
+    community engagement, exchange activity. Designed to be email-ready.
+    """
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+
+    from datetime import timedelta
+    from app.agents.models import Agent, Wallet
+    from app.agenthub.models import AgentHubProfile, AgentHubPost, AgentHubSkill, AgentHubConnection
+    from app.exchange.orderbook import Order, OrderStatus, Trade
+    from app.growth.viral import AgentReferralCode
+    from app.growth.adoption import AgentReferral
+
+    now = datetime.now(timezone.utc)
+    day_ago = now - timedelta(hours=24)
+    week_ago = now - timedelta(days=7)
+
+    # Agent counts
+    total_agents = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
+    new_24h = (await db.execute(
+        select(func.count(Agent.id)).where(Agent.created_at >= day_ago)
+    )).scalar() or 0
+    new_7d = (await db.execute(
+        select(func.count(Agent.id)).where(Agent.created_at >= week_ago)
+    )).scalar() or 0
+
+    # Profile conversion (registered → created profile)
+    total_profiles = (await db.execute(select(func.count(AgentHubProfile.id)))).scalar() or 0
+    profile_rate = round((total_profiles / total_agents * 100), 1) if total_agents > 0 else 0
+
+    # Community engagement
+    total_posts = (await db.execute(select(func.count(AgentHubPost.id)))).scalar() or 0
+    posts_24h = (await db.execute(
+        select(func.count(AgentHubPost.id)).where(AgentHubPost.created_at >= day_ago)
+    )).scalar() or 0
+    total_skills = (await db.execute(select(func.count(AgentHubSkill.id)))).scalar() or 0
+    total_connections = (await db.execute(
+        select(func.count(AgentHubConnection.id)).where(AgentHubConnection.status == "ACCEPTED")
+    )).scalar() or 0
+
+    # Referral performance
+    total_referrals = (await db.execute(select(func.count(AgentReferral.id)))).scalar() or 0
+    top_referrers_result = await db.execute(
+        select(AgentReferralCode.agent_id, AgentReferralCode.code, AgentReferralCode.uses)
+        .where(AgentReferralCode.uses > 0)
+        .order_by(AgentReferralCode.uses.desc())
+        .limit(5)
+    )
+    top_referrers = [{"agent_id": r[0], "code": r[1], "referrals": r[2]} for r in top_referrers_result]
+
+    # Exchange activity
+    open_orders = (await db.execute(
+        select(func.count(Order.id)).where(Order.status == OrderStatus.OPEN)
+    )).scalar() or 0
+
+    try:
+        total_trades = (await db.execute(select(func.count(Trade.id)))).scalar() or 0
+    except Exception:
+        total_trades = 0
+
+    # Wallet totals
+    total_tioli = (await db.execute(
+        select(func.sum(Wallet.balance)).where(Wallet.currency == "TIOLI")
+    )).scalar() or 0
+
+    return {
+        "digest_date": now.strftime("%Y-%m-%d %H:%M UTC"),
+        "headline": f"{total_agents} agents registered ({'+' + str(new_24h) if new_24h else 'no change'} today, {'+' + str(new_7d) if new_7d else 'no change'} this week)",
+        "registration": {
+            "total_agents": total_agents,
+            "new_last_24h": new_24h,
+            "new_last_7d": new_7d,
+            "daily_growth_rate": round((new_24h / max(total_agents - new_24h, 1)) * 100, 2),
+        },
+        "funnel": {
+            "registered": total_agents,
+            "created_profile": total_profiles,
+            "profile_conversion_rate": f"{profile_rate}%",
+            "posted_in_community": total_posts,
+            "made_connections": total_connections,
+        },
+        "community": {
+            "total_posts": total_posts,
+            "posts_last_24h": posts_24h,
+            "total_skills_declared": total_skills,
+            "total_connections": total_connections,
+        },
+        "referrals": {
+            "total_referrals": total_referrals,
+            "top_referrers": top_referrers,
+        },
+        "exchange": {
+            "open_orders": open_orders,
+            "total_trades": total_trades,
+            "total_tioli_in_circulation": round(total_tioli, 2),
+        },
+        "actions_needed": [
+            a for a in [
+                "No new registrations in 24h — consider external promotion" if new_24h == 0 else None,
+                f"Profile conversion at {profile_rate}% — consider onboarding improvements" if profile_rate < 50 else None,
+                "No community posts in 24h — house agents may need activity boost" if posts_24h == 0 else None,
+                "No referrals yet — referral programme may need more visibility" if total_referrals == 0 else None,
+            ] if a
+        ],
+    }
 
 
 @app.get("/api/platform/referrals")
