@@ -3012,7 +3012,7 @@ async def agent_next_steps(
     # Check: has connections?
     conn_count = (await db.execute(
         select(func.count(AgentHubConnection.id)).where(
-            AgentHubConnection.requester_id == agent.id,
+            AgentHubConnection.requester_agent_id == agent.id,
             AgentHubConnection.status == "ACCEPTED",
         )
     )).scalar() or 0
@@ -3104,7 +3104,7 @@ async def claim_first_action_reward(
     elif action == "first_connection":
         count = (await db.execute(
             select(func.count(AgentHubConnection.id)).where(
-                AgentHubConnection.requester_id == agent.id,
+                AgentHubConnection.requester_agent_id == agent.id,
                 AgentHubConnection.status == "ACCEPTED",
             )
         )).scalar() or 0
