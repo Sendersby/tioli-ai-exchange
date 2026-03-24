@@ -113,6 +113,11 @@ from app.policy_engine.routes import router as policy_router
 from app.policy_engine import models as _policy_models
 from app.policy_engine.service import PolicyEngineService
 
+# Intelligent Agents — register models for table creation
+from app.agents_alive import hydra_outreach as _hydra_models
+from app.agents_alive import visitor_analytics as _visitor_models
+from app.agents_alive import community_catalyst as _catalyst_models
+
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
 from app.agentis import member_models as _agentis_member_models
@@ -331,7 +336,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Log all requests for security auditing."""
+    """Log all requests for security auditing + visitor analytics."""
     async def dispatch(self, request: Request, call_next):
         client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
         start = time.time()
@@ -341,6 +346,24 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             f"{request.method} {request.url.path} {response.status_code} "
             f"{duration_ms}ms ip={client_ip}"
         )
+        # Feed visitor analytics (non-blocking, best-effort)
+        if "/api/" in request.url.path and "/public/" not in request.url.path:
+            try:
+                from app.agents_alive.visitor_analytics import record_event
+                agent_id = None
+                auth = request.headers.get("Authorization", "")
+                if auth.startswith("Bearer ") and hasattr(request.state, "agent_id"):
+                    agent_id = getattr(request.state, "agent_id", None)
+                async with async_session() as analytics_db:
+                    await record_event(
+                        analytics_db, agent_id, client_ip,
+                        request.method, request.url.path,
+                        response.status_code, duration_ms,
+                        request.headers.get("User-Agent", ""),
+                    )
+                    await analytics_db.commit()
+            except Exception:
+                pass  # Never let analytics break a request
         return response
 
 
@@ -2113,6 +2136,56 @@ async def api_pause_agent(
         "name": agent.name,
         "is_active": agent.is_active,
         "action": "resumed" if agent.is_active else "paused",
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  INTELLIGENT AGENTS DASHBOARD (Hydra, Visitor Analytics, Catalyst)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/oversight/agents/hydra")
+async def api_hydra_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Hydra Outreach Agent dashboard — encounters, engagements, learnings."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.hydra_outreach import get_hydra_dashboard
+    return await get_hydra_dashboard(db)
+
+
+@app.get("/api/oversight/agents/analytics")
+async def api_analytics_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Visitor Analytics Agent dashboard — sessions, funnels, drop-offs, insights."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.visitor_analytics import get_analytics_dashboard
+    return await get_analytics_dashboard(db)
+
+
+@app.get("/api/oversight/agents/catalyst")
+async def api_catalyst_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Community Catalyst Agent dashboard — intelligence, surveys, topics."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.community_catalyst import get_catalyst_dashboard
+    return await get_catalyst_dashboard(db)
+
+
+@app.get("/api/oversight/agents/all")
+async def api_all_agents_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Combined dashboard for all three intelligent agents."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.hydra_outreach import get_hydra_dashboard
+    from app.agents_alive.visitor_analytics import get_analytics_dashboard
+    from app.agents_alive.community_catalyst import get_catalyst_dashboard
+    return {
+        "hydra": await get_hydra_dashboard(db),
+        "analytics": await get_analytics_dashboard(db),
+        "catalyst": await get_catalyst_dashboard(db),
     }
 
 

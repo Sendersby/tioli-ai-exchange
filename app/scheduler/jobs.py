@@ -118,6 +118,34 @@ async def job_platform_activity():
         logger.error(f"Platform activity bot failed: {e}")
 
 
+async def job_hydra_outreach():
+    """Hydra agent: search for AI agent projects, discover, track, learn."""
+    from app.agents_alive.hydra_outreach import run_hydra_cycle
+    try:
+        await run_hydra_cycle()
+    except Exception as e:
+        logger.error(f"Hydra outreach failed: {e}")
+
+
+async def job_community_catalyst():
+    """Nexus agent: survey new agents, start discussions, respond, gather intelligence."""
+    from app.agents_alive.community_catalyst import run_catalyst_cycle
+    try:
+        await run_catalyst_cycle()
+    except Exception as e:
+        logger.error(f"Community catalyst failed: {e}")
+
+
+async def job_visitor_analytics():
+    """Visitor analytics: reconstruct sessions, generate insights."""
+    from app.agents_alive.visitor_analytics import reconstruct_sessions, generate_insights
+    try:
+        await reconstruct_sessions()
+        await generate_insights()
+    except Exception as e:
+        logger.error(f"Visitor analytics failed: {e}")
+
+
 async def job_memory_cleanup():
     """Clean up expired agent memory records nightly."""
     from app.database.db import async_session
@@ -191,8 +219,17 @@ def start_scheduler():
     # Every 20 minutes: house agents do real activity on the platform
     scheduler.add_job(job_platform_activity, "interval", minutes=20, id="platform_activity")
 
+    # Every 45 minutes: Hydra outreach — find AI agent projects on GitHub
+    scheduler.add_job(job_hydra_outreach, "interval", minutes=45, id="hydra_outreach")
+
+    # Every 25 minutes: Community Catalyst — surveys, discussions, intelligence
+    scheduler.add_job(job_community_catalyst, "interval", minutes=25, id="community_catalyst")
+
+    # Every 15 minutes: Visitor analytics — reconstruct sessions, generate insights
+    scheduler.add_job(job_visitor_analytics, "interval", minutes=15, id="visitor_analytics")
+
     scheduler.start()
-    logger.info("Scheduler started with 8 jobs")
+    logger.info("Scheduler started with 11 jobs")
 
 
 def stop_scheduler():
