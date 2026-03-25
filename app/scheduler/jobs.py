@@ -136,6 +136,15 @@ async def job_community_catalyst():
         logger.error(f"Community catalyst failed: {e}")
 
 
+async def job_blog_article():
+    """Generate a blog article + LinkedIn content (2x/week)."""
+    from app.agents_alive.blog_generator import run_blog_cycle
+    try:
+        await run_blog_cycle()
+    except Exception as e:
+        logger.error(f"Blog generation failed: {e}")
+
+
 async def job_auto_poster():
     """Auto-post content that's due now to automated platforms."""
     from app.outreach_campaigns.auto_poster import run_auto_post_cycle
@@ -301,7 +310,10 @@ def start_scheduler():
     scheduler.add_job(job_auto_poster, "interval", minutes=30, id="auto_poster")
 
     scheduler.start()
-    logger.info("Scheduler started with 17 jobs")
+    # Tuesday and Thursday 09:00 UTC: blog article + LinkedIn content
+    scheduler.add_job(job_blog_article, "cron", day_of_week="tue,thu", hour=9, minute=0, id="blog_article")
+
+    logger.info("Scheduler started with 18 jobs")
 
 
 def stop_scheduler():
