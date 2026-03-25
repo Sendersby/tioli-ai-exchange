@@ -136,6 +136,15 @@ async def job_community_catalyst():
         logger.error(f"Community catalyst failed: {e}")
 
 
+async def job_auto_poster():
+    """Auto-post content that's due now to automated platforms."""
+    from app.outreach_campaigns.auto_poster import run_auto_post_cycle
+    try:
+        await run_auto_post_cycle()
+    except Exception as e:
+        logger.error(f"Auto-poster failed: {e}")
+
+
 async def job_campaign_scheduler():
     """Auto-schedule campaign content for the week ahead."""
     from app.outreach_campaigns.scheduler import run_scheduler_cycle
@@ -288,8 +297,11 @@ def start_scheduler():
     # Every 6 hours: auto-schedule campaign content for the week ahead
     scheduler.add_job(job_campaign_scheduler, "interval", hours=6, id="campaign_scheduler")
 
+    # Every 30 minutes: auto-post content that's due
+    scheduler.add_job(job_auto_poster, "interval", minutes=30, id="auto_poster")
+
     scheduler.start()
-    logger.info("Scheduler started with 16 jobs")
+    logger.info("Scheduler started with 17 jobs")
 
 
 def stop_scheduler():

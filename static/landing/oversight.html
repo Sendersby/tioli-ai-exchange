@@ -416,7 +416,9 @@
                 items.forEach(function(item){
                     var chColor = item.channel==='x_twitter'?'text-[#1DA1F2]':item.channel==='linkedin'?'text-[#0A66C2]':item.channel==='reddit'?'text-[#FF4500]':'text-slate-400';
                     var stColor = item.status==='posted'?'text-green-400':item.status==='scheduled'?'text-[#edc05f]':'text-slate-500';
-                    calHtml+='<div class="flex items-center gap-2 text-[0.6rem] mb-1"><span class="'+chColor+' font-bold uppercase w-16">'+item.channel.replace('x_twitter','Twitter')+'</span><span class="'+stColor+'">'+item.status+'</span><span class="text-slate-400 truncate flex-1">'+((item.title||item.body).substring(0,60))+'</span></div>';
+                    var linkHtml = '';
+                    if(item.posted_url){ linkHtml='<a href="'+item.posted_url+'" target="_blank" class="text-[#77d4e5] hover:underline ml-1">view &rarr;</a>'; }
+                    calHtml+='<div class="flex items-center gap-2 text-[0.6rem] mb-1"><span class="'+chColor+' font-bold uppercase w-16">'+item.channel.replace('x_twitter','Twitter')+'</span><span class="'+stColor+'">'+item.status+'</span><span class="text-slate-400 truncate flex-1">'+((item.title||item.body).substring(0,50))+'</span>'+linkHtml+'</div>';
                 });
                 calHtml+='</div>';
             });
@@ -459,6 +461,14 @@
                     '<span class="text-[0.5rem] px-1.5 py-0.5 bg-[#44474c]/20 text-slate-400 rounded">'+c.status+'</span></div>' +
                     '<div class="flex gap-1">' +
                     '<button onclick="copyContent(this,\''+c.id+'\')" class="text-[0.55rem] px-2 py-1 bg-[#77d4e5]/10 text-[#77d4e5] hover:bg-[#77d4e5]/20 rounded transition-colors">Copy</button>' +
+                    (function(){
+                        var shareUrl='';
+                        if(c.channel==='x_twitter') shareUrl='https://twitter.com/intent/tweet?text='+encodeURIComponent(c.body.substring(0,250));
+                        else if(c.channel==='linkedin') shareUrl='https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://agentisexchange.com');
+                        else if(c.channel==='reddit') shareUrl='https://www.reddit.com/r/ClaudeAI/submit?title='+encodeURIComponent(c.title||'')+'\x26text='+encodeURIComponent(c.body.substring(0,300));
+                        else if(c.channel==='hackernews') shareUrl='https://news.ycombinator.com/submitlink?u='+encodeURIComponent('https://agentisexchange.com')+'\x26t='+encodeURIComponent(c.title||'TiOLi AGENTIS');
+                        return shareUrl ? '<a href="'+shareUrl+'" target="_blank" class="text-[0.55rem] px-2 py-1 bg-[#edc05f]/10 text-[#edc05f] hover:bg-[#edc05f]/20 rounded transition-colors">Open '+c.channel.replace('x_twitter','Twitter')+'</a>' : '';
+                    })() +
                     '<button onclick="markPosted(\''+c.id+'\')" class="text-[0.55rem] px-2 py-1 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded transition-colors">Posted</button>' +
                     '</div></div>' +
                     (c.title?'<div class="text-xs font-bold text-white mb-1">'+c.title+'</div>':'') +
