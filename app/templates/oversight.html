@@ -69,114 +69,156 @@
             </div>
         </div>
 
-        <!-- TAB: Hydra Outreach -->
+        <!-- TAB: Hydra Outreach (server-rendered) -->
         <div id="tab-hydra" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="hydra-encounters">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Repos Discovered</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ hydra.total_encounters or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Repos Discovered</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="hydra-engagements">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Engagements</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ hydra.total_engagements or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Engagements</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="hydra-responses">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Responses</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ hydra.total_responses or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Responses</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="hydra-today">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Discovered Today</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-tertiary">{{ hydra.today.discovered if hydra.today else 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Discovered Today</div>
                 </div>
             </div>
-            <h3 class="text-sm font-bold text-white mb-2">Recent Discoveries</h3>
-            <div id="hydra-recent" class="space-y-2 max-h-96 overflow-y-auto">
-                <div class="text-xs text-slate-500 text-center py-4">Loading...</div>
+            <h3 class="text-sm font-bold text-on-surface mb-2">Recent Discoveries</h3>
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                {% for e in hydra.recent_encounters or [] %}
+                <div class="bg-surface-container border border-outline-variant/10 p-2 rounded flex items-center justify-between">
+                    <div><a href="{{ e.url }}" target="_blank" class="text-xs text-primary hover:underline">{{ e.name }}</a><span class="text-[0.55rem] text-on-surface-variant ml-2">{{ e.stars }} stars</span></div>
+                    <span class="text-[0.5rem] text-on-surface-variant">{{ e.discovered_via }}</span>
+                </div>
+                {% endfor %}
+                {% if not hydra.recent_encounters %}<div class="text-xs text-on-surface-variant text-center py-2">No encounters yet</div>{% endif %}
             </div>
-            <h3 class="text-sm font-bold text-white mt-4 mb-2">Top Topics Found</h3>
-            <div id="hydra-topics" class="flex flex-wrap gap-2">
-                <div class="text-xs text-slate-500">Loading...</div>
+            <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Top Topics Found</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for topic in hydra.top_topics or [] %}
+                <span class="px-2 py-0.5 bg-surface-container border border-outline-variant/20 text-[0.6rem] text-on-surface-variant rounded">{{ topic[0] }} ({{ topic[1] }})</span>
+                {% endfor %}
+                {% if not hydra.top_topics %}<span class="text-xs text-on-surface-variant">None yet</span>{% endif %}
             </div>
         </div>
 
-        <!-- TAB: Visitor Analytics -->
+        <!-- TAB: Visitor Analytics (server-rendered) -->
         <div id="tab-analytics" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="analytics-events">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">API Events</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ analytics.total_events or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">API Events</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="analytics-sessions">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Sessions</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ analytics.total_sessions or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Sessions</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="analytics-converted">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Converted</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ analytics.converted_sessions or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Converted</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="analytics-rate">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Conversion Rate</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-tertiary">{{ analytics.conversion_rate or 0 }}%</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Conversion Rate</div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <h3 class="text-sm font-bold text-white mb-2">Endpoint Categories</h3>
-                    <div id="analytics-categories" class="space-y-1"></div>
+                    <h3 class="text-sm font-bold text-on-surface mb-2">Endpoint Categories</h3>
+                    {% for cat, count in (analytics.category_breakdown or {}).items() %}
+                    <div class="text-xs text-on-surface-variant mb-1">{{ cat }}: <span class="text-on-surface font-bold">{{ count }}</span></div>
+                    {% endfor %}
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-white mb-2">Journey Stages</h3>
-                    <div id="analytics-stages" class="space-y-1"></div>
+                    <h3 class="text-sm font-bold text-on-surface mb-2">Journey Stages</h3>
+                    {% for stage, count in (analytics.journey_stage_breakdown or {}).items() %}
+                    <div class="text-xs text-on-surface-variant mb-1">{{ stage }}: <span class="text-on-surface font-bold">{{ count }}</span></div>
+                    {% endfor %}
                 </div>
             </div>
-            <h3 class="text-sm font-bold text-white mt-4 mb-2">Insights</h3>
-            <div id="analytics-insights" class="space-y-2"></div>
+            <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Insights</h3>
+            {% for i in analytics.insights or [] %}
+            <div class="bg-surface-container border {% if i.severity == 'critical' %}border-red-500/20{% elif i.severity == 'warning' %}border-yellow-500/20{% else %}border-outline-variant/10{% endif %} p-3 rounded mb-2">
+                <div class="text-xs font-bold text-on-surface">{{ i.title }}</div>
+                <div class="text-[0.6rem] text-on-surface-variant mt-1">{{ i.description }}</div>
+            </div>
+            {% endfor %}
+            {% if not analytics.insights %}<div class="text-xs text-on-surface-variant text-center py-2">No insights yet</div>{% endif %}
         </div>
 
-        <!-- TAB: Community Catalyst -->
+        <!-- TAB: Community Catalyst (server-rendered) -->
         <div id="tab-catalyst" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="catalyst-intel">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Intelligence Gathered</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ catalyst.total_intelligence or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Intelligence Gathered</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="catalyst-topics">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Topics Covered</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ (catalyst.topic_breakdown or {}).keys()|list|length }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Topics Covered</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="catalyst-cats">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Categories</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ (catalyst.category_breakdown or {}).keys()|list|length }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Categories</div>
                 </div>
             </div>
-            <h3 class="text-sm font-bold text-white mb-2">Recent Intelligence</h3>
-            <div id="catalyst-recent" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            <h3 class="text-sm font-bold text-on-surface mb-2">Recent Intelligence</h3>
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                {% for i in catalyst.recent_intelligence or [] %}
+                <div class="bg-surface-container border border-outline-variant/10 p-2 rounded">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[0.55rem] px-1.5 py-0.5 bg-primary/10 text-primary rounded">{{ i.category }}</span>
+                        <span class="text-[0.55rem] text-on-surface-variant">{{ i.topic }}</span>
+                        {% if i.agent %}<span class="text-[0.55rem] text-on-surface-variant">by {{ i.agent }}</span>{% endif %}
+                    </div>
+                    <div class="text-xs text-on-surface-variant">{{ i.content[:200] }}</div>
+                </div>
+                {% endfor %}
+                {% if not catalyst.recent_intelligence %}<div class="text-xs text-on-surface-variant text-center py-2">No intelligence yet</div>{% endif %}
+            </div>
         </div>
 
-        <!-- TAB: Engagement Amplifier -->
+        <!-- TAB: Engagement Amplifier (server-rendered) -->
         <div id="tab-amplifier" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="amp-total">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Opportunities Found</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ amplifier.total_opportunities or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Opportunities Found</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="amp-hn">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Hacker News</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ (amplifier.by_platform or {}).get('hackernews', 0) }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Hacker News</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="amp-devto">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">DEV.to</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ (amplifier.by_platform or {}).get('devto', 0) }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">DEV.to</div>
                 </div>
             </div>
-            <h3 class="text-sm font-bold text-white mb-2">Top Opportunities (by relevance)</h3>
-            <div id="amp-opportunities" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            <h3 class="text-sm font-bold text-on-surface mb-2">Top Opportunities (by relevance)</h3>
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                {% for o in amplifier.top_opportunities or [] %}
+                <div class="bg-surface-container border border-outline-variant/10 p-2 rounded flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[0.5rem] px-1.5 py-0.5 {% if o.platform == 'hackernews' %}bg-orange-500/10 text-orange-400{% else %}bg-blue-500/10 text-blue-400{% endif %} rounded uppercase font-bold">{{ o.platform }}</span>
+                        <a href="{{ o.url }}" target="_blank" class="text-xs text-primary hover:underline truncate max-w-xs">{{ o.title[:60] }}</a>
+                    </div>
+                    <span class="text-[0.55rem] text-on-surface-variant">score: {{ o.score }}</span>
+                </div>
+                {% endfor %}
+                {% if not amplifier.top_opportunities %}<div class="text-xs text-on-surface-variant text-center py-2">No opportunities yet</div>{% endif %}
+            </div>
         </div>
 
-        <!-- TAB: SEO & Content -->
+        <!-- TAB: SEO & Content (server-rendered) -->
         <div id="tab-seo" class="tab-panel">
-            <h3 class="text-sm font-bold text-white mb-3">Published SEO Pages</h3>
-            <div id="seo-pages" class="space-y-2"></div>
+            <h3 class="text-sm font-bold text-on-surface mb-3">Published SEO Pages</h3>
+            <div class="space-y-2 mb-4"><div class="text-xs text-on-surface-variant">Visit <a href="/blog" class="text-primary hover:underline">/blog</a> to see all published pages.</div></div>
             <div class="mt-4 bg-[#0f1c2c] border border-[#44474c]/15 p-4 rounded">
                 <h3 class="text-sm font-bold text-white mb-2">Embeddable Badges</h3>
                 <div class="flex flex-wrap gap-3">
@@ -189,24 +231,24 @@
             </div>
         </div>
 
-        <!-- TAB: Outreach Campaigns -->
+        <!-- TAB: Outreach Campaigns (server-rendered stats, JS for actions) -->
         <div id="tab-outreach" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="out-campaigns">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Campaigns</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ outreach.total_campaigns or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Campaigns</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="out-content">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Content Pieces</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ outreach.total_content or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Content Pieces</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="out-drafts">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Ready to Post</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-tertiary">{{ outreach.drafts or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Ready to Post</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-green-400" id="out-posted">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Posted</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-green-400">{{ outreach.posted or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Posted</div>
                 </div>
             </div>
 
@@ -233,34 +275,54 @@
             <div id="out-ready" class="space-y-2 max-h-[400px] overflow-y-auto"></div>
         </div>
 
-        <!-- TAB: Feedback Loop -->
+        <!-- TAB: Feedback Loop (server-rendered) -->
         <div id="tab-feedback" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="fb-total">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Feedback Items</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ feedback.total_feedback or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Feedback Items</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="fb-tasks">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Tasks Generated</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-tertiary">{{ feedback.tasks_generated or 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Tasks Generated</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-green-400" id="fb-positive">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Positive</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-green-400">{{ (feedback.by_sentiment or {}).get('positive', 0) }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Positive</div>
                 </div>
-                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="fb-actionable">—</div>
-                    <div class="text-[0.6rem] text-slate-500 uppercase">Actionable</div>
+                <div class="bg-surface-container border border-outline-variant/20 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-on-surface">{{ feedback.recent_feedback|selectattr('actionable')|list|length if feedback.recent_feedback else 0 }}</div>
+                    <div class="text-[0.6rem] text-on-surface-variant uppercase">Actionable</div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <h3 class="text-sm font-bold text-white mb-2">Recent Feedback (by value)</h3>
-                    <div id="fb-recent" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                    <h3 class="text-sm font-bold text-on-surface mb-2">Recent Feedback (by value)</h3>
+                    <div class="space-y-2 max-h-80 overflow-y-auto">
+                        {% for f in feedback.recent_feedback or [] %}
+                        <div class="bg-surface-container border border-outline-variant/10 p-2 rounded">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[0.55rem] px-1.5 py-0.5 bg-primary/10 text-primary rounded uppercase font-bold">{{ f.category }}</span>
+                                <span class="text-[0.55rem] text-on-surface-variant">val:{{ f.value }}</span>
+                                {% if f.actionable %}<span class="text-[0.5rem] text-tertiary">ACTIONABLE</span>{% endif %}
+                            </div>
+                            <div class="text-xs text-on-surface-variant truncate">{{ f.title }}</div>
+                        </div>
+                        {% endfor %}
+                        {% if not feedback.recent_feedback %}<div class="text-xs text-on-surface-variant text-center py-2">No feedback yet</div>{% endif %}
+                    </div>
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-white mb-2">Development Tasks</h3>
-                    <div id="fb-devtasks" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                    <h3 class="text-sm font-bold text-on-surface mb-2">Development Tasks</h3>
+                    <div class="space-y-2 max-h-80 overflow-y-auto">
+                        {% for t in feedback.development_tasks or [] %}
+                        <div class="bg-surface-container border border-outline-variant/10 p-2 rounded">
+                            <div class="text-xs font-bold text-on-surface truncate">{{ t.title }}</div>
+                            <div class="text-[0.55rem] text-on-surface-variant">{{ t.priority }} | {{ t.status }} | up:{{ t.upvotes }} down:{{ t.downvotes }}</div>
+                        </div>
+                        {% endfor %}
+                        {% if not feedback.development_tasks %}<div class="text-xs text-on-surface-variant text-center py-2">No tasks yet</div>{% endif %}
+                    </div>
                 </div>
             </div>
         </div>

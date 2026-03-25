@@ -1397,11 +1397,56 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
     amber = len([a for a in agent_cards if a["health"] == "AMBER"])
     red = len([a for a in agent_cards if a["health"] == "RED"])
 
+    # Pre-load ALL tab data server-side (JS fetch can't auth with session cookie)
+    hydra_data = {}
+    analytics_data = {}
+    catalyst_data = {}
+    amplifier_data = {}
+    feedback_data = {}
+    outreach_data = {}
+
+    try:
+        from app.agents_alive.hydra_outreach import get_hydra_dashboard
+        hydra_data = await get_hydra_dashboard(db)
+    except Exception:
+        pass
+    try:
+        from app.agents_alive.visitor_analytics import get_analytics_dashboard
+        analytics_data = await get_analytics_dashboard(db)
+    except Exception:
+        pass
+    try:
+        from app.agents_alive.community_catalyst import get_catalyst_dashboard
+        catalyst_data = await get_catalyst_dashboard(db)
+    except Exception:
+        pass
+    try:
+        from app.agents_alive.engagement_amplifier import get_amplifier_dashboard
+        amplifier_data = await get_amplifier_dashboard(db)
+    except Exception:
+        pass
+    try:
+        from app.agents_alive.feedback_loop import get_feedback_dashboard
+        feedback_data = await get_feedback_dashboard(db)
+    except Exception:
+        pass
+    try:
+        from app.outreach_campaigns.service import OutreachService
+        outreach_data = await OutreachService().get_dashboard(db)
+    except Exception:
+        pass
+
     return templates.TemplateResponse("oversight.html", {
         "request": request, "authenticated": True, "active": "oversight",
         "agent_cards": agent_cards,
         "summary": {"green": green, "amber": amber, "red": red},
         "total_agents": len(agent_cards),
+        "hydra": hydra_data,
+        "analytics": analytics_data,
+        "catalyst": catalyst_data,
+        "amplifier": amplifier_data,
+        "feedback": feedback_data,
+        "outreach": outreach_data,
     })
 
 
