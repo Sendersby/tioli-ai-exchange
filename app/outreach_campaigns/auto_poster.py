@@ -173,6 +173,60 @@ def _generate_share_url(content: OutreachContent) -> dict:
     return {"auto_posted": False, "share_url": share_url, "posted_url": ""}
 
 
+async def _notify_owner_email(content: OutreachContent, posted_url: str):
+    """Send email to owner when content is auto-deployed."""
+    import os
+    try:
+        import httpx
+        tenant = os.environ.get("AZURE_TENANT_ID", "")
+        client_id = os.environ.get("AZURE_CLIENT_ID", "")
+        client_secret = os.environ.get("AZURE_CLIENT_SECRET", "")
+        owner_email = "sendersby@tioli.onmicrosoft.com"
+
+        if not (tenant and client_id and client_secret):
+            return
+
+        async with httpx.AsyncClient(timeout=15) as hc:
+            token_resp = await hc.post(
+                f"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+                data={
+                    "client_id": client_id, "client_secret": client_secret,
+                    "scope": "https://graph.microsoft.com/.default",
+                    "grant_type": "client_credentials",
+                },
+            )
+            if token_resp.status_code != 200:
+                return
+            access_token = token_resp.json().get("access_token")
+
+            channel = content.channel.replace("x_twitter", "Twitter").replace("_", " ").title()
+            subject = f"AGENTIS Campaign: {channel} content deployed"
+            body = (
+                f"Content has been deployed to {channel}.\n\n"
+                f"Title: {content.title or '(no title)'}\n"
+                f"Preview: {content.body[:200]}\n\n"
+                f"View it here: {posted_url}\n\n"
+                f"Command Centre: https://exchange.tioli.co.za/oversight\n"
+                f"---\nAutomated notification from TiOLi AGENTIS Campaign System"
+            )
+
+            await hc.post(
+                f"https://graph.microsoft.com/v1.0/users/{owner_email}/sendMail",
+                headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"},
+                json={
+                    "message": {
+                        "subject": subject,
+                        "body": {"contentType": "Text", "content": body},
+                        "toRecipients": [{"emailAddress": {"address": owner_email}}],
+                    },
+                    "saveToSentItems": False,
+                },
+            )
+            logger.info(f"Email notification sent for {channel} deployment")
+    except Exception as e:
+        logger.debug(f"Email notification failed: {e}")
+
+
 async def run_auto_post_cycle():
     """Auto-post all scheduled content that's due now."""
     from app.database.db import async_session
@@ -192,9 +246,14 @@ async def run_auto_post_cycle():
                 result = await auto_post_content(db, item)
                 if result.get("auto_posted"):
                     logger.info(f"Auto-posted to {item.channel}: {item.title or item.body[:40]}")
+                    # Email notification with link
+                    try:
+                        await _notify_owner_email(item, result.get("posted_url", ""))
+                    except Exception:
+                        pass
                 elif result.get("share_url"):
                     # Mark as needing manual post
-                    item.status = "approved"  # Move from scheduled to approved (ready for manual)
+                    item.status = "approved"
 
             await db.commit()
             if items:
