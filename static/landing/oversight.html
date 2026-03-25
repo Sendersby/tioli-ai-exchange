@@ -285,7 +285,13 @@
 
     function fetchAll(){
         // Agent health cards
-        fetch(BASE+'/api/oversight/agents', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+        fetch(BASE+'/api/oversight/agents', OPTS).then(function(r){
+            if(r.status === 401){
+                document.getElementById('agent-cards').innerHTML='<div class="text-center py-8 col-span-full"><p class="text-red-400 mb-2">Owner authentication required</p><p class="text-xs text-slate-500 mb-3">Log in via the Gateway first, then return here.</p><a href="/gateway" class="px-4 py-2 bg-[#77d4e5] text-[#061423] text-xs font-bold uppercase rounded">Log In</a></div>';
+                return null;
+            }
+            return r.ok ? r.json() : null;
+        }).then(function(d){
             if(!d) return;
             document.getElementById('badge-green').textContent = d.summary.green + ' GREEN';
             document.getElementById('badge-amber').textContent = d.summary.amber + ' AMBER';
