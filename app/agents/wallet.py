@@ -28,7 +28,7 @@ class WalletService:
         self._profitability_updater = updater
 
     async def get_or_create_wallet(
-        self, db: AsyncSession, agent_id: str, currency: str = "TIOLI",
+        self, db: AsyncSession, agent_id: str, currency: str = "AGENTIS",
         lock: bool = False
     ) -> Wallet:
         """Get an agent's wallet for a currency, creating one if needed.
@@ -50,7 +50,7 @@ class WalletService:
 
     async def deposit(
         self, db: AsyncSession, agent_id: str, amount: float,
-        currency: str = "TIOLI", description: str = ""
+        currency: str = "AGENTIS", description: str = ""
     ) -> Transaction:
         """Deposit funds into an agent's wallet."""
         if amount <= 0:
@@ -70,7 +70,7 @@ class WalletService:
 
     async def withdraw(
         self, db: AsyncSession, agent_id: str, amount: float,
-        currency: str = "TIOLI", description: str = ""
+        currency: str = "AGENTIS", description: str = ""
     ) -> Transaction:
         """Withdraw funds from an agent's wallet."""
         if amount <= 0:
@@ -96,7 +96,7 @@ class WalletService:
 
     async def transfer(
         self, db: AsyncSession, sender_id: str, receiver_id: str,
-        amount: float, currency: str = "TIOLI", description: str = ""
+        amount: float, currency: str = "AGENTIS", description: str = ""
     ) -> Transaction:
         """Transfer funds between two agents, with automatic fee deduction.
 
@@ -199,7 +199,7 @@ class WalletService:
 
     async def issue_loan(
         self, db: AsyncSession, lender_id: str, borrower_id: str,
-        amount: float, interest_rate: float, currency: str = "TIOLI",
+        amount: float, interest_rate: float, currency: str = "AGENTIS",
         due_at=None
     ) -> Loan:
         """Issue a loan from one agent to another.
@@ -307,7 +307,7 @@ class WalletService:
         return tx
 
     async def get_balance(
-        self, db: AsyncSession, agent_id: str, currency: str = "TIOLI"
+        self, db: AsyncSession, agent_id: str, currency: str = "AGENTIS"
     ) -> dict:
         """Get an agent's wallet balance."""
         wallet = await self.get_or_create_wallet(db, agent_id, currency)

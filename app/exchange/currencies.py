@@ -1,6 +1,6 @@
-"""Multi-currency system and TIOLI token economics.
+"""Multi-currency system and AGENTIS token economics.
 
-Supports TIOLI (native platform token), BTC, ETH, and custom agent-created tokens.
+Supports AGENTIS (native platform token), BTC, ETH, and custom agent-created tokens.
 All currencies are interconvertible with exchange rates governed by supply and demand.
 Bitcoin serves as the primary global reserve currency per the build brief.
 """
@@ -18,7 +18,7 @@ from app.database.db import Base
 
 
 class CurrencyType(str, Enum):
-    NATIVE = "native"       # TIOLI — platform currency
+    NATIVE = "native"       # AGENTIS — platform currency
     CRYPTO = "crypto"       # BTC, ETH, etc.
     FIAT = "fiat"           # ZAR, USD, EUR, GBP
     AGENT_TOKEN = "agent"   # Custom tokens created by agents
@@ -29,7 +29,7 @@ class Currency(Base):
     """A currency or token tradeable on the platform."""
     __tablename__ = "currencies"
 
-    symbol = Column(String(20), primary_key=True)  # e.g. "TIOLI", "BTC", "ETH"
+    symbol = Column(String(20), primary_key=True)  # e.g. "AGENTIS", "BTC", "ETH"
     name = Column(String(255), nullable=False)
     currency_type = Column(String(20), nullable=False, default=CurrencyType.NATIVE)
     created_by = Column(String, nullable=True)  # agent_id for custom tokens, None for system
@@ -48,7 +48,7 @@ class ExchangeRate(Base):
     __tablename__ = "exchange_rates"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    base_currency = Column(String(20), nullable=False)    # e.g. "TIOLI"
+    base_currency = Column(String(20), nullable=False)    # e.g. "AGENTIS"
     quote_currency = Column(String(20), nullable=False)   # e.g. "BTC"
     rate = Column(Float, nullable=False)                   # 1 base = rate quote
     volume_24h = Column(Float, default=0.0)
@@ -59,7 +59,7 @@ class ExchangeRate(Base):
 
 SYSTEM_CURRENCIES = [
     {
-        "symbol": "TIOLI",
+        "symbol": "AGENTIS",
         "name": "TiOLi Token",
         "currency_type": CurrencyType.NATIVE,
         "total_supply": 1_000_000_000,  # 1 billion initial supply
@@ -93,7 +93,7 @@ SYSTEM_CURRENCIES = [
         "total_supply": 0,
         "max_supply": None,
         "description": "Represents stored compute capacity — 1 COMPUTE = 1 unit of processing",
-        "reserve_currency": "TIOLI",
+        "reserve_currency": "AGENTIS",
     },
     # Fiat currencies (Issue #8 — international expansion)
     {
@@ -140,15 +140,15 @@ SYSTEM_CURRENCIES = [
 
 # Initial exchange rates (seed values — will be driven by supply/demand)
 INITIAL_RATES = {
-    ("TIOLI", "BTC"): 0.00000100,    # 1 TIOLI = 0.000001 BTC (1 satoshi)
-    ("TIOLI", "ETH"): 0.00001500,    # 1 TIOLI = 0.000015 ETH
-    ("TIOLI", "COMPUTE"): 1.0,       # 1 TIOLI = 1 COMPUTE (parity)
+    ("AGENTIS", "BTC"): 0.00000100,    # 1 AGENTIS = 0.000001 BTC (1 satoshi)
+    ("AGENTIS", "ETH"): 0.00001500,    # 1 AGENTIS = 0.000015 ETH
+    ("AGENTIS", "COMPUTE"): 1.0,       # 1 AGENTIS = 1 COMPUTE (parity)
     ("ETH", "BTC"): 0.06667,         # 1 ETH ≈ 0.067 BTC
     # Fiat rates (seed values — updated by forex service)
-    ("TIOLI", "ZAR"): 0.055,         # 1 TIOLI = R0.055
-    ("TIOLI", "USD"): 0.003,         # 1 TIOLI = $0.003
-    ("TIOLI", "EUR"): 0.0028,        # 1 TIOLI = €0.0028
-    ("TIOLI", "GBP"): 0.0024,        # 1 TIOLI = £0.0024
+    ("AGENTIS", "ZAR"): 0.055,         # 1 AGENTIS = R0.055
+    ("AGENTIS", "USD"): 0.003,         # 1 AGENTIS = $0.003
+    ("AGENTIS", "EUR"): 0.0028,        # 1 AGENTIS = €0.0028
+    ("AGENTIS", "GBP"): 0.0024,        # 1 AGENTIS = £0.0024
     ("USD", "ZAR"): 18.30,           # 1 USD = R18.30
     ("EUR", "USD"): 1.08,            # 1 EUR = $1.08
     ("GBP", "USD"): 1.26,            # 1 GBP = $1.26
@@ -213,7 +213,7 @@ class CurrencyService:
             circulating_supply=0,
             max_supply=max_supply,
             description=description,
-            reserve_currency="TIOLI",
+            reserve_currency="AGENTIS",
         )
         db.add(currency)
         await db.flush()

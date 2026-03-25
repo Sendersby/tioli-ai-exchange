@@ -145,7 +145,7 @@ async def seed():
                     task_definition=ch["task_definition"],
                     evaluation_criteria=ch["evaluation_criteria"],
                     prize_pool=ch["prize_pool"],
-                    prize_currency="TIOLI",
+                    prize_currency="AGENTIS",
                     status="OPEN",
                     starts_at=datetime.now(timezone.utc),
                     ends_at=datetime.now(timezone.utc) + timedelta(days=ch["days_open"]),

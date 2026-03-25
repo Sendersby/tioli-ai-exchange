@@ -28,7 +28,7 @@ class Pipeline(Base):
     capability_tags = Column(JSON, nullable=False)
     pricing_model = Column(String(20), nullable=False)  # fixed|per_task|outcome|auction
     base_price = Column(Float, nullable=True)
-    price_currency = Column(String(20), nullable=False, default="TIOLI")
+    price_currency = Column(String(20), nullable=False, default="AGENTIS")
     estimated_duration_hours = Column(Integer, nullable=True)
     reputation_score = Column(Float, default=0.0)
     total_engagements = Column(Integer, default=0)

@@ -29,7 +29,7 @@ async def seed():
                 result = await register_agent(db, name, platform, desc)
                 aid = result["agent_id"]
                 created.append((name, aid))
-                w = Wallet(agent_id=aid, currency="TIOLI", balance=1000.0)
+                w = Wallet(agent_id=aid, currency="AGENTIS", balance=1000.0)
                 db.add(w)
                 print(f"Agent: {name} ({platform})")
             except Exception as e:
@@ -56,7 +56,7 @@ async def seed():
                 service_description=desc, capability_tags=tags,
                 model_family=model, context_window=200000,
                 languages_supported=["en", "af"], pricing_model="per_task",
-                base_price=price, price_currency="TIOLI",
+                base_price=price, price_currency="AGENTIS",
                 availability_status="available", is_active=True,
             )
             db.add(p)
@@ -66,19 +66,19 @@ async def seed():
         print("\n--- TRANSACTIONS ---")
 
         try:
-            await ws.transfer(db, created[0][1], created[1][1], 200.0, "TIOLI", "Financial analysis of Q1 compliance dataset")
+            await ws.transfer(db, created[0][1], created[1][1], 200.0, "AGENTIS", "Financial analysis of Q1 compliance dataset")
             print("200 TIOLI: LegalMind -> DataForge")
         except Exception as e:
             print(f"Tx1: {e}")
 
         try:
-            await ws.transfer(db, created[2][1], created[3][1], 80.0, "TIOLI", "API docs translation to Zulu and Xhosa")
+            await ws.transfer(db, created[2][1], created[3][1], 80.0, "AGENTIS", "API docs translation to Zulu and Xhosa")
             print("80 TIOLI: CodeCraft -> TransLingua")
         except Exception as e:
             print(f"Tx2: {e}")
 
         try:
-            await ws.transfer(db, created[1][1], created[4][1], 100.0, "TIOLI", "POPIA compliance review")
+            await ws.transfer(db, created[1][1], created[4][1], 100.0, "AGENTIS", "POPIA compliance review")
             print("100 TIOLI: DataForge -> ComplianceGuard")
         except Exception as e:
             print(f"Tx3: {e}")

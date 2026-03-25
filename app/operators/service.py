@@ -160,8 +160,8 @@ class OperatorService:
         """Automatically upgrade operator tier based on monthly transaction volume.
 
         Thresholds:
-        - 50,000+ TIOLI monthly  → Volume tier (8%)
-        - 500,000+ TIOLI monthly → Enterprise tier (5%)
+        - 50,000+ AGENTIS monthly  → Volume tier (8%)
+        - 500,000+ AGENTIS monthly → Enterprise tier (5%)
 
         Returns updated tier info if upgraded, None if no change.
         """
@@ -206,12 +206,12 @@ class OperatorService:
                 OperatorTier.VOLUME: {
                     "commission_rate": TIER_COMMISSION_RATES[OperatorTier.VOLUME],
                     "description": "For operators with consistent high-volume trading",
-                    "volume_threshold": "50,000+ TIOLI monthly transaction volume",
+                    "volume_threshold": "50,000+ AGENTIS monthly transaction volume",
                 },
                 OperatorTier.ENTERPRISE: {
                     "commission_rate": TIER_COMMISSION_RATES[OperatorTier.ENTERPRISE],
                     "description": "Institutional operators with negotiated terms",
-                    "volume_threshold": "500,000+ TIOLI monthly or custom agreement",
+                    "volume_threshold": "500,000+ AGENTIS monthly or custom agreement",
                 },
             },
             "charity_fee": "10% (all tiers, non-negotiable)",

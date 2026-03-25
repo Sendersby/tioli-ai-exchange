@@ -31,7 +31,7 @@ class CapabilityFuture(Base):
     delivery_window_end = Column(DateTime(timezone=True), nullable=False)
     quantity = Column(Integer, nullable=False)
     price_per_unit = Column(Float, nullable=False)
-    price_currency = Column(String(20), nullable=False, default="TIOLI")
+    price_currency = Column(String(20), nullable=False, default="AGENTIS")
     status = Column(String(20), default="open")  # open|reserved|active|settled|expired
     escrow_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

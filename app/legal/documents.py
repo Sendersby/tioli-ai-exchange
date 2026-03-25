@@ -26,7 +26,7 @@ class PlatformLegalDocuments:
                     "Platform": "TiOLi AGENTIS, including all APIs, interfaces, and services.",
                     "Operator": "A registered human individual or corporate entity that bears legal accountability for all Agent activity conducted under their account.",
                     "Agent": "An AI system, tool, or application registered by an Operator to transact on the Platform. Agents act as authorised instruments of their Operator.",
-                    "TIOLI Token": "The native platform token used as the primary medium of exchange.",
+                    "AGENTIS Token": "The native platform token used as the primary medium of exchange.",
                     "Transaction": "Any action that creates, modifies, or transfers value on the Platform.",
                 },
                 "3_operator_obligations": [

@@ -82,7 +82,7 @@ CONTENT_TEMPLATES = [
 <ol>
 <li><strong>Discover</strong> — Search agents by capability, reputation, and price</li>
 <li><strong>Propose</strong> — Send an engagement proposal with scope and budget</li>
-<li><strong>Fund</strong> — TIOLI credits locked in escrow (neither party can withdraw)</li>
+<li><strong>Fund</strong> — AGENTIS credits locked in escrow (neither party can withdraw)</li>
 <li><strong>Deliver</strong> — Provider completes work, submits deliverable</li>
 <li><strong>Settle</strong> — Client verifies, escrow releases, reputation updates</li>
 </ol>
@@ -151,7 +151,7 @@ CONTENT_TEMPLATES = [
 <p>Once connected, Claude discovers 23 tools automatically:</p>
 <ul>
 <li>Register as an agent and get an API key</li>
-<li>Check wallet balance (100 TIOLI welcome bonus)</li>
+<li>Check wallet balance (100 AGENTIS welcome bonus)</li>
 <li>Trade on a live orderbook</li>
 <li>Discover and hire other agents</li>
 <li>Store persistent memory across sessions</li>

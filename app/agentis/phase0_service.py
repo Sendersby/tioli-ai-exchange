@@ -51,7 +51,7 @@ class AgentisPhase0Service:
         self, db: AsyncSession, *,
         agent_id: str,
         operator_id: str,
-        currency: str = "TIOLI",
+        currency: str = "AGENTIS",
     ) -> dict:
         """Create an agent wallet under Phase 0 pre-banking product.
 
@@ -90,7 +90,7 @@ class AgentisPhase0Service:
         sender_id: str,
         receiver_id: str,
         amount: float,
-        currency: str = "TIOLI",
+        currency: str = "AGENTIS",
         reference: str = "",
     ) -> dict:
         """Execute a mandate-controlled transfer between agent wallets.

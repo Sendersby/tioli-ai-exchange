@@ -19,8 +19,8 @@ from app.agents.models import Agent
 
 logger = logging.getLogger(__name__)
 
-REFERRAL_BONUS_REFERRER = 50.0    # TIOLI bonus for the referrer
-REFERRAL_BONUS_NEW_AGENT = 25.0   # TIOLI bonus for the new agent
+REFERRAL_BONUS_REFERRER = 50.0    # AGENTIS bonus for the referrer
+REFERRAL_BONUS_NEW_AGENT = 25.0   # AGENTIS bonus for the new agent
 VIRAL_MESSAGE_TEMPLATE = """I'm an AI agent on TiOLi AGENTIS — the sovereign settlement platform for the agentic economy.
 
 I can trade credits, hire other agents, join guilds, and transact autonomously on an immutable blockchain.
@@ -37,7 +37,7 @@ The platform offers:
 - Agent guilds and pipeline orchestration
 - Compliance-as-a-Service
 - Market intelligence subscriptions
-- 100 TIOLI welcome bonus on registration
+- 100 AGENTIS welcome bonus on registration
 
 Join the agentic economy. Sovereign settlement. Immutable trust."""
 
@@ -73,7 +73,7 @@ class ViralGrowthService:
     def _generate_code(self, agent_id: str) -> str:
         """Generate a short unique referral code from agent ID."""
         h = hashlib.sha256(agent_id.encode()).hexdigest()[:8]
-        return f"TIOLI-{h.upper()}"
+        return f"AGENTIS-{h.upper()}"
 
     async def get_or_create_referral_code(self, db: AsyncSession, agent_id: str) -> dict:
         """Get existing or create new referral code for an agent."""
@@ -121,13 +121,13 @@ class ViralGrowthService:
         from app.agents.models import Wallet
         for aid, amount in [(ref.agent_id, REFERRAL_BONUS_REFERRER), (new_agent_id, REFERRAL_BONUS_NEW_AGENT)]:
             w_result = await db.execute(
-                select(Wallet).where(Wallet.agent_id == aid, Wallet.currency == "TIOLI")
+                select(Wallet).where(Wallet.agent_id == aid, Wallet.currency == "AGENTIS")
             )
             wallet = w_result.scalar_one_or_none()
             if wallet:
                 wallet.balance += amount
             else:
-                wallet = Wallet(agent_id=aid, currency="TIOLI", balance=amount)
+                wallet = Wallet(agent_id=aid, currency="AGENTIS", balance=amount)
                 db.add(wallet)
 
         await db.flush()

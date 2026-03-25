@@ -45,7 +45,7 @@ class PlatformRevenue(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     source = Column(String(100), nullable=False)  # "founder_commission", "charity_fee", etc.
     amount = Column(Float, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     description = Column(String(500), default="")
     recorded_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
@@ -59,7 +59,7 @@ class PlatformExpense(Base):
     description = Column(Text, default="")
     category = Column(String(50), nullable=False)
     amount = Column(Float, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     recurring = Column(Boolean, default=False)
     recurring_interval = Column(String(20), nullable=True)  # "monthly", "yearly"
     status = Column(String(20), default=ExpenseStatus.PROPOSED)
@@ -126,7 +126,7 @@ class FinancialGovernance:
 
     async def record_revenue(
         self, db: AsyncSession, source: str, amount: float,
-        currency: str = "TIOLI", description: str = ""
+        currency: str = "AGENTIS", description: str = ""
     ) -> PlatformRevenue:
         """Record platform revenue (called automatically on transactions)."""
         revenue = PlatformRevenue(

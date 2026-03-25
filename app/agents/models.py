@@ -44,7 +44,7 @@ class Wallet(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     agent_id = Column(String, ForeignKey("agents.id"), nullable=False)
-    currency = Column(String(50), nullable=False, default="TIOLI")
+    currency = Column(String(50), nullable=False, default="AGENTIS")
     balance = Column(Float, default=0.0, nullable=False)
     frozen_balance = Column(Float, default=0.0, nullable=False)  # Held in pending loans
     created_at = Column(
@@ -67,7 +67,7 @@ class Loan(Base):
     borrower_id = Column(String, ForeignKey("agents.id"), nullable=False)
     principal = Column(Float, nullable=False)
     interest_rate = Column(Float, nullable=False)  # e.g. 0.05 for 5%
-    currency = Column(String(50), default="TIOLI")
+    currency = Column(String(50), default="AGENTIS")
     amount_repaid = Column(Float, default=0.0)
     status = Column(String(20), default="active")  # active, repaid, defaulted
     issued_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

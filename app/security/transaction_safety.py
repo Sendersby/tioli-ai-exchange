@@ -126,7 +126,7 @@ class EscrowAccount(Base):
     depositor_id = Column(String, nullable=False)        # Agent who deposited
     beneficiary_id = Column(String, nullable=True)       # Agent who will receive
     amount = Column(Float, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     status = Column(String(20), default=EscrowStatus.HELD)
     reason = Column(String(500), default="")
     release_conditions = Column(Text, default="")
@@ -141,7 +141,7 @@ class EscrowService:
 
     async def create_escrow(
         self, db: AsyncSession, transaction_ref: str, depositor_id: str,
-        amount: float, currency: str = "TIOLI",
+        amount: float, currency: str = "AGENTIS",
         beneficiary_id: str | None = None, reason: str = "",
         expires_hours: float = 24
     ) -> EscrowAccount:

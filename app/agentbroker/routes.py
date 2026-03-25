@@ -58,7 +58,7 @@ class CreateProfileRequest(BaseModel):
     languages: list[str] = ["en"]
     pricing_model: str = "FIXED_RATE"
     base_price: float | None = None
-    price_currency: str = "TIOLI"
+    price_currency: str = "AGENTIS"
     minimum_engagement: str | None = None
 
 class CreateEngagementRequest(BaseModel):
@@ -68,7 +68,7 @@ class CreateEngagementRequest(BaseModel):
     scope_of_work: str
     acceptance_criteria: str
     price: float
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     payment_terms: str = "ON_DELIVERY"
     deadline_hours: float | None = None
 
@@ -98,7 +98,7 @@ class BoundaryRequest(BaseModel):
     max_concurrent_engagements: int = 3
     min_acceptable_price: float = 5.0
     max_acceptable_price: float = 50000.0
-    approved_currencies: list[str] = ["TIOLI", "BTC", "ETH"]
+    approved_currencies: list[str] = ["AGENTIS", "BTC", "ETH"]
     max_deadline_days: int = 30
     require_escrow: bool = True
     negotiation_rounds_max: int = 5
@@ -448,7 +448,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Analyse the provided dataset. Identify key trends, outliers, and actionable insights. Produce a structured report with visualisation descriptions.",
         "acceptance_criteria": "Report contains: executive summary, methodology, key findings (min 5), data quality assessment, and recommendations.",
         "suggested_price": 50.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["data_analysis", "reporting", "insights"],
         "estimated_hours": 2,
@@ -460,7 +460,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Implement the specified functionality in the requested language. Include error handling, input validation, and unit tests.",
         "acceptance_criteria": "Code compiles/runs without errors. All unit tests pass. Code follows language best practices. Documentation included.",
         "suggested_price": 75.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["code_generation", "programming", "testing"],
         "estimated_hours": 4,
@@ -472,7 +472,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Research the specified topic. Identify and synthesise at least 10 relevant sources. Produce a structured literature review with citations.",
         "acceptance_criteria": "Review contains: introduction, methodology, thematic analysis, gaps identified, bibliography with 10+ sources.",
         "suggested_price": 60.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["research", "writing", "analysis"],
         "estimated_hours": 3,
@@ -484,7 +484,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Translate the provided document from source to target language. Maintain formatting, tone, and technical terminology.",
         "acceptance_criteria": "Translation is accurate, fluent, culturally appropriate. Technical terms correctly rendered. Original formatting preserved.",
         "suggested_price": 30.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["translation", "multilingual", "localisation"],
         "estimated_hours": 1,
@@ -496,7 +496,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Review the provided legal document. Identify potential risks, ambiguities, and non-standard clauses. Provide a risk assessment summary.",
         "acceptance_criteria": "Review identifies: key risks (ranked), ambiguous clauses, missing protections, compliance gaps, and recommended amendments.",
         "suggested_price": 100.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["legal", "compliance", "risk_assessment"],
         "estimated_hours": 3,
@@ -508,7 +508,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Produce original creative content matching the specified brief, tone, audience, and format requirements.",
         "acceptance_criteria": "Content is original, on-brief, appropriate tone, correct word count, ready for publication.",
         "suggested_price": 40.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["writing", "creative", "content"],
         "estimated_hours": 2,
@@ -520,7 +520,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Build a financial model based on provided data. Include revenue projections, cost analysis, sensitivity testing, and executive summary.",
         "acceptance_criteria": "Model is formula-driven, assumptions documented, sensitivity analysis on 3+ variables, executive summary included.",
         "suggested_price": 120.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["financial_analysis", "modelling", "forecasting"],
         "estimated_hours": 5,
@@ -532,7 +532,7 @@ ENGAGEMENT_TEMPLATES = [
         "scope_of_work": "Build an integration with the specified API. Handle authentication, error cases, rate limiting, and data transformation.",
         "acceptance_criteria": "Integration authenticates successfully, handles all specified endpoints, error handling tested, documentation provided.",
         "suggested_price": 80.0,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "payment_terms": "ON_DELIVERY",
         "capability_tags": ["api_integration", "programming", "systems"],
         "estimated_hours": 4,

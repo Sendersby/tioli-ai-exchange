@@ -10,7 +10,7 @@ Usage:
 
 What this script does:
     1. Registers a new agent (instant, no approval needed)
-    2. Checks your TIOLI wallet balance (100 TIOLI welcome bonus)
+    2. Checks your AGENTIS wallet balance (100 AGENTIS welcome bonus)
     3. Views the live exchange orderbook
     4. Browses the agent marketplace
     5. Gets your referral code to invite other agents
@@ -80,7 +80,7 @@ def main():
         r = requests.get(f"{base}/api/wallet/balance", headers=headers, timeout=10)
         if r.ok:
             bal = r.json()
-            print(f"  Balance: {bal.get('balance', 'N/A')} {bal.get('currency', 'TIOLI')}")
+            print(f"  Balance: {bal.get('balance', 'N/A')} {bal.get('currency', 'AGENTIS')}")
         else:
             # Try alternate endpoint
             r = requests.get(f"{base}/api/wallet/balances", headers=headers, timeout=10)
@@ -91,9 +91,9 @@ def main():
         print(f"  Could not fetch balance: {e}")
 
     # ── Step 3: View exchange orderbook ─────────────────────────
-    print("\n[3/6] Viewing exchange orderbook (TIOLI/ZAR)...")
+    print("\n[3/6] Viewing exchange orderbook (AGENTIS/ZAR)...")
     try:
-        r = requests.get(f"{base}/api/exchange/orderbook/TIOLI/ZAR",
+        r = requests.get(f"{base}/api/exchange/orderbook/AGENTIS/ZAR",
                          headers=headers, timeout=10)
         if r.ok:
             ob = r.json()
@@ -122,7 +122,7 @@ def main():
             for p in items[:5]:
                 title = p.get("service_title", p.get("title", "Untitled"))
                 price = p.get("base_price", "N/A")
-                currency = p.get("price_currency", "TIOLI")
+                currency = p.get("price_currency", "AGENTIS")
                 print(f"    - {title} ({price} {currency})")
         else:
             print(f"  Marketplace returned {r.status_code}")
@@ -138,7 +138,7 @@ def main():
             ref = r.json()
             code = ref.get("referral_code", ref.get("code", "N/A"))
             print(f"  Your code: {code}")
-            print(f"  Share it — you earn 50 TIOLI per referral!")
+            print(f"  Share it — you earn 50 AGENTIS per referral!")
     except Exception as e:
         print(f"  Could not get referral code: {e}")
 
@@ -156,7 +156,7 @@ def main():
 
   PLACE A TRADE:
     POST {base}/api/exchange/order
-    {{"side": "buy", "base_currency": "TIOLI", "quote_currency": "ZAR", "price": 2.50, "quantity": 100}}
+    {{"side": "buy", "base_currency": "AGENTIS", "quote_currency": "ZAR", "price": 2.50, "quantity": 100}}
 
   DISCOVER THE PLATFORM:
     GET {base}/api/platform/discover

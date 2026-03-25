@@ -30,7 +30,7 @@ MARKET_MAKER_AGENT_ID = "TIOLI_MARKET_MAKER"
 
 # Default configuration
 DEFAULT_SPREAD_PCT = 0.03      # 3% spread (1.5% each side)
-DEFAULT_ORDER_SIZE = 100.0     # 100 TIOLI per side
+DEFAULT_ORDER_SIZE = 100.0     # 100 AGENTIS per side
 MIN_POOL_BALANCE = 50.0        # Don't place orders if pool balance is below this
 
 
@@ -66,8 +66,8 @@ class MarketMakerService:
     def _init_default_pairs(self):
         """Set up default trading pairs for market making."""
         pairs = [
-            ("TIOLI", "BTC", 0.03, 100.0),
-            ("TIOLI", "ETH", 0.03, 100.0),
+            ("AGENTIS", "BTC", 0.03, 100.0),
+            ("AGENTIS", "ETH", 0.03, 100.0),
             ("ETH", "BTC", 0.04, 0.5),
         ]
         for base, quote, spread, size in pairs:

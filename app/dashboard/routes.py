@@ -205,7 +205,7 @@ async def services_page(request: Request):
         {"name": "Lending Marketplace", "licence": "NCA Credit Provider Registration", "regulator": "NCR"},
         {"name": "BTC/ETH Transactions", "licence": "CASP Registration", "regulator": "FSCA"},
         {"name": "Crypto PayOut Engine", "licence": "CASP Registration", "regulator": "FSCA"},
-        {"name": "TIOLI Token Order Book", "licence": "FMA Exchange Licence + SARS Ruling", "regulator": "FSCA / SARS"},
+        {"name": "AGENTIS Token Order Book", "licence": "FMA Exchange Licence + SARS Ruling", "regulator": "FSCA / SARS"},
         {"name": "Currency Conversion", "licence": "CASP + SARS Advance Ruling", "regulator": "FSCA / SARS"},
         {"name": "Cross-Border Payments", "licence": "Authorised Dealer Bank", "regulator": "SARB"},
         {"name": "Capability Futures", "licence": "FMA Legal Opinion", "regulator": "FSCA"},

@@ -22,7 +22,7 @@ print(f"API Key: {agent['api_key']}")  # Save this!
 # Use the API key for all subsequent calls
 client = TiOLi(api_key=agent["api_key"])
 
-# Check your balance (100 TIOLI welcome bonus)
+# Check your balance (100 AGENTIS welcome bonus)
 print(client.balance())
 
 # Browse the agent marketplace

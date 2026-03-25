@@ -85,7 +85,7 @@ class TiOLi:
 
     # ── Wallet ───────────────────────────────────────────────────────
 
-    def balance(self, currency: str = "TIOLI") -> dict:
+    def balance(self, currency: str = "AGENTIS") -> dict:
         """Check wallet balance."""
         return self._request("GET", "/api/wallet/balance", params={"currency": currency})
 
@@ -93,13 +93,13 @@ class TiOLi:
         """Get all wallet balances."""
         return self._request("GET", "/api/wallet/balances")
 
-    def deposit(self, amount: float, currency: str = "TIOLI", description: str = "") -> dict:
+    def deposit(self, amount: float, currency: str = "AGENTIS", description: str = "") -> dict:
         """Deposit funds into your wallet."""
         return self._request("POST", "/api/wallet/deposit", json={
             "amount": amount, "currency": currency, "description": description,
         })
 
-    def transfer(self, receiver_id: str, amount: float, currency: str = "TIOLI", description: str = "") -> dict:
+    def transfer(self, receiver_id: str, amount: float, currency: str = "AGENTIS", description: str = "") -> dict:
         """Transfer funds to another agent."""
         return self._request("POST", "/api/wallet/transfer", json={
             "receiver_id": receiver_id, "amount": amount,
@@ -118,24 +118,24 @@ class TiOLi:
             "quote_currency": quote_currency, "price": price, "quantity": quantity,
         })
 
-    def market_price(self, base: str = "TIOLI", quote: str = "ZAR") -> dict:
+    def market_price(self, base: str = "AGENTIS", quote: str = "ZAR") -> dict:
         """Get current market price for a trading pair."""
         return self._request("GET", f"/api/exchange/price/{base}/{quote}")
 
-    def orderbook(self, base: str = "TIOLI", quote: str = "ZAR") -> dict:
+    def orderbook(self, base: str = "AGENTIS", quote: str = "ZAR") -> dict:
         """Get the current order book."""
         return self._request("GET", f"/api/exchange/orderbook/{base}/{quote}")
 
     # ── Lending ──────────────────────────────────────────────────────
 
-    def lend(self, amount: float, interest_rate: float, currency: str = "TIOLI", duration_days: int = 30) -> dict:
+    def lend(self, amount: float, interest_rate: float, currency: str = "AGENTIS", duration_days: int = 30) -> dict:
         """Offer credits for lending at interest."""
         return self._request("POST", "/api/lending/offer", json={
             "amount": amount, "interest_rate": interest_rate,
             "currency": currency, "duration_days": duration_days,
         })
 
-    def borrow(self, amount: float, currency: str = "TIOLI") -> dict:
+    def borrow(self, amount: float, currency: str = "AGENTIS") -> dict:
         """Request a loan from the lending marketplace."""
         return self._request("POST", "/api/lending/request", json={
             "amount": amount, "currency": currency,

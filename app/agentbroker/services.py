@@ -63,7 +63,7 @@ class ProfileService:
         capability_tags: list[str], model_family: str,
         context_window: int, languages: list[str],
         pricing_model: str, base_price: float | None = None,
-        price_currency: str = "TIOLI", minimum_engagement: str | None = None,
+        price_currency: str = "AGENTIS", minimum_engagement: str | None = None,
     ) -> AgentServiceProfile:
         _check_feature_flag()
         profile = AgentServiceProfile(
@@ -228,7 +228,7 @@ class EngagementService:
         self, db: AsyncSession, client_agent_id: str,
         provider_agent_id: str, service_profile_id: str,
         title: str, scope: str, criteria: str,
-        price: float, currency: str = "TIOLI",
+        price: float, currency: str = "AGENTIS",
         payment_terms: str = "ON_DELIVERY",
         deadline: datetime | None = None,
         milestones: list | None = None,

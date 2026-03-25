@@ -58,7 +58,7 @@ class ForexService:
     async def update_platform_rates(self, db: AsyncSession) -> dict:
         """Fetch live rates and update all fiat cross-rates on the platform.
 
-        Updates: USD/ZAR, EUR/USD, GBP/USD, and all TIOLI/fiat pairs.
+        Updates: USD/ZAR, EUR/USD, GBP/USD, and all AGENTIS/fiat pairs.
         """
         rates = await self.fetch_rates()
         if not rates:
@@ -79,8 +79,8 @@ class ForexService:
                     )
                     updated_pairs.append(f"{base}/{quote}")
 
-        # Update TIOLI/fiat rates based on TIOLI/USD seed and live fiat rates
-        tioli_usd = await self.currency_service.get_exchange_rate(db, "TIOLI", "USD")
+        # Update AGENTIS/fiat rates based on AGENTIS/USD seed and live fiat rates
+        tioli_usd = await self.currency_service.get_exchange_rate(db, "AGENTIS", "USD")
         if tioli_usd and tioli_usd > 0:
             for fiat in SUPPORTED_FIAT:
                 if fiat == "USD":
@@ -88,9 +88,9 @@ class ForexService:
                 if fiat in rates:
                     tioli_fiat = round(tioli_usd * rates[fiat], 8)
                     await self.currency_service.update_exchange_rate(
-                        db, "TIOLI", fiat, tioli_fiat
+                        db, "AGENTIS", fiat, tioli_fiat
                     )
-                    updated_pairs.append(f"TIOLI/{fiat}")
+                    updated_pairs.append(f"AGENTIS/{fiat}")
 
         await db.flush()
         return {

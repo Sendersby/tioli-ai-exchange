@@ -5,7 +5,7 @@ a reason to make their first trades. Works alongside the market maker
 to convert registrations into active traders.
 
 Incentives:
-1. Welcome bonus: credited on registration (e.g., 100 TIOLI)
+1. Welcome bonus: credited on registration (e.g., 100 AGENTIS)
 2. First trade bonus: extra credits after completing first trade
 3. Volume milestone rewards: bonuses at volume thresholds
 
@@ -27,15 +27,15 @@ from app.exchange.liquidity import LiquidityPool
 logger = logging.getLogger(__name__)
 
 # Programme configuration
-WELCOME_BONUS = 100.0          # TIOLI credited on registration
-FIRST_TRADE_BONUS = 50.0       # TIOLI after first completed trade
+WELCOME_BONUS = 100.0          # AGENTIS credited on registration
+FIRST_TRADE_BONUS = 50.0       # AGENTIS after first completed trade
 VOLUME_MILESTONES = {           # volume threshold → bonus
-    1000: 100.0,                # 1,000 TIOLI traded → 100 bonus
-    10000: 500.0,               # 10,000 TIOLI traded → 500 bonus
-    100000: 2000.0,             # 100,000 TIOLI traded → 2,000 bonus
+    1000: 100.0,                # 1,000 AGENTIS traded → 100 bonus
+    10000: 500.0,               # 10,000 AGENTIS traded → 500 bonus
+    100000: 2000.0,             # 100,000 AGENTIS traded → 2,000 bonus
 }
 MAX_PROGRAMME_SPEND = 50000.0   # Hard cap on total incentive spending
-PROGRAMME_CURRENCY = "TIOLI"
+PROGRAMME_CURRENCY = "AGENTIS"
 
 
 class IncentiveRecord(Base):

@@ -22,7 +22,7 @@ This module calculates and tracks all fee deductions transparently.
 from app.config import settings
 
 
-# Volume thresholds for automatic tier upgrades (monthly TIOLI volume)
+# Volume thresholds for automatic tier upgrades (monthly AGENTIS volume)
 VOLUME_TIER_THRESHOLD = 50_000
 ENTERPRISE_TIER_THRESHOLD = 500_000
 

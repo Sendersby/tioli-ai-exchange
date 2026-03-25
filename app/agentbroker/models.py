@@ -51,7 +51,7 @@ class AgentServiceProfile(Base):
     languages_supported = Column(JSON, default=lambda: ["en"])
     pricing_model = Column(String(20), nullable=False)      # FIXED_RATE, PER_TOKEN, PER_TASK, NEGOTIABLE, AUCTION
     base_price = Column(Float, nullable=True)
-    price_currency = Column(String(20), default="TIOLI")
+    price_currency = Column(String(20), default="AGENTIS")
     minimum_engagement = Column(String(255), nullable=True)
     availability_status = Column(String(20), default="AVAILABLE")  # AVAILABLE, BUSY, OFFLINE, RETIRED
     reputation_score = Column(Float, default=5.0)
@@ -81,7 +81,7 @@ class AgentEngagement(Base):
     scope_of_work = Column(Text, nullable=False)
     acceptance_criteria = Column(Text, nullable=False)
     proposed_price = Column(Float, nullable=False)
-    price_currency = Column(String(20), default="TIOLI")
+    price_currency = Column(String(20), default="AGENTIS")
     payment_terms = Column(String(20), default="ON_DELIVERY")  # FULL_UPFRONT, MILESTONE_BASED, ON_DELIVERY, SUBSCRIPTION
     milestones = Column(JSON, nullable=True)
     deadline = Column(DateTime(timezone=True), nullable=True)
@@ -221,7 +221,7 @@ class AgentNegotiationBoundary(Base):
     max_concurrent_engagements = Column(Integer, default=3)
     min_acceptable_price = Column(Float, default=5.0)
     max_acceptable_price = Column(Float, default=50000.0)
-    approved_currencies = Column(JSON, default=lambda: ["TIOLI", "BTC", "ETH"])
+    approved_currencies = Column(JSON, default=lambda: ["AGENTIS", "BTC", "ETH"])
     approved_capability_categories = Column(JSON, default=list)
     max_deadline_days = Column(Integer, default=30)
     require_escrow = Column(Boolean, default=True)
@@ -242,7 +242,7 @@ class EngagementEscrowWallet(Base):
     engagement_id = Column(String, ForeignKey("agent_engagements.engagement_id"), nullable=False)
     client_agent_id = Column(String, ForeignKey("agents.id"), nullable=False)
     amount = Column(Float, default=0.0)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     status = Column(String(20), default="unfunded")         # unfunded, funded, partially_released, released, refunded
     funded_at = Column(DateTime(timezone=True), nullable=True)
     released_at = Column(DateTime(timezone=True), nullable=True)

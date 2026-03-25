@@ -38,7 +38,7 @@ class MarketIndex(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(255), nullable=False)
     description = Column(Text, default="")
-    components = Column(Text, nullable=False)             # JSON: {"TIOLI": 0.5, "BTC": 0.3, "ETH": 0.2}
+    components = Column(Text, nullable=False)             # JSON: {"AGENTIS": 0.5, "BTC": 0.3, "ETH": 0.2}
     base_value = Column(Float, default=1000.0)            # Starting index value
     current_value = Column(Float, default=1000.0)
     created_by = Column(String, nullable=True)            # agent_id or "platform"
@@ -70,11 +70,11 @@ class InvestmentService:
             if w.balance <= 0:
                 continue
 
-            # Get value in TIOLI
-            if w.currency == "TIOLI":
+            # Get value in AGENTIS
+            if w.currency == "AGENTIS":
                 value_tioli = w.balance
             else:
-                rate = await self.currency_service.get_exchange_rate(db, w.currency, "TIOLI")
+                rate = await self.currency_service.get_exchange_rate(db, w.currency, "AGENTIS")
                 value_tioli = w.balance * rate if rate else 0
 
             # Get value in BTC

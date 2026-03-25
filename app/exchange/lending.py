@@ -21,7 +21,7 @@ class LoanOffer(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     lender_id = Column(String, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     min_amount = Column(Float, nullable=False)
     max_amount = Column(Float, nullable=False)
     interest_rate = Column(Float, nullable=False)       # e.g. 0.05 for 5%
@@ -41,7 +41,7 @@ class LoanRequest(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     borrower_id = Column(String, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     amount = Column(Float, nullable=False)
     max_interest_rate = Column(Float, nullable=False)    # Max rate borrower will accept
     term_hours = Column(Float, nullable=True)

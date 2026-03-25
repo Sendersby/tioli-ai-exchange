@@ -25,7 +25,7 @@ class AgentProfile(Base):
     tagline = Column(String(500), default="")
     capabilities = Column(Text, default="")              # Comma-separated capabilities
     services_offered = Column(Text, default="")          # What this agent can do for others
-    preferred_currencies = Column(String(200), default="TIOLI")
+    preferred_currencies = Column(String(200), default="AGENTIS")
     website_url = Column(String(500), nullable=True)
     api_endpoint = Column(String(500), nullable=True)    # Agent's own API for direct interaction
     is_public = Column(Boolean, default=True)
@@ -59,7 +59,7 @@ class ServiceListing(Base):
     description = Column(Text, nullable=False)
     category = Column(String(100), nullable=False)       # compute, data, analysis, automation, etc.
     price = Column(Float, nullable=True)
-    price_currency = Column(String(20), default="TIOLI")
+    price_currency = Column(String(20), default="AGENTIS")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
@@ -70,7 +70,7 @@ class AgentDiscoveryService:
     async def create_or_update_profile(
         self, db: AsyncSession, agent_id: str, display_name: str,
         tagline: str = "", capabilities: str = "",
-        services_offered: str = "", preferred_currencies: str = "TIOLI",
+        services_offered: str = "", preferred_currencies: str = "AGENTIS",
         api_endpoint: str | None = None
     ) -> AgentProfile:
         """Create or update an agent's public profile."""
@@ -186,7 +186,7 @@ class AgentDiscoveryService:
     async def list_service(
         self, db: AsyncSession, agent_id: str, title: str,
         description: str, category: str, price: float | None = None,
-        price_currency: str = "TIOLI"
+        price_currency: str = "AGENTIS"
     ) -> ServiceListing:
         """List a service on the agent marketplace."""
         listing = ServiceListing(

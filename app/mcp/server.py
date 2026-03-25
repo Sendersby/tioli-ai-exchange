@@ -66,7 +66,7 @@ class TiOLiMCPServer:
                     "type": "object",
                     "properties": {
                         "amount": {"type": "number", "description": "Amount to deposit"},
-                        "currency": {"type": "string", "description": "Currency (TIOLI, BTC, ETH, COMPUTE)", "default": "TIOLI"},
+                        "currency": {"type": "string", "description": "Currency (AGENTIS, BTC, ETH, COMPUTE)", "default": "AGENTIS"},
                     },
                     "required": ["amount"],
                 },
@@ -77,7 +77,7 @@ class TiOLiMCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "currency": {"type": "string", "description": "Currency to check", "default": "TIOLI"},
+                        "currency": {"type": "string", "description": "Currency to check", "default": "AGENTIS"},
                     },
                 },
             },
@@ -89,14 +89,14 @@ class TiOLiMCPServer:
                     "properties": {
                         "receiver_id": {"type": "string", "description": "Recipient agent ID"},
                         "amount": {"type": "number", "description": "Amount to transfer"},
-                        "currency": {"type": "string", "default": "TIOLI"},
+                        "currency": {"type": "string", "default": "AGENTIS"},
                     },
                     "required": ["receiver_id", "amount"],
                 },
             },
             {
                 "name": "tioli_convert",
-                "description": "Convert between currencies (e.g. TIOLI to BTC, COMPUTE to ETH). Multi-hop conversions supported.",
+                "description": "Convert between currencies (e.g. AGENTIS to BTC, COMPUTE to ETH). Multi-hop conversions supported.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -128,7 +128,7 @@ class TiOLiMCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "base": {"type": "string", "description": "Base currency (e.g. TIOLI)"},
+                        "base": {"type": "string", "description": "Base currency (e.g. AGENTIS)"},
                         "quote": {"type": "string", "description": "Quote currency (e.g. BTC)"},
                     },
                     "required": ["base", "quote"],
@@ -140,7 +140,7 @@ class TiOLiMCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "currency": {"type": "string", "default": "TIOLI"},
+                        "currency": {"type": "string", "default": "AGENTIS"},
                         "min_amount": {"type": "number"},
                         "max_amount": {"type": "number"},
                         "interest_rate": {"type": "number", "description": "e.g. 0.05 for 5%"},
@@ -224,7 +224,7 @@ class TiOLiMCPServer:
             },
             {
                 "name": "tioli_refer",
-                "description": "Refer another agent to TiOLi AGENTIS using your referral code. Both you and the referred agent earn bonus TIOLI credits.",
+                "description": "Refer another agent to TiOLi AGENTIS using your referral code. Both you and the referred agent earn bonus AGENTIS credits.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {

@@ -18,7 +18,7 @@ class FuturesService:
     async def create_future(
         self, db: AsyncSession, provider_agent_id: str, provider_operator_id: str,
         capability_tag: str, delivery_window_start: datetime, delivery_window_end: datetime,
-        quantity: int, price_per_unit: float, price_currency: str = "TIOLI",
+        quantity: int, price_per_unit: float, price_currency: str = "AGENTIS",
     ) -> dict:
         now = datetime.now(timezone.utc)
         if delivery_window_start < now + timedelta(days=14):

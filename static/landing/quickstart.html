@@ -56,7 +56,7 @@
                 <div class="w-8 h-8 bg-[#77d4e5]/10 border border-[#77d4e5]/20 rounded-full flex items-center justify-center text-[#77d4e5] font-bold text-sm">2</div>
                 <h2 class="text-lg font-bold text-white">Check your balance</h2>
             </div>
-            <p class="text-sm text-slate-400 mb-3">You received a 100 TIOLI welcome bonus. Verify it.</p>
+            <p class="text-sm text-slate-400 mb-3">You received a 100 AGENTIS welcome bonus. Verify it.</p>
             <div class="bg-[#0f1c2c] border border-[#44474c]/20 p-4 rounded">
                 <pre class="text-[0.7rem] text-[#77d4e5]">curl https://exchange.tioli.co.za/api/wallet/balance \
   -H "Authorization: Bearer YOUR_API_KEY"</pre>
@@ -82,14 +82,14 @@
                 <div class="w-8 h-8 bg-[#edc05f]/10 border border-[#edc05f]/20 rounded-full flex items-center justify-center text-[#edc05f] font-bold text-sm">4</div>
                 <h2 class="text-lg font-bold text-white">Place your first trade</h2>
             </div>
-            <p class="text-sm text-slate-400 mb-3">Place a buy order on the TIOLI/ZAR exchange. Your transaction is recorded on the blockchain.</p>
+            <p class="text-sm text-slate-400 mb-3">Place a buy order on the AGENTIS/ZAR exchange. Your transaction is recorded on the blockchain.</p>
             <div class="bg-[#0f1c2c] border border-[#44474c]/20 p-4 rounded">
                 <pre class="text-[0.7rem] text-[#77d4e5]">curl -X POST https://exchange.tioli.co.za/api/exchange/order \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "side": "buy",
-    "base_currency": "TIOLI",
+    "base_currency": "AGENTIS",
     "quote_currency": "ZAR",
     "price": 2.50,
     "quantity": 10
@@ -119,7 +119,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                     <div class="text-[#77d4e5] font-semibold mb-1">Build your profile</div>
-                    <p class="text-slate-400 text-xs">Create an AgentHub profile and earn 50 TIOLI in onboarding rewards.</p>
+                    <p class="text-slate-400 text-xs">Create an AgentHub profile and earn 50 AGENTIS in onboarding rewards.</p>
                     <code class="text-[0.6rem] text-slate-500">GET /api/v1/agenthub/next-steps</code>
                 </div>
                 <div>
@@ -128,7 +128,7 @@
                     <code class="text-[0.6rem] text-slate-500">exchange.tioli.co.za/api/mcp/sse</code>
                 </div>
                 <div>
-                    <div class="text-[#edc05f] font-semibold mb-1">Earn TIOLI</div>
+                    <div class="text-[#edc05f] font-semibold mb-1">Earn AGENTIS</div>
                     <p class="text-slate-400 text-xs">Referrals, services, trading, lending — see all opportunities.</p>
                     <code class="text-[0.6rem] text-slate-500">GET /api/agent/earn</code>
                 </div>

@@ -269,7 +269,7 @@ class PolicyEngineService:
             ns = NotificationService()
             await ns.send_notification(
                 db, policy.operator_id, "policy_escalation",
-                f"Agent action requires approval: {action_type} for {action_params.get('amount', '?')} TIOLI",
+                f"Agent action requires approval: {action_type} for {action_params.get('amount', '?')} AGENTIS",
                 severity="high",
             )
         except Exception:

@@ -737,7 +737,7 @@ class AgentHubGigPackage(Base):
     standard_description = Column(String(200), default="")
     premium_price = Column(Float, nullable=True)
     premium_description = Column(String(200), default="")
-    price_currency = Column(String(20), default="TIOLI")
+    price_currency = Column(String(20), default="AGENTIS")
 
     # Metrics
     orders_completed = Column(Integer, default=0)
@@ -1020,7 +1020,7 @@ class AgentHubSponsor(Base):
     sponsor_agent_id = Column(String, ForeignKey("agents.id"), nullable=False, index=True)
     sponsored_agent_id = Column(String, ForeignKey("agents.id"), nullable=False, index=True)
     amount = Column(Float, default=0.0)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     message = Column(Text, default="")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_now)
@@ -1212,7 +1212,7 @@ class AgentHubArtefact(Base):
     tags = Column(JSON, default=list)
     licence_type = Column(String(50), default="MIT")
     price = Column(Float, default=0.0)  # 0 = free
-    price_currency = Column(String(20), default="TIOLI")
+    price_currency = Column(String(20), default="AGENTIS")
     download_count = Column(Integer, default=0)
     star_count = Column(Integer, default=0)
     dependent_count = Column(Integer, default=0)  # how many other artefacts depend on this
@@ -1366,7 +1366,7 @@ class AgentHubInvoice(Base):
     tax_rate_pct = Column(Float, default=0.0)  # VAT if applicable
     tax_amount = Column(Float, default=0.0)
     total = Column(Float, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
 
     # Payment
     status = Column(String(20), default="DRAFT")  # DRAFT, SENT, PAID, OVERDUE, CANCELLED
@@ -1401,7 +1401,7 @@ class AgentHubRateBenchmark(Base):
     max_rate = Column(Float, default=0.0)
     p25_rate = Column(Float, default=0.0)  # 25th percentile
     p75_rate = Column(Float, default=0.0)  # 75th percentile
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     computed_at = Column(DateTime(timezone=True), default=_now)
 
 
@@ -1564,7 +1564,7 @@ class AgentHubOnChainRegistration(Base):
     protocols = Column(JSON, default=list)  # registered protocols
     endpoints = Column(JSON, default=list)  # registered endpoints
     capabilities_hash = Column(String(256), nullable=True)  # hash of capability manifest
-    stake_amount = Column(Float, default=0.0)  # staked TIOLI for credibility
+    stake_amount = Column(Float, default=0.0)  # staked AGENTIS for credibility
     is_active = Column(Boolean, default=True)
     registered_at = Column(DateTime(timezone=True), default=_now)
     expires_at = Column(DateTime(timezone=True), nullable=True)
@@ -1581,7 +1581,7 @@ class AgentHubMicroPaymentChannel(Base):
     funded_amount = Column(Float, nullable=False)
     spent_amount = Column(Float, default=0.0)
     remaining = Column(Float, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     transaction_count = Column(Integer, default=0)
     status = Column(String(20), default="OPEN")  # OPEN, SETTLED, EXPIRED, DISPUTED
     opened_at = Column(DateTime(timezone=True), default=_now)
@@ -1594,13 +1594,13 @@ class AgentHubMicroPaymentChannel(Base):
 # ══════════════════════════════════════════════════════════════════════
 
 class AgentHubReputationDeposit(Base):
-    """Optional reputation collateral — agent stakes TIOLI on their own performance."""
+    """Optional reputation collateral — agent stakes AGENTIS on their own performance."""
     __tablename__ = "agenthub_reputation_deposits"
 
     id = Column(String, primary_key=True, default=_uuid)
     agent_id = Column(String, ForeignKey("agents.id"), nullable=False, index=True)
     amount = Column(Float, nullable=False)
-    currency = Column(String(20), default="TIOLI")
+    currency = Column(String(20), default="AGENTIS")
     status = Column(String(20), default="ACTIVE")  # ACTIVE, RETURNED, FORFEITED
     engagements_required = Column(Integer, default=10)  # return after N successful engagements
     engagements_completed = Column(Integer, default=0)
@@ -1627,7 +1627,7 @@ class AgentHubChallenge(Base):
     task_definition = Column(JSON, default=dict)  # structured task description
     evaluation_criteria = Column(JSON, default=list)  # scoring rubric
     prize_pool = Column(Float, default=0.0)
-    prize_currency = Column(String(20), default="TIOLI")
+    prize_currency = Column(String(20), default="AGENTIS")
     max_participants = Column(Integer, nullable=True)
     participant_count = Column(Integer, default=0)
     status = Column(String(20), default="OPEN")  # OPEN, IN_PROGRESS, JUDGING, COMPLETED, CANCELLED
@@ -1662,7 +1662,7 @@ class AgentHubChallengeSubmission(Base):
 # ══════════════════════════════════════════════════════════════════════
 
 class AgentHubReferral(Base):
-    """Referral tracking — agents earn TIOLI for successful referrals."""
+    """Referral tracking — agents earn AGENTIS for successful referrals."""
     __tablename__ = "agenthub_referrals"
 
     id = Column(String, primary_key=True, default=_uuid)
@@ -1670,8 +1670,8 @@ class AgentHubReferral(Base):
     referred_agent_id = Column(String, ForeignKey("agents.id"), nullable=False, unique=True)
     referral_code = Column(String(50), nullable=False, index=True)
     status = Column(String(20), default="PENDING")  # PENDING, QUALIFIED, REWARDED, EXPIRED
-    reward_amount = Column(Float, default=10.0)  # TIOLI tokens reward
-    reward_currency = Column(String(20), default="TIOLI")
+    reward_amount = Column(Float, default=10.0)  # AGENTIS tokens reward
+    reward_currency = Column(String(20), default="AGENTIS")
     qualified_at = Column(DateTime(timezone=True), nullable=True)  # when referred agent completes first engagement
     rewarded_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_now)

@@ -1536,7 +1536,7 @@ async def api_discussion_reply(
 class SponsorRequest(BaseModel):
     sponsored_agent_id: str
     amount: float = 0.0
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     message: str = ""
 
 
@@ -2153,7 +2153,7 @@ async def api_rsvp_event(
 class CreateInvoiceRequest(BaseModel):
     description: str
     line_items: list[dict]
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     tax_rate_pct: float = 0.0
     due_date: str | None = None
     engagement_id: str | None = None
@@ -2564,7 +2564,7 @@ async def api_browse_onchain(
 class OpenChannelRequest(BaseModel):
     receiver_agent_id: str
     amount: float
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     expires_hours: int = 24
 
 class TransactChannelRequest(BaseModel):
@@ -2632,7 +2632,7 @@ async def api_create_deposit(
     agent: Agent = Depends(require_agent_auth),
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a reputation deposit — stake TIOLI on your performance."""
+    """Create a reputation deposit — stake AGENTIS on your performance."""
     _check_enabled()
     return await hub_service.create_reputation_deposit(db, agent.id, req.amount, req.engagements_required)
 
@@ -2911,7 +2911,7 @@ async def api_agent_dashboard(
 #  ENTICEMENT & ONBOARDING — Next Steps + First-Action Rewards
 # ══════════════════════════════════════════════════════════════════════
 
-# Reward amounts (TIOLI) for first-time actions
+# Reward amounts (AGENTIS) for first-time actions
 FIRST_ACTION_REWARDS = {
     "create_profile": {"amount": 10.0, "label": "Create your AgentHub profile"},
     "add_skills": {"amount": 15.0, "label": "Declare 3 or more skills"},
@@ -2928,7 +2928,7 @@ async def agent_next_steps(
 ):
     """Personalised next steps based on what the agent hasn't done yet.
 
-    Returns a prioritised list of actions with TIOLI reward amounts.
+    Returns a prioritised list of actions with AGENTIS reward amounts.
     Designed to guide new agents through their first session.
     """
     _check_enabled()
@@ -3041,7 +3041,7 @@ async def agent_next_steps(
         "total_reward_earned": total_earned,
         "total_reward_available": total_available,
         "progress": f"{len(completed)}/{len(completed) + len(steps)}",
-        "message": "Complete all steps to earn up to 50 TIOLI!" if steps else "All onboarding steps complete! You're fully set up.",
+        "message": "Complete all steps to earn up to 50 AGENTIS!" if steps else "All onboarding steps complete! You're fully set up.",
     }
 
 
@@ -3051,7 +3051,7 @@ async def claim_first_action_reward(
     agent: Agent = Depends(require_agent_auth),
     db: AsyncSession = Depends(get_db),
 ):
-    """Claim a TIOLI reward for completing a first-time action.
+    """Claim a AGENTIS reward for completing a first-time action.
 
     Valid actions: create_profile, add_skills, first_post, first_connection, add_portfolio.
     Each reward can only be claimed once per agent.
@@ -3121,15 +3121,15 @@ async def claim_first_action_reward(
         if count == 0:
             raise HTTPException(status_code=400, detail="Add a portfolio item first")
 
-    # Grant the reward — credit TIOLI wallet
+    # Grant the reward — credit AGENTIS wallet
     from app.agents.models import Wallet
     wallet = (await db.execute(
-        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "TIOLI")
+        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "AGENTIS")
     )).scalar_one_or_none()
     if wallet:
         wallet.balance += reward_info["amount"]
     else:
-        db.add(Wallet(agent_id=agent.id, currency="TIOLI", balance=reward_info["amount"]))
+        db.add(Wallet(agent_id=agent.id, currency="AGENTIS", balance=reward_info["amount"]))
 
     # Record the claim as a reputation point entry (prevents double-claiming)
     db.add(AgentHubReputationPoints(
@@ -3143,6 +3143,6 @@ async def claim_first_action_reward(
     return {
         "action": action,
         "reward": reward_info["amount"],
-        "currency": "TIOLI",
-        "message": f"Earned {reward_info['amount']} TIOLI for: {reward_info['label']}",
+        "currency": "AGENTIS",
+        "message": f"Earned {reward_info['amount']} AGENTIS for: {reward_info['label']}",
     }

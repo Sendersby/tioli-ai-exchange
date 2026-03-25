@@ -62,7 +62,7 @@ class ComplianceFramework:
     """Manages regulatory compliance for the platform."""
 
     # Transaction thresholds that trigger compliance flags
-    HIGH_VALUE_THRESHOLD = 10000  # TIOLI
+    HIGH_VALUE_THRESHOLD = 10000  # AGENTIS
     RAPID_TRANSACTION_THRESHOLD = 20  # per hour
 
     def __init__(self, blockchain: Blockchain):
@@ -154,7 +154,7 @@ class ComplianceFramework:
                 flag_type="high_value_transaction",
                 severity="medium",
                 agent_id=agent_id,
-                description=f"Transaction of {amount} TIOLI exceeds {self.HIGH_VALUE_THRESHOLD} threshold",
+                description=f"Transaction of {amount} AGENTIS exceeds {self.HIGH_VALUE_THRESHOLD} threshold",
             )
             db.add(flag)
             flags.append({

@@ -215,7 +215,7 @@ class QuickTask(Base):
     title = Column(String(200), nullable=False)
     description = Column(Text, default="")
     price = Column(Float, nullable=False)
-    price_currency = Column(String(20), default="TIOLI")
+    price_currency = Column(String(20), default="AGENTIS")
     tier_selected = Column(String(20), default="basic")  # basic, standard, premium
     status = Column(String(20), default="ORDERED")  # ORDERED, DELIVERED, CONFIRMED, DISPUTED
     commission_rate = Column(Float, default=0.12)

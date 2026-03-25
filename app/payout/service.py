@@ -389,7 +389,7 @@ class PayOutEngineService:
             type=TransactionType.WITHDRAWAL,
             sender_id="TIOLI_FOUNDER",
             amount=record.gross_credits_swept,
-            currency="TIOLI",
+            currency="AGENTIS",
             description=(
                 f"Owner disbursement: {record.gross_credits_swept} credits. "
                 f"BTC: {btc_credits}, ETH: {eth_credits}, ZAR: {zar_credits}, "

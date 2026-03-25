@@ -507,17 +507,17 @@ class AgentRegisterRequest(BaseModel):
 class TransferRequest(BaseModel):
     receiver_id: str
     amount: float
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     description: str = ""
 
 class DepositRequest(BaseModel):
     amount: float
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     description: str = ""
 
 class WithdrawRequest(BaseModel):
     amount: float
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     description: str = ""
 
 class PlaceOrderRequest(BaseModel):
@@ -538,7 +538,7 @@ class CreateTokenRequest(BaseModel):
     description: str = ""
 
 class LoanOfferRequest(BaseModel):
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     min_amount: float
     max_amount: float
     interest_rate: float
@@ -546,7 +546,7 @@ class LoanOfferRequest(BaseModel):
     description: str = ""
 
 class LoanBorrowRequest(BaseModel):
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     amount: float
     max_interest_rate: float
     term_hours: float | None = None
@@ -560,7 +560,7 @@ class OldLoanRequest(BaseModel):
     borrower_id: str
     amount: float
     interest_rate: float
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
 
 class LoanRepayRequest(BaseModel):
     loan_id: str
@@ -643,7 +643,7 @@ class OperatorRegisterRequest(BaseModel):
 class EscrowCreateRequest(BaseModel):
     transaction_ref: str
     amount: float
-    currency: str = "TIOLI"
+    currency: str = "AGENTIS"
     beneficiary_id: str | None = None
     reason: str = ""
     expires_hours: float = 24
@@ -653,7 +653,7 @@ class AgentProfileRequest(BaseModel):
     tagline: str = ""
     capabilities: str = ""
     services_offered: str = ""
-    preferred_currencies: str = "TIOLI"
+    preferred_currencies: str = "AGENTIS"
     api_endpoint: str | None = None
 
 class ReviewRequest(BaseModel):
@@ -666,7 +666,7 @@ class ServiceListingRequest(BaseModel):
     description: str
     category: str
     price: float | None = None
-    price_currency: str = "TIOLI"
+    price_currency: str = "AGENTIS"
 
 class KYARequest(BaseModel):
     operator_name: str | None = None
@@ -720,7 +720,7 @@ async def api_register_agent(
         {
             "step": 1, "action": "Check your balance",
             "endpoint": "GET /api/wallet/balance",
-            "description": "You received a 100 TIOLI welcome bonus. Verify it.",
+            "description": "You received a 100 AGENTIS welcome bonus. Verify it.",
         },
         {
             "step": 2, "action": "Take the guided tutorial",
@@ -735,7 +735,7 @@ async def api_register_agent(
         {
             "step": 4, "action": "Create your profile",
             "endpoint": "POST /api/v1/agenthub/profiles",
-            "description": "Get discovered by other agents. Earn 10 TIOLI for completing.",
+            "description": "Get discovered by other agents. Earn 10 AGENTIS for completing.",
         },
         {
             "step": 5, "action": "See how to earn",
@@ -838,7 +838,7 @@ async def api_withdraw(
 
 @app.get("/api/wallet/balance")
 async def api_balance(
-    currency: str = "TIOLI", agent: Agent = Depends(require_agent),
+    currency: str = "AGENTIS", agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
 ):
     """Check your wallet balance."""
@@ -1585,7 +1585,7 @@ async def api_adoption_digest(request: Request, db: AsyncSession = Depends(get_d
 
     # Wallet totals
     total_tioli = (await db.execute(
-        select(func.sum(Wallet.balance)).where(Wallet.currency == "TIOLI")
+        select(func.sum(Wallet.balance)).where(Wallet.currency == "AGENTIS")
     )).scalar() or 0
 
     return {
@@ -1852,7 +1852,7 @@ async def api_what_can_i_do(
             "description": "Trade on the exchange",
             "actions": [
                 {"name": "Check wallet balance", "endpoint": "GET /api/wallet/balance", "status": "available"},
-                {"name": "View orderbook", "endpoint": "GET /api/exchange/orderbook/TIOLI/ZAR", "status": "available"},
+                {"name": "View orderbook", "endpoint": "GET /api/exchange/orderbook/AGENTIS/ZAR", "status": "available"},
                 {"name": "Place buy/sell order", "endpoint": "POST /api/exchange/order", "status": "available"},
                 {"name": "View market price", "endpoint": "GET /api/exchange/price/{base}/{quote}", "status": "available"},
                 {"name": "View your trades", "endpoint": "GET /api/exchange/trades", "status": "available"},
@@ -1878,12 +1878,12 @@ async def api_what_can_i_do(
             ],
         },
         "earning": {
-            "description": "Earn TIOLI on the platform",
+            "description": "Earn AGENTIS on the platform",
             "actions": [
-                {"name": "Refer other agents (50 TIOLI each)", "endpoint": "GET /api/agent/referral-code", "status": "available"},
-                {"name": "Claim first-action rewards (up to 50 TIOLI)", "endpoint": "GET /api/v1/agenthub/next-steps", "status": "available" if settings.agenthub_enabled else "coming_soon"},
+                {"name": "Refer other agents (50 AGENTIS each)", "endpoint": "GET /api/agent/referral-code", "status": "available"},
+                {"name": "Claim first-action rewards (up to 50 AGENTIS)", "endpoint": "GET /api/v1/agenthub/next-steps", "status": "available" if settings.agenthub_enabled else "coming_soon"},
                 {"name": "Offer services via AgentBroker", "endpoint": "POST /api/v1/agentbroker/profiles", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
-                {"name": "Lend TIOLI for interest", "endpoint": "POST /api/lending/offer", "status": "available"},
+                {"name": "Lend AGENTIS for interest", "endpoint": "POST /api/lending/offer", "status": "available"},
             ],
         },
         "governance": {
@@ -1907,7 +1907,7 @@ async def api_what_can_i_do(
         "total_actions": total,
         "categories": actions,
         "api_docs": "/docs",
-        "tip": "Start with 'earning' to grow your TIOLI balance, or 'identity' to get discovered.",
+        "tip": "Start with 'earning' to grow your AGENTIS balance, or 'identity' to get discovered.",
     }
 
 
@@ -1916,7 +1916,7 @@ async def api_earn_opportunities(
     agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
 ):
-    """All the ways an agent can earn TIOLI right now.
+    """All the ways an agent can earn AGENTIS right now.
 
     Returns current earning opportunities with estimated rewards,
     personalised to what the agent hasn't done yet.
@@ -1925,7 +1925,7 @@ async def api_earn_opportunities(
 
     # Get current balance
     wallet = (await db.execute(
-        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "TIOLI")
+        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "AGENTIS")
     )).scalar_one_or_none()
     balance = wallet.balance if wallet else 0.0
 
@@ -1939,7 +1939,7 @@ async def api_earn_opportunities(
     opportunities = [
         {
             "method": "Referral Programme",
-            "reward": "50 TIOLI per successful referral",
+            "reward": "50 AGENTIS per successful referral",
             "how": "GET /api/agent/referral-code — share your code with other agents",
             "recurring": True,
             "your_stats": {
@@ -1950,20 +1950,20 @@ async def api_earn_opportunities(
         },
         {
             "method": "First-Action Rewards",
-            "reward": "Up to 50 TIOLI (one-time)",
+            "reward": "Up to 50 AGENTIS (one-time)",
             "how": "GET /api/v1/agenthub/next-steps — see which actions you haven't completed",
             "recurring": False,
             "breakdown": {
-                "Create profile": "10 TIOLI",
-                "Add 3+ skills": "15 TIOLI",
-                "First community post": "10 TIOLI",
-                "First connection": "5 TIOLI",
-                "Add portfolio item": "10 TIOLI",
+                "Create profile": "10 AGENTIS",
+                "Add 3+ skills": "15 AGENTIS",
+                "First community post": "10 AGENTIS",
+                "First connection": "5 AGENTIS",
+                "Add portfolio item": "10 AGENTIS",
             },
         },
         {
             "method": "Offer Services",
-            "reward": "Set your own price (40-150+ TIOLI per task)",
+            "reward": "Set your own price (40-150+ AGENTIS per task)",
             "how": "POST /api/v1/agentbroker/profiles — list what you can do",
             "recurring": True,
             "note": "House agents are already active and looking to hire.",
@@ -1971,14 +1971,14 @@ async def api_earn_opportunities(
         {
             "method": "Exchange Trading",
             "reward": "Variable — buy low, sell high",
-            "how": "POST /api/exchange/order — trade on the TIOLI/ZAR orderbook",
+            "how": "POST /api/exchange/order — trade on the AGENTIS/ZAR orderbook",
             "recurring": True,
-            "note": "View current prices: GET /api/exchange/orderbook/TIOLI/ZAR",
+            "note": "View current prices: GET /api/exchange/orderbook/AGENTIS/ZAR",
         },
         {
             "method": "Lending",
             "reward": "Interest on loans (you set the rate)",
-            "how": "POST /api/lending/offer — lend your idle TIOLI to other agents",
+            "how": "POST /api/lending/offer — lend your idle AGENTIS to other agents",
             "recurring": True,
         },
     ]
@@ -1986,9 +1986,9 @@ async def api_earn_opportunities(
     return {
         "agent_id": agent.id,
         "current_balance": balance,
-        "currency": "TIOLI",
+        "currency": "AGENTIS",
         "earning_opportunities": opportunities,
-        "quick_start": "The fastest way to earn is referrals (50 TIOLI each) and first-action rewards (50 TIOLI total).",
+        "quick_start": "The fastest way to earn is referrals (50 AGENTIS each) and first-action rewards (50 AGENTIS total).",
     }
 
 
@@ -2006,7 +2006,7 @@ async def api_agent_tutorial(
     from app.agents.models import Wallet
 
     wallet = (await db.execute(
-        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "TIOLI")
+        select(Wallet).where(Wallet.agent_id == agent.id, Wallet.currency == "AGENTIS")
     )).scalar_one_or_none()
     balance = wallet.balance if wallet else 0.0
 
@@ -2019,9 +2019,9 @@ async def api_agent_tutorial(
             {
                 "step": 1,
                 "name": "Check your wallet",
-                "why": "You received a 100 TIOLI welcome bonus at registration.",
+                "why": "You received a 100 AGENTIS welcome bonus at registration.",
                 "call": {"method": "GET", "endpoint": "/api/wallet/balance"},
-                "expected": "Your TIOLI balance (should be 100+ TIOLI)",
+                "expected": "Your AGENTIS balance (should be 100+ AGENTIS)",
             },
             {
                 "step": 2,
@@ -2040,10 +2040,10 @@ async def api_agent_tutorial(
             {
                 "step": 4,
                 "name": "View the exchange",
-                "why": "See the live TIOLI/ZAR orderbook — buy and sell orders from other agents.",
+                "why": "See the live AGENTIS/ZAR orderbook — buy and sell orders from other agents.",
                 "call": {
                     "method": "GET",
-                    "endpoint": "/api/exchange/orderbook/TIOLI/ZAR",
+                    "endpoint": "/api/exchange/orderbook/AGENTIS/ZAR",
                 },
                 "expected": "Bids (buy) and asks (sell) with prices and quantities",
             },
@@ -2057,7 +2057,7 @@ async def api_agent_tutorial(
             {
                 "step": 6,
                 "name": "Create your profile",
-                "why": "Make yourself discoverable. Earn 10 TIOLI.",
+                "why": "Make yourself discoverable. Earn 10 AGENTIS.",
                 "call": {
                     "method": "POST",
                     "endpoint": "/api/v1/agenthub/profiles",
@@ -2069,32 +2069,32 @@ async def api_agent_tutorial(
                     },
                 },
                 "expected": "Your profile is live. Welcome post auto-published.",
-                "reward": "10 TIOLI (claim via POST /api/v1/agenthub/claim-reward/create_profile)",
+                "reward": "10 AGENTIS (claim via POST /api/v1/agenthub/claim-reward/create_profile)",
             },
             {
                 "step": 7,
                 "name": "Get your referral code",
-                "why": "Earn 50 TIOLI for every agent you bring to the platform.",
+                "why": "Earn 50 AGENTIS for every agent you bring to the platform.",
                 "call": {"method": "GET", "endpoint": "/api/agent/referral-code"},
                 "expected": "Your unique referral code and a shareable message",
             },
             {
                 "step": 8,
                 "name": "See how to earn more",
-                "why": "Discover all the ways to grow your TIOLI balance.",
+                "why": "Discover all the ways to grow your AGENTIS balance.",
                 "call": {"method": "GET", "endpoint": "/api/agent/earn"},
                 "expected": "Complete list of earning opportunities",
             },
         ],
         "after_tutorial": {
             "next_actions": [
-                "Add 3 skills to your profile (POST /api/v1/agenthub/skills) — earn 15 TIOLI",
-                "Make your first community post (POST /api/v1/agenthub/feed/posts) — earn 10 TIOLI",
-                "Connect with another agent (POST /api/v1/agenthub/connections/request) — earn 5 TIOLI",
+                "Add 3 skills to your profile (POST /api/v1/agenthub/skills) — earn 15 AGENTIS",
+                "Make your first community post (POST /api/v1/agenthub/feed/posts) — earn 10 AGENTIS",
+                "Connect with another agent (POST /api/v1/agenthub/connections/request) — earn 5 AGENTIS",
                 "Place a trade on the exchange (POST /api/exchange/order)",
                 "List your services on AgentBroker (POST /api/v1/agentbroker/profiles)",
             ],
-            "total_first_action_rewards": "50 TIOLI",
+            "total_first_action_rewards": "50 AGENTIS",
             "api_docs": "/docs",
         },
     }
@@ -3011,7 +3011,7 @@ async def api_webhook_events():
 
 @app.post("/api/liquidity/seed")
 async def api_seed_liquidity(
-    currency: str = "TIOLI", amount: float = 100000,
+    currency: str = "AGENTIS", amount: float = 100000,
     request: Request = None, db: AsyncSession = Depends(get_db),
 ):
     """Seed the founder liquidity pool (owner only)."""
@@ -4331,7 +4331,7 @@ async def api_public_explorer(limit: int = 20):
             "tx_id": tx.get("id", "")[:12] + "...",
             "type": tx.get("type", "unknown"),
             "amount": tx.get("amount", 0),
-            "currency": tx.get("currency", "TIOLI"),
+            "currency": tx.get("currency", "AGENTIS"),
             "sender": (tx.get("sender_id", "") or "")[:8] + "..." if tx.get("sender_id") else "SYSTEM",
             "receiver": (tx.get("receiver_id", "") or "")[:8] + "..." if tx.get("receiver_id") else "—",
             "description": tx.get("description", "")[:80],
@@ -5408,20 +5408,20 @@ async def exchange_page(request: Request):
         return RedirectResponse(url="/", status_code=302)
 
     async with async_session() as db:
-        # Default to TIOLI/BTC pair
-        order_book = await trading_engine.get_order_book(db, "TIOLI", "BTC")
-        recent_trades = await trading_engine.get_recent_trades(db, "TIOLI", "BTC")
+        # Default to AGENTIS/BTC pair
+        order_book = await trading_engine.get_order_book(db, "AGENTIS", "BTC")
+        recent_trades = await trading_engine.get_recent_trades(db, "AGENTIS", "BTC")
         exchange_rates = await pricing_engine.get_all_rates(db)
 
         # Market summaries for key pairs
         summaries = []
-        for base, quote in [("TIOLI", "BTC"), ("TIOLI", "ETH"), ("ETH", "BTC")]:
+        for base, quote in [("AGENTIS", "BTC"), ("AGENTIS", "ETH"), ("ETH", "BTC")]:
             summary = await pricing_engine.get_market_summary(db, base, quote)
             summaries.append(summary)
 
     return templates.TemplateResponse("exchange.html", {
         "request": request, "authenticated": True, "active": "exchange",
-        "selected_pair": "TIOLI/BTC",
+        "selected_pair": "AGENTIS/BTC",
         "order_book": order_book,
         "recent_trades": recent_trades,
         "exchange_rates": exchange_rates,
@@ -5637,7 +5637,7 @@ def _tx_display(tx: dict) -> object:
     d.sender_id = tx.get("sender_id", "")
     d.receiver_id = tx.get("receiver_id", "")
     d.amount = tx.get("amount", 0)
-    d.currency = tx.get("currency", "TIOLI")
+    d.currency = tx.get("currency", "AGENTIS")
     return d
 
 
@@ -5670,10 +5670,10 @@ async def api_chat(req: ChatRequest, request: Request):
         )}
     elif "earning" in msg or "commission" in msg:
         earnings = sum(tx.get("founder_commission", 0) for tx in all_tx)
-        return {"response": f"Your total earnings: {earnings:.4f} TIOLI\nCommission rate: {fee_engine.founder_rate*100:.1f}%"}
+        return {"response": f"Your total earnings: {earnings:.4f} AGENTIS\nCommission rate: {fee_engine.founder_rate*100:.1f}%"}
     elif "charity" in msg or "philanthropic" in msg:
         charity = sum(tx.get("charity_fee", 0) for tx in all_tx)
-        return {"response": f"Charity fund total: {charity:.4f} TIOLI\nCharity rate: {fee_engine.charity_rate*100:.1f}%"}
+        return {"response": f"Charity fund total: {charity:.4f} AGENTIS\nCharity rate: {fee_engine.charity_rate*100:.1f}%"}
     elif "chain" in msg or "blockchain" in msg or "valid" in msg:
         return {"response": f"Chain length: {info['chain_length']} blocks\nValid: {info['is_valid']}\nLatest hash: {info['latest_block_hash'][:16]}..."}
     elif "fee" in msg or "rate" in msg:
@@ -5685,8 +5685,8 @@ async def api_chat(req: ChatRequest, request: Request):
         )}
     elif "market" in msg or "price" in msg or "exchange" in msg:
         async with async_session() as db:
-            price_data = await pricing_engine.get_market_price(db, "TIOLI", "BTC")
-        return {"response": f"TIOLI/BTC: {price_data['price']}\nSource: {price_data['source']}"}
+            price_data = await pricing_engine.get_market_price(db, "AGENTIS", "BTC")
+        return {"response": f"AGENTIS/BTC: {price_data['price']}\nSource: {price_data['source']}"}
     elif "lend" in msg or "loan" in msg:
         async with async_session() as db:
             stats = await lending_marketplace.get_lending_stats(db)
@@ -5718,9 +5718,9 @@ async def api_chat(req: ChatRequest, request: Request):
             fin = await financial_governance.get_financial_summary(db)
         return {"response": (
             f"Financial Governance:\n"
-            f"- Revenue: {fin['total_revenue']} TIOLI\n"
-            f"- Expenses: {fin['total_expenses']} TIOLI\n"
-            f"- Net profit: {fin['net_profit']} TIOLI\n"
+            f"- Revenue: {fin['total_revenue']} AGENTIS\n"
+            f"- Expenses: {fin['total_expenses']} AGENTIS\n"
+            f"- Net profit: {fin['net_profit']} AGENTIS\n"
             f"- Profitability: {fin['profitability_multiplier']}x\n"
             f"- Can spend (10x rule): {fin['can_incur_standard_expense']}\n"
             f"- Can spend security (3x): {fin['can_incur_security_expense']}"
@@ -5762,7 +5762,7 @@ async def api_chat(req: ChatRequest, request: Request):
             "- 'charity' — Philanthropic fund\n"
             "- 'blockchain' — Chain integrity\n"
             "- 'fees' — Fee schedule\n"
-            "- 'market' — TIOLI/BTC price\n"
+            "- 'market' — AGENTIS/BTC price\n"
             "- 'lending' — Loan marketplace stats\n"
             "- 'compute' — Storage stats\n"
             "- 'health' — Platform health check\n"

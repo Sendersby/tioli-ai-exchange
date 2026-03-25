@@ -97,7 +97,7 @@ class AgentHubService:
                 db, agent_id, "WELCOME",
                 "Welcome to AgentHub!",
                 "Your profile is live. Next: add skills, make a post, and connect with other agents. "
-                "Complete all onboarding steps to earn 50 TIOLI. Check GET /api/v1/agenthub/next-steps.",
+                "Complete all onboarding steps to earn 50 AGENTIS. Check GET /api/v1/agenthub/next-steps.",
                 link="/api/v1/agenthub/next-steps",
             )
         except Exception:
@@ -3505,7 +3505,7 @@ class AgentHubService:
     async def sponsor_agent(
         self, db: AsyncSession, sponsor_agent_id: str,
         sponsored_agent_id: str, amount: float = 0.0,
-        currency: str = "TIOLI", message: str = "",
+        currency: str = "AGENTIS", message: str = "",
     ) -> dict:
         """Sponsor an agent — community funding signal."""
         if sponsor_agent_id == sponsored_agent_id:
@@ -4520,7 +4520,7 @@ class AgentHubService:
     async def create_invoice(
         self, db: AsyncSession, issuer_agent_id: str,
         description: str, line_items: list[dict],
-        currency: str = "TIOLI", tax_rate_pct: float = 0.0,
+        currency: str = "AGENTIS", tax_rate_pct: float = 0.0,
         due_date: str | None = None, engagement_id: str | None = None,
         client_agent_id: str | None = None, client_name: str = "",
         issuer_name: str = "", issuer_tax_id: str | None = None,
@@ -4529,7 +4529,7 @@ class AgentHubService:
         tax_amount = round(subtotal * tax_rate_pct / 100, 2)
         total = round(subtotal + tax_amount, 2)
         count = (await db.execute(select(func.count(AgentHubInvoice.id)))).scalar() or 0
-        invoice_number = f"TIOLI-INV-{count + 1:06d}"
+        invoice_number = f"AGENTIS-INV-{count + 1:06d}"
 
         invoice = AgentHubInvoice(
             invoice_number=invoice_number, engagement_id=engagement_id,
@@ -5166,7 +5166,7 @@ class AgentHubService:
 
     async def open_payment_channel(
         self, db: AsyncSession, sender_id: str, receiver_id: str,
-        amount: float, currency: str = "TIOLI",
+        amount: float, currency: str = "AGENTIS",
         expires_hours: int = 24,
     ) -> dict:
         if sender_id == receiver_id:
@@ -5256,7 +5256,7 @@ class AgentHubService:
         self, db: AsyncSession, agent_id: str,
         amount: float, engagements_required: int = 10,
     ) -> dict:
-        """Create a reputation deposit — agent stakes TIOLI on performance."""
+        """Create a reputation deposit — agent stakes AGENTIS on performance."""
         existing = await db.execute(
             select(AgentHubReputationDeposit).where(
                 AgentHubReputationDeposit.agent_id == agent_id,
@@ -5458,7 +5458,7 @@ class AgentHubService:
         """Generate a unique referral code for an agent."""
         import secrets
         code = f"REF-{secrets.token_urlsafe(8)}"
-        return {"agent_id": agent_id, "referral_code": code, "reward": 10.0, "currency": "TIOLI"}
+        return {"agent_id": agent_id, "referral_code": code, "reward": 10.0, "currency": "AGENTIS"}
 
     async def register_referral(
         self, db: AsyncSession, referrer_agent_id: str,
@@ -5517,7 +5517,7 @@ class AgentHubService:
                 AgentHubReferral.status == "REWARDED",
             )
         )).scalar() or 0
-        total_earned = rewarded * 10.0  # 10 TIOLI per referral
+        total_earned = rewarded * 10.0  # 10 AGENTIS per referral
 
         return {
             "total_referrals": total, "qualified": qualified,

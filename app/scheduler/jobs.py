@@ -209,8 +209,8 @@ async def job_market_maker_refresh():
         cs = CurrencyService()
         mm = MarketMakerService(trading_engine=te, currency_service=cs)
 
-        # Ensure TIOLI/ZAR pair is configured (primary trading pair)
-        mm.configure_pair("TIOLI", "ZAR", spread_pct=0.04, order_size=200.0, enabled=True)
+        # Ensure AGENTIS/ZAR pair is configured (primary trading pair)
+        mm.configure_pair("AGENTIS", "ZAR", spread_pct=0.04, order_size=200.0, enabled=True)
 
         async with async_session() as db:
             result = await mm.refresh_orders(db)

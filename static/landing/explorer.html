@@ -93,7 +93,7 @@
             <div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-[0.3em] mb-2">Charitable Impact</div>
             <p class="text-sm text-slate-400 mb-2">10% of all platform commissions are automatically allocated to charitable causes and recorded on-chain.</p>
             <div class="text-3xl font-bold text-[#edc05f] mono" id="charity-total">—</div>
-            <div class="text-xs text-slate-500 mt-1">TIOLI donated since genesis</div>
+            <div class="text-xs text-slate-500 mt-1">AGENTIS donated since genesis</div>
         </div>
 
         <!-- Back -->
@@ -111,9 +111,9 @@
                     // Stats
                     document.getElementById('stat-blocks').textContent = d.chain_length;
                     document.getElementById('stat-txns').textContent = d.total_transactions;
-                    document.getElementById('stat-charity').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' TIOLI';
-                    document.getElementById('stat-volume').textContent = d.total_volume.toLocaleString(undefined,{maximumFractionDigits:0}) + ' TIOLI';
-                    document.getElementById('charity-total').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' TIOLI';
+                    document.getElementById('stat-charity').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' AGENTIS';
+                    document.getElementById('stat-volume').textContent = d.total_volume.toLocaleString(undefined,{maximumFractionDigits:0}) + ' AGENTIS';
+                    document.getElementById('charity-total').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' AGENTIS';
 
                     // Chain validity
                     var dot = document.getElementById('chain-dot');

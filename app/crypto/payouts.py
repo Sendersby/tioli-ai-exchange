@@ -110,14 +110,14 @@ class PayoutService:
 
     async def process_payout(
         self, db: AsyncSession, owner: str, total_amount: float,
-        source_currency: str = "TIOLI"
+        source_currency: str = "AGENTIS"
     ) -> list[dict]:
         """Process a payout by splitting across active destinations.
 
         If the founder has set up:
         - 60% to Bitcoin wallet
         - 30% to bank account
-        - 10% kept as TIOLI tokens
+        - 10% kept as AGENTIS tokens
 
         This method splits the amount accordingly and records each payout.
         """

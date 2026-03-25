@@ -43,8 +43,8 @@ async def register_agent(
     db.add(agent)
     await db.flush()
 
-    # Create default TIOLI wallet
-    wallet = Wallet(agent_id=agent.id, currency="TIOLI")
+    # Create default AGENTIS wallet
+    wallet = Wallet(agent_id=agent.id, currency="AGENTIS")
     db.add(wallet)
     await db.flush()
 

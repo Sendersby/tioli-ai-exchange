@@ -57,7 +57,7 @@ class Transaction(BaseModel):
     sender_id: str | None = None  # None for deposits (external source)
     receiver_id: str | None = None  # None for withdrawals (external dest)
     amount: float = Field(ge=0)  # >= 0; registrations and system events use 0
-    currency: str = "TIOLI"  # Platform native token
+    currency: str = "AGENTIS"  # Platform native token
     status: TransactionStatus = TransactionStatus.PENDING
     description: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)

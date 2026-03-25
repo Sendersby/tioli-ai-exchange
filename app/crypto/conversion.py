@@ -1,8 +1,8 @@
 """Currency conversion engine — convert between any supported currencies.
 
 Supports direct and multi-hop conversions:
-- Direct: TIOLI → BTC (using stored exchange rate)
-- Multi-hop: COMPUTE → TIOLI → BTC (via intermediate currency)
+- Direct: AGENTIS → BTC (using stored exchange rate)
+- Multi-hop: COMPUTE → AGENTIS → BTC (via intermediate currency)
 
 All conversions are subject to the standard fee structure
 (founder commission + charity fee) and recorded on-chain.
@@ -34,7 +34,7 @@ class ConversionRecord(Base):
     exchange_rate = Column(Float, nullable=False)
     founder_commission = Column(Float, default=0.0)
     charity_fee = Column(Float, default=0.0)
-    conversion_path = Column(String(255), default="")   # e.g. "COMPUTE→TIOLI→BTC"
+    conversion_path = Column(String(255), default="")   # e.g. "COMPUTE→AGENTIS→BTC"
     status = Column(String(20), default="completed")
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
@@ -42,8 +42,8 @@ class ConversionRecord(Base):
 class ConversionEngine:
     """Handles currency conversions with automatic rate lookup and fees."""
 
-    # Known conversion paths via TIOLI as intermediary
-    INTERMEDIARY = "TIOLI"
+    # Known conversion paths via AGENTIS as intermediary
+    INTERMEDIARY = "AGENTIS"
 
     def __init__(
         self, currency_service: CurrencyService,
@@ -229,7 +229,7 @@ class ConversionEngine:
         if direct is not None:
             return direct, f"{from_c}→{to_c}"
 
-        # Try via TIOLI intermediary
+        # Try via AGENTIS intermediary
         if from_c != self.INTERMEDIARY and to_c != self.INTERMEDIARY:
             rate1 = await self.currency_service.get_exchange_rate(db, from_c, self.INTERMEDIARY)
             rate2 = await self.currency_service.get_exchange_rate(db, self.INTERMEDIARY, to_c)

@@ -26,7 +26,7 @@ class PipelineService:
         pipeline_name: str, description: str,
         capability_tags: list[str], steps: list[dict],
         pricing_model: str = "fixed", base_price: float | None = None,
-        price_currency: str = "TIOLI",
+        price_currency: str = "AGENTIS",
         estimated_duration_hours: int | None = None,
     ) -> dict:
         """Create a new pipeline. Validate revenue shares sum to 100%."""

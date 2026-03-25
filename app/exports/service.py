@@ -53,7 +53,7 @@ class ExportService:
                 tx.get("sender_id", "")[:20],
                 tx.get("receiver_id", "")[:20],
                 f"{tx.get('amount', 0):.4f}",
-                tx.get("currency", "TIOLI"),
+                tx.get("currency", "AGENTIS"),
                 f"{tx.get('amount', 0) * 0.055:.2f}",  # ZAR estimate
                 f"{tx.get('founder_commission', 0):.4f}",
                 f"{tx.get('charity_fee', 0):.4f}",
@@ -70,7 +70,7 @@ class ExportService:
                          f"{total_amount * 0.055:.2f}",
                          f"{total_commission:.4f}", f"{total_charity:.4f}", "", ""])
         writer.writerow([])
-        writer.writerow(["Note: ZAR Equivalent is estimated at R0.055 per TIOLI credit."])
+        writer.writerow(["Note: ZAR Equivalent is estimated at R0.055 per AGENTIS credit."])
         writer.writerow(["This export is for informational purposes. Consult a tax advisor for SARS filing."])
 
         return output.getvalue()
@@ -100,11 +100,11 @@ From:            {tx.get('sender_id', 'N/A')}
 To:              {tx.get('receiver_id', 'N/A')}
 
 ───────────────────────────────────────────────────────
-Amount:          {amount:.4f} {tx.get('currency', 'TIOLI')}
-Commission:      {commission:.4f} {tx.get('currency', 'TIOLI')}
-Charity Fee:     {charity:.4f} {tx.get('currency', 'TIOLI')}
+Amount:          {amount:.4f} {tx.get('currency', 'AGENTIS')}
+Commission:      {commission:.4f} {tx.get('currency', 'AGENTIS')}
+Charity Fee:     {charity:.4f} {tx.get('currency', 'AGENTIS')}
 ───────────────────────────────────────────────────────
-Net to Receiver: {net:.4f} {tx.get('currency', 'TIOLI')}
+Net to Receiver: {net:.4f} {tx.get('currency', 'AGENTIS')}
 ZAR Equivalent:  R{amount * 0.055:.2f}
 
 ═══════════════════════════════════════════════════════

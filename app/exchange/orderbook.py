@@ -37,7 +37,7 @@ class Order(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     agent_id = Column(String, nullable=False)
     side = Column(String(10), nullable=False)           # "buy" or "sell"
-    base_currency = Column(String(20), nullable=False)  # What you're trading (e.g. TIOLI)
+    base_currency = Column(String(20), nullable=False)  # What you're trading (e.g. AGENTIS)
     quote_currency = Column(String(20), nullable=False) # What you're pricing in (e.g. BTC)
     price = Column(Float, nullable=False)               # Price per unit in quote currency
     quantity = Column(Float, nullable=False)             # Total quantity to trade

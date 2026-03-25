@@ -67,7 +67,7 @@ class TreasuryService:
             min_reserve_pct=min_reserve_pct,
             buy_threshold=buy_threshold,
             sell_threshold=sell_threshold,
-            approved_currencies=approved_currencies or ["TIOLI", "BTC", "ETH"],
+            approved_currencies=approved_currencies or ["AGENTIS", "BTC", "ETH"],
             allowed_actions=actions,
             execution_interval_minutes=execution_interval_minutes,
         )

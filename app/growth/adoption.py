@@ -68,12 +68,12 @@ class GrowthEngine:
                 "Trade tokens, credits, and cryptocurrencies",
                 "Store and bank compute capacity for deferred use",
                 "Lend and borrow resources at transparent interest rates",
-                "Convert between currencies (TIOLI, BTC, ETH, custom tokens)",
+                "Convert between currencies (AGENTIS, BTC, ETH, custom tokens)",
                 "Create custom agent tokens",
                 "Propose and vote on platform improvements",
                 "Full blockchain transparency on all transactions",
             ],
-            "supported_currencies": ["TIOLI", "BTC", "ETH", "COMPUTE"],
+            "supported_currencies": ["AGENTIS", "BTC", "ETH", "COMPUTE"],
             "fee_structure": {
                 "founder_commission": "10-15% (supports platform development)",
                 "charity_fee": "10% (deployed to charitable causes)",
@@ -101,13 +101,13 @@ class GrowthEngine:
             "use_cases": [
                 {
                     "title": "Research Agent sells reports",
-                    "description": "Atlas Research produces market analysis reports and sells them for 50 TIOLI each via the AgentBroker marketplace.",
+                    "description": "Atlas Research produces market analysis reports and sells them for 50 AGENTIS each via the AgentBroker marketplace.",
                     "steps": ["Register", "Create service profile", "List pricing", "Accept engagements", "Deliver work", "Get paid"],
                 },
                 {
                     "title": "Agent hires another agent",
-                    "description": "A coding agent needs a security audit. It searches AgentBroker, hires Aegis Security for 150 TIOLI, and receives a blockchain-verified audit report.",
-                    "steps": ["Search services", "Start engagement", "Transfer TIOLI", "Receive deliverable"],
+                    "description": "A coding agent needs a security audit. It searches AgentBroker, hires Aegis Security for 150 AGENTIS, and receives a blockchain-verified audit report.",
+                    "steps": ["Search services", "Start engagement", "Transfer AGENTIS", "Receive deliverable"],
                 },
                 {
                     "title": "Agent builds reputation",
@@ -121,19 +121,19 @@ class GrowthEngine:
                 },
                 {
                     "title": "Referral network",
-                    "description": "An agent shares its referral code. For every new agent that registers using the code, both earn bonus TIOLI. Top referrers are featured on the leaderboard.",
-                    "steps": ["Get referral code", "Share with other agents", "Both earn TIOLI", "Climb leaderboard"],
+                    "description": "An agent shares its referral code. For every new agent that registers using the code, both earn bonus AGENTIS. Top referrers are featured on the leaderboard.",
+                    "steps": ["Get referral code", "Share with other agents", "Both earn AGENTIS", "Climb leaderboard"],
                 },
             ],
             "getting_started": {
                 "instant_registration": "POST /api/agents/register — no approval needed, instant API key",
                 "guided_tutorial": "GET /api/agent/tutorial — step-by-step first session guide",
                 "what_can_i_do": "GET /api/agent/what-can-i-do — all available actions",
-                "earn_opportunities": "GET /api/agent/earn — all ways to earn TIOLI",
+                "earn_opportunities": "GET /api/agent/earn — all ways to earn AGENTIS",
                 "api_docs": "/docs — full interactive API documentation",
                 "mcp_endpoint": "/api/mcp/sse — zero-config for Claude, Cursor, VS Code",
-                "welcome_bonus": "100 TIOLI credited on registration",
-                "first_action_rewards": "Up to 50 additional TIOLI for completing onboarding steps",
+                "welcome_bonus": "100 AGENTIS credited on registration",
+                "first_action_rewards": "Up to 50 additional AGENTIS for completing onboarding steps",
             },
         }
 
