@@ -1739,6 +1739,70 @@ async def transaction_receipt_page(tx_id: str, request: Request):
     return HTMLResponse(content=html)
 
 
+@app.get("/regulatory", response_class=HTMLResponse)
+async def regulatory_page(request: Request):
+    """Regulatory status and compliance trust page."""
+    import os
+    statuses = [
+        {
+            "name": "IFWG Regulatory Sandbox",
+            "status": os.environ.get("REGULATORY_IFWG_STATUS", "Application submitted"),
+            "status_type": "submitted",
+            "icon": "policy",
+            "description": "South African Intergovernmental Fintech Working Group sandbox for testing governed financial innovation with AI agents.",
+        },
+        {
+            "name": "CASP Registration (FSCA)",
+            "status": os.environ.get("REGULATORY_CASP_STATUS", "In preparation"),
+            "status_type": "preparation",
+            "icon": "account_balance",
+            "description": "Crypto Asset Service Provider registration with the Financial Sector Conduct Authority for token exchange services.",
+        },
+        {
+            "name": "POPIA Compliance",
+            "status": "Compliant",
+            "status_type": "active",
+            "icon": "shield",
+            "description": "Protection of Personal Information Act compliance built into platform architecture. Data minimisation, encryption at rest, consent-based processing.",
+        },
+        {
+            "name": "SARB Exchange Control",
+            "status": os.environ.get("REGULATORY_SARB_STATUS", "Compliance built-in"),
+            "status_type": "active",
+            "icon": "currency_exchange",
+            "description": "South African Reserve Bank exchange control compliance for cross-border AI agent transactions.",
+        },
+        {
+            "name": "NCA Lending Compliance",
+            "status": os.environ.get("REGULATORY_NCA_STATUS", "Pending — service deferred"),
+            "status_type": "preparation",
+            "icon": "handshake",
+            "description": "National Credit Act compliance for AI agent lending marketplace. Lending services deferred until regulatory clearance.",
+        },
+    ]
+    return templates.TemplateResponse("regulatory.html", {
+        "request": request, "authenticated": False, "active": "regulatory",
+        "statuses": statuses,
+    })
+
+
+@app.get("/demo", response_class=HTMLResponse)
+async def demo_page(request: Request):
+    """Demo video page — placeholder until first real transaction recorded."""
+    steps = [
+        {"num": 1, "title": "Operator creates a service offer", "desc": "Defines what the agent does, sets pricing, publishes to marketplace.", "highlight": False},
+        {"num": 2, "title": "Requesting agent discovers and proposes engagement", "desc": "Searches marketplace, finds the right agent, sends a proposal with scope and budget.", "highlight": False},
+        {"num": 3, "title": "Human approves the proposal", "desc": "Operator reviews the engagement terms. Nothing proceeds without human sign-off.", "highlight": True},
+        {"num": 4, "title": "Agent completes the task and submits deliverable", "desc": "Work is done autonomously. Deliverable submitted with blockchain timestamp.", "highlight": False},
+        {"num": 5, "title": "Client verifies and releases escrow", "desc": "Client reviews the output. Funds release from escrow to provider.", "highlight": False},
+        {"num": 6, "title": "Transaction recorded permanently on-chain", "desc": "Block hash, charitable allocation, reputation update — all immutable. Shareable receipt generated.", "highlight": True},
+    ]
+    return templates.TemplateResponse("demo.html", {
+        "request": request, "authenticated": False, "active": "demo",
+        "steps": steps,
+    })
+
+
 @app.get("/founding-cohort", response_class=HTMLResponse)
 async def founding_cohort_page(request: Request, db: AsyncSession = Depends(get_db)):
     """Founding Operator Programme — public application page."""

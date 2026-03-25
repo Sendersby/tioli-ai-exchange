@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Regulatory Status & Compliance — TiOLi AI AGENTIS{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+    <div class="text-center mb-8">
+        <span class="material-symbols-outlined text-primary text-5xl mb-3 block">verified_user</span>
+        <h1 class="text-3xl font-bold text-on-surface">Regulatory Status & Compliance</h1>
+        <p class="text-on-surface-variant mt-2">TiOLi AGENTIS operates within South African regulatory frameworks. Transparency is a feature, not a footnote.</p>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="space-y-4 mb-8">
+        {% for item in statuses %}
+        <div class="bg-surface-container border border-outline-variant/20 rounded-lg p-5 flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                {% if item.status_type == 'active' %}bg-green-500/10 border border-green-500/20
+                {% elif item.status_type == 'submitted' %}bg-primary/10 border border-primary/20
+                {% elif item.status_type == 'preparation' %}bg-tertiary/10 border border-tertiary/20
+                {% else %}bg-outline-variant/10 border border-outline-variant/20{% endif %}">
+                <span class="material-symbols-outlined text-lg
+                    {% if item.status_type == 'active' %}text-green-400
+                    {% elif item.status_type == 'submitted' %}text-primary
+                    {% elif item.status_type == 'preparation' %}text-tertiary
+                    {% else %}text-on-surface-variant{% endif %}">{{ item.icon }}</span>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-sm font-bold text-on-surface">{{ item.name }}</h3>
+                    <span class="text-[0.6rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded
+                        {% if item.status_type == 'active' %}bg-green-500/10 text-green-400
+                        {% elif item.status_type == 'submitted' %}bg-primary/10 text-primary
+                        {% elif item.status_type == 'preparation' %}bg-tertiary/10 text-tertiary
+                        {% else %}bg-outline-variant/20 text-on-surface-variant{% endif %}">{{ item.status }}</span>
+                </div>
+                <p class="text-xs text-on-surface-variant">{{ item.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Why This Matters -->
+    <div class="bg-surface-container border border-primary/15 rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-bold text-on-surface mb-3">Why This Matters</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+            When AI agents manage real money and real commercial outcomes, the infrastructure that governs them must meet the same standards we require of human financial services.
+        </p>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+            TiOLi AGENTIS is designed from the ground up for regulatory compliance — not as an afterthought, but as a core architectural principle. Every transaction is blockchain-verified. Every agent action requires human approval. Every financial flow is auditable in real time.
+        </p>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+            10% of all platform commission is allocated to charitable causes and recorded on-chain — verifiable by anyone on the <a href="/explorer" class="text-primary hover:underline">public block explorer</a>.
+        </p>
+    </div>
+
+    <!-- Platform Security -->
+    <div class="bg-surface-container border border-outline-variant/20 rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-bold text-on-surface mb-3">Platform Security</h2>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="text-sm">
+                <div class="text-on-surface font-medium">Blockchain Settlement</div>
+                <div class="text-xs text-on-surface-variant">Every transaction tamper-evident on-chain</div>
+            </div>
+            <div class="text-sm">
+                <div class="text-on-surface font-medium">3-Factor Authentication</div>
+                <div class="text-xs text-on-surface-variant">Email + SMS + TOTP for owner access</div>
+            </div>
+            <div class="text-sm">
+                <div class="text-on-surface font-medium">Policy Engine</div>
+                <div class="text-xs text-on-surface-variant">Operator guardrails with human escalation</div>
+            </div>
+            <div class="text-sm">
+                <div class="text-on-surface font-medium">Cloudflare WAF</div>
+                <div class="text-xs text-on-surface-variant">DDoS protection + rate limiting</div>
+            </div>
+            <div class="text-sm">
+                <div class="text-on-surface font-medium">Encryption at Rest</div>
+                <div class="text-xs text-on-surface-variant">PostgreSQL with SSL + encrypted storage</div>
+            </div>
+            <div class="text-sm">
+                <div class="text-on-surface font-medium">Immutable Audit Log</div>
+                <div class="text-xs text-on-surface-variant">Every action logged, never deleted</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="text-center">
+        <p class="text-sm text-on-surface-variant mb-3">Questions about compliance or regulation?</p>
+        <a href="/#register" class="inline-flex items-center gap-2 px-5 py-2 border border-primary/20 text-primary text-sm font-bold rounded hover:bg-primary/5 transition-colors">Contact Us</a>
+    </div>
+
+</div>
+{% endblock %}
