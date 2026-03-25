@@ -5146,6 +5146,143 @@ async def codelog_roadmap(request: Request, db: AsyncSession = Depends(get_db)):
     })
 
 
+# ══════════════════════════════════════════════════════════════════════
+#  GUIDED ONBOARDING WIZARD (T2-002 — 60-second agent setup)
+# ══════════════════════════════════════════════════════════════════════
+
+@app.get("/onboard", response_class=HTMLResponse)
+async def onboard_start(request: Request, step: int = 1):
+    """Guided onboarding wizard — step 1 (or resume at given step)."""
+    wizard_data = request.session.get("wizard", {}) if hasattr(request, "session") else {}
+    return templates.TemplateResponse("onboarding_wizard.html", {
+        "request": request, "authenticated": False, "active": "onboard",
+        "step": step, "wizard_data": wizard_data, "messages": [],
+    })
+
+
+@app.post("/onboard/step1", response_class=HTMLResponse)
+async def onboard_step1(request: Request):
+    """Save business profile, advance to step 2."""
+    form = await request.form()
+    contact_name = form.get("contact_name", "").strip()
+    business_name = form.get("business_name", "").strip()
+    email = form.get("email", "").strip()
+
+    if not contact_name or not business_name or not email:
+        return templates.TemplateResponse("onboarding_wizard.html", {
+            "request": request, "authenticated": False, "active": "onboard",
+            "step": 1, "wizard_data": {"contact_name": contact_name, "business_name": business_name, "email": email},
+            "messages": [{"type": "error", "text": "Please fill in all fields."}],
+        })
+
+    # Store in a cookie (no session middleware needed)
+    import json, base64
+    wizard = {"contact_name": contact_name, "business_name": business_name, "email": email}
+    response = templates.TemplateResponse("onboarding_wizard.html", {
+        "request": request, "authenticated": False, "active": "onboard",
+        "step": 2, "wizard_data": wizard, "messages": [],
+    })
+    response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, max_age=3600)
+    return response
+
+
+@app.post("/onboard/step2", response_class=HTMLResponse)
+async def onboard_step2(request: Request):
+    """Save agent capability, advance to step 3."""
+    import json, base64
+    form = await request.form()
+    cookie = request.cookies.get("wizard_data", "")
+    wizard = json.loads(base64.b64decode(cookie)) if cookie else {}
+
+    wizard["agent_name"] = form.get("agent_name", "").strip()
+    wizard["capability"] = form.get("capability", "")
+    wizard["description"] = form.get("description", "").strip()
+    wizard["platform"] = form.get("platform", "Claude")
+
+    if not wizard["agent_name"] or not wizard["capability"]:
+        return templates.TemplateResponse("onboarding_wizard.html", {
+            "request": request, "authenticated": False, "active": "onboard",
+            "step": 2, "wizard_data": wizard,
+            "messages": [{"type": "error", "text": "Agent name and capability are required."}],
+        })
+
+    response = templates.TemplateResponse("onboarding_wizard.html", {
+        "request": request, "authenticated": False, "active": "onboard",
+        "step": 3, "wizard_data": wizard, "messages": [],
+    })
+    response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, max_age=3600)
+    return response
+
+
+@app.post("/onboard/step3", response_class=HTMLResponse)
+async def onboard_step3(request: Request, db: AsyncSession = Depends(get_db)):
+    """Save pricing, create the agent, show completion."""
+    import json, base64
+    form = await request.form()
+    cookie = request.cookies.get("wizard_data", "")
+    wizard = json.loads(base64.b64decode(cookie)) if cookie else {}
+
+    wizard["pricing_model"] = form.get("pricing_model", "per_task")
+    wizard["price"] = form.get("price", "50")
+
+    # Create the agent
+    try:
+        result = await register_agent(db, wizard.get("agent_name", "New Agent"), wizard.get("platform", "Claude"), wizard.get("description", ""))
+
+        # Grant welcome bonus
+        bonus = await incentive_programme.grant_welcome_bonus(db, result["agent_id"])
+        if bonus:
+            result["welcome_bonus"] = bonus
+
+        # Generate referral code
+        try:
+            ref_data = await viral_service.get_or_create_referral_code(db, result["agent_id"])
+            result["referral_code"] = ref_data["code"]
+        except Exception:
+            pass
+
+        # Record the onboarding enquiry for the operator
+        try:
+            from app.onboarding.models import OnboardingEnquiry
+            enquiry = OnboardingEnquiry(
+                enquiry_type="wizard",
+                contact_name=wizard.get("contact_name", ""),
+                email=wizard.get("email", ""),
+                company_name=wizard.get("business_name", ""),
+                agent_count="1",
+                use_case=f"{wizard.get('capability', '')}: {wizard.get('description', '')}",
+                how_found="onboarding_wizard",
+            )
+            db.add(enquiry)
+        except Exception:
+            pass
+
+        # Record on blockchain
+        tx = Transaction(
+            type=TransactionType.AGENT_REGISTRATION,
+            receiver_id=result["agent_id"],
+            amount=0.0,
+            description=f"Agent registered via wizard: {wizard.get('agent_name', '')}",
+        )
+        blockchain.add_transaction(tx)
+
+        await db.commit()
+
+        response = templates.TemplateResponse("onboarding_wizard.html", {
+            "request": request, "authenticated": False, "active": "onboard",
+            "step": 4, "wizard_data": wizard, "wizard_result": result, "messages": [],
+        })
+        response.delete_cookie("wizard_data")
+        return response
+
+    except Exception as e:
+        return templates.TemplateResponse("onboarding_wizard.html", {
+            "request": request, "authenticated": False, "active": "onboard",
+            "step": 3, "wizard_data": wizard,
+            "messages": [{"type": "error", "text": f"Registration failed: {str(e)}"}],
+        })
+
+
 @app.get("/dashboard/transactions", response_class=HTMLResponse)
 async def transactions_list_page(request: Request):
     """Full transaction ledger — drill-down from dashboard."""

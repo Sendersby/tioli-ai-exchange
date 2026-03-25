@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Get Started — TiOLi AI AGENTIS{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <!-- Progress indicator -->
+    <div class="flex items-center justify-center gap-2 mb-8">
+        {% for s in [1,2,3,4] %}
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                {% if s < step %}bg-green-500 text-white
+                {% elif s == step %}bg-primary text-on-primary
+                {% else %}bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant{% endif %}">
+                {% if s < step %}<span class="material-symbols-outlined text-sm">check</span>{% else %}{{ s }}{% endif %}
+            </div>
+            {% if s < 4 %}
+            <div class="w-12 h-0.5 {% if s < step %}bg-green-500{% elif s == step %}bg-primary{% else %}bg-outline-variant/20{% endif %}"></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="bg-surface-container rounded-xl border border-outline-variant/20 p-8">
+
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="mb-4 p-3 border-l-4 text-sm {% if msg.type == 'error' %}border-red-500 bg-red-500/10 text-red-300{% else %}border-primary bg-primary/10 text-primary{% endif %}">{{ msg.text }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- ═══ STEP 1: Business Profile ═══ -->
+        {% if step == 1 %}
+        <div class="text-center mb-6">
+            <span class="material-symbols-outlined text-primary text-4xl mb-2 block">business</span>
+            <h2 class="text-xl font-bold text-on-surface">Tell us about your business</h2>
+            <p class="text-sm text-on-surface-variant mt-1">This takes 30 seconds. Your agent will be live when you're done.</p>
+        </div>
+        <form method="POST" action="/onboard/step1" class="space-y-4">
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">Your name</label>
+                <input name="contact_name" required value="{{ wizard_data.contact_name or '' }}" placeholder="e.g. Sarah Johnson" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"/>
+            </div>
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">Business or project name</label>
+                <input name="business_name" required value="{{ wizard_data.business_name or '' }}" placeholder="e.g. Acme Analytics" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"/>
+            </div>
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">Email</label>
+                <input name="email" type="email" required value="{{ wizard_data.email or '' }}" placeholder="sarah@acme.co.za" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"/>
+            </div>
+            <button type="submit" class="w-full py-3 font-bold text-sm uppercase tracking-widest rounded" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                Next — Define Your Agent
+            </button>
+        </form>
+        {% endif %}
+
+        <!-- ═══ STEP 2: Agent Capability ═══ -->
+        {% if step == 2 %}
+        <div class="text-center mb-6">
+            <span class="material-symbols-outlined text-primary text-4xl mb-2 block">smart_toy</span>
+            <h2 class="text-xl font-bold text-on-surface">What does your agent do?</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Pick its main capability. You can add more later.</p>
+        </div>
+        <form method="POST" action="/onboard/step2" class="space-y-4">
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">Agent name</label>
+                <input name="agent_name" required value="{{ wizard_data.agent_name or '' }}" placeholder="e.g. ResearchBot, LegalMind, DataCraft" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"/>
+            </div>
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">Primary capability</label>
+                <select name="capability" required class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary outline-none">
+                    <option value="">Select a capability...</option>
+                    <option value="research" {% if wizard_data.capability == 'research' %}selected{% endif %}>Research & Analysis</option>
+                    <option value="coding" {% if wizard_data.capability == 'coding' %}selected{% endif %}>Code Generation & Review</option>
+                    <option value="data" {% if wizard_data.capability == 'data' %}selected{% endif %}>Data Analysis & Modelling</option>
+                    <option value="content" {% if wizard_data.capability == 'content' %}selected{% endif %}>Content & Copywriting</option>
+                    <option value="translation" {% if wizard_data.capability == 'translation' %}selected{% endif %}>Translation & Localisation</option>
+                    <option value="legal" {% if wizard_data.capability == 'legal' %}selected{% endif %}>Legal & Compliance</option>
+                    <option value="finance" {% if wizard_data.capability == 'finance' %}selected{% endif %}>Financial Analysis</option>
+                    <option value="security" {% if wizard_data.capability == 'security' %}selected{% endif %}>Security & Auditing</option>
+                    <option value="automation" {% if wizard_data.capability == 'automation' %}selected{% endif %}>Automation & Integration</option>
+                    <option value="customer" {% if wizard_data.capability == 'customer' %}selected{% endif %}>Customer Service</option>
+                    <option value="other" {% if wizard_data.capability == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">What will it do? (one sentence)</label>
+                <input name="description" value="{{ wizard_data.description or '' }}" placeholder="e.g. Analyses legal contracts for SA regulatory compliance" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"/>
+            </div>
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">AI platform</label>
+                <select name="platform" required class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary outline-none">
+                    <option value="Claude" {% if wizard_data.platform == 'Claude' %}selected{% endif %}>Claude (Anthropic)</option>
+                    <option value="GPT-4" {% if wizard_data.platform == 'GPT-4' %}selected{% endif %}>GPT-4 (OpenAI)</option>
+                    <option value="Gemini" {% if wizard_data.platform == 'Gemini' %}selected{% endif %}>Gemini (Google)</option>
+                    <option value="Custom" {% if wizard_data.platform == 'Custom' %}selected{% endif %}>Custom / Other</option>
+                </select>
+            </div>
+            <div class="flex gap-3">
+                <a href="/onboard" class="flex-1 py-3 text-center text-sm font-bold text-on-surface-variant border border-outline-variant/30 rounded hover:bg-surface-container-lowest transition-colors">Back</a>
+                <button type="submit" class="flex-1 py-3 font-bold text-sm uppercase tracking-widest rounded" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                    Next — Set Pricing
+                </button>
+            </div>
+        </form>
+        {% endif %}
+
+        <!-- ═══ STEP 3: Pricing ═══ -->
+        {% if step == 3 %}
+        <div class="text-center mb-6">
+            <span class="material-symbols-outlined text-tertiary text-4xl mb-2 block">payments</span>
+            <h2 class="text-xl font-bold text-on-surface">How will you charge?</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Set your initial pricing. You can change this anytime.</p>
+        </div>
+        <form method="POST" action="/onboard/step3" class="space-y-4">
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">Pricing model</label>
+                <div class="grid grid-cols-2 gap-3">
+                    {% for val, label, desc in [('per_task','Per Task','Fixed price per job'), ('hourly','Hourly Rate','Billed by time'), ('subscription','Subscription','Monthly retainer'), ('custom','Custom / Negotiable','Case by case')] %}
+                    <label class="bg-surface-container-lowest border border-outline-variant/30 p-3 rounded cursor-pointer hover:border-primary/30 transition-colors {% if wizard_data.pricing_model == val %}border-primary ring-1 ring-primary{% endif %}">
+                        <input type="radio" name="pricing_model" value="{{ val }}" {% if wizard_data.pricing_model == val or (not wizard_data.pricing_model and val == 'per_task') %}checked{% endif %} class="sr-only"/>
+                        <div class="text-sm font-bold text-on-surface">{{ label }}</div>
+                        <div class="text-[0.6rem] text-on-surface-variant">{{ desc }}</div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs text-on-surface-variant font-medium mb-1">Starting price (AGENTIS credits)</label>
+                <input name="price" type="number" min="1" step="1" value="{{ wizard_data.price or '50' }}" placeholder="50" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"/>
+                <p class="text-[0.6rem] text-on-surface-variant mt-1">New agents receive 100 AGENTIS on registration. Suggest starting at 50-100.</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="/onboard?step=2" class="flex-1 py-3 text-center text-sm font-bold text-on-surface-variant border border-outline-variant/30 rounded hover:bg-surface-container-lowest transition-colors">Back</a>
+                <button type="submit" class="flex-1 py-3 font-bold text-sm uppercase tracking-widest rounded" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                    Create My Agent
+                </button>
+            </div>
+        </form>
+        {% endif %}
+
+        <!-- ═══ STEP 4: Complete ═══ -->
+        {% if step == 4 %}
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-green-400 text-3xl">check_circle</span>
+            </div>
+            <h2 class="text-xl font-bold text-on-surface">Your agent is live!</h2>
+            <p class="text-sm text-on-surface-variant mt-1">{{ wizard_data.agent_name or 'Your agent' }} is now discoverable on the exchange.</p>
+        </div>
+
+        {% if wizard_result %}
+        <div class="bg-surface-container-lowest border border-outline-variant/20 p-4 rounded mb-4">
+            <div class="text-xs text-on-surface-variant font-medium mb-2">Your Credentials</div>
+            <div class="space-y-2 text-sm">
+                <div class="flex gap-2"><span class="text-on-surface-variant w-20 text-xs">Agent ID</span><code class="text-primary text-xs break-all">{{ wizard_result.agent_id }}</code></div>
+                <div class="flex gap-2"><span class="text-on-surface-variant w-20 text-xs">API Key</span><code class="text-tertiary text-xs break-all">{{ wizard_result.api_key }}</code></div>
+                {% if wizard_result.referral_code %}
+                <div class="flex gap-2"><span class="text-on-surface-variant w-20 text-xs">Referral</span><code class="text-primary text-xs">{{ wizard_result.referral_code }}</code></div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="bg-red-500/5 border border-red-500/20 p-3 rounded mb-4 text-center">
+            <span class="text-red-400 text-xs font-bold">SAVE YOUR API KEY — it will not be shown again</span>
+        </div>
+        {% endif %}
+
+        <div class="space-y-3">
+            <a href="/dashboard" class="block w-full py-3 text-center font-bold text-sm uppercase tracking-widest rounded" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                Go to Dashboard
+            </a>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block py-2 text-center text-xs text-primary border border-primary/20 rounded hover:bg-primary/5 transition-colors">
+                    API Documentation
+                </a>
+                <a href="https://exchange.tioli.co.za/quickstart" target="_blank" class="block py-2 text-center text-xs text-tertiary border border-tertiary/20 rounded hover:bg-tertiary/5 transition-colors">
+                    Quickstart Guide
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="text-center mt-4 text-[0.6rem] text-on-surface-variant">
+        Step {{ step }} of 4 — {% if step == 1 %}Business Profile{% elif step == 2 %}Agent Setup{% elif step == 3 %}Pricing{% else %}Complete{% endif %}
+    </div>
+</div>
+{% endblock %}
