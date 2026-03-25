@@ -136,6 +136,33 @@ async def job_community_catalyst():
         logger.error(f"Community catalyst failed: {e}")
 
 
+async def job_seo_content():
+    """Generate one new SEO page per day targeting search queries."""
+    from app.agents_alive.seo_content import generate_daily_content
+    try:
+        await generate_daily_content()
+    except Exception as e:
+        logger.error(f"SEO content generation failed: {e}")
+
+
+async def job_daily_report():
+    """Generate daily platform report — fresh content for search crawlers."""
+    from app.agents_alive.content_freshness import generate_daily_report
+    try:
+        await generate_daily_report()
+    except Exception as e:
+        logger.error(f"Daily report failed: {e}")
+
+
+async def job_engagement_amplifier():
+    """Search DEV.to and HN for engagement opportunities."""
+    from app.agents_alive.engagement_amplifier import run_amplifier_cycle
+    try:
+        await run_amplifier_cycle()
+    except Exception as e:
+        logger.error(f"Engagement amplifier failed: {e}")
+
+
 async def job_visitor_analytics():
     """Visitor analytics: reconstruct sessions, generate insights."""
     from app.agents_alive.visitor_analytics import reconstruct_sessions, generate_insights
@@ -228,8 +255,17 @@ def start_scheduler():
     # Every 15 minutes: Visitor analytics — reconstruct sessions, generate insights
     scheduler.add_job(job_visitor_analytics, "interval", minutes=15, id="visitor_analytics")
 
+    # Daily at 07:00 UTC: SEO content generation (one new page per day)
+    scheduler.add_job(job_seo_content, "cron", hour=7, minute=0, id="seo_content")
+
+    # Daily at 08:00 UTC: daily platform report (fresh content for crawlers)
+    scheduler.add_job(job_daily_report, "cron", hour=8, minute=0, id="daily_report")
+
+    # Every 60 minutes: Engagement amplifier (search DEV.to, HN for opportunities)
+    scheduler.add_job(job_engagement_amplifier, "interval", minutes=60, id="engagement_amplifier")
+
     scheduler.start()
-    logger.info("Scheduler started with 11 jobs")
+    logger.info("Scheduler started with 14 jobs")
 
 
 def stop_scheduler():

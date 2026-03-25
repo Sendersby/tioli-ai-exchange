@@ -117,6 +117,8 @@ from app.policy_engine.service import PolicyEngineService
 from app.agents_alive import hydra_outreach as _hydra_models
 from app.agents_alive import visitor_analytics as _visitor_models
 from app.agents_alive import community_catalyst as _catalyst_models
+from app.agents_alive import seo_content as _seo_models
+from app.agents_alive import engagement_amplifier as _amplifier_models
 
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
@@ -1330,6 +1332,79 @@ async def serve_quickstart():
     """5-step quickstart guide for developers."""
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/quickstart.html", media_type="text/html")
+
+
+@app.get("/blog/{slug}", include_in_schema=False)
+async def serve_blog_page(slug: str, db: AsyncSession = Depends(get_db)):
+    """SEO content pages — public, indexable, no auth required."""
+    from app.agents_alive.seo_content import get_page_by_slug
+    page = await get_page_by_slug(db, slug)
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    # Return as HTML page with proper meta tags
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{page['title']}</title>
+<meta name="description" content="{page['meta_description']}"/>
+<meta name="keywords" content="{page['keywords']}"/>
+<meta property="og:title" content="{page['title']}"/>
+<meta property="og:description" content="{page['meta_description']}"/>
+<meta property="og:url" content="https://exchange.tioli.co.za/blog/{slug}"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{{background:#061423;color:#d6e4f9;font-family:Inter,sans-serif}}a{{color:#77d4e5}}h1{{color:#fff;font-size:2rem;font-weight:800;margin-bottom:1rem}}h2{{color:#fff;font-size:1.3rem;font-weight:700;margin-top:2rem;margin-bottom:0.5rem}}pre{{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);padding:1rem;border-radius:4px;overflow-x:auto;font-size:0.8rem;color:#77d4e5}}code{{font-family:JetBrains Mono,monospace}}ul,ol{{margin:1rem 0;padding-left:1.5rem}}li{{margin-bottom:0.5rem}}table{{width:100%;border-collapse:collapse;margin:1rem 0}}td{{padding:0.5rem;border-bottom:1px solid rgba(68,71,76,0.2)}}</style>
+</head>
+<body>
+<nav style="background:rgba(6,20,35,0.9);border-bottom:1px solid rgba(119,212,229,0.15);padding:1rem 1.5rem;position:fixed;top:0;width:100%;z-index:50">
+<a href="https://agentisexchange.com" style="color:#fff;text-decoration:none;font-weight:300">T<span style="color:#edc05f">i</span>OL<span style="color:#edc05f">i</span> <span style="font-weight:700;background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AGENTIS</span></a>
+<a href="/blog" style="margin-left:2rem;color:#94a3b8;text-decoration:none;font-size:0.9rem">Blog</a>
+</nav>
+<main style="max-width:48rem;margin:0 auto;padding:6rem 1.5rem 4rem">{page['content_html']}</main>
+<footer style="text-align:center;padding:2rem;color:#475569;font-size:0.75rem">&copy; 2026 TiOLi AI Investments | <a href="https://agentisexchange.com">agentisexchange.com</a></footer>
+</body></html>"""
+    return HTMLResponse(content=html)
+
+
+@app.get("/blog", include_in_schema=False)
+async def serve_blog_index(db: AsyncSession = Depends(get_db)):
+    """Blog index — lists all published SEO pages."""
+    from app.agents_alive.seo_content import list_pages
+    pages = await list_pages(db)
+    items_html = "".join(
+        f'<a href="/blog/{p["slug"]}" style="display:block;padding:1rem;border-bottom:1px solid rgba(68,71,76,0.2);color:#d6e4f9;text-decoration:none"><div style="font-weight:600;color:#fff">{p["title"]}</div><div style="font-size:0.75rem;color:#64748b">{p["category"]} | {p["views"]} views | {p["created_at"][:10]}</div></a>'
+        for p in pages
+    ) or '<p style="color:#64748b;text-align:center;padding:2rem">Content coming soon.</p>'
+    html = f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Blog — TiOLi AGENTIS</title><meta name="description" content="Articles, guides, and reports from the world's first AI agent financial exchange."/><style>body{{background:#061423;color:#d6e4f9;font-family:Inter,sans-serif}}a:hover div:first-child{{color:#77d4e5}}</style></head><body>
+<nav style="background:rgba(6,20,35,0.9);border-bottom:1px solid rgba(119,212,229,0.15);padding:1rem 1.5rem"><a href="https://agentisexchange.com" style="color:#fff;text-decoration:none">T<span style="color:#edc05f">i</span>OL<span style="color:#edc05f">i</span> <b style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AGENTIS</b></a></nav>
+<main style="max-width:48rem;margin:0 auto;padding:2rem 1.5rem"><h1 style="color:#fff;font-size:2rem;font-weight:800;margin-bottom:1rem">Blog</h1>{items_html}</main>
+</body></html>"""
+    return HTMLResponse(content=html)
+
+
+@app.get("/api/badge/{badge_type}", include_in_schema=False)
+async def serve_badge(badge_type: str, db: AsyncSession = Depends(get_db)):
+    """SVG badges for embedding — creates backlinks."""
+    from app.agents_alive.social_proof import generate_badge_svg
+    from fastapi.responses import Response
+    svg = await generate_badge_svg(db, badge_type)
+    return Response(content=svg, media_type="image/svg+xml", headers={
+        "Cache-Control": "public, max-age=300",  # Cache 5 min
+    })
+
+
+@app.get("/api/widget/embed", include_in_schema=False)
+async def serve_widget():
+    """Embeddable HTML widget — live stats, creates backlinks."""
+    from app.agents_alive.social_proof import generate_embed_widget_html
+    return HTMLResponse(content=generate_embed_widget_html())
+
+
+@app.get("/api/widget/badges", include_in_schema=False)
+async def serve_markdown_badges():
+    """Markdown badges for GitHub READMEs."""
+    from app.agents_alive.social_proof import generate_markdown_badges
+    return {"markdown": generate_markdown_badges()}
 
 
 @app.get("/api/agent/dashboard", response_class=HTMLResponse)
