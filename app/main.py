@@ -1344,13 +1344,64 @@ async def serve_oversight_redirect():
 
 
 @app.get("/dashboard/oversight", response_class=HTMLResponse)
-async def dashboard_oversight(request: Request):
+async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_db)):
     """Command Centre — agent intelligence, outreach, feedback, oversight."""
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/gateway", status_code=302)
+
+    # Pre-load agent data server-side so it renders immediately
+    from datetime import datetime as _dt, timedelta, timezone as _tz
+    from app.policy_engine.models import PolicyAuditLog, PendingApproval
+    from app.agent_memory.models import AgentMemory
+
+    agents_result = await db.execute(
+        select(Agent).where(Agent.is_active == True).order_by(Agent.created_at.desc()).limit(50)
+    )
+    agents_list = agents_result.scalars().all()
+    now = _dt.now(_tz.utc)
+    week_ago = now - timedelta(days=7)
+
+    agent_cards = []
+    for agent in agents_list:
+        wallets = (await db.execute(
+            select(Wallet).where(Wallet.agent_id == agent.id)
+        )).scalars().all()
+        balance_summary = {w.currency: round(w.balance, 2) for w in wallets}
+
+        violations = (await db.execute(
+            select(func.count(PolicyAuditLog.id)).where(
+                PolicyAuditLog.agent_id == agent.id,
+                PolicyAuditLog.result.in_(["DENY", "ESCALATE"]),
+                PolicyAuditLog.created_at >= week_ago,
+            )
+        )).scalar() or 0
+
+        memory_count = (await db.execute(
+            select(func.count(AgentMemory.id)).where(AgentMemory.agent_id == agent.id)
+        )).scalar() or 0
+
+        health = "GREEN"
+        if violations > 0:
+            health = "AMBER"
+        if violations > 3:
+            health = "RED"
+
+        agent_cards.append({
+            "agent_id": agent.id, "name": agent.name, "platform": agent.platform,
+            "is_active": agent.is_active, "wallets": balance_summary,
+            "violations": violations, "memory": memory_count, "health": health,
+        })
+
+    green = len([a for a in agent_cards if a["health"] == "GREEN"])
+    amber = len([a for a in agent_cards if a["health"] == "AMBER"])
+    red = len([a for a in agent_cards if a["health"] == "RED"])
+
     return templates.TemplateResponse("oversight.html", {
         "request": request, "authenticated": True, "active": "oversight",
+        "agent_cards": agent_cards,
+        "summary": {"green": green, "amber": amber, "red": red},
+        "total_agents": len(agent_cards),
     })
 
 

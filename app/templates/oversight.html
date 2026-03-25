@@ -17,10 +17,10 @@
                 <h1 class="text-xl font-bold text-white">Agent Intelligence & Oversight</h1>
                 <p class="text-xs text-on-surface-variant">17 scheduled jobs | 10 agents | Auto-refreshes every 15s</p>
             </div>
-            <div class="flex items-center gap-2" id="summary-badges">
-                <span class="px-2 py-1 bg-green-500/10 text-green-400 text-[0.6rem] font-bold rounded" id="badge-green">—</span>
-                <span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 text-[0.6rem] font-bold rounded" id="badge-amber">—</span>
-                <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[0.6rem] font-bold rounded" id="badge-red">—</span>
+            <div class="flex items-center gap-2">
+                <span class="px-2 py-1 bg-green-500/10 text-green-400 text-[0.6rem] font-bold rounded">{{ summary.green }} GREEN</span>
+                <span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 text-[0.6rem] font-bold rounded">{{ summary.amber }} AMBER</span>
+                <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[0.6rem] font-bold rounded">{{ summary.red }} RED</span>
             </div>
         </div>
 
@@ -37,10 +37,35 @@
             <div class="tab-btn text-slate-500" onclick="showTab('approvals')">Approvals</div>
         </div>
 
-        <!-- TAB: Agent Health Cards -->
+        <!-- TAB: Agent Health Cards (server-rendered) -->
         <div id="tab-agents" class="tab-panel active">
-            <div id="agent-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div class="text-sm text-slate-500 text-center py-8 col-span-full">Loading agents...</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {% for a in agent_cards %}
+                <div class="bg-surface-container border rounded-lg p-3 {% if a.health == 'GREEN' %}border-green-500/20{% elif a.health == 'AMBER' %}border-yellow-500/20{% else %}border-red-500/20{% endif %}">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2 h-2 rounded-full {% if a.health == 'GREEN' %}bg-green-400{% elif a.health == 'AMBER' %}bg-yellow-400{% else %}bg-red-400{% endif %}"></div>
+                            <span class="text-on-surface font-bold text-xs">{{ a.name }}</span>
+                            {% if a.is_active %}<span class="text-green-400 text-[0.55rem]">ACTIVE</span>
+                            {% else %}<span class="text-red-400 text-[0.55rem]">PAUSED</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="text-[0.5rem] text-on-surface-variant mb-1">{{ a.platform }} | {{ a.agent_id[:8] }}...</div>
+                    <div class="mb-1">
+                        {% for cur, bal in a.wallets.items() %}
+                        <span class="text-[0.55rem] text-on-surface-variant">{{ cur }}: <span class="text-on-surface">{{ bal }}</span></span>
+                        {% endfor %}
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 text-center text-[0.55rem]">
+                        <div class="bg-surface-container-lowest p-1 rounded"><div class="text-on-surface font-bold">{{ a.violations }}</div><div class="text-on-surface-variant">violations</div></div>
+                        <div class="bg-surface-container-lowest p-1 rounded"><div class="text-on-surface font-bold">0</div><div class="text-on-surface-variant">pending</div></div>
+                        <div class="bg-surface-container-lowest p-1 rounded"><div class="text-on-surface font-bold">{{ a.memory }}</div><div class="text-on-surface-variant">memory</div></div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not agent_cards %}
+                <div class="text-sm text-on-surface-variant text-center py-8 col-span-full">No agents found</div>
+                {% endif %}
             </div>
         </div>
 
