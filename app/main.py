@@ -1430,9 +1430,14 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
         feedback_data = await get_feedback_dashboard(db)
     except Exception:
         pass
+    outreach_campaigns = []
+    outreach_content = []
     try:
         from app.outreach_campaigns.service import OutreachService
-        outreach_data = await OutreachService().get_dashboard(db)
+        _os = OutreachService()
+        outreach_data = await _os.get_dashboard(db)
+        outreach_campaigns = await _os.list_campaigns(db)
+        outreach_content = await _os.list_content(db, status="draft")
     except Exception:
         pass
 
@@ -1447,6 +1452,8 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
         "amplifier": amplifier_data,
         "feedback": feedback_data,
         "outreach": outreach_data,
+        "outreach_campaigns": outreach_campaigns,
+        "outreach_content": outreach_content,
     })
 
 

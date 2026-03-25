@@ -258,21 +258,53 @@
                 <button onclick="generateContent()" class="px-6 py-3 bg-[#0f1c2c] text-slate-300 text-xs font-bold uppercase tracking-widest border border-[#44474c]/30 hover:border-[#77d4e5]/30 hover:text-white transition-all rounded">Generate Content</button>
             </div>
 
-            <!-- Reminders (due soon) -->
-            <div id="out-reminders" class="mb-4"></div>
+            <!-- Campaigns List -->
+            {% if outreach_campaigns %}
+            <h3 class="text-sm font-bold text-on-surface mb-2">Your Campaigns</h3>
+            <div class="space-y-2 mb-6">
+                {% for c in outreach_campaigns %}
+                <div class="bg-surface-container border border-outline-variant/15 p-3 rounded flex items-center justify-between">
+                    <div>
+                        <span class="text-sm font-bold text-on-surface">{{ c.name }}</span>
+                        <span class="text-[0.55rem] px-1.5 py-0.5 ml-2 {% if c.status == 'active' %}bg-green-500/10 text-green-400{% elif c.status == 'draft' %}bg-primary/10 text-primary{% else %}bg-outline-variant/20 text-on-surface-variant{% endif %} rounded uppercase">{{ c.status }}</span>
+                        {% if c.goal %}<div class="text-xs text-on-surface-variant mt-0.5">{{ c.goal }}</div>{% endif %}
+                    </div>
+                    <div class="text-[0.55rem] text-on-surface-variant">{{ c.target_channels|join(', ') if c.target_channels else '' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-            <!-- Calendar Timeline -->
-            <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#edc05f] text-lg">calendar_month</span>
-                Campaign Calendar
-            </h3>
-            <div id="out-calendar" class="space-y-2 mb-6 max-h-[350px] overflow-y-auto"></div>
-
-            <!-- Overdue -->
-            <div id="out-overdue" class="mb-4"></div>
-
-            <h3 class="text-sm font-bold text-white mb-2">Ready to Post — Copy & Share</h3>
-            <div id="out-ready" class="space-y-2 max-h-[400px] overflow-y-auto"></div>
+            <!-- Content Ready to Post -->
+            <h3 class="text-sm font-bold text-on-surface mb-2">Content — Ready to Post ({{ outreach_content|length }} items)</h3>
+            <div class="space-y-2 max-h-[500px] overflow-y-auto mb-4">
+                {% for c in outreach_content %}
+                <div class="bg-surface-container border border-outline-variant/10 p-3 rounded">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[0.5rem] px-1.5 py-0.5 {% if c.channel == 'x_twitter' %}bg-blue-500/10 text-blue-400{% elif c.channel == 'linkedin' %}bg-blue-700/10 text-blue-300{% elif c.channel == 'reddit' %}bg-orange-500/10 text-orange-400{% elif c.channel == 'discord' %}bg-purple-500/10 text-purple-400{% else %}bg-outline-variant/20 text-on-surface-variant{% endif %} rounded uppercase font-bold">{{ c.channel.replace('x_twitter','twitter') }}</span>
+                            <span class="text-[0.55rem] text-on-surface-variant">{{ c.status }}</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="navigator.clipboard.writeText(document.getElementById('cc-{{ c.id }}').value);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)" class="text-[0.55rem] px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded transition-colors">Copy</button>
+                            {% if c.channel == 'x_twitter' %}
+                            <a href="https://twitter.com/intent/tweet?text={{ c.body[:250]|urlencode }}" target="_blank" class="text-[0.55rem] px-2 py-1 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded transition-colors">Open Twitter</a>
+                            {% elif c.channel == 'linkedin' %}
+                            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://agentisexchange.com" target="_blank" class="text-[0.55rem] px-2 py-1 bg-blue-700/10 text-blue-300 hover:bg-blue-700/20 rounded transition-colors">Open LinkedIn</a>
+                            {% elif c.channel == 'reddit' %}
+                            <a href="https://www.reddit.com/r/ClaudeAI/submit?type=self&title={{ c.title|urlencode }}&selftext=true&text={{ c.body[:1000]|urlencode }}" target="_blank" class="text-[0.55rem] px-2 py-1 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 rounded transition-colors">Open Reddit</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if c.title %}<div class="text-xs font-bold text-on-surface mb-1">{{ c.title }}</div>{% endif %}
+                    <div class="text-xs text-on-surface-variant whitespace-pre-wrap max-h-24 overflow-y-auto">{{ c.body[:400] }}{% if c.body|length > 400 %}...{% endif %}</div>
+                    <textarea class="hidden" id="cc-{{ c.id }}">{{ c.body }}</textarea>
+                </div>
+                {% endfor %}
+                {% if not outreach_content %}
+                <div class="text-xs text-on-surface-variant text-center py-4">No draft content — click "Generate Content" or "+ New Campaign"</div>
+                {% endif %}
+            </div>
         </div>
 
         <!-- TAB: Feedback Loop (server-rendered) -->
