@@ -78,7 +78,7 @@ async def verify_email(
     }
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
     return templates.TemplateResponse("login.html", {
         "request": request, "challenge": challenge, "status": status, "authenticated": False,
@@ -99,7 +99,7 @@ async def verify_phone(request: Request, challenge_id: str = Form(...), phone: s
     challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id), "phone_code": owner_auth._challenges.get(challenge_id, {}).get("phone_code", "")}
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
     return templates.TemplateResponse("login.html", {
         "request": request, "challenge": challenge, "status": status, "authenticated": False,
@@ -113,7 +113,7 @@ async def verify_cli(request: Request, challenge_id: str = Form(...), code: str 
     challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id)}
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
     return templates.TemplateResponse("login.html", {
         "request": request, "challenge": challenge, "status": status, "authenticated": False,
@@ -125,7 +125,7 @@ async def complete_login(request: Request, challenge_id: str = Form(...)):
     status = owner_auth.check_challenge_complete(challenge_id)
     if status.get("complete"):
         response = RedirectResponse(url="/dashboard", status_code=302)
-        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="strict")
+        response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
     challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id)}
     return templates.TemplateResponse("login.html", {
