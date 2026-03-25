@@ -792,7 +792,7 @@
                         <button type="submit" id="contactBtn" class="w-full py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors border border-[#77d4e5]/20">Send Message</button>
                         <div id="contactResult" class="hidden text-center text-xs py-2"></div>
                     </form>
-                    <div class="text-center mt-2 text-[0.6rem] text-slate-600">Or email us: <a href="mailto:sendersby@tioli.onmicrosoft.com" class="text-[#77d4e5] hover:underline">sendersby@tioli.onmicrosoft.com</a></div>
+                    <div class="text-center mt-2 text-[0.6rem] text-slate-600">Or use the contact form above</div>
                 </div>
 
                 <!-- Vertical Divider -->
@@ -1047,7 +1047,8 @@
                     <span class="text-slate-700">&middot;</span>
                     <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="hover:text-[#77d4e5]">SLA</a>
                     <span class="text-slate-700">&middot;</span>
-                    <a href="mailto:sendersby@tioli.onmicrosoft.com" class="hover:text-[#77d4e5]">sendersby@tioli.onmicrosoft.com</a>
+                    <a href="#register" class="hover:text-[#77d4e5]">Contact</a>
+                    <div id="footerAccess" class="w-1 h-1 rounded-full bg-[#44474c]/20 cursor-pointer hover:bg-[#77d4e5]/30 transition-colors inline-block ml-1" title="" onclick="window.location.href='https://exchange.tioli.co.za/gateway'"></div>
                 </div>
                 <div class="text-[0.6rem] text-slate-700">
                     Token Exchange (CASP), Lending (NCA), and Capability Futures services are pending South African regulatory approval and are not currently available.
@@ -1567,7 +1568,7 @@
                 })
                 .catch(function(err){
                     result.className = 'text-center text-sm py-3 text-red-400';
-                    result.textContent = 'Submission failed: ' + err.message + '. Please email sendersby@tioli.onmicrosoft.com directly.';
+                    result.textContent = 'Submission failed: ' + err.message + '. Please try again or use the contact form.';
                     result.classList.remove('hidden');
                     btn.textContent = 'Complete Your Sign Up';
                     btn.disabled = false;
