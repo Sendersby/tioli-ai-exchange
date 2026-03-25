@@ -44,7 +44,7 @@
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h1 class="text-xl font-bold text-white">Agent Intelligence & Oversight</h1>
-                <p class="text-xs text-slate-500">14 scheduled jobs | 9 agents | Auto-refreshes every 15s</p>
+                <p class="text-xs text-slate-500">15 scheduled jobs | 10 agents | Auto-refreshes every 15s</p>
             </div>
             <div class="flex items-center gap-2" id="summary-badges">
                 <span class="px-2 py-1 bg-green-500/10 text-green-400 text-[0.6rem] font-bold rounded" id="badge-green">—</span>
@@ -61,6 +61,7 @@
             <div class="tab-btn text-slate-500" onclick="showTab('catalyst')">Community Catalyst</div>
             <div class="tab-btn text-slate-500" onclick="showTab('amplifier')">Engagement Amplifier</div>
             <div class="tab-btn text-slate-500" onclick="showTab('seo')">SEO & Content</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('feedback')">Feedback Loop</div>
             <div class="tab-btn text-slate-500" onclick="showTab('approvals')">Approvals</div>
         </div>
 
@@ -191,6 +192,38 @@
             </div>
         </div>
 
+        <!-- TAB: Feedback Loop -->
+        <div id="tab-feedback" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="fb-total">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Feedback Items</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="fb-tasks">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Tasks Generated</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-green-400" id="fb-positive">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Positive</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="fb-actionable">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Actionable</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Recent Feedback (by value)</h3>
+                    <div id="fb-recent" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Development Tasks</h3>
+                    <div id="fb-devtasks" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- TAB: Pending Approvals -->
         <div id="tab-approvals" class="tab-panel">
             <div id="approvals-list" class="space-y-3">
@@ -314,6 +347,27 @@
                 list+='<a href="/blog/'+slug+'" target="_blank" class="block bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded text-xs text-[#77d4e5] hover:underline">'+slug+'</a>';
             });
             document.getElementById('seo-pages').innerHTML=list||'<div class="text-xs text-slate-500">No pages yet</div>';
+        }).catch(function(){});
+
+        // Feedback Loop
+        fetch(BASE+'/api/oversight/agents/feedback', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('fb-total').textContent = d.total_feedback;
+            document.getElementById('fb-tasks').textContent = d.tasks_generated;
+            document.getElementById('fb-positive').textContent = (d.by_sentiment||{}).positive || 0;
+            document.getElementById('fb-actionable').textContent = d.recent_feedback.filter(function(f){return f.actionable}).length;
+            var html='';
+            (d.recent_feedback||[]).forEach(function(f){
+                var catColor = f.category==='accepted'?'text-green-400':f.category==='rejected'?'text-red-400':f.category==='insight'?'text-[#77d4e5]':f.category==='feature_request'?'text-[#edc05f]':'text-slate-400';
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded"><div class="flex items-center gap-2 mb-1"><span class="text-[0.55rem] px-1.5 py-0.5 bg-[#061423] '+catColor+' rounded uppercase font-bold">'+f.category+'</span><span class="text-[0.55rem] text-slate-500">val:'+f.value+'</span>'+(f.actionable?'<span class="text-[0.5rem] text-[#edc05f]">ACTIONABLE</span>':'')+'</div><div class="text-xs text-slate-400 truncate">'+f.title+'</div>'+(f.author?'<div class="text-[0.5rem] text-slate-600">by '+f.author+'</div>':'')+'</div>';
+            });
+            document.getElementById('fb-recent').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-2">No feedback yet</div>';
+            var tasks='';
+            (d.development_tasks||[]).forEach(function(t){
+                var pColor = t.priority==='P0'?'text-red-400':t.priority==='P1'?'text-[#edc05f]':'text-slate-400';
+                tasks+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded"><div class="flex items-center justify-between mb-1"><span class="text-xs font-bold text-white truncate max-w-xs">'+t.title+'</span><span class="text-[0.55rem] '+pColor+' font-bold">'+t.priority+'</span></div><div class="flex items-center gap-2 text-[0.55rem] text-slate-500"><span>'+t.status+'</span><span>↑'+t.upvotes+' ↓'+t.downvotes+'</span></div></div>';
+            });
+            document.getElementById('fb-devtasks').innerHTML=tasks||'<div class="text-xs text-slate-500 text-center py-2">No tasks yet</div>';
         }).catch(function(){});
 
         // Approvals

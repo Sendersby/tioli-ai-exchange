@@ -119,6 +119,7 @@ from app.agents_alive import visitor_analytics as _visitor_models
 from app.agents_alive import community_catalyst as _catalyst_models
 from app.agents_alive import seo_content as _seo_models
 from app.agents_alive import engagement_amplifier as _amplifier_models
+from app.agents_alive import feedback_loop as _feedback_models
 
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
@@ -2256,6 +2257,32 @@ async def api_amplifier_dashboard(request: Request, db: AsyncSession = Depends(g
         raise HTTPException(status_code=401, detail="Owner authentication required")
     from app.agents_alive.engagement_amplifier import get_amplifier_dashboard
     return await get_amplifier_dashboard(db)
+
+
+@app.get("/api/oversight/agents/feedback")
+async def api_feedback_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Feedback Loop dashboard — ingested feedback, dev tasks, analysis."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.feedback_loop import get_feedback_dashboard
+    return await get_feedback_dashboard(db)
+
+
+@app.post("/api/oversight/feedback/ingest")
+async def api_ingest_feedback(
+    request: Request, source: str = "manual", content: str = "",
+    title: str = "", author: str = "", url: str = "",
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually ingest a piece of feedback (owner only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.feedback_loop import ingest_feedback
+    result = await ingest_feedback(db, source, content, source_url=url, source_author=author, title=title)
+    await db.commit()
+    return result
 
 
 @app.get("/api/oversight/agents/all")

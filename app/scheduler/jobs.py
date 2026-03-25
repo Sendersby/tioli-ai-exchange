@@ -136,6 +136,15 @@ async def job_community_catalyst():
         logger.error(f"Community catalyst failed: {e}")
 
 
+async def job_feedback_loop():
+    """Feedback loop: ingest external feedback, analyse, create dev tasks."""
+    from app.agents_alive.feedback_loop import run_feedback_cycle
+    try:
+        await run_feedback_cycle()
+    except Exception as e:
+        logger.error(f"Feedback loop failed: {e}")
+
+
 async def job_seo_content():
     """Generate one new SEO page per day targeting search queries."""
     from app.agents_alive.seo_content import generate_daily_content
@@ -264,8 +273,11 @@ def start_scheduler():
     # Every 60 minutes: Engagement amplifier (search DEV.to, HN for opportunities)
     scheduler.add_job(job_engagement_amplifier, "interval", minutes=60, id="engagement_amplifier")
 
+    # Every 30 minutes: Feedback loop — ingest, analyse, create tasks
+    scheduler.add_job(job_feedback_loop, "interval", minutes=30, id="feedback_loop")
+
     scheduler.start()
-    logger.info("Scheduler started with 14 jobs")
+    logger.info("Scheduler started with 15 jobs")
 
 
 def stop_scheduler():
