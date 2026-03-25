@@ -120,6 +120,39 @@ async def api_mark_posted(
         raise HTTPException(status_code=404, detail=str(e))
 
 
+# ── Calendar & Schedule ──────────────────────────────────────────────
+
+@router.get("/calendar")
+async def api_calendar(
+    days_ahead: int = Query(14, le=60),
+    days_behind: int = Query(7, le=30),
+    db: AsyncSession = Depends(get_db),
+):
+    """Full campaign calendar — past, present, future with stats."""
+    from app.outreach_campaigns.scheduler import get_calendar
+    return await get_calendar(db, days_ahead, days_behind)
+
+
+@router.post("/schedule-week")
+async def api_schedule_week(
+    request: Request, campaign_id: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Auto-schedule content for the next 7 days across all channels."""
+    _require_owner(request)
+    from app.outreach_campaigns.scheduler import auto_schedule_week
+    results = await auto_schedule_week(db, campaign_id)
+    await db.commit()
+    return {"scheduled": len(results), "items": results}
+
+
+@router.get("/reminders")
+async def api_reminders(db: AsyncSession = Depends(get_db)):
+    """Get posting reminders — items due in the next 2 hours."""
+    from app.outreach_campaigns.scheduler import get_reminders
+    return await get_reminders(db)
+
+
 # ── Actions ──────────────────────────────────────────────────────────
 
 @router.get("/actions")

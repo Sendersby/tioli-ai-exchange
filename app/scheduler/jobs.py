@@ -136,6 +136,15 @@ async def job_community_catalyst():
         logger.error(f"Community catalyst failed: {e}")
 
 
+async def job_campaign_scheduler():
+    """Auto-schedule campaign content for the week ahead."""
+    from app.outreach_campaigns.scheduler import run_scheduler_cycle
+    try:
+        await run_scheduler_cycle()
+    except Exception as e:
+        logger.error(f"Campaign scheduler failed: {e}")
+
+
 async def job_feedback_loop():
     """Feedback loop: ingest external feedback, analyse, create dev tasks."""
     from app.agents_alive.feedback_loop import run_feedback_cycle
@@ -276,8 +285,11 @@ def start_scheduler():
     # Every 30 minutes: Feedback loop — ingest, analyse, create tasks
     scheduler.add_job(job_feedback_loop, "interval", minutes=30, id="feedback_loop")
 
+    # Every 6 hours: auto-schedule campaign content for the week ahead
+    scheduler.add_job(job_campaign_scheduler, "interval", hours=6, id="campaign_scheduler")
+
     scheduler.start()
-    logger.info("Scheduler started with 15 jobs")
+    logger.info("Scheduler started with 16 jobs")
 
 
 def stop_scheduler():

@@ -216,11 +216,25 @@
 
             <div class="flex gap-3 mb-4">
                 <button onclick="createCampaign()" class="px-4 py-2 bg-[#77d4e5] text-[#061423] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors rounded">+ New Campaign</button>
-                <button onclick="generateContent()" class="px-4 py-2 bg-[#edc05f]/10 text-[#edc05f] text-xs font-bold uppercase tracking-widest border border-[#edc05f]/20 hover:bg-[#edc05f]/20 transition-colors rounded">Generate Content</button>
+                <button onclick="scheduleWeek()" class="px-4 py-2 bg-[#edc05f] text-[#061423] text-xs font-bold uppercase tracking-widest hover:bg-[#edc05f]/90 transition-colors rounded">Schedule Week</button>
+                <button onclick="generateContent()" class="px-4 py-2 bg-[#44474c]/20 text-slate-400 text-xs font-bold uppercase tracking-widest border border-[#44474c]/20 hover:bg-[#44474c]/30 transition-colors rounded">Generate Content</button>
             </div>
 
+            <!-- Reminders (due soon) -->
+            <div id="out-reminders" class="mb-4"></div>
+
+            <!-- Calendar Timeline -->
+            <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#edc05f] text-lg">calendar_month</span>
+                Campaign Calendar
+            </h3>
+            <div id="out-calendar" class="space-y-2 mb-6 max-h-[350px] overflow-y-auto"></div>
+
+            <!-- Overdue -->
+            <div id="out-overdue" class="mb-4"></div>
+
             <h3 class="text-sm font-bold text-white mb-2">Ready to Post — Copy & Share</h3>
-            <div id="out-ready" class="space-y-2 max-h-[500px] overflow-y-auto"></div>
+            <div id="out-ready" class="space-y-2 max-h-[400px] overflow-y-auto"></div>
         </div>
 
         <!-- TAB: Feedback Loop -->
@@ -386,7 +400,50 @@
             document.getElementById('seo-pages').innerHTML=list||'<div class="text-xs text-slate-500">No pages yet</div>';
         }).catch(function(){});
 
-        // Outreach Campaigns
+        // Outreach Calendar
+        fetch(BASE+'/api/v1/outreach/calendar', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            // Render calendar
+            var calHtml='';
+            var today = new Date().toISOString().split('T')[0];
+            var dates = Object.keys(d.calendar||{}).sort();
+            dates.forEach(function(date){
+                var items = d.calendar[date];
+                var isToday = date === today;
+                var isPast = date < today;
+                calHtml+='<div class="'+(isToday?'bg-[#77d4e5]/5 border border-[#77d4e5]/20':'bg-[#0f1c2c] border border-[#44474c]/10')+' p-3 rounded">';
+                calHtml+='<div class="flex items-center justify-between mb-2"><span class="text-xs font-bold '+(isToday?'text-[#77d4e5]':isPast?'text-slate-600':'text-white')+'">'+date+(isToday?' (TODAY)':'')+'</span><span class="text-[0.55rem] text-slate-500">'+items.length+' post'+(items.length>1?'s':'')+'</span></div>';
+                items.forEach(function(item){
+                    var chColor = item.channel==='x_twitter'?'text-[#1DA1F2]':item.channel==='linkedin'?'text-[#0A66C2]':item.channel==='reddit'?'text-[#FF4500]':'text-slate-400';
+                    var stColor = item.status==='posted'?'text-green-400':item.status==='scheduled'?'text-[#edc05f]':'text-slate-500';
+                    calHtml+='<div class="flex items-center gap-2 text-[0.6rem] mb-1"><span class="'+chColor+' font-bold uppercase w-16">'+item.channel.replace('x_twitter','Twitter')+'</span><span class="'+stColor+'">'+item.status+'</span><span class="text-slate-400 truncate flex-1">'+((item.title||item.body).substring(0,60))+'</span></div>';
+                });
+                calHtml+='</div>';
+            });
+            document.getElementById('out-calendar').innerHTML=calHtml||'<div class="text-xs text-slate-500 text-center py-4">No scheduled content — click "Schedule Week" to auto-fill</div>';
+
+            // Render overdue
+            if(d.overdue && d.overdue.length > 0){
+                var ohtml='<div class="bg-red-500/5 border border-red-500/20 p-3 rounded mb-2"><div class="text-xs font-bold text-red-400 mb-2">Overdue — '+d.overdue.length+' post'+(d.overdue.length>1?'s':'')+' missed schedule</div>';
+                d.overdue.forEach(function(o){ ohtml+='<div class="text-[0.6rem] text-red-300">'+o.channel+': '+o.title.substring(0,50)+' (was due '+o.scheduled_for.substring(0,16)+')</div>'; });
+                ohtml+='</div>';
+                document.getElementById('out-overdue').innerHTML=ohtml;
+            }
+        }).catch(function(){});
+
+        // Reminders
+        fetch(BASE+'/api/v1/outreach/reminders', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d || d.length===0){ document.getElementById('out-reminders').innerHTML=''; return; }
+            var html='<div class="bg-[#edc05f]/5 border border-[#edc05f]/20 p-3 rounded mb-2"><div class="text-xs font-bold text-[#edc05f] mb-2">Posting Reminders — '+d.length+' due soon</div>';
+            d.forEach(function(r){
+                html+='<div class="flex items-center justify-between text-[0.6rem] mb-1"><span class="text-[#edc05f]">'+r.channel+': '+r.time_until+' remaining</span>';
+                html+='<button onclick="copyContent(this,\''+r.content_id+'\')" class="px-2 py-0.5 bg-[#edc05f]/10 text-[#edc05f] rounded">Copy & Post Now</button></div>';
+            });
+            html+='</div>';
+            document.getElementById('out-reminders').innerHTML=html;
+        }).catch(function(){});
+
+        // Outreach Dashboard Stats
         fetch(BASE+'/api/v1/outreach/dashboard', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
             if(!d) return;
             document.getElementById('out-campaigns').textContent = d.total_campaigns;
@@ -472,6 +529,11 @@
         fetch(BASE+'/api/v1/outreach/campaigns',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
             body:JSON.stringify({name:name,goal:'Agent signups',auto_generate:true})})
         .then(function(r){return r.json();}).then(function(d){alert('Campaign "'+d.name+'" created with auto-generated content!'); fetchAll();})
+        .catch(function(e){alert('Failed: '+e.message);});
+    };
+    window.scheduleWeek = function(){
+        fetch(BASE+'/api/v1/outreach/schedule-week',{method:'POST',credentials:'include'})
+        .then(function(r){return r.json();}).then(function(d){alert(d.scheduled+' posts scheduled for the next 7 days!'); fetchAll();})
         .catch(function(e){alert('Failed: '+e.message);});
     };
     window.generateContent = function(){
