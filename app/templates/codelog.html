@@ -26,6 +26,7 @@
             ("commits", "Code Log", "history", "/codelog"),
             ("tasks", "Task Board", "checklist", "/codelog/tasks"),
             ("files", "Changed Files", "description", "/codelog/files"),
+            ("roadmap", "Agentis Roadmap", "route", "/codelog/roadmap"),
         ] %}
         {% for tab_id, tab_name, tab_icon, tab_url in tabs %}
         <a href="{{ tab_url }}"
@@ -198,6 +199,152 @@
                 </div>
                 {% endfor %}
             </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ═══ ROADMAP TAB ═══ -->
+    {% if active_tab == 'roadmap' %}
+    <div>
+        <!-- Dashboard Metrics -->
+        {% if roadmap_dashboard %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums">{{ roadmap_dashboard.v1_total }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">V1 Tasks</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums">{{ roadmap_dashboard.v1_done }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">V1 Done</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold tabular-nums" style="color:#77d4e5;">{{ roadmap_dashboard.v1_progress_pct }}%</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">V1 Progress</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-5 border border-outline-variant/30">
+                <div class="text-2xl font-bold text-on-surface tabular-nums">{{ roadmap_dashboard.avg_impact_score }}</div>
+                <div class="text-xs text-on-surface-variant font-label uppercase tracking-wider mt-1">Avg Impact</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 text-center">
+                <div class="text-lg font-bold text-on-surface">{{ roadmap_dashboard.deferred }}</div>
+                <div class="text-xs text-on-surface-variant">Deferred</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 text-center">
+                <div class="text-lg font-bold text-on-surface">{{ roadmap_dashboard.culled }}</div>
+                <div class="text-xs text-on-surface-variant">Culled</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-4 border border-outline-variant/30 text-center">
+                {% if roadmap_dashboard.active_sprint %}
+                <div class="text-sm font-bold text-primary">{{ roadmap_dashboard.active_sprint.label }}</div>
+                {% else %}
+                <div class="text-sm text-on-surface-variant">No active sprint</div>
+                {% endif %}
+                <div class="text-xs text-on-surface-variant">Active Sprint</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Version Swimlanes -->
+        <h2 class="text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">route</span>
+            Version Swimlanes
+        </h2>
+
+        {% for version_label in ['V1', 'V2', 'WATCH'] %}
+        <div class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="px-2 py-0.5 text-xs font-bold uppercase tracking-widest rounded
+                    {% if version_label == 'V1' %}bg-primary/15 text-primary
+                    {% elif version_label == 'V2' %}bg-tertiary/15 text-tertiary
+                    {% else %}bg-outline-variant/30 text-on-surface-variant{% endif %}">
+                    {{ version_label }}
+                </span>
+                <span class="text-xs text-on-surface-variant">
+                    {% if version_label == 'V1' %}Build Now — Governed Commercial Operating Layer
+                    {% elif version_label == 'V2' %}Build Later — Deferred Explicitly
+                    {% else %}Watch Only — Do Not Build{% endif %}
+                </span>
+            </div>
+
+            {% if roadmap_sprints and version_label == 'V1' %}
+                {% for sprint in roadmap_sprints %}
+                {% if sprint.version_focus == 'V1' %}
+                <div class="mb-4 ml-4">
+                    <div class="text-xs font-bold text-on-surface-variant mb-2">
+                        {{ sprint.label }}
+                        <span class="text-primary ml-2">{{ sprint.done_tasks }}/{{ sprint.total_tasks }}</span>
+                        {% if sprint.total_tasks > 0 %}
+                        <span class="text-on-surface-variant ml-1">({{ sprint.progress_pct }}%)</span>
+                        {% endif %}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {% for task in roadmap_tasks %}
+                        {% if task.sprint == sprint.sprint_number and task.version_target == 'V1' %}
+                        <div class="bg-surface-container border border-outline-variant/20 rounded-lg p-3 hover:border-primary/30 transition-colors">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-mono text-xs text-primary font-bold">{{ task.task_code }}</span>
+                                <span class="px-1.5 py-0.5 text-[0.5rem] font-bold uppercase tracking-widest rounded
+                                    {% if task.status == 'done' %}bg-green-500/15 text-green-400
+                                    {% elif task.status == 'in-progress' %}bg-blue-500/15 text-blue-400
+                                    {% elif task.status == 'review' %}bg-yellow-500/15 text-yellow-400
+                                    {% elif task.status == 'deferred' %}bg-orange-500/15 text-orange-400
+                                    {% elif task.status == 'culled' %}bg-red-500/15 text-red-400
+                                    {% else %}bg-outline-variant/20 text-on-surface-variant{% endif %}">
+                                    {{ task.status }}
+                                </span>
+                            </div>
+                            <div class="text-sm text-on-surface font-medium mb-1">{{ task.title }}</div>
+                            <div class="flex items-center gap-2 text-[0.55rem] text-on-surface-variant">
+                                <span>C:{{ task.complexity_score or '—' }}</span>
+                                <span>I:{{ task.impact_score or '—' }}</span>
+                                <span>R:{{ task.relevance_score or '—' }}</span>
+                                {% if task.requires_approval %}<span class="text-yellow-400">APPROVAL</span>{% endif %}
+                                {% if task.requires_3fa %}<span class="text-red-400">3FA</span>{% endif %}
+                                {% if task.immutable_check %}<span class="text-red-400">IMMUTABLE</span>{% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 ml-4">
+                    {% for task in roadmap_tasks %}
+                    {% if task.version_target == version_label %}
+                    <div class="bg-surface-container border border-outline-variant/20 rounded-lg p-3 opacity-70">
+                        <span class="font-mono text-xs text-on-surface-variant font-bold">{{ task.task_code }}</span>
+                        <div class="text-sm text-on-surface">{{ task.title }}</div>
+                        <div class="text-[0.55rem] text-on-surface-variant">{{ task.module }}</div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Versions -->
+        <h2 class="text-lg font-bold text-on-surface mt-8 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-tertiary">new_releases</span>
+            Version Milestones
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {% for v in roadmap_versions %}
+            <div class="bg-surface-container border border-outline-variant/20 rounded-lg p-4">
+                <div class="font-mono text-sm font-bold text-primary">{{ v.version_tag }}</div>
+                <div class="text-xs text-on-surface">{{ v.version_label }}</div>
+                <div class="text-[0.55rem] text-on-surface-variant mt-1">
+                    {{ v.status }}
+                    {% if v.owner_sign_off %}
+                    <span class="text-green-400 ml-1">SIGNED OFF</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
     {% endif %}

@@ -121,6 +121,10 @@ from app.agents_alive import seo_content as _seo_models
 from app.agents_alive import engagement_amplifier as _amplifier_models
 from app.agents_alive import feedback_loop as _feedback_models
 
+# Agentis Roadmap
+from app.agentis_roadmap.routes import router as roadmap_router
+from app.agentis_roadmap import models as _roadmap_models
+
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
 from app.agentis import member_models as _agentis_member_models
@@ -250,6 +254,15 @@ async def lifespan(app: FastAPI):
     print(f"  Phase 4: Crypto, Conversion, Security ACTIVE")
     print(f"  Phase 5: Optimization, Discovery, Investing, Compliance ACTIVE")
     print(f"{'='*60}\n")
+    # Seed Agentis Roadmap if empty
+    try:
+        from app.agentis_roadmap.service import RoadmapService
+        async with async_session() as _seed_db:
+            await RoadmapService().seed_if_empty(_seed_db)
+            await _seed_db.commit()
+    except Exception as e:
+        print(f"Roadmap seed: {e}")
+
     # Start scheduled jobs
     from app.scheduler.jobs import start_scheduler, stop_scheduler
     start_scheduler()
@@ -450,6 +463,7 @@ app.include_router(onboarding_router)
 app.include_router(agentis_router)
 app.include_router(memory_router)
 app.include_router(policy_router)
+app.include_router(roadmap_router)
 
 
 # ── Brute-Force Protection ───────────────────────────────────────────
@@ -4990,6 +5004,29 @@ async def codelog_files_page(request: Request):
         "recent_files": recent_files,
         "total_files_changed": total_files, "total_insertions": total_ins,
         "total_deletions": total_del,
+    })
+
+
+@app.get("/codelog/roadmap", response_class=HTMLResponse)
+async def codelog_roadmap(request: Request, db: AsyncSession = Depends(get_db)):
+    """Agentis Roadmap tab in Code Log & Tasks."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/gateway", status_code=302)
+    from app.agentis_roadmap.service import RoadmapService
+    rm = RoadmapService()
+    dashboard = await rm.get_dashboard(db)
+    tasks = await rm.list_tasks(db)
+    sprints = await rm.list_sprints(db)
+    versions = await rm.list_versions(db)
+    return templates.TemplateResponse("codelog.html", {
+        "request": request, "authenticated": True, "active": "codelog",
+        "active_tab": "roadmap", "commits": [], "tasks": [],
+        "total_files_changed": 0, "total_insertions": 0, "total_deletions": 0,
+        "roadmap_dashboard": dashboard,
+        "roadmap_tasks": tasks,
+        "roadmap_sprints": sprints,
+        "roadmap_versions": versions,
     })
 
 

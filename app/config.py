@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     agenthub_enabled: bool = False
     agentvault_enabled: bool = False
 
+    # Agentis Roadmap
+    agentis_roadmap_enabled: bool = False
+    agentis_roadmap_operator_visible: bool = False
+
     # Agentis Cooperative Bank feature flags — all default FALSE
     # Phase 1: CFI Level (build now, deploy on CBDA approval)
     agentis_compliance_enabled: bool = False      # Must be first — all others depend on it
