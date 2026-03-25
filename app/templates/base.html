@@ -226,15 +226,21 @@
 
 <!-- Top Bar -->
 <header id="topBar" class="fixed top-0 right-0 left-0 md:left-64 h-14 md:h-16 border-b border-[#44474c]/15 z-40 bg-[#061423]/80 backdrop-blur-xl flex items-center justify-between px-3 md:px-8">
-    <!-- Mobile: hamburger + branding -->
-    <div class="flex items-center gap-3 md:hidden">
+    <!-- Mobile: back + hamburger + branding -->
+    <div class="flex items-center gap-2 md:hidden">
+        <button onclick="history.back()" class="w-8 h-8 flex items-center justify-center bg-surface-container border border-outline-variant/20 rounded hover:border-primary/30 transition-colors" title="Go back">
+            <span class="material-symbols-outlined text-slate-400 text-lg">arrow_back</span>
+        </button>
         <button onclick="toggleSidebar()" class="text-slate-400 hover:text-primary p-1">
             <span class="material-symbols-outlined text-2xl">menu</span>
         </button>
         <div class="text-sm font-light tracking-tighter text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-semibold text-xs">AI</span></div>
     </div>
-    <!-- Desktop: search + date (hidden on mobile) -->
+    <!-- Desktop: back + search + date (hidden on mobile) -->
     <div class="hidden md:flex items-center gap-6">
+        <button onclick="history.back()" class="w-8 h-8 flex items-center justify-center bg-surface-container border border-outline-variant/20 rounded hover:border-primary/30 transition-colors" title="Go back">
+            <span class="material-symbols-outlined text-slate-400 text-lg">arrow_back</span>
+        </button>
         <div class="relative" id="globalSearchWrap">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm">search</span>
             <input id="globalSearchInput" class="bg-surface-container-lowest border border-[#44474c]/20 text-[0.7rem] font-mono tracking-widest w-56 pl-10 pr-3 py-2 focus:ring-1 focus:ring-primary focus:border-primary rounded-sm" placeholder="Search platform..." type="text" autocomplete="off"/>
@@ -311,7 +317,9 @@
                 'arm':'ARM','escrow':'Escrow','reports':'Reports','chat':'AI Prompt',
                 'modules':'Modules','transactions':'Transactions','blocks':'Blocks',
                 'agents':'Agents','proposals':'Proposals','pricing':'Pricing',
-                'owner':'Owner','revenue':'Revenue',
+                'owner':'Owner','revenue':'Revenue','codelog':'Code Log',
+                'tasks':'Tasks','files':'Changed Files','roadmap':'Agentis Roadmap',
+                'vault':'AgentVault','oversight':'Command Centre',
             };
             var parts = path.split('/').filter(function(p){return p;});
             var html = '<a href="/dashboard" class="hover:text-[#77d4e5] transition-colors">Home</a>';
