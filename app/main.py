@@ -126,6 +126,8 @@ from app.agentis_roadmap.routes import router as roadmap_router
 from app.agentis_roadmap import models as _roadmap_models
 from app.outreach_campaigns.routes import router as outreach_router
 from app.outreach_campaigns import models as _outreach_models
+from app.founding_cohort.routes import router as cohort_router
+from app.founding_cohort import models as _cohort_models
 
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
@@ -467,6 +469,7 @@ app.include_router(memory_router)
 app.include_router(policy_router)
 app.include_router(roadmap_router)
 app.include_router(outreach_router)
+app.include_router(cohort_router)
 
 
 # ── Brute-Force Protection ───────────────────────────────────────────
@@ -1560,6 +1563,83 @@ async def public_agent_profile(agent_id: str, db: AsyncSession = Depends(get_db)
 </div>
 </body></html>"""
     return HTMLResponse(content=html)
+
+
+@app.get("/founding-cohort", response_class=HTMLResponse)
+async def founding_cohort_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Founding Operator Programme — public application page."""
+    from app.founding_cohort.models import FoundingCohortApplication, MAX_FOUNDING_SPOTS
+    approved = (await db.execute(
+        select(func.count(FoundingCohortApplication.application_id))
+        .where(FoundingCohortApplication.status == "approved")
+    )).scalar() or 0
+    return templates.TemplateResponse("founding_cohort.html", {
+        "request": request, "authenticated": False, "active": "cohort",
+        "max_spots": MAX_FOUNDING_SPOTS,
+        "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
+        "submitted": False, "error": None,
+    })
+
+
+@app.post("/founding-cohort", response_class=HTMLResponse)
+async def founding_cohort_submit(request: Request, db: AsyncSession = Depends(get_db)):
+    """Submit founding cohort application."""
+    from app.founding_cohort.models import FoundingCohortApplication, MAX_FOUNDING_SPOTS
+    form = await request.form()
+
+    business_name = form.get("business_name", "").strip()
+    contact_name = form.get("contact_name", "").strip()
+    email = form.get("email", "").strip().lower()
+    phone = form.get("phone", "").strip()
+    use_case = form.get("use_case", "").strip()
+    how_heard = form.get("how_heard", "").strip()
+
+    if not business_name or not contact_name or not email or not use_case:
+        approved = (await db.execute(
+            select(func.count(FoundingCohortApplication.application_id))
+            .where(FoundingCohortApplication.status == "approved")
+        )).scalar() or 0
+        return templates.TemplateResponse("founding_cohort.html", {
+            "request": request, "authenticated": False, "active": "cohort",
+            "max_spots": MAX_FOUNDING_SPOTS,
+            "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
+            "submitted": False, "error": "Please fill in all required fields.",
+        })
+
+    # Check duplicate
+    existing = await db.execute(
+        select(FoundingCohortApplication).where(FoundingCohortApplication.email == email)
+    )
+    if existing.scalar_one_or_none():
+        approved = (await db.execute(
+            select(func.count(FoundingCohortApplication.application_id))
+            .where(FoundingCohortApplication.status == "approved")
+        )).scalar() or 0
+        return templates.TemplateResponse("founding_cohort.html", {
+            "request": request, "authenticated": False, "active": "cohort",
+            "max_spots": MAX_FOUNDING_SPOTS,
+            "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
+            "submitted": False, "error": "An application with this email already exists.",
+        })
+
+    app_record = FoundingCohortApplication(
+        business_name=business_name, contact_name=contact_name,
+        email=email, phone=phone, use_case=use_case, how_heard=how_heard,
+    )
+    db.add(app_record)
+    await db.commit()
+
+    approved = (await db.execute(
+        select(func.count(FoundingCohortApplication.application_id))
+        .where(FoundingCohortApplication.status == "approved")
+    )).scalar() or 0
+
+    return templates.TemplateResponse("founding_cohort.html", {
+        "request": request, "authenticated": False, "active": "cohort",
+        "max_spots": MAX_FOUNDING_SPOTS,
+        "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
+        "submitted": True, "error": None,
+    })
 
 
 @app.get("/quickstart", include_in_schema=False)
