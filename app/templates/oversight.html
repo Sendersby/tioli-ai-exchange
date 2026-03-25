@@ -26,15 +26,15 @@
 
         <!-- Tab Navigation -->
         <div class="flex gap-1 border-b border-[#44474c]/20 mb-6 overflow-x-auto">
-            <div class="tab-btn active text-[#77d4e5]" onclick="showTab('agents')">Agents</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('hydra')">Hydra Outreach</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('analytics')">Visitor Analytics</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('catalyst')">Community Catalyst</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('amplifier')">Engagement Amplifier</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('seo')">SEO & Content</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('outreach')">Outreach</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('feedback')">Feedback Loop</div>
-            <div class="tab-btn text-slate-500" onclick="showTab('approvals')">Approvals</div>
+            <div class="tab-btn active text-[#77d4e5]" onclick="showTab('agents',this)">Agents</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('hydra',this)">Hydra Outreach</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('analytics',this)">Visitor Analytics</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('catalyst',this)">Community Catalyst</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('amplifier',this)">Engagement Amplifier</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('seo',this)">SEO & Content</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('outreach',this)">Outreach</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('feedback',this)">Feedback Loop</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('approvals',this)">Approvals</div>
         </div>
 
         <!-- TAB: Agent Health Cards (server-rendered) -->
@@ -279,12 +279,12 @@
     var OPTS = {credentials:'include'};
 
     // Tab switching
-    function showTab(name){
+    function showTab(name, el){
         document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
         document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active','text-[#77d4e5]'); b.classList.add('text-slate-500'); });
-        document.getElementById('tab-'+name).classList.add('active');
-        event.target.classList.add('active','text-[#77d4e5]');
-        event.target.classList.remove('text-slate-500');
+        var panel = document.getElementById('tab-'+name);
+        if(panel) panel.classList.add('active');
+        if(el){ el.classList.add('active','text-[#77d4e5]'); el.classList.remove('text-slate-500'); }
     }
 
     // Helper
