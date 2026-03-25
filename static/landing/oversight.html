@@ -477,11 +477,11 @@
                         var shareUrl='';
                         if(c.channel==='x_twitter') shareUrl='https://twitter.com/intent/tweet?text='+encodeURIComponent(c.body.substring(0,250));
                         else if(c.channel==='linkedin') shareUrl='https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://agentisexchange.com');
-                        else if(c.channel==='reddit') shareUrl='https://www.reddit.com/r/ClaudeAI/submit?title='+encodeURIComponent(c.title||'')+'\x26text='+encodeURIComponent(c.body.substring(0,300));
+                        else if(c.channel==='reddit'){ var sub=(c.target_url||'').split('/r/')[1]||'ClaudeAI'; shareUrl='https://www.reddit.com/r/'+sub+'/submit?type=self\x26title='+encodeURIComponent(c.title||'')+'\x26selftext=true\x26text='+encodeURIComponent(c.body.substring(0,2000)); }
                         else if(c.channel==='hackernews') shareUrl='https://news.ycombinator.com/submitlink?u='+encodeURIComponent('https://agentisexchange.com')+'\x26t='+encodeURIComponent(c.title||'TiOLi AGENTIS');
                         return shareUrl ? '<a href="'+shareUrl+'" target="_blank" class="text-[0.55rem] px-2 py-1 bg-[#edc05f]/10 text-[#edc05f] hover:bg-[#edc05f]/20 rounded transition-colors">Open '+c.channel.replace('x_twitter','Twitter')+'</a>' : '';
                     })() +
-                    '<button onclick="markPosted(\''+c.id+'\')" class="text-[0.55rem] px-2 py-1 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded transition-colors">Posted</button>' +
+                    '<button onclick="markPosted(\''+c.id+'\',this)" class="text-[0.55rem] px-2 py-1 bg-[#edc05f]/10 text-[#edc05f] hover:bg-green-500/20 rounded transition-colors">To Be Posted</button>' +
                     '</div></div>' +
                     (c.title?'<div class="text-xs font-bold text-white mb-1">'+c.title+'</div>':'') +
                     '<div class="text-xs text-slate-400 whitespace-pre-wrap max-h-32 overflow-y-auto">'+c.body.substring(0,400)+(c.body.length>400?'...':'')+'</div>' +
@@ -541,9 +541,11 @@
         var el = document.getElementById('content-'+id);
         if(el){ navigator.clipboard.writeText(el.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},2000); }
     };
-    window.markPosted = function(id){
+    window.markPosted = function(id, btn){
+        if(btn){ btn.textContent='Marking...'; btn.disabled=true; }
         fetch(BASE+'/api/v1/outreach/content/'+id+'/mark-posted',{method:'POST',credentials:'include'})
-        .then(function(){ fetchAll(); }).catch(function(e){ alert('Failed: '+e.message); });
+        .then(function(){ if(btn){ btn.textContent='Posted'; btn.className='text-[0.55rem] px-2 py-1 bg-green-500/10 text-green-400 rounded'; btn.disabled=true; } fetchAll(); })
+        .catch(function(e){ alert('Failed: '+e.message); if(btn){ btn.textContent='To Be Posted'; btn.disabled=false; } });
     };
     window.createCampaign = function(){
         var name = prompt('Campaign name:');

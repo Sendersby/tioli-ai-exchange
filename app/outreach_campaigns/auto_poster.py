@@ -157,7 +157,7 @@ def _generate_share_url(content: OutreachContent) -> dict:
     elif channel == "reddit":
         target = content.target_url or "https://reddit.com/r/ClaudeAI"
         subreddit = target.split("/r/")[-1] if "/r/" in target else "ClaudeAI"
-        share_url = f"https://www.reddit.com/r/{subreddit}/submit?title={urllib.parse.quote(title)}&text={urllib.parse.quote(body[:300])}"
+        share_url = f"https://www.reddit.com/r/{subreddit}/submit?type=self&title={urllib.parse.quote(title)}&selftext=true&text={urllib.parse.quote(body[:2000])}"
 
     elif channel == "hackernews":
         share_url = f"https://news.ycombinator.com/submitlink?u={urllib.parse.quote('https://agentisexchange.com')}&t={urllib.parse.quote(title or 'TiOLi AGENTIS — AI Agent Exchange')}"
