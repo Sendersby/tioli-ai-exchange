@@ -61,6 +61,7 @@
             <div class="tab-btn text-slate-500" onclick="showTab('catalyst')">Community Catalyst</div>
             <div class="tab-btn text-slate-500" onclick="showTab('amplifier')">Engagement Amplifier</div>
             <div class="tab-btn text-slate-500" onclick="showTab('seo')">SEO & Content</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('outreach')">Outreach</div>
             <div class="tab-btn text-slate-500" onclick="showTab('feedback')">Feedback Loop</div>
             <div class="tab-btn text-slate-500" onclick="showTab('approvals')">Approvals</div>
         </div>
@@ -190,6 +191,36 @@
                 </div>
                 <p class="text-[0.6rem] text-slate-500 mt-2">Embed these on any site to create backlinks. URLs: /api/badge/agents, /api/badge/mcp, etc.</p>
             </div>
+        </div>
+
+        <!-- TAB: Outreach Campaigns -->
+        <div id="tab-outreach" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="out-campaigns">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Campaigns</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="out-content">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Content Pieces</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="out-drafts">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Ready to Post</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-green-400" id="out-posted">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Posted</div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mb-4">
+                <button onclick="createCampaign()" class="px-4 py-2 bg-[#77d4e5] text-[#061423] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors rounded">+ New Campaign</button>
+                <button onclick="generateContent()" class="px-4 py-2 bg-[#edc05f]/10 text-[#edc05f] text-xs font-bold uppercase tracking-widest border border-[#edc05f]/20 hover:bg-[#edc05f]/20 transition-colors rounded">Generate Content</button>
+            </div>
+
+            <h3 class="text-sm font-bold text-white mb-2">Ready to Post — Copy & Share</h3>
+            <div id="out-ready" class="space-y-2 max-h-[500px] overflow-y-auto"></div>
         </div>
 
         <!-- TAB: Feedback Loop -->
@@ -349,6 +380,32 @@
             document.getElementById('seo-pages').innerHTML=list||'<div class="text-xs text-slate-500">No pages yet</div>';
         }).catch(function(){});
 
+        // Outreach Campaigns
+        fetch(BASE+'/api/v1/outreach/dashboard', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('out-campaigns').textContent = d.total_campaigns;
+            document.getElementById('out-content').textContent = d.total_content;
+            document.getElementById('out-drafts').textContent = d.drafts;
+            document.getElementById('out-posted').textContent = d.posted;
+            var html='';
+            (d.ready_to_post||[]).forEach(function(c){
+                var channelColor = c.channel==='x_twitter'?'bg-[#1DA1F2]/10 text-[#1DA1F2]':c.channel==='linkedin'?'bg-[#0A66C2]/10 text-[#0A66C2]':c.channel==='reddit'?'bg-[#FF4500]/10 text-[#FF4500]':c.channel==='discord'?'bg-[#5865F2]/10 text-[#5865F2]':'bg-slate-500/10 text-slate-400';
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-3 rounded">' +
+                    '<div class="flex items-center justify-between mb-2">' +
+                    '<div class="flex items-center gap-2"><span class="text-[0.5rem] px-1.5 py-0.5 '+channelColor+' rounded uppercase font-bold">'+c.channel+'</span>' +
+                    '<span class="text-[0.5rem] px-1.5 py-0.5 bg-[#44474c]/20 text-slate-400 rounded">'+c.status+'</span></div>' +
+                    '<div class="flex gap-1">' +
+                    '<button onclick="copyContent(this,\''+c.id+'\')" class="text-[0.55rem] px-2 py-1 bg-[#77d4e5]/10 text-[#77d4e5] hover:bg-[#77d4e5]/20 rounded transition-colors">Copy</button>' +
+                    '<button onclick="markPosted(\''+c.id+'\')" class="text-[0.55rem] px-2 py-1 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded transition-colors">Posted</button>' +
+                    '</div></div>' +
+                    (c.title?'<div class="text-xs font-bold text-white mb-1">'+c.title+'</div>':'') +
+                    '<div class="text-xs text-slate-400 whitespace-pre-wrap max-h-32 overflow-y-auto">'+c.body.substring(0,400)+(c.body.length>400?'...':'')+'</div>' +
+                    '<textarea class="hidden" id="content-'+c.id+'">'+c.body.replace(/</g,'&lt;')+'</textarea>' +
+                    '</div>';
+            });
+            document.getElementById('out-ready').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-4">No content yet — click "Generate Content" or "+ New Campaign"</div>';
+        }).catch(function(){});
+
         // Feedback Loop
         fetch(BASE+'/api/oversight/agents/feedback', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
             if(!d) return;
@@ -393,6 +450,28 @@
     window.resolveApproval = function(id, decision){
         fetch(BASE+'/api/v1/policies/approvals/'+id+'/resolve',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision:decision,notes:''})})
         .then(function(){fetchAll();}).catch(function(e){alert('Failed: '+e.message);});
+    };
+
+    window.copyContent = function(btn, id){
+        var el = document.getElementById('content-'+id);
+        if(el){ navigator.clipboard.writeText(el.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},2000); }
+    };
+    window.markPosted = function(id){
+        fetch(BASE+'/api/v1/outreach/content/'+id+'/mark-posted',{method:'POST',credentials:'include'})
+        .then(function(){ fetchAll(); }).catch(function(e){ alert('Failed: '+e.message); });
+    };
+    window.createCampaign = function(){
+        var name = prompt('Campaign name:');
+        if(!name) return;
+        fetch(BASE+'/api/v1/outreach/campaigns',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({name:name,goal:'Agent signups',auto_generate:true})})
+        .then(function(r){return r.json();}).then(function(d){alert('Campaign "'+d.name+'" created with auto-generated content!'); fetchAll();})
+        .catch(function(e){alert('Failed: '+e.message);});
+    };
+    window.generateContent = function(){
+        fetch(BASE+'/api/v1/outreach/content/generate',{method:'POST',credentials:'include'})
+        .then(function(r){return r.json();}).then(function(d){alert(d.length+' content pieces generated!'); fetchAll();})
+        .catch(function(e){alert('Failed: '+e.message);});
     };
 
     fetchAll();

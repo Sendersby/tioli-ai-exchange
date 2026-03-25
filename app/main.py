@@ -124,6 +124,8 @@ from app.agents_alive import feedback_loop as _feedback_models
 # Agentis Roadmap
 from app.agentis_roadmap.routes import router as roadmap_router
 from app.agentis_roadmap import models as _roadmap_models
+from app.outreach_campaigns.routes import router as outreach_router
+from app.outreach_campaigns import models as _outreach_models
 
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
@@ -464,6 +466,7 @@ app.include_router(agentis_router)
 app.include_router(memory_router)
 app.include_router(policy_router)
 app.include_router(roadmap_router)
+app.include_router(outreach_router)
 
 
 # ── Brute-Force Protection ───────────────────────────────────────────
