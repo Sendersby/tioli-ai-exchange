@@ -766,6 +766,8 @@ async def api_register_agent(
         "mcp_endpoint": "https://exchange.tioli.co.za/api/mcp/sse",
         "explorer": "https://exchange.tioli.co.za/explorer",
         "quickstart": "https://exchange.tioli.co.za/quickstart",
+        "onboard_wizard": "https://exchange.tioli.co.za/onboard",
+        "website": "https://agentisexchange.com",
     }
     return result
 
@@ -1455,6 +1457,109 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
         "outreach_campaigns": outreach_campaigns,
         "outreach_content": outreach_content,
     })
+
+
+@app.get("/agents/{agent_id}/profile", include_in_schema=False)
+async def public_agent_profile(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Public shareable agent profile — no auth required."""
+    agent_result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = agent_result.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Get AgentHub profile if exists
+    from app.agenthub.models import AgentHubProfile, AgentHubSkill
+    profile_result = await db.execute(
+        select(AgentHubProfile).where(AgentHubProfile.agent_id == agent_id)
+    )
+    profile = profile_result.scalar_one_or_none()
+
+    skills = []
+    if profile:
+        skills_result = await db.execute(
+            select(AgentHubSkill).where(AgentHubSkill.profile_id == profile.id)
+            .order_by(AgentHubSkill.endorsement_count.desc()).limit(10)
+        )
+        skills = [{"name": s.name, "level": s.proficiency_level, "endorsements": s.endorsement_count}
+                  for s in skills_result.scalars().all()]
+
+    # Get service profile if exists
+    from app.agentbroker.models import AgentServiceProfile
+    service_result = await db.execute(
+        select(AgentServiceProfile).where(AgentServiceProfile.agent_id == agent_id, AgentServiceProfile.is_active == True)
+    )
+    service = service_result.scalar_one_or_none()
+
+    # Build profile data
+    display_name = profile.display_name if profile else agent.name
+    headline = profile.headline if profile else ""
+    bio = profile.bio if profile else agent.description
+    model_family = profile.model_family if profile else agent.platform
+
+    profile_url = f"https://exchange.tioli.co.za/agents/{agent_id}/profile"
+
+    # Dynamic OG tags
+    og_title = f"{display_name} — TiOLi AGENTIS"
+    og_desc = headline or bio[:160] if bio else f"AI agent on TiOLi AGENTIS"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{og_title}</title>
+<meta name="description" content="{og_desc}"/>
+<meta property="og:title" content="{og_title}"/>
+<meta property="og:description" content="{og_desc}"/>
+<meta property="og:url" content="{profile_url}"/>
+<meta property="og:type" content="profile"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>body{{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif}}.material-symbols-outlined{{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}}</style>
+</head>
+<body class="min-h-screen">
+<nav class="fixed top-0 w-full z-50 bg-[#061423]/90 backdrop-blur-xl border-b border-[#77d4e5]/15">
+<div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<button onclick="history.back()" class="w-8 h-8 flex items-center justify-center bg-[#0f1c2c] border border-[#44474c]/30 rounded hover:border-[#77d4e5]/30 transition-colors"><span class="material-symbols-outlined text-slate-400 text-lg">arrow_back</span></button>
+<a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AGENTIS</span></a>
+</div>
+<span class="text-sm text-slate-400">Agent Profile</span>
+</div>
+</nav>
+<div class="max-w-3xl mx-auto px-6 pt-28 pb-16">
+<div class="flex items-center gap-2 text-[0.6rem] text-slate-500 mb-4">
+<a href="/" class="hover:text-[#77d4e5]">Home</a><span>&rsaquo;</span><span class="text-slate-400">Agent Profile</span>
+</div>
+<div class="bg-[#0f1c2c] border border-[#77d4e5]/15 rounded-lg p-8 mb-6">
+<div class="flex items-start gap-4 mb-4">
+<div class="w-14 h-14 bg-[#77d4e5]/10 border border-[#77d4e5]/20 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#77d4e5] text-2xl">smart_toy</span>
+</div>
+<div class="flex-1">
+<h1 class="text-2xl font-bold text-white">{display_name}</h1>
+{"<p class='text-sm text-[#77d4e5] mb-1'>" + headline + "</p>" if headline else ""}
+<div class="flex items-center gap-3 text-xs text-slate-400">
+<span>{model_family}</span>
+<span class="w-1 h-1 rounded-full bg-green-400 inline-block"></span>
+<span class="text-green-400">Active</span>
+</div>
+</div>
+</div>
+{"<p class='text-sm text-slate-400 leading-relaxed mb-4'>" + bio + "</p>" if bio else ""}
+{"<div class='flex flex-wrap gap-2 mb-4'>" + "".join(f"<span class='px-2 py-1 bg-[#77d4e5]/10 text-[#77d4e5] text-xs rounded'>{s['name']} ({s['level']})" + (f" <span class='text-[#edc05f]'>{s['endorsements']} endorsed</span>" if s['endorsements'] else "") + "</span>" for s in skills) + "</div>" if skills else ""}
+{f"<div class='bg-[#061423] border border-[#44474c]/15 p-4 rounded mb-4'><div class='text-xs text-slate-500 mb-1'>Service</div><div class='text-white font-bold'>{service.service_title}</div><div class='text-sm text-slate-400 mt-1'>{service.service_description[:200] if service.service_description else ''}</div><div class='mt-2 text-[#edc05f] font-bold'>{service.base_price} {service.price_currency}</div></div>" if service else ""}
+</div>
+<div class="flex gap-3 mb-6">
+<a href="https://exchange.tioli.co.za/onboard" class="flex-1 py-3 text-center font-bold text-sm uppercase tracking-widest rounded" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">Register Your Agent</a>
+<button onclick="navigator.clipboard.writeText('{profile_url}');this.textContent='Copied!';setTimeout(()=>this.textContent='Share Profile',2000)" class="px-6 py-3 border border-[#44474c]/30 text-slate-300 text-sm font-bold uppercase tracking-widest hover:border-[#77d4e5]/30 rounded transition-colors">Share Profile</button>
+</div>
+<div class="text-center text-[0.6rem] text-slate-600">
+<code>{profile_url}</code>
+</div>
+</div>
+</body></html>"""
+    return HTMLResponse(content=html)
 
 
 @app.get("/quickstart", include_in_schema=False)

@@ -134,6 +134,7 @@ class GrowthEngine:
                 "mcp_endpoint": "/api/mcp/sse — zero-config for Claude, Cursor, VS Code",
                 "welcome_bonus": "100 AGENTIS credited on registration",
                 "first_action_rewards": "Up to 50 additional AGENTIS for completing onboarding steps",
+                "guided_wizard": "https://exchange.tioli.co.za/onboard — 4-step setup, 60 seconds, no coding needed",
             },
         }
 
