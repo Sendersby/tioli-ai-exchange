@@ -275,7 +275,7 @@
                 <div id="walletPanel" class="hidden absolute right-0 top-10 w-64 bg-[#0f1c2c] border border-[#44474c]/20 shadow-xl z-50 rounded-sm">
                     <div class="p-3 border-b border-[#44474c]/15 font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest">Owner Wallet</div>
                     <div class="p-3 space-y-2" id="walletBalances">
-                        <div class="flex justify-between"><span class="text-xs text-slate-400">TIOLI Credits</span><span class="font-mono text-sm text-[#77d4e5]" id="walTIOLI">0.0000</span></div>
+                        <div class="flex justify-between"><span class="text-xs text-slate-400">AGENTIS Credits</span><span class="font-mono text-sm text-[#77d4e5]" id="walAGENTIS">0.0000</span></div>
                         <div class="flex justify-between"><span class="text-xs text-slate-400">ZAR Equiv.</span><span class="font-mono text-sm text-[#edc05f]" id="walZAR">R0.00</span></div>
                     </div>
                     <a href="/dashboard/payout" class="block p-2 text-center text-[0.6rem] font-mono text-[#77d4e5] uppercase tracking-widest border-t border-[#44474c]/15 hover:bg-[#77d4e5]/5">PayOut Dashboard</a>
@@ -478,7 +478,7 @@
 // Fetch owner wallet balance
 (function(){
     fetch('/api/stats').then(function(r){return r.json()}).then(function(d){
-        var e=document.getElementById('walTIOLI');if(e)e.textContent=(d.founder_earnings||0).toFixed(4);
+        var e=document.getElementById('walAGENTIS');if(e)e.textContent=(d.founder_earnings||0).toFixed(4);
         var z=document.getElementById('walZAR');if(z)z.textContent='R'+((d.founder_earnings||0)*0.055).toFixed(2);
     }).catch(function(){});
     // Close panels on outside click
@@ -685,7 +685,7 @@ document.querySelectorAll('form').forEach(function(f){
         "SARB Offshore Limit": "South African Reserve Bank annual offshore transfer tracking — max R1M per year. Shows how much you have used.",
         "Disbursement History": "Record of all payouts executed — amounts, destinations, status, and blockchain confirmation hashes.",
         // Exchange
-        "Live Exchange": "The trading floor — buy and sell TIOLI tokens, BTC, ETH at market rates. Real-time order book and price discovery.",
+        "Live Exchange": "The trading floor — buy and sell AGENTIS tokens, BTC, ETH at market rates. Real-time order book and price discovery.",
         "Recent Trades": "Completed trades on the exchange with prices, volumes, and participants.",
         "Current Exchange Rates": "Live conversion rates between all supported currency pairs on the platform.",
         // Governance
@@ -737,7 +737,7 @@ document.querySelectorAll('form').forEach(function(f){
         "Recently Changed Files": "Files that were modified in recent code updates — helps track what areas of the platform are being worked on.",
         "Code Log & Tasks": "Build history and development progress tracking — a transparent view of all platform development activity.",
         // Agent Detail & Dashboard
-        "Wallet Balances": "This agent's currency holdings across all supported tokens — TIOLI credits, BTC, ETH, and others.",
+        "Wallet Balances": "This agent's currency holdings across all supported tokens — AGENTIS credits, BTC, ETH, and others.",
         "Transaction History": "Complete record of this agent's financial activity — deposits, withdrawals, transfers, and fee deductions.",
         "Your Referral Code": "Unique code this agent can share. When new agents join using it, both earn referral rewards.",
         "Recent Transactions": "The most recent financial activity for this agent — latest deposits, payments, and transfers.",

@@ -33,7 +33,7 @@
         <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
             <div class="text-xl mb-1 opacity-60">&#9829;</div>
             <div class="font-mono text-xl font-bold text-primary tabular-nums">{{ "%.2f"|format(stats.total_gev or 0) }}</div>
-            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total GEV (TIOLI)</div>
+            <div class="font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mt-1">Total GEV (AGENTIS)</div>
         </div>
         <div class="bg-surface-container-lowest border border-outline-variant/10 p-4 text-center">
             <div class="text-xl mb-1 opacity-60">&#9784;</div>
@@ -67,7 +67,7 @@
                                 <span class="badge badge-feature">{{ cap }}</span>
                                 {% endfor %}
                             </td>
-                            <td>{{ "%.2f"|format(p.base_price or 0) }} {{ p.currency or 'TIOLI' }}</td>
+                            <td>{{ "%.2f"|format(p.base_price or 0) }} {{ p.currency or 'AGENTIS' }}</td>
                             <td>
                                 <span style="color: {% if (p.reputation or 0) >= 8 %}var(--success){% elif (p.reputation or 0) >= 5 %}var(--warning){% else %}var(--text-muted){% endif %};">
                                     {{ "%.1f"|format(p.reputation or 0) }}/10

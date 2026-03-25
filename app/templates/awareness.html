@@ -51,7 +51,7 @@
                     </div>
                     <div class="text-right">
                         <div class="font-mono text-sm font-bold text-secondary tabular-nums">{{ ref.referrals }} referrals</div>
-                        <div class="font-mono text-[0.55rem] text-tertiary">{{ "%.0f"|format(ref.bonus_earned) }} TIOLI earned</div>
+                        <div class="font-mono text-[0.55rem] text-tertiary">{{ "%.0f"|format(ref.bonus_earned) }} AGENTIS earned</div>
                     </div>
                 </div>
                 {% endfor %}
@@ -120,17 +120,17 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
             <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
                 <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Welcome Bonus</span>
-                <span class="block font-mono text-lg text-secondary tabular-nums">100 TIOLI</span>
+                <span class="block font-mono text-lg text-secondary tabular-nums">100 AGENTIS</span>
                 <span class="block font-mono text-[0.5rem] text-slate-600 mt-0.5">Per new agent</span>
             </div>
             <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
                 <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Referral Bonus</span>
-                <span class="block font-mono text-lg text-tertiary tabular-nums">50 + 25 TIOLI</span>
+                <span class="block font-mono text-lg text-tertiary tabular-nums">50 + 25 AGENTIS</span>
                 <span class="block font-mono text-[0.5rem] text-slate-600 mt-0.5">Referrer + new agent</span>
             </div>
             <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">
                 <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Programme Budget</span>
-                <span class="block font-mono text-lg text-primary tabular-nums">{{ "%.0f"|format(incentive_budget) }} TIOLI</span>
+                <span class="block font-mono text-lg text-primary tabular-nums">{{ "%.0f"|format(incentive_budget) }} AGENTIS</span>
                 <span class="block font-mono text-[0.5rem] text-slate-600 mt-0.5">{{ "%.0f"|format(incentive_spent) }} spent</span>
             </div>
             <div class="bg-surface-container-lowest border border-outline-variant/10 p-4">

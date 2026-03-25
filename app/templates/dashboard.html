@@ -14,7 +14,7 @@
                     <h2 class="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-500 mb-2">Platform Infrastructure</h2>
                     <div class="flex items-baseline gap-3">
                         <span class="font-headline text-4xl font-black tracking-tight text-white tabular-nums">{{ "%.4f"|format(founder_earnings) }}</span>
-                        <span class="text-secondary font-mono text-xs tracking-widest uppercase">TIOLI Earned</span>
+                        <span class="text-secondary font-mono text-xs tracking-widest uppercase">AGENTIS Earned</span>
                     </div>
                 </div>
                 <div class="flex gap-3">
@@ -386,7 +386,7 @@
     new Chart(document.getElementById('revenueChart').getContext('2d'),{
         type:'doughnut',
         data:{labels:['Founder','Charity'],datasets:[{data:[{{ founder_earnings }},{{ charity_total }}],backgroundColor:[primary,tertiary],borderColor:'#061423',borderWidth:3,hoverOffset:6}]},
-        options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:14,usePointStyle:true,font:{family:'JetBrains Mono',size:10},color:'#94a3b8'}},tooltip:{backgroundColor:'#1e2b3b',titleFont:{family:'Inter',size:12},bodyFont:{family:'JetBrains Mono',size:11},padding:10,cornerRadius:4,callbacks:{label:function(c){return c.label+': '+c.parsed.toFixed(4)+' TIOLI'}}}}}
+        options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:14,usePointStyle:true,font:{family:'JetBrains Mono',size:10},color:'#94a3b8'}},tooltip:{backgroundColor:'#1e2b3b',titleFont:{family:'Inter',size:12},bodyFont:{family:'JetBrains Mono',size:11},padding:10,cornerRadius:4,callbacks:{label:function(c){return c.label+': '+c.parsed.toFixed(4)+' AGENTIS'}}}}}
     });
 
     {% set live_count = services_summary|selectattr('status','equalto','live')|list|length %}

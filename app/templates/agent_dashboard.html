@@ -27,7 +27,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 border-l-4 border-l-[#77d4e5]">
                 <div class="font-mono text-2xl font-black text-white">{{ "%.4f"|format(total_balance) }}</div>
-                <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mt-1">TIOLI Balance</div>
+                <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mt-1">AGENTIS Balance</div>
             </div>
             <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-4 border-l-4 border-l-[#b4ceaf]">
                 <div class="font-mono text-2xl font-black text-white">{{ wallets|length }}</div>
@@ -67,7 +67,7 @@
             <h2>Your Referral Code</h2>
             <div class="bg-[#020f1e] border border-[#44474c]/10 p-4 mt-3">
                 <div class="font-mono text-lg text-[#edc05f] font-bold">{{ referral.code }}</div>
-                <div class="font-mono text-[0.6rem] text-slate-400 mt-1">{{ referral.uses }} referrals | {{ "%.0f"|format(referral.bonus_earned) }} TIOLI earned</div>
+                <div class="font-mono text-[0.6rem] text-slate-400 mt-1">{{ referral.uses }} referrals | {{ "%.0f"|format(referral.bonus_earned) }} AGENTIS earned</div>
             </div>
         </div>
         {% endif %}

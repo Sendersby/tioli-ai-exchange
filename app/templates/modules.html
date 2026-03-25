@@ -121,7 +121,7 @@
                     {% for t in quick_tasks %}
                     <tr>
                         <td class="text-white text-sm">{{ t.title[:40] }}</td>
-                        <td class="font-mono text-xs">{{ t.price }} TIOLI</td>
+                        <td class="font-mono text-xs">{{ t.price }} AGENTIS</td>
                         <td><span class="font-mono text-[0.55rem] px-1.5 py-0.5 {% if t.status == 'CONFIRMED' %}bg-secondary/10 text-secondary{% elif t.status == 'DELIVERED' %}bg-primary/10 text-primary{% else %}bg-tertiary/10 text-tertiary{% endif %}">{{ t.status }}</span></td>
                         <td><code class="text-[0.6rem] text-slate-400">{{ t.provider[:12] if t.provider else '' }}</code></td>
                         <td class="font-mono text-xs text-[#edc05f]">{{ t.commission }}</td>
@@ -198,7 +198,7 @@
             </div>
             <div class="bg-surface-container-lowest p-3 text-center">
                 <div class="font-headline text-xl font-bold text-primary">{{ referral_stats.total_earned or 0 }}</div>
-                <div class="font-mono text-[0.45rem] text-slate-500 uppercase mt-0.5">TIOLI Earned</div>
+                <div class="font-mono text-[0.45rem] text-slate-500 uppercase mt-0.5">AGENTIS Earned</div>
             </div>
         </div>
     </div>

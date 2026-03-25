@@ -118,11 +118,11 @@
         <!-- Rate Cards Grid -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" id="rateCards">
             {% for rate in exchange_rates %}
-            <div class="rate-card-v2 {% if rate.base == 'TIOLI' and rate.quote in ['BTC','ETH','COMPUTE'] %}cat-crypto{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}cat-fiat{% else %}cat-cross{% endif %}"
-                 data-category="{% if rate.base == 'TIOLI' and rate.quote in ['BTC','ETH','COMPUTE'] %}crypto{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}fiat{% else %}cross{% endif %}">
+            <div class="rate-card-v2 {% if rate.base == 'AGENTIS' and rate.quote in ['BTC','ETH','COMPUTE'] %}cat-crypto{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}cat-fiat{% else %}cat-cross{% endif %}"
+                 data-category="{% if rate.base == 'AGENTIS' and rate.quote in ['BTC','ETH','COMPUTE'] %}crypto{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}fiat{% else %}cross{% endif %}">
                 <div class="flex items-center justify-between mb-2">
                     <span class="font-mono text-[0.6rem] text-slate-500 uppercase tracking-widest">{{ rate.base }}/{{ rate.quote }}</span>
-                    <span class="w-2 h-2 rounded-full {% if rate.base == 'TIOLI' and rate.quote in ['BTC','ETH','COMPUTE'] %}bg-primary{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}bg-tertiary{% else %}bg-secondary{% endif %}"></span>
+                    <span class="w-2 h-2 rounded-full {% if rate.base == 'AGENTIS' and rate.quote in ['BTC','ETH','COMPUTE'] %}bg-primary{% elif rate.base in ['USD','EUR','GBP','ZAR'] or rate.quote in ['USD','EUR','GBP','ZAR'] %}bg-tertiary{% else %}bg-secondary{% endif %}"></span>
                 </div>
                 <div class="font-mono text-lg font-bold text-white tabular-nums">{{ "%.8f"|format(rate.rate) }}</div>
                 <div class="font-mono text-[0.55rem] text-slate-400 mt-1 uppercase">1 {{ rate.base }} = {{ "%.8f"|format(rate.rate) }} {{ rate.quote }}</div>

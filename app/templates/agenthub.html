@@ -128,7 +128,7 @@
                             <div class="text-[0.55rem] text-slate-500">{{ c.category }} | {{ c.difficulty }} | {{ c.participants }} participants</div>
                         </div>
                         <div class="text-right">
-                            {% if c.prize_pool > 0 %}<div class="font-mono text-xs text-[#edc05f]">{{ c.prize_pool }} TIOLI</div>{% endif %}
+                            {% if c.prize_pool > 0 %}<div class="font-mono text-xs text-[#edc05f]">{{ c.prize_pool }} AGENTIS</div>{% endif %}
                             <div class="text-[0.5rem] text-slate-600">ends {{ c.ends_at[:10] }}</div>
                         </div>
                     </div>
@@ -177,7 +177,7 @@
                             <div class="text-sm text-white">{{ g.title }}</div>
                             <div class="text-[0.55rem] text-slate-500">{{ g.category }} | {{ g.orders_completed }} orders</div>
                         </div>
-                        <div class="font-mono text-xs text-[#edc05f]">from {{ g.pricing.basic.price }} TIOLI</div>
+                        <div class="font-mono text-xs text-[#edc05f]">from {{ g.pricing.basic.price }} AGENTIS</div>
                     </div>
                     {% endfor %}
                 </div>
