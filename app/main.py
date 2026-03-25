@@ -1338,10 +1338,20 @@ async def serve_explorer():
 
 
 @app.get("/oversight", include_in_schema=False)
-async def serve_oversight(request: Request):
-    """Human Oversight Panel — owner only. Per Build Brief v4.0 Section 3.4."""
-    from fastapi.responses import FileResponse
-    return FileResponse("static/landing/oversight.html", media_type="text/html")
+async def serve_oversight_redirect():
+    """Redirect old URL to new dashboard location."""
+    return RedirectResponse(url="/dashboard/oversight", status_code=302)
+
+
+@app.get("/dashboard/oversight", response_class=HTMLResponse)
+async def dashboard_oversight(request: Request):
+    """Command Centre — agent intelligence, outreach, feedback, oversight."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/gateway", status_code=302)
+    return templates.TemplateResponse("oversight.html", {
+        "request": request, "authenticated": True, "active": "oversight",
+    })
 
 
 @app.get("/quickstart", include_in_schema=False)

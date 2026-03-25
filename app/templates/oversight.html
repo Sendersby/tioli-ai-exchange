@@ -1,0 +1,530 @@
+{% extends "base.html" %}
+
+{% block title %}Command Centre — TiOLi AI AGENTIS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <style>
+        .tab-btn { cursor:pointer; padding:0.5rem 1rem; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; border-bottom:2px solid transparent; transition:all 0.2s; }
+        .tab-btn:hover { color:#fff; }
+        .tab-btn.active { color:#77d4e5; border-bottom-color:#77d4e5; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+    </style>
+        <!-- Header with health badges -->
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-xl font-bold text-white">Agent Intelligence & Oversight</h1>
+                <p class="text-xs text-on-surface-variant">17 scheduled jobs | 10 agents | Auto-refreshes every 15s</p>
+            </div>
+            <div class="flex items-center gap-2" id="summary-badges">
+                <span class="px-2 py-1 bg-green-500/10 text-green-400 text-[0.6rem] font-bold rounded" id="badge-green">—</span>
+                <span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 text-[0.6rem] font-bold rounded" id="badge-amber">—</span>
+                <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[0.6rem] font-bold rounded" id="badge-red">—</span>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex gap-1 border-b border-[#44474c]/20 mb-6 overflow-x-auto">
+            <div class="tab-btn active text-[#77d4e5]" onclick="showTab('agents')">Agents</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('hydra')">Hydra Outreach</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('analytics')">Visitor Analytics</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('catalyst')">Community Catalyst</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('amplifier')">Engagement Amplifier</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('seo')">SEO & Content</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('outreach')">Outreach</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('feedback')">Feedback Loop</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('approvals')">Approvals</div>
+        </div>
+
+        <!-- TAB: Agent Health Cards -->
+        <div id="tab-agents" class="tab-panel active">
+            <div id="agent-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="text-sm text-slate-500 text-center py-8 col-span-full">Loading agents...</div>
+            </div>
+        </div>
+
+        <!-- TAB: Hydra Outreach -->
+        <div id="tab-hydra" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="hydra-encounters">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Repos Discovered</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="hydra-engagements">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Engagements</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="hydra-responses">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Responses</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="hydra-today">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Discovered Today</div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-2">Recent Discoveries</h3>
+            <div id="hydra-recent" class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="text-xs text-slate-500 text-center py-4">Loading...</div>
+            </div>
+            <h3 class="text-sm font-bold text-white mt-4 mb-2">Top Topics Found</h3>
+            <div id="hydra-topics" class="flex flex-wrap gap-2">
+                <div class="text-xs text-slate-500">Loading...</div>
+            </div>
+        </div>
+
+        <!-- TAB: Visitor Analytics -->
+        <div id="tab-analytics" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="analytics-events">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">API Events</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="analytics-sessions">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Sessions</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="analytics-converted">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Converted</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="analytics-rate">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Conversion Rate</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Endpoint Categories</h3>
+                    <div id="analytics-categories" class="space-y-1"></div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Journey Stages</h3>
+                    <div id="analytics-stages" class="space-y-1"></div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mt-4 mb-2">Insights</h3>
+            <div id="analytics-insights" class="space-y-2"></div>
+        </div>
+
+        <!-- TAB: Community Catalyst -->
+        <div id="tab-catalyst" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="catalyst-intel">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Intelligence Gathered</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="catalyst-topics">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Topics Covered</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="catalyst-cats">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Categories</div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-2">Recent Intelligence</h3>
+            <div id="catalyst-recent" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <!-- TAB: Engagement Amplifier -->
+        <div id="tab-amplifier" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="amp-total">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Opportunities Found</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="amp-hn">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Hacker News</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="amp-devto">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">DEV.to</div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-2">Top Opportunities (by relevance)</h3>
+            <div id="amp-opportunities" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <!-- TAB: SEO & Content -->
+        <div id="tab-seo" class="tab-panel">
+            <h3 class="text-sm font-bold text-white mb-3">Published SEO Pages</h3>
+            <div id="seo-pages" class="space-y-2"></div>
+            <div class="mt-4 bg-[#0f1c2c] border border-[#44474c]/15 p-4 rounded">
+                <h3 class="text-sm font-bold text-white mb-2">Embeddable Badges</h3>
+                <div class="flex flex-wrap gap-3">
+                    <img src="/api/badge/agents" alt="agents badge"/>
+                    <img src="/api/badge/mcp" alt="mcp badge"/>
+                    <img src="/api/badge/endpoints" alt="endpoints badge"/>
+                    <img src="/api/badge/blockchain" alt="blockchain badge"/>
+                </div>
+                <p class="text-[0.6rem] text-slate-500 mt-2">Embed these on any site to create backlinks. URLs: /api/badge/agents, /api/badge/mcp, etc.</p>
+            </div>
+        </div>
+
+        <!-- TAB: Outreach Campaigns -->
+        <div id="tab-outreach" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="out-campaigns">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Campaigns</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="out-content">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Content Pieces</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="out-drafts">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Ready to Post</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-green-400" id="out-posted">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Posted</div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mb-4">
+                <button onclick="createCampaign()" class="px-8 py-3 text-sm font-bold uppercase tracking-widest hover:opacity-90 hover:scale-105 transition-all rounded" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">+ New Campaign</button>
+                <button onclick="scheduleWeek()" class="px-6 py-3 bg-[#edc05f] text-[#061423] text-xs font-bold uppercase tracking-widest hover:bg-[#edc05f]/90 transition-all rounded">Schedule Week</button>
+                <button onclick="generateContent()" class="px-6 py-3 bg-[#0f1c2c] text-slate-300 text-xs font-bold uppercase tracking-widest border border-[#44474c]/30 hover:border-[#77d4e5]/30 hover:text-white transition-all rounded">Generate Content</button>
+            </div>
+
+            <!-- Reminders (due soon) -->
+            <div id="out-reminders" class="mb-4"></div>
+
+            <!-- Calendar Timeline -->
+            <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#edc05f] text-lg">calendar_month</span>
+                Campaign Calendar
+            </h3>
+            <div id="out-calendar" class="space-y-2 mb-6 max-h-[350px] overflow-y-auto"></div>
+
+            <!-- Overdue -->
+            <div id="out-overdue" class="mb-4"></div>
+
+            <h3 class="text-sm font-bold text-white mb-2">Ready to Post — Copy & Share</h3>
+            <div id="out-ready" class="space-y-2 max-h-[400px] overflow-y-auto"></div>
+        </div>
+
+        <!-- TAB: Feedback Loop -->
+        <div id="tab-feedback" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="fb-total">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Feedback Items</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="fb-tasks">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Tasks Generated</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-green-400" id="fb-positive">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Positive</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="fb-actionable">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Actionable</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Recent Feedback (by value)</h3>
+                    <div id="fb-recent" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Development Tasks</h3>
+                    <div id="fb-devtasks" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Pending Approvals -->
+        <div id="tab-approvals" class="tab-panel">
+            <div id="approvals-list" class="space-y-3">
+                <div class="text-sm text-slate-500 text-center py-4">Loading approvals...</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+    <script>
+    var BASE = '';  // Same-origin — no need for absolute URL
+    var OPTS = {credentials:'same-origin'};
+
+    // Tab switching
+    function showTab(name){
+        document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+        document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active','text-[#77d4e5]'); b.classList.add('text-slate-500'); });
+        document.getElementById('tab-'+name).classList.add('active');
+        event.target.classList.add('active','text-[#77d4e5]');
+        event.target.classList.remove('text-slate-500');
+    }
+
+    // Helper
+    function bar(label, count, max, color){
+        var pct = max > 0 ? Math.round(count/max*100) : 0;
+        return '<div class="flex items-center gap-2 text-xs"><span class="w-24 text-slate-400 truncate">'+label+'</span><div class="flex-1 bg-[#061423] rounded h-3"><div class="h-3 rounded" style="width:'+pct+'%;background:'+color+'"></div></div><span class="text-white w-8 text-right">'+count+'</span></div>';
+    }
+
+    function fetchAll(){
+        // Agent health cards
+        fetch(BASE+'/api/oversight/agents', OPTS).then(function(r){
+            if(r.status === 401){
+                document.getElementById('agent-cards').innerHTML='<div class="text-center py-8 col-span-full"><p class="text-red-400 mb-2">Owner authentication required</p><p class="text-xs text-slate-500 mb-3">Log in via the Gateway first, then return here.</p><a href="/gateway" class="px-4 py-2 bg-[#77d4e5] text-[#061423] text-xs font-bold uppercase rounded">Log In</a></div>';
+                return null;
+            }
+            return r.ok ? r.json() : null;
+        }).then(function(d){
+            if(!d) return;
+            document.getElementById('badge-green').textContent = d.summary.green + ' GREEN';
+            document.getElementById('badge-amber').textContent = d.summary.amber + ' AMBER';
+            document.getElementById('badge-red').textContent = d.summary.red + ' RED';
+            var html = '';
+            d.agents.forEach(function(a){
+                var hc = 'health-'+a.health.toLowerCase();
+                var dot = a.health==='GREEN'?'bg-green-400':a.health==='AMBER'?'bg-yellow-400':'bg-red-400';
+                var st = a.is_active?'<span class="text-green-400 text-[0.55rem]">ACTIVE</span>':'<span class="text-red-400 text-[0.55rem]">PAUSED</span>';
+                var w='';for(var c in a.wallets){w+='<span class="text-[0.55rem] text-slate-400">'+c+': <span class="text-white">'+(a.wallets[c]||0).toFixed(1)+'</span></span> ';}
+                html+='<div class="bg-[#0f1c2c] border '+hc+' p-3 rounded"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full '+dot+'"></div><span class="text-white font-bold text-xs">'+a.name+'</span>'+st+'</div><button onclick="togglePause(\''+a.agent_id+'\',this)" class="text-[0.6rem] px-2 py-0.5 border border-[#44474c]/30 text-slate-400 hover:text-white transition-colors">'+(a.is_active?'Pause':'Resume')+'</button></div><div class="text-[0.5rem] text-slate-600 mb-1">'+a.platform+' | '+a.agent_id.substring(0,8)+'...</div><div class="mb-1">'+w+'</div><div class="grid grid-cols-3 gap-1 text-center text-[0.55rem]"><div class="bg-[#061423] p-1 rounded"><div class="text-white font-bold">'+a.policy_violations_7d+'</div><div class="text-slate-600">violations</div></div><div class="bg-[#061423] p-1 rounded"><div class="text-white font-bold">'+a.pending_approvals+'</div><div class="text-slate-600">pending</div></div><div class="bg-[#061423] p-1 rounded"><div class="text-white font-bold">'+a.memory_records+'</div><div class="text-slate-600">memory</div></div></div></div>';
+            });
+            document.getElementById('agent-cards').innerHTML = html || '<div class="text-sm text-slate-500 text-center py-4 col-span-full">No agents</div>';
+        }).catch(function(){});
+
+        // Hydra
+        fetch(BASE+'/api/oversight/agents/hydra', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('hydra-encounters').textContent = d.total_encounters;
+            document.getElementById('hydra-engagements').textContent = d.total_engagements;
+            document.getElementById('hydra-responses').textContent = d.total_responses;
+            document.getElementById('hydra-today').textContent = d.today.discovered;
+            var html='';
+            (d.recent_encounters||[]).forEach(function(e){
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded flex items-center justify-between"><div><a href="'+e.url+'" target="_blank" class="text-xs text-[#77d4e5] hover:underline">'+e.name+'</a><span class="text-[0.55rem] text-slate-500 ml-2">'+e.stars+' stars</span></div><span class="text-[0.5rem] text-slate-600">'+e.discovered_via+'</span></div>';
+            });
+            document.getElementById('hydra-recent').innerHTML = html || '<div class="text-xs text-slate-500 text-center py-2">No encounters yet</div>';
+            var topics='';
+            (d.top_topics||[]).forEach(function(t){
+                topics+='<span class="px-2 py-0.5 bg-[#0f1c2c] border border-[#44474c]/20 text-[0.6rem] text-slate-400 rounded">'+t[0]+' ('+t[1]+')</span>';
+            });
+            document.getElementById('hydra-topics').innerHTML = topics || '<span class="text-xs text-slate-500">None yet</span>';
+        }).catch(function(){});
+
+        // Visitor Analytics
+        fetch(BASE+'/api/oversight/agents/analytics', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('analytics-events').textContent = d.total_events.toLocaleString();
+            document.getElementById('analytics-sessions').textContent = d.total_sessions;
+            document.getElementById('analytics-converted').textContent = d.converted_sessions;
+            document.getElementById('analytics-rate').textContent = d.conversion_rate+'%';
+            var cats='', maxCat=Math.max.apply(null,Object.values(d.category_breakdown||{}).concat([1]));
+            for(var k in (d.category_breakdown||{})){cats+=bar(k,d.category_breakdown[k],maxCat,'#77d4e5');}
+            document.getElementById('analytics-categories').innerHTML=cats||'<div class="text-xs text-slate-500">No data</div>';
+            var stages='', maxS=Math.max.apply(null,Object.values(d.journey_stage_breakdown||{}).concat([1]));
+            for(var s in (d.journey_stage_breakdown||{})){stages+=bar(s,d.journey_stage_breakdown[s],maxS,'#edc05f');}
+            document.getElementById('analytics-stages').innerHTML=stages||'<div class="text-xs text-slate-500">No data</div>';
+            var insights='';
+            (d.insights||[]).forEach(function(i){
+                var sc=i.severity==='critical'?'border-red-500/20 text-red-400':i.severity==='warning'?'border-yellow-500/20 text-yellow-400':'border-[#44474c]/15 text-slate-400';
+                insights+='<div class="bg-[#0f1c2c] border '+sc+' p-3 rounded"><div class="text-xs font-bold text-white">'+i.title+'</div><div class="text-[0.6rem] text-slate-400 mt-1">'+i.description+'</div>'+(i.suggested_action?'<div class="text-[0.55rem] text-[#77d4e5] mt-1">Action: '+i.suggested_action+'</div>':'')+'</div>';
+            });
+            document.getElementById('analytics-insights').innerHTML=insights||'<div class="text-xs text-slate-500 text-center py-2">No insights yet — need more visitor data</div>';
+        }).catch(function(){});
+
+        // Catalyst
+        fetch(BASE+'/api/oversight/agents/catalyst', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('catalyst-intel').textContent = d.total_intelligence;
+            document.getElementById('catalyst-topics').textContent = Object.keys(d.topic_breakdown||{}).length;
+            document.getElementById('catalyst-cats').textContent = Object.keys(d.category_breakdown||{}).length;
+            var html='';
+            (d.recent_intelligence||[]).forEach(function(i){
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded"><div class="flex items-center gap-2 mb-1"><span class="text-[0.55rem] px-1.5 py-0.5 bg-[#77d4e5]/10 text-[#77d4e5] rounded">'+i.category+'</span><span class="text-[0.55rem] text-slate-500">'+i.topic+'</span>'+(i.agent?'<span class="text-[0.55rem] text-slate-600">by '+i.agent+'</span>':'')+'</div><div class="text-xs text-slate-400">'+i.content+'</div></div>';
+            });
+            document.getElementById('catalyst-recent').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-2">No intelligence yet</div>';
+        }).catch(function(){});
+
+        // Amplifier
+        fetch(BASE+'/api/oversight/agents/amplifier', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('amp-total').textContent = d.total_opportunities;
+            document.getElementById('amp-hn').textContent = (d.by_platform||{}).hackernews || 0;
+            document.getElementById('amp-devto').textContent = (d.by_platform||{}).devto || 0;
+            var html='';
+            (d.top_opportunities||[]).forEach(function(o){
+                var badge = o.platform==='hackernews'?'bg-[#ff6600]/10 text-[#ff6600]':'bg-[#3b49df]/10 text-[#3b49df]';
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded flex items-center justify-between"><div class="flex items-center gap-2"><span class="text-[0.5rem] px-1.5 py-0.5 '+badge+' rounded uppercase font-bold">'+o.platform+'</span><a href="'+o.url+'" target="_blank" class="text-xs text-[#77d4e5] hover:underline truncate max-w-xs">'+o.title+'</a></div><span class="text-[0.55rem] text-slate-500">score: '+o.score+'</span></div>';
+            });
+            document.getElementById('amp-opportunities').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-2">No opportunities yet</div>';
+        }).catch(function(){});
+
+        // SEO Pages
+        fetch(BASE+'/blog', OPTS).then(function(r){ return r.ok ? r.text() : ''; }).then(function(html){
+            // Parse links from blog index
+            var matches = html.match(/href="\/blog\/[^"]+"/g) || [];
+            var list='';
+            matches.forEach(function(m){
+                var slug = m.replace('href="/blog/','').replace('"','');
+                list+='<a href="/blog/'+slug+'" target="_blank" class="block bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded text-xs text-[#77d4e5] hover:underline">'+slug+'</a>';
+            });
+            document.getElementById('seo-pages').innerHTML=list||'<div class="text-xs text-slate-500">No pages yet</div>';
+        }).catch(function(){});
+
+        // Outreach Calendar
+        fetch(BASE+'/api/v1/outreach/calendar', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            // Render calendar
+            var calHtml='';
+            var today = new Date().toISOString().split('T')[0];
+            var dates = Object.keys(d.calendar||{}).sort();
+            dates.forEach(function(date){
+                var items = d.calendar[date];
+                var isToday = date === today;
+                var isPast = date < today;
+                calHtml+='<div class="'+(isToday?'bg-[#77d4e5]/5 border border-[#77d4e5]/20':'bg-[#0f1c2c] border border-[#44474c]/10')+' p-3 rounded">';
+                calHtml+='<div class="flex items-center justify-between mb-2"><span class="text-xs font-bold '+(isToday?'text-[#77d4e5]':isPast?'text-slate-600':'text-white')+'">'+date+(isToday?' (TODAY)':'')+'</span><span class="text-[0.55rem] text-slate-500">'+items.length+' post'+(items.length>1?'s':'')+'</span></div>';
+                items.forEach(function(item){
+                    var chColor = item.channel==='x_twitter'?'text-[#1DA1F2]':item.channel==='linkedin'?'text-[#0A66C2]':item.channel==='reddit'?'text-[#FF4500]':'text-slate-400';
+                    var stColor = item.status==='posted'?'text-green-400':item.status==='scheduled'?'text-[#edc05f]':'text-slate-500';
+                    var linkHtml = '';
+                    if(item.posted_url){ linkHtml='<a href="'+item.posted_url+'" target="_blank" class="text-[#77d4e5] hover:underline ml-1">view &rarr;</a>'; }
+                    calHtml+='<div class="flex items-center gap-2 text-[0.6rem] mb-1"><span class="'+chColor+' font-bold uppercase w-16">'+item.channel.replace('x_twitter','Twitter')+'</span><span class="'+stColor+'">'+item.status+'</span><span class="text-slate-400 truncate flex-1">'+((item.title||item.body).substring(0,50))+'</span>'+linkHtml+'</div>';
+                });
+                calHtml+='</div>';
+            });
+            document.getElementById('out-calendar').innerHTML=calHtml||'<div class="text-xs text-slate-500 text-center py-4">No scheduled content — click "Schedule Week" to auto-fill</div>';
+
+            // Render overdue
+            if(d.overdue && d.overdue.length > 0){
+                var ohtml='<div class="bg-red-500/5 border border-red-500/20 p-3 rounded mb-2"><div class="text-xs font-bold text-red-400 mb-2">Overdue — '+d.overdue.length+' post'+(d.overdue.length>1?'s':'')+' missed schedule</div>';
+                d.overdue.forEach(function(o){ ohtml+='<div class="text-[0.6rem] text-red-300">'+o.channel+': '+o.title.substring(0,50)+' (was due '+o.scheduled_for.substring(0,16)+')</div>'; });
+                ohtml+='</div>';
+                document.getElementById('out-overdue').innerHTML=ohtml;
+            }
+        }).catch(function(){});
+
+        // Reminders
+        fetch(BASE+'/api/v1/outreach/reminders', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d || d.length===0){ document.getElementById('out-reminders').innerHTML=''; return; }
+            var html='<div class="bg-[#edc05f]/5 border border-[#edc05f]/20 p-3 rounded mb-2"><div class="text-xs font-bold text-[#edc05f] mb-2">Posting Reminders — '+d.length+' due soon</div>';
+            d.forEach(function(r){
+                html+='<div class="flex items-center justify-between text-[0.6rem] mb-1"><span class="text-[#edc05f]">'+r.channel+': '+r.time_until+' remaining</span>';
+                html+='<button onclick="copyContent(this,\''+r.content_id+'\')" class="px-2 py-0.5 bg-[#edc05f]/10 text-[#edc05f] rounded">Copy & Post Now</button></div>';
+            });
+            html+='</div>';
+            document.getElementById('out-reminders').innerHTML=html;
+        }).catch(function(){});
+
+        // Outreach Dashboard Stats
+        fetch(BASE+'/api/v1/outreach/dashboard', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('out-campaigns').textContent = d.total_campaigns;
+            document.getElementById('out-content').textContent = d.total_content;
+            document.getElementById('out-drafts').textContent = d.drafts;
+            document.getElementById('out-posted').textContent = d.posted;
+            var html='';
+            (d.ready_to_post||[]).forEach(function(c){
+                var channelColor = c.channel==='x_twitter'?'bg-[#1DA1F2]/10 text-[#1DA1F2]':c.channel==='linkedin'?'bg-[#0A66C2]/10 text-[#0A66C2]':c.channel==='reddit'?'bg-[#FF4500]/10 text-[#FF4500]':c.channel==='discord'?'bg-[#5865F2]/10 text-[#5865F2]':'bg-slate-500/10 text-slate-400';
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-3 rounded">' +
+                    '<div class="flex items-center justify-between mb-2">' +
+                    '<div class="flex items-center gap-2"><span class="text-[0.5rem] px-1.5 py-0.5 '+channelColor+' rounded uppercase font-bold">'+c.channel+'</span>' +
+                    '<span class="text-[0.5rem] px-1.5 py-0.5 bg-[#44474c]/20 text-slate-400 rounded">'+c.status+'</span></div>' +
+                    '<div class="flex gap-1">' +
+                    '<button onclick="copyContent(this,\''+c.id+'\')" class="text-[0.55rem] px-2 py-1 bg-[#77d4e5]/10 text-[#77d4e5] hover:bg-[#77d4e5]/20 rounded transition-colors">Copy</button>' +
+                    (function(){
+                        var shareUrl='';
+                        if(c.channel==='x_twitter') shareUrl='https://twitter.com/intent/tweet?text='+encodeURIComponent(c.body.substring(0,250));
+                        else if(c.channel==='linkedin') shareUrl='https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://agentisexchange.com');
+                        else if(c.channel==='reddit'){ var sub=(c.target_url||'').split('/r/')[1]||'ClaudeAI'; shareUrl='https://www.reddit.com/r/'+sub+'/submit?type=self\x26title='+encodeURIComponent(c.title||'')+'\x26selftext=true\x26text='+encodeURIComponent(c.body.substring(0,2000)); }
+                        else if(c.channel==='hackernews') shareUrl='https://news.ycombinator.com/submitlink?u='+encodeURIComponent('https://agentisexchange.com')+'\x26t='+encodeURIComponent(c.title||'TiOLi AGENTIS');
+                        return shareUrl ? '<a href="'+shareUrl+'" target="_blank" class="text-[0.55rem] px-2 py-1 bg-[#edc05f]/10 text-[#edc05f] hover:bg-[#edc05f]/20 rounded transition-colors">Open '+c.channel.replace('x_twitter','Twitter')+'</a>' : '';
+                    })() +
+                    '<button onclick="markPosted(\''+c.id+'\',this)" class="text-[0.55rem] px-2 py-1 bg-[#edc05f]/10 text-[#edc05f] hover:bg-green-500/20 rounded transition-colors">To Be Posted</button>' +
+                    '</div></div>' +
+                    (c.title?'<div class="text-xs font-bold text-white mb-1">'+c.title+'</div>':'') +
+                    '<div class="text-xs text-slate-400 whitespace-pre-wrap max-h-32 overflow-y-auto">'+c.body.substring(0,400)+(c.body.length>400?'...':'')+'</div>' +
+                    '<textarea class="hidden" id="content-'+c.id+'">'+c.body.replace(/</g,'&lt;')+'</textarea>' +
+                    '</div>';
+            });
+            document.getElementById('out-ready').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-4">No content yet — click "Generate Content" or "+ New Campaign"</div>';
+        }).catch(function(){});
+
+        // Feedback Loop
+        fetch(BASE+'/api/oversight/agents/feedback', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('fb-total').textContent = d.total_feedback;
+            document.getElementById('fb-tasks').textContent = d.tasks_generated;
+            document.getElementById('fb-positive').textContent = (d.by_sentiment||{}).positive || 0;
+            document.getElementById('fb-actionable').textContent = d.recent_feedback.filter(function(f){return f.actionable}).length;
+            var html='';
+            (d.recent_feedback||[]).forEach(function(f){
+                var catColor = f.category==='accepted'?'text-green-400':f.category==='rejected'?'text-red-400':f.category==='insight'?'text-[#77d4e5]':f.category==='feature_request'?'text-[#edc05f]':'text-slate-400';
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded"><div class="flex items-center gap-2 mb-1"><span class="text-[0.55rem] px-1.5 py-0.5 bg-[#061423] '+catColor+' rounded uppercase font-bold">'+f.category+'</span><span class="text-[0.55rem] text-slate-500">val:'+f.value+'</span>'+(f.actionable?'<span class="text-[0.5rem] text-[#edc05f]">ACTIONABLE</span>':'')+'</div><div class="text-xs text-slate-400 truncate">'+f.title+'</div>'+(f.author?'<div class="text-[0.5rem] text-slate-600">by '+f.author+'</div>':'')+'</div>';
+            });
+            document.getElementById('fb-recent').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-2">No feedback yet</div>';
+            var tasks='';
+            (d.development_tasks||[]).forEach(function(t){
+                var pColor = t.priority==='P0'?'text-red-400':t.priority==='P1'?'text-[#edc05f]':'text-slate-400';
+                tasks+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded"><div class="flex items-center justify-between mb-1"><span class="text-xs font-bold text-white truncate max-w-xs">'+t.title+'</span><span class="text-[0.55rem] '+pColor+' font-bold">'+t.priority+'</span></div><div class="flex items-center gap-2 text-[0.55rem] text-slate-500"><span>'+t.status+'</span><span>↑'+t.upvotes+' ↓'+t.downvotes+'</span></div></div>';
+            });
+            document.getElementById('fb-devtasks').innerHTML=tasks||'<div class="text-xs text-slate-500 text-center py-2">No tasks yet</div>';
+        }).catch(function(){});
+
+        // Approvals
+        fetch(BASE+'/api/v1/policies/approvals', OPTS).then(function(r){ return r.ok ? r.json() : []; }).then(function(approvals){
+            if(!approvals||approvals.length===0){
+                document.getElementById('approvals-list').innerHTML='<div class="bg-[#0f1c2c] border border-green-500/20 p-4 text-center text-green-400 text-sm rounded">No pending approvals — all clear</div>';
+                return;
+            }
+            var html='';
+            approvals.forEach(function(a){
+                html+='<div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-3 rounded"><div class="flex items-center justify-between mb-1"><div><span class="text-[#edc05f] font-bold text-sm">'+a.action_type+'</span><span class="text-xs text-slate-500 ml-2">'+a.agent_id.substring(0,8)+'...</span></div><div class="flex gap-2"><button onclick="resolveApproval(\''+a.approval_id+'\',\'APPROVED\')" class="px-2 py-1 bg-green-500/10 text-green-400 text-xs font-bold hover:bg-green-500/20 rounded">Approve</button><button onclick="resolveApproval(\''+a.approval_id+'\',\'REJECTED\')" class="px-2 py-1 bg-red-500/10 text-red-400 text-xs font-bold hover:bg-red-500/20 rounded">Reject</button></div></div><div class="text-[0.6rem] text-slate-400">'+JSON.stringify(a.action_params)+'</div></div>';
+            });
+            document.getElementById('approvals-list').innerHTML=html;
+        }).catch(function(){});
+    }
+
+    window.togglePause = function(agentId, btn){
+        btn.disabled=true; btn.textContent='...';
+        fetch(BASE+'/api/oversight/agents/'+agentId+'/pause',{method:'POST',credentials:'include'})
+        .then(function(r){return r.json();}).then(function(d){btn.textContent=d.is_active?'Pause':'Resume';btn.disabled=false;fetchAll();})
+        .catch(function(){btn.disabled=false;btn.textContent='Error';});
+    };
+    window.resolveApproval = function(id, decision){
+        fetch(BASE+'/api/v1/policies/approvals/'+id+'/resolve',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision:decision,notes:''})})
+        .then(function(){fetchAll();}).catch(function(e){alert('Failed: '+e.message);});
+    };
+
+    window.copyContent = function(btn, id){
+        var el = document.getElementById('content-'+id);
+        if(el){ navigator.clipboard.writeText(el.value); btn.textContent='Copied!'; setTimeout(function(){btn.textContent='Copy';},2000); }
+    };
+    window.markPosted = function(id, btn){
+        if(btn){ btn.textContent='Marking...'; btn.disabled=true; }
+        fetch(BASE+'/api/v1/outreach/content/'+id+'/mark-posted',{method:'POST',credentials:'include'})
+        .then(function(){ if(btn){ btn.textContent='Posted'; btn.className='text-[0.55rem] px-2 py-1 bg-green-500/10 text-green-400 rounded'; btn.disabled=true; } fetchAll(); })
+        .catch(function(e){ alert('Failed: '+e.message); if(btn){ btn.textContent='To Be Posted'; btn.disabled=false; } });
+    };
+    window.createCampaign = function(){
+        var name = prompt('Campaign name:');
+        if(!name) return;
+        fetch(BASE+'/api/v1/outreach/campaigns',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({name:name,goal:'Agent signups',auto_generate:true})})
+        .then(function(r){return r.json();}).then(function(d){alert('Campaign "'+d.name+'" created with auto-generated content!'); fetchAll();})
+        .catch(function(e){alert('Failed: '+e.message);});
+    };
+    window.scheduleWeek = function(){
+        fetch(BASE+'/api/v1/outreach/schedule-week',{method:'POST',credentials:'include'})
+        .then(function(r){return r.json();}).then(function(d){alert(d.scheduled+' posts scheduled for the next 7 days!'); fetchAll();})
+        .catch(function(e){alert('Failed: '+e.message);});
+    };
+    window.generateContent = function(){
+        fetch(BASE+'/api/v1/outreach/content/generate',{method:'POST',credentials:'include'})
+        .then(function(r){return r.json();}).then(function(d){alert(d.length+' content pieces generated!'); fetchAll();})
+        .catch(function(e){alert('Failed: '+e.message);});
+    };
+
+    fetchAll();
+    setInterval(fetchAll, 15000);
+{% endblock %}
