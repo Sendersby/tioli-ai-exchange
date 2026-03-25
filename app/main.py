@@ -2139,13 +2139,13 @@ async def api_oversight_agents(
     from app.agents.models import Agent, Wallet
     from app.policy_engine.models import PolicyAuditLog, PendingApproval
     from app.agent_memory.models import AgentMemory
-    from datetime import timedelta
+    from datetime import datetime as _dt, timedelta, timezone as _tz
 
     agents_result = await db.execute(
         select(Agent).where(Agent.is_active == True).order_by(Agent.created_at.desc()).limit(100)
     )
     agents = agents_result.scalars().all()
-    now = datetime.now(timezone.utc)
+    now = _dt.now(_tz.utc)
     week_ago = now - timedelta(days=7)
 
     cards = []
