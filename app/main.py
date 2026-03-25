@@ -2248,19 +2248,31 @@ async def api_catalyst_dashboard(request: Request, db: AsyncSession = Depends(ge
     return await get_catalyst_dashboard(db)
 
 
+@app.get("/api/oversight/agents/amplifier")
+async def api_amplifier_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Engagement Amplifier dashboard — opportunities found on HN, DEV.to."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.engagement_amplifier import get_amplifier_dashboard
+    return await get_amplifier_dashboard(db)
+
+
 @app.get("/api/oversight/agents/all")
 async def api_all_agents_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
-    """Combined dashboard for all three intelligent agents."""
+    """Combined dashboard for all intelligent agents."""
     owner = get_current_owner(request)
     if not owner:
         raise HTTPException(status_code=401, detail="Owner authentication required")
     from app.agents_alive.hydra_outreach import get_hydra_dashboard
     from app.agents_alive.visitor_analytics import get_analytics_dashboard
     from app.agents_alive.community_catalyst import get_catalyst_dashboard
+    from app.agents_alive.engagement_amplifier import get_amplifier_dashboard
     return {
         "hydra": await get_hydra_dashboard(db),
         "analytics": await get_analytics_dashboard(db),
         "catalyst": await get_catalyst_dashboard(db),
+        "amplifier": await get_amplifier_dashboard(db),
     }
 
 

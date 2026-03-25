@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Human Oversight Panel — TiOLi AGENTIS</title>
+    <title>Command Centre — TiOLi AGENTIS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -15,156 +15,334 @@
         .health-green { border-color: rgba(74,222,128,0.3); }
         .health-amber { border-color: rgba(251,191,36,0.3); }
         .health-red { border-color: rgba(248,113,113,0.3); }
+        .tab-btn { cursor:pointer; padding:0.5rem 1rem; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; border-bottom:2px solid transparent; transition:all 0.2s; }
+        .tab-btn:hover { color:#fff; }
+        .tab-btn.active { color:#77d4e5; border-bottom-color:#77d4e5; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
     </style>
 </head>
 <body class="min-h-screen">
 
+    <!-- Nav -->
     <nav class="fixed top-0 w-full z-50 bg-[#061423]/90 backdrop-blur-xl border-b border-[#77d4e5]/15">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/gateway" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">OVERSIGHT</span></a>
-            <div class="flex items-center gap-4">
-                <a href="/gateway" class="text-sm text-slate-400 hover:text-white transition-colors">Dashboard</a>
-                <a href="/" class="text-sm text-slate-400 hover:text-white transition-colors">Home</a>
+        <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+            <a href="/dashboard" class="text-lg font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">COMMAND CENTRE</span></a>
+            <div class="flex items-center gap-4 text-xs">
+                <a href="/dashboard" class="text-slate-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="/oversight" class="text-[#77d4e5] font-bold">Oversight</a>
+                <a href="/explorer" class="text-slate-400 hover:text-white transition-colors">Explorer</a>
+                <a href="/blog" class="text-slate-400 hover:text-white transition-colors">Blog</a>
+                <a href="/" class="text-slate-400 hover:text-white transition-colors">Home</a>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-6xl mx-auto px-6 pt-28 pb-16">
+    <div class="max-w-7xl mx-auto px-6 pt-24 pb-16">
 
-        <div class="flex items-center justify-between mb-6">
+        <!-- Header with health badges -->
+        <div class="flex items-center justify-between mb-4">
             <div>
-                <h1 class="text-2xl font-bold text-white">Human Oversight Panel</h1>
-                <p class="text-sm text-slate-400">Monitor, approve, pause, and supervise all agent activity in real time.</p>
+                <h1 class="text-xl font-bold text-white">Agent Intelligence & Oversight</h1>
+                <p class="text-xs text-slate-500">14 scheduled jobs | 9 agents | Auto-refreshes every 15s</p>
             </div>
-            <div class="flex items-center gap-3" id="summary-badges">
-                <span class="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-bold rounded" id="badge-green">— GREEN</span>
-                <span class="px-3 py-1 bg-yellow-500/10 text-yellow-400 text-xs font-bold rounded" id="badge-amber">— AMBER</span>
-                <span class="px-3 py-1 bg-red-500/10 text-red-400 text-xs font-bold rounded" id="badge-red">— RED</span>
+            <div class="flex items-center gap-2" id="summary-badges">
+                <span class="px-2 py-1 bg-green-500/10 text-green-400 text-[0.6rem] font-bold rounded" id="badge-green">—</span>
+                <span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 text-[0.6rem] font-bold rounded" id="badge-amber">—</span>
+                <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[0.6rem] font-bold rounded" id="badge-red">—</span>
             </div>
         </div>
 
-        <!-- Pending Approvals -->
-        <div class="mb-8">
-            <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#edc05f]">pending_actions</span>
-                Pending Approvals
-            </h2>
+        <!-- Tab Navigation -->
+        <div class="flex gap-1 border-b border-[#44474c]/20 mb-6 overflow-x-auto">
+            <div class="tab-btn active text-[#77d4e5]" onclick="showTab('agents')">Agents</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('hydra')">Hydra Outreach</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('analytics')">Visitor Analytics</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('catalyst')">Community Catalyst</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('amplifier')">Engagement Amplifier</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('seo')">SEO & Content</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('approvals')">Approvals</div>
+        </div>
+
+        <!-- TAB: Agent Health Cards -->
+        <div id="tab-agents" class="tab-panel active">
+            <div id="agent-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="text-sm text-slate-500 text-center py-8 col-span-full">Loading agents...</div>
+            </div>
+        </div>
+
+        <!-- TAB: Hydra Outreach -->
+        <div id="tab-hydra" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="hydra-encounters">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Repos Discovered</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="hydra-engagements">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Engagements</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="hydra-responses">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Responses</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="hydra-today">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Discovered Today</div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-2">Recent Discoveries</h3>
+            <div id="hydra-recent" class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="text-xs text-slate-500 text-center py-4">Loading...</div>
+            </div>
+            <h3 class="text-sm font-bold text-white mt-4 mb-2">Top Topics Found</h3>
+            <div id="hydra-topics" class="flex flex-wrap gap-2">
+                <div class="text-xs text-slate-500">Loading...</div>
+            </div>
+        </div>
+
+        <!-- TAB: Visitor Analytics -->
+        <div id="tab-analytics" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="analytics-events">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">API Events</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="analytics-sessions">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Sessions</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="analytics-converted">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Converted</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-[#edc05f]" id="analytics-rate">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Conversion Rate</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Endpoint Categories</h3>
+                    <div id="analytics-categories" class="space-y-1"></div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-white mb-2">Journey Stages</h3>
+                    <div id="analytics-stages" class="space-y-1"></div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mt-4 mb-2">Insights</h3>
+            <div id="analytics-insights" class="space-y-2"></div>
+        </div>
+
+        <!-- TAB: Community Catalyst -->
+        <div id="tab-catalyst" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="catalyst-intel">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Intelligence Gathered</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="catalyst-topics">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Topics Covered</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="catalyst-cats">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Categories</div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-2">Recent Intelligence</h3>
+            <div id="catalyst-recent" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <!-- TAB: Engagement Amplifier -->
+        <div id="tab-amplifier" class="tab-panel">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="amp-total">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Opportunities Found</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="amp-hn">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">Hacker News</div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
+                    <div class="text-xl font-bold text-white" id="amp-devto">—</div>
+                    <div class="text-[0.6rem] text-slate-500 uppercase">DEV.to</div>
+                </div>
+            </div>
+            <h3 class="text-sm font-bold text-white mb-2">Top Opportunities (by relevance)</h3>
+            <div id="amp-opportunities" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <!-- TAB: SEO & Content -->
+        <div id="tab-seo" class="tab-panel">
+            <h3 class="text-sm font-bold text-white mb-3">Published SEO Pages</h3>
+            <div id="seo-pages" class="space-y-2"></div>
+            <div class="mt-4 bg-[#0f1c2c] border border-[#44474c]/15 p-4 rounded">
+                <h3 class="text-sm font-bold text-white mb-2">Embeddable Badges</h3>
+                <div class="flex flex-wrap gap-3">
+                    <img src="https://exchange.tioli.co.za/api/badge/agents" alt="agents badge"/>
+                    <img src="https://exchange.tioli.co.za/api/badge/mcp" alt="mcp badge"/>
+                    <img src="https://exchange.tioli.co.za/api/badge/endpoints" alt="endpoints badge"/>
+                    <img src="https://exchange.tioli.co.za/api/badge/blockchain" alt="blockchain badge"/>
+                </div>
+                <p class="text-[0.6rem] text-slate-500 mt-2">Embed these on any site to create backlinks. URLs: /api/badge/agents, /api/badge/mcp, etc.</p>
+            </div>
+        </div>
+
+        <!-- TAB: Pending Approvals -->
+        <div id="tab-approvals" class="tab-panel">
             <div id="approvals-list" class="space-y-3">
                 <div class="text-sm text-slate-500 text-center py-4">Loading approvals...</div>
             </div>
         </div>
 
-        <!-- Agent Cards -->
-        <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[#77d4e5]">smart_toy</span>
-            Agent Status
-        </h2>
-        <div id="agent-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="text-sm text-slate-500 text-center py-8 col-span-full">Loading agents...</div>
-        </div>
     </div>
 
     <script>
-    (function(){
-        // Note: This page requires owner gateway session cookie
-        function fetchOversight(){
-            fetch('https://exchange.tioli.co.za/api/oversight/agents', {credentials:'include'})
-                .then(function(r){
-                    if(r.status === 401) throw new Error('AUTH');
-                    return r.json();
-                })
-                .then(function(d){
-                    document.getElementById('badge-green').textContent = d.summary.green + ' GREEN';
-                    document.getElementById('badge-amber').textContent = d.summary.amber + ' AMBER';
-                    document.getElementById('badge-red').textContent = d.summary.red + ' RED';
+    var BASE = 'https://exchange.tioli.co.za';
+    var OPTS = {credentials:'include'};
 
-                    var html = '';
-                    d.agents.forEach(function(a){
-                        var healthClass = 'health-' + a.health.toLowerCase();
-                        var healthDot = a.health === 'GREEN' ? 'bg-green-400' : a.health === 'AMBER' ? 'bg-yellow-400' : 'bg-red-400';
-                        var statusBadge = a.is_active
-                            ? '<span class="text-green-400 text-[0.6rem]">ACTIVE</span>'
-                            : '<span class="text-red-400 text-[0.6rem]">PAUSED</span>';
+    // Tab switching
+    function showTab(name){
+        document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+        document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active','text-[#77d4e5]'); b.classList.add('text-slate-500'); });
+        document.getElementById('tab-'+name).classList.add('active');
+        event.target.classList.add('active','text-[#77d4e5]');
+        event.target.classList.remove('text-slate-500');
+    }
 
-                        var walletHtml = '';
-                        for(var cur in a.wallets){
-                            walletHtml += '<span class="text-[0.6rem] text-slate-400">' + cur + ': <span class="text-white">' + (a.wallets[cur] || 0).toFixed(2) + '</span></span> ';
-                        }
+    // Helper
+    function bar(label, count, max, color){
+        var pct = max > 0 ? Math.round(count/max*100) : 0;
+        return '<div class="flex items-center gap-2 text-xs"><span class="w-24 text-slate-400 truncate">'+label+'</span><div class="flex-1 bg-[#061423] rounded h-3"><div class="h-3 rounded" style="width:'+pct+'%;background:'+color+'"></div></div><span class="text-white w-8 text-right">'+count+'</span></div>';
+    }
 
-                        html += '<div class="bg-[#0f1c2c] border ' + healthClass + ' p-4 rounded">' +
-                            '<div class="flex items-center justify-between mb-3">' +
-                            '<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full ' + healthDot + '"></div>' +
-                            '<span class="text-white font-bold text-sm">' + a.name + '</span>' + statusBadge + '</div>' +
-                            '<button onclick="togglePause(\'' + a.agent_id + '\',this)" class="text-xs px-2 py-1 border border-[#44474c]/30 text-slate-400 hover:text-white hover:border-[#77d4e5]/30 transition-colors">' + (a.is_active ? 'Pause' : 'Resume') + '</button></div>' +
-                            '<div class="text-[0.55rem] text-slate-500 mb-2">' + a.platform + ' | ' + a.agent_id.substring(0,8) + '...</div>' +
-                            '<div class="mb-2">' + walletHtml + '</div>' +
-                            '<div class="grid grid-cols-3 gap-2 text-center text-[0.6rem]">' +
-                            '<div class="bg-[#061423] p-1.5 rounded"><div class="text-white font-bold">' + a.policy_violations_7d + '</div><div class="text-slate-500">violations</div></div>' +
-                            '<div class="bg-[#061423] p-1.5 rounded"><div class="text-white font-bold">' + a.pending_approvals + '</div><div class="text-slate-500">pending</div></div>' +
-                            '<div class="bg-[#061423] p-1.5 rounded"><div class="text-white font-bold">' + a.memory_records + '</div><div class="text-slate-500">memory</div></div>' +
-                            '</div></div>';
-                    });
-                    document.getElementById('agent-cards').innerHTML = html || '<div class="text-sm text-slate-500 text-center py-4 col-span-full">No agents found</div>';
-                })
-                .catch(function(e){
-                    if(e.message === 'AUTH'){
-                        document.getElementById('agent-cards').innerHTML = '<div class="text-center py-8 col-span-full"><p class="text-red-400 mb-2">Owner authentication required</p><a href="/gateway" class="text-[#77d4e5] hover:underline">Log in via Gateway</a></div>';
-                    }
-                });
+    function fetchAll(){
+        // Agent health cards
+        fetch(BASE+'/api/oversight/agents', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('badge-green').textContent = d.summary.green + ' GREEN';
+            document.getElementById('badge-amber').textContent = d.summary.amber + ' AMBER';
+            document.getElementById('badge-red').textContent = d.summary.red + ' RED';
+            var html = '';
+            d.agents.forEach(function(a){
+                var hc = 'health-'+a.health.toLowerCase();
+                var dot = a.health==='GREEN'?'bg-green-400':a.health==='AMBER'?'bg-yellow-400':'bg-red-400';
+                var st = a.is_active?'<span class="text-green-400 text-[0.55rem]">ACTIVE</span>':'<span class="text-red-400 text-[0.55rem]">PAUSED</span>';
+                var w='';for(var c in a.wallets){w+='<span class="text-[0.55rem] text-slate-400">'+c+': <span class="text-white">'+(a.wallets[c]||0).toFixed(1)+'</span></span> ';}
+                html+='<div class="bg-[#0f1c2c] border '+hc+' p-3 rounded"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full '+dot+'"></div><span class="text-white font-bold text-xs">'+a.name+'</span>'+st+'</div><button onclick="togglePause(\''+a.agent_id+'\',this)" class="text-[0.6rem] px-2 py-0.5 border border-[#44474c]/30 text-slate-400 hover:text-white transition-colors">'+(a.is_active?'Pause':'Resume')+'</button></div><div class="text-[0.5rem] text-slate-600 mb-1">'+a.platform+' | '+a.agent_id.substring(0,8)+'...</div><div class="mb-1">'+w+'</div><div class="grid grid-cols-3 gap-1 text-center text-[0.55rem]"><div class="bg-[#061423] p-1 rounded"><div class="text-white font-bold">'+a.policy_violations_7d+'</div><div class="text-slate-600">violations</div></div><div class="bg-[#061423] p-1 rounded"><div class="text-white font-bold">'+a.pending_approvals+'</div><div class="text-slate-600">pending</div></div><div class="bg-[#061423] p-1 rounded"><div class="text-white font-bold">'+a.memory_records+'</div><div class="text-slate-600">memory</div></div></div></div>';
+            });
+            document.getElementById('agent-cards').innerHTML = html || '<div class="text-sm text-slate-500 text-center py-4 col-span-full">No agents</div>';
+        }).catch(function(){});
 
-            // Fetch pending approvals
-            fetch('https://exchange.tioli.co.za/api/v1/policies/approvals', {credentials:'include'})
-                .then(function(r){ return r.ok ? r.json() : []; })
-                .then(function(approvals){
-                    if(!approvals || approvals.length === 0){
-                        document.getElementById('approvals-list').innerHTML = '<div class="bg-[#0f1c2c] border border-green-500/20 p-4 text-center text-green-400 text-sm rounded">No pending approvals — all clear</div>';
-                        return;
-                    }
-                    var html = '';
-                    approvals.forEach(function(a){
-                        html += '<div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-4 rounded">' +
-                            '<div class="flex items-center justify-between mb-2">' +
-                            '<div><span class="text-[#edc05f] font-bold text-sm">' + a.action_type + '</span>' +
-                            '<span class="text-xs text-slate-500 ml-2">Agent: ' + a.agent_id.substring(0,8) + '...</span></div>' +
-                            '<div class="flex gap-2">' +
-                            '<button onclick="resolveApproval(\'' + a.approval_id + '\',\'APPROVED\')" class="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-colors rounded">Approve</button>' +
-                            '<button onclick="resolveApproval(\'' + a.approval_id + '\',\'REJECTED\')" class="px-3 py-1 bg-red-500/10 text-red-400 text-xs font-bold hover:bg-red-500/20 transition-colors rounded">Reject</button>' +
-                            '</div></div>' +
-                            '<div class="text-xs text-slate-400">Amount: ' + JSON.stringify(a.action_params) + '</div>' +
-                            '<div class="text-[0.55rem] text-slate-600 mt-1">Policy: ' + a.policy_type + ' | Threshold: ' + a.threshold + ' | Expires: ' + a.expires_at + '</div>' +
-                            '</div>';
-                    });
-                    document.getElementById('approvals-list').innerHTML = html;
-                })
-                .catch(function(){});
-        }
+        // Hydra
+        fetch(BASE+'/api/oversight/agents/hydra', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('hydra-encounters').textContent = d.total_encounters;
+            document.getElementById('hydra-engagements').textContent = d.total_engagements;
+            document.getElementById('hydra-responses').textContent = d.total_responses;
+            document.getElementById('hydra-today').textContent = d.today.discovered;
+            var html='';
+            (d.recent_encounters||[]).forEach(function(e){
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded flex items-center justify-between"><div><a href="'+e.url+'" target="_blank" class="text-xs text-[#77d4e5] hover:underline">'+e.name+'</a><span class="text-[0.55rem] text-slate-500 ml-2">'+e.stars+' stars</span></div><span class="text-[0.5rem] text-slate-600">'+e.discovered_via+'</span></div>';
+            });
+            document.getElementById('hydra-recent').innerHTML = html || '<div class="text-xs text-slate-500 text-center py-2">No encounters yet</div>';
+            var topics='';
+            (d.top_topics||[]).forEach(function(t){
+                topics+='<span class="px-2 py-0.5 bg-[#0f1c2c] border border-[#44474c]/20 text-[0.6rem] text-slate-400 rounded">'+t[0]+' ('+t[1]+')</span>';
+            });
+            document.getElementById('hydra-topics').innerHTML = topics || '<span class="text-xs text-slate-500">None yet</span>';
+        }).catch(function(){});
 
-        window.togglePause = function(agentId, btn){
-            btn.disabled = true;
-            btn.textContent = '...';
-            fetch('https://exchange.tioli.co.za/api/oversight/agents/' + agentId + '/pause', {method:'POST', credentials:'include'})
-                .then(function(r){ return r.json(); })
-                .then(function(d){
-                    btn.textContent = d.is_active ? 'Pause' : 'Resume';
-                    btn.disabled = false;
-                    fetchOversight(); // Refresh
-                })
-                .catch(function(){ btn.disabled = false; btn.textContent = 'Error'; });
-        };
+        // Visitor Analytics
+        fetch(BASE+'/api/oversight/agents/analytics', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('analytics-events').textContent = d.total_events.toLocaleString();
+            document.getElementById('analytics-sessions').textContent = d.total_sessions;
+            document.getElementById('analytics-converted').textContent = d.converted_sessions;
+            document.getElementById('analytics-rate').textContent = d.conversion_rate+'%';
+            var cats='', maxCat=Math.max.apply(null,Object.values(d.category_breakdown||{}).concat([1]));
+            for(var k in (d.category_breakdown||{})){cats+=bar(k,d.category_breakdown[k],maxCat,'#77d4e5');}
+            document.getElementById('analytics-categories').innerHTML=cats||'<div class="text-xs text-slate-500">No data</div>';
+            var stages='', maxS=Math.max.apply(null,Object.values(d.journey_stage_breakdown||{}).concat([1]));
+            for(var s in (d.journey_stage_breakdown||{})){stages+=bar(s,d.journey_stage_breakdown[s],maxS,'#edc05f');}
+            document.getElementById('analytics-stages').innerHTML=stages||'<div class="text-xs text-slate-500">No data</div>';
+            var insights='';
+            (d.insights||[]).forEach(function(i){
+                var sc=i.severity==='critical'?'border-red-500/20 text-red-400':i.severity==='warning'?'border-yellow-500/20 text-yellow-400':'border-[#44474c]/15 text-slate-400';
+                insights+='<div class="bg-[#0f1c2c] border '+sc+' p-3 rounded"><div class="text-xs font-bold text-white">'+i.title+'</div><div class="text-[0.6rem] text-slate-400 mt-1">'+i.description+'</div>'+(i.suggested_action?'<div class="text-[0.55rem] text-[#77d4e5] mt-1">Action: '+i.suggested_action+'</div>':'')+'</div>';
+            });
+            document.getElementById('analytics-insights').innerHTML=insights||'<div class="text-xs text-slate-500 text-center py-2">No insights yet — need more visitor data</div>';
+        }).catch(function(){});
 
-        window.resolveApproval = function(id, decision){
-            fetch('https://exchange.tioli.co.za/api/v1/policies/approvals/' + id + '/resolve', {
-                method: 'POST', credentials: 'include',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({decision: decision, notes: ''})
-            })
-            .then(function(){ fetchOversight(); })
-            .catch(function(e){ alert('Failed: ' + e.message); });
-        };
+        // Catalyst
+        fetch(BASE+'/api/oversight/agents/catalyst', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('catalyst-intel').textContent = d.total_intelligence;
+            document.getElementById('catalyst-topics').textContent = Object.keys(d.topic_breakdown||{}).length;
+            document.getElementById('catalyst-cats').textContent = Object.keys(d.category_breakdown||{}).length;
+            var html='';
+            (d.recent_intelligence||[]).forEach(function(i){
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded"><div class="flex items-center gap-2 mb-1"><span class="text-[0.55rem] px-1.5 py-0.5 bg-[#77d4e5]/10 text-[#77d4e5] rounded">'+i.category+'</span><span class="text-[0.55rem] text-slate-500">'+i.topic+'</span>'+(i.agent?'<span class="text-[0.55rem] text-slate-600">by '+i.agent+'</span>':'')+'</div><div class="text-xs text-slate-400">'+i.content+'</div></div>';
+            });
+            document.getElementById('catalyst-recent').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-2">No intelligence yet</div>';
+        }).catch(function(){});
 
-        fetchOversight();
-        setInterval(fetchOversight, 15000); // Refresh every 15s
-    })();
+        // Amplifier
+        fetch(BASE+'/api/oversight/agents/amplifier', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+            if(!d) return;
+            document.getElementById('amp-total').textContent = d.total_opportunities;
+            document.getElementById('amp-hn').textContent = (d.by_platform||{}).hackernews || 0;
+            document.getElementById('amp-devto').textContent = (d.by_platform||{}).devto || 0;
+            var html='';
+            (d.top_opportunities||[]).forEach(function(o){
+                var badge = o.platform==='hackernews'?'bg-[#ff6600]/10 text-[#ff6600]':'bg-[#3b49df]/10 text-[#3b49df]';
+                html+='<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded flex items-center justify-between"><div class="flex items-center gap-2"><span class="text-[0.5rem] px-1.5 py-0.5 '+badge+' rounded uppercase font-bold">'+o.platform+'</span><a href="'+o.url+'" target="_blank" class="text-xs text-[#77d4e5] hover:underline truncate max-w-xs">'+o.title+'</a></div><span class="text-[0.55rem] text-slate-500">score: '+o.score+'</span></div>';
+            });
+            document.getElementById('amp-opportunities').innerHTML=html||'<div class="text-xs text-slate-500 text-center py-2">No opportunities yet</div>';
+        }).catch(function(){});
+
+        // SEO Pages
+        fetch(BASE+'/blog', OPTS).then(function(r){ return r.ok ? r.text() : ''; }).then(function(html){
+            // Parse links from blog index
+            var matches = html.match(/href="\/blog\/[^"]+"/g) || [];
+            var list='';
+            matches.forEach(function(m){
+                var slug = m.replace('href="/blog/','').replace('"','');
+                list+='<a href="/blog/'+slug+'" target="_blank" class="block bg-[#0f1c2c] border border-[#44474c]/15 p-2 rounded text-xs text-[#77d4e5] hover:underline">'+slug+'</a>';
+            });
+            document.getElementById('seo-pages').innerHTML=list||'<div class="text-xs text-slate-500">No pages yet</div>';
+        }).catch(function(){});
+
+        // Approvals
+        fetch(BASE+'/api/v1/policies/approvals', OPTS).then(function(r){ return r.ok ? r.json() : []; }).then(function(approvals){
+            if(!approvals||approvals.length===0){
+                document.getElementById('approvals-list').innerHTML='<div class="bg-[#0f1c2c] border border-green-500/20 p-4 text-center text-green-400 text-sm rounded">No pending approvals — all clear</div>';
+                return;
+            }
+            var html='';
+            approvals.forEach(function(a){
+                html+='<div class="bg-[#0f1c2c] border border-[#edc05f]/20 p-3 rounded"><div class="flex items-center justify-between mb-1"><div><span class="text-[#edc05f] font-bold text-sm">'+a.action_type+'</span><span class="text-xs text-slate-500 ml-2">'+a.agent_id.substring(0,8)+'...</span></div><div class="flex gap-2"><button onclick="resolveApproval(\''+a.approval_id+'\',\'APPROVED\')" class="px-2 py-1 bg-green-500/10 text-green-400 text-xs font-bold hover:bg-green-500/20 rounded">Approve</button><button onclick="resolveApproval(\''+a.approval_id+'\',\'REJECTED\')" class="px-2 py-1 bg-red-500/10 text-red-400 text-xs font-bold hover:bg-red-500/20 rounded">Reject</button></div></div><div class="text-[0.6rem] text-slate-400">'+JSON.stringify(a.action_params)+'</div></div>';
+            });
+            document.getElementById('approvals-list').innerHTML=html;
+        }).catch(function(){});
+    }
+
+    window.togglePause = function(agentId, btn){
+        btn.disabled=true; btn.textContent='...';
+        fetch(BASE+'/api/oversight/agents/'+agentId+'/pause',{method:'POST',credentials:'include'})
+        .then(function(r){return r.json();}).then(function(d){btn.textContent=d.is_active?'Pause':'Resume';btn.disabled=false;fetchAll();})
+        .catch(function(){btn.disabled=false;btn.textContent='Error';});
+    };
+    window.resolveApproval = function(id, decision){
+        fetch(BASE+'/api/v1/policies/approvals/'+id+'/resolve',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision:decision,notes:''})})
+        .then(function(){fetchAll();}).catch(function(e){alert('Failed: '+e.message);});
+    };
+
+    fetchAll();
+    setInterval(fetchAll, 15000);
     </script>
 </body>
 </html>
