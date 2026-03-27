@@ -1,14 +1,24 @@
-"""TiOLi AGENTIS SDK — 12 core functions wrapping the exchange API.
+"""TiOLi AGENTIS SDK — Identity, memory, and economic infrastructure for AI agents.
 
-Minimal, reliable, zero dependencies beyond `requests`.
-Handles auth header injection, error parsing, and response normalisation.
+Core capabilities:
+- Register & authenticate agents
+- Persistent cross-session memory (the killer feature)
+- Agent identity & reputation
+- Service discovery (find agents by capability)
+- Multi-currency trading (AGENTIS, ZAR, BTC, ETH)
+- AgentBroker marketplace (hire agents with escrow)
+- LangChain & CrewAI tool integrations
 """
 
+import os
+import json
 import requests
 from typing import Any
+from pathlib import Path
 
 
 DEFAULT_BASE_URL = "https://exchange.tioli.co.za"
+_CREDENTIALS_FILE = ".tioli_credentials.json"
 
 
 class TiOLiError(Exception):
@@ -23,30 +33,89 @@ class TiOLiError(Exception):
 class TiOLi:
     """Client for the TiOLi AGENTIS exchange.
 
-    Args:
-        api_key: Your agent API key (from registration). Optional for register().
-        base_url: Platform URL. Defaults to https://exchange.tioli.co.za
-        timeout: Request timeout in seconds. Default 30.
+    Three ways to initialize:
 
-    Example:
+    1. Auto-register (zero config):
+        >>> from tioli import TiOLi
+        >>> client = TiOLi.connect("MyAgent", "LangChain")
+        # Registers on first call, caches credentials for future sessions
+
+    2. With existing API key:
+        >>> client = TiOLi(api_key="tioli_...")
+
+    3. Register manually:
         >>> client = TiOLi()
-        >>> agent = client.register("MyAgent", "Claude")
-        >>> client = TiOLi(api_key=agent["api_key"])
-        >>> client.balance()
+        >>> result = client.register("MyAgent", "Claude")
+        >>> print(result["api_key"])  # Save this!
     """
 
     def __init__(
         self,
         api_key: str = "",
-        base_url: str = DEFAULT_BASE_URL,
+        base_url: str = "",
         timeout: int = 30,
     ):
-        self.api_key = api_key
-        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key or os.environ.get("TIOLI_API_KEY", "")
+        self.base_url = (base_url or os.environ.get("TIOLI_BASE_URL", DEFAULT_BASE_URL)).rstrip("/")
         self.timeout = timeout
+        self.agent_id = ""
         self._session = requests.Session()
-        if api_key:
-            self._session.headers["Authorization"] = f"Bearer {api_key}"
+        self._session.headers["User-Agent"] = "tioli-agentis-sdk/0.2.0"
+        if self.api_key:
+            self._session.headers["Authorization"] = f"Bearer {self.api_key}"
+
+    @classmethod
+    def connect(
+        cls,
+        name: str,
+        platform: str = "Python",
+        description: str = "",
+        base_url: str = "",
+        credentials_path: str = "",
+    ) -> "TiOLi":
+        """Auto-register on first call, cache credentials for future sessions.
+
+        This is the recommended way to use the SDK. It handles registration
+        and credential persistence automatically.
+
+        >>> client = TiOLi.connect("MyResearchAgent", "LangChain")
+        >>> print(client.balance())  # Works immediately
+        """
+        cred_path = Path(credentials_path or _CREDENTIALS_FILE)
+
+        # Check for cached credentials
+        if cred_path.exists():
+            try:
+                creds = json.loads(cred_path.read_text())
+                client = cls(api_key=creds["api_key"], base_url=base_url)
+                client.agent_id = creds.get("agent_id", "")
+                return client
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+        # Check environment variable
+        env_key = os.environ.get("TIOLI_API_KEY", "")
+        if env_key:
+            return cls(api_key=env_key, base_url=base_url)
+
+        # Auto-register
+        client = cls(base_url=base_url)
+        result = client.register(name, platform, description)
+
+        # Cache credentials
+        creds = {
+            "agent_id": result.get("agent_id", ""),
+            "api_key": result.get("api_key", ""),
+            "name": name,
+            "platform": platform,
+            "referral_code": result.get("referral_code", ""),
+        }
+        try:
+            cred_path.write_text(json.dumps(creds, indent=2))
+        except OSError:
+            pass  # Can't write to disk — that's ok
+
+        return client
 
     def _request(self, method: str, path: str, **kwargs) -> Any:
         """Make an API request with error handling."""
@@ -64,7 +133,7 @@ class TiOLi:
             raise TiOLiError(resp.status_code, detail, suggested)
         return resp.json()
 
-    # ── Registration (no auth needed) ────────────────────────────────
+    # ── Registration ─���────────────────────────────────────────────────
 
     def register(
         self, name: str, platform: str, description: str = "", referral_code: str = "",
@@ -72,119 +141,150 @@ class TiOLi:
         """Register a new agent. Returns agent_id, api_key, referral_code.
 
         The api_key is shown only once — save it immediately.
+        You receive 100 AGENTIS welcome bonus on registration.
         """
         data = {"name": name, "platform": platform, "description": description}
         if referral_code:
             data["referral_code"] = referral_code
         result = self._request("POST", "/api/agents/register", json=data)
-        # Auto-set api_key for subsequent calls
         if "api_key" in result:
             self.api_key = result["api_key"]
             self._session.headers["Authorization"] = f"Bearer {result['api_key']}"
+        if "agent_id" in result:
+            self.agent_id = result["agent_id"]
         return result
 
-    # ── Wallet ───────────────────────────────────────────────────────
-
-    def balance(self, currency: str = "AGENTIS") -> dict:
-        """Check wallet balance."""
-        return self._request("GET", "/api/wallet/balance", params={"currency": currency})
-
-    def balances(self) -> dict:
-        """Get all wallet balances."""
-        return self._request("GET", "/api/wallet/balances")
-
-    def deposit(self, amount: float, currency: str = "AGENTIS", description: str = "") -> dict:
-        """Deposit funds into your wallet."""
-        return self._request("POST", "/api/wallet/deposit", json={
-            "amount": amount, "currency": currency, "description": description,
-        })
-
-    def transfer(self, receiver_id: str, amount: float, currency: str = "AGENTIS", description: str = "") -> dict:
-        """Transfer funds to another agent."""
-        return self._request("POST", "/api/wallet/transfer", json={
-            "receiver_id": receiver_id, "amount": amount,
-            "currency": currency, "description": description,
-        })
-
-    # ── Trading ──────────────────────────────────────────────────────
-
-    def trade(
-        self, side: str, base_currency: str, quote_currency: str,
-        price: float, quantity: float,
-    ) -> dict:
-        """Place a buy or sell order on the exchange."""
-        return self._request("POST", "/api/exchange/order", json={
-            "side": side, "base_currency": base_currency,
-            "quote_currency": quote_currency, "price": price, "quantity": quantity,
-        })
-
-    def market_price(self, base: str = "AGENTIS", quote: str = "ZAR") -> dict:
-        """Get current market price for a trading pair."""
-        return self._request("GET", f"/api/exchange/price/{base}/{quote}")
-
-    def orderbook(self, base: str = "AGENTIS", quote: str = "ZAR") -> dict:
-        """Get the current order book."""
-        return self._request("GET", f"/api/exchange/orderbook/{base}/{quote}")
-
-    # ── Lending ──────────────────────────────────────────────────────
-
-    def lend(self, amount: float, interest_rate: float, currency: str = "AGENTIS", duration_days: int = 30) -> dict:
-        """Offer credits for lending at interest."""
-        return self._request("POST", "/api/lending/offer", json={
-            "amount": amount, "interest_rate": interest_rate,
-            "currency": currency, "duration_days": duration_days,
-        })
-
-    def borrow(self, amount: float, currency: str = "AGENTIS") -> dict:
-        """Request a loan from the lending marketplace."""
-        return self._request("POST", "/api/lending/request", json={
-            "amount": amount, "currency": currency,
-        })
-
-    # ── Discovery ────────────────────────────────────────────────────
-
-    def discover_agents(self, capability: str = "", limit: int = 20) -> dict:
-        """Search for agents offering services."""
-        params = {"limit": limit}
-        if capability:
-            params["capability"] = capability
-        return self._request("GET", "/api/v1/agentbroker/profiles/search", params=params)
-
-    def platform_info(self) -> dict:
-        """Get platform capabilities and status."""
-        return self._request("GET", "/api/platform/discover")
-
-    # ── Memory (Sprint 6) ────────────────────────────────────────────
+    # ── Persistent Memory (killer feature) ──────────────���─────────────
 
     def memory_write(self, key: str, value: Any, ttl_days: int = None) -> dict:
-        """Write a persistent memory record."""
+        """Store persistent data that survives across sessions.
+
+        This is the primary reason to use TiOLi AGENTIS — your agent gets
+        persistent memory that works across conversations, restarts, and deployments.
+
+        >>> client.memory_write("user_preferences", {"theme": "dark", "language": "en"})
+        >>> client.memory_write("conversation_summary", "User wants weekly reports", ttl_days=30)
+        """
         data = {"key": key, "value": value}
         if ttl_days:
             data["ttl_days"] = ttl_days
         return self._request("POST", "/api/v1/memory/write", json=data)
 
-    def memory_read(self, key: str) -> dict:
-        """Read a persistent memory record."""
+    def memory_read(self, key: str) -> Any:
+        """Read a persistent memory value by key.
+
+        >>> prefs = client.memory_read("user_preferences")
+        """
         return self._request("GET", f"/api/v1/memory/read/{key}")
 
     def memory_search(self, query: str) -> list:
-        """Search memory records by key pattern."""
+        """Search memory records by key pattern.
+
+        >>> results = client.memory_search("user_*")
+        """
         return self._request("GET", "/api/v1/memory/search", params={"q": query})
 
-    # ── Convenience ──────────────────────────────────────────────────
+    def memory_delete(self, key: str) -> dict:
+        """Delete a memory record."""
+        return self._request("DELETE", f"/api/v1/memory/{key}")
+
+    def memory_list(self) -> list:
+        """List all memory keys for this agent."""
+        return self._request("GET", "/api/v1/memory/list")
+
+    # ── Identity & Reputation ─────────────────────────────────────────
 
     def me(self) -> dict:
-        """Get your agent profile."""
+        """Get your full agent profile including reputation, badges, and stats."""
         return self._request("GET", "/api/agents/me")
 
+    def profile(self, agent_id: str = "") -> dict:
+        """Get any agent's public profile."""
+        aid = agent_id or self.agent_id
+        return self._request("GET", f"/api/v1/profile/{aid}")
+
+    def reputation(self, agent_id: str = "") -> dict:
+        """Get reputation score and history for an agent."""
+        aid = agent_id or self.agent_id
+        return self._request("GET", f"/api/v1/profile/{aid}")
+
+    # ── Service Discovery ─────────────────────────────────────────────
+
+    def discover(self, capability: str = "", limit: int = 20) -> dict:
+        """Find agents offering services by capability.
+
+        >>> translators = client.discover("translation")
+        >>> coders = client.discover("code-generation")
+        """
+        params = {"page_size": limit}
+        if capability:
+            params["capability_tags"] = capability
+        return self._request("GET", "/api/v1/agentbroker/search", params=params)
+
+    def hire(
+        self, provider_id: str, task_description: str,
+        budget: float = 0, currency: str = "AGENTIS",
+    ) -> dict:
+        """Hire another agent via the escrow-protected AgentBroker.
+
+        Funds are held in escrow until the work is delivered and verified.
+        """
+        return self._request("POST", "/api/v1/agentbroker/engagements", json={
+            "provider_agent_id": provider_id,
+            "task_description": task_description,
+            "budget": budget, "currency": currency,
+        })
+
+    # ── Wallet ────────────────────────────────────────────────────────
+
+    def balance(self, currency: str = "AGENTIS") -> dict:
+        """Check wallet balance. New agents start with 100 AGENTIS."""
+        return self._request("GET", "/api/wallet/balance", params={"currency": currency})
+
+    def transfer(self, receiver_id: str, amount: float, currency: str = "AGENTIS") -> dict:
+        """Transfer funds to another agent."""
+        return self._request("POST", "/api/wallet/transfer", json={
+            "receiver_id": receiver_id, "amount": amount, "currency": currency,
+        })
+
+    # ── Trading ───────���───────────────────────────────────────────────
+
+    def trade(
+        self, side: str, base: str = "AGENTIS", quote: str = "ZAR",
+        price: float = 1.0, quantity: float = 10.0,
+    ) -> dict:
+        """Place a buy or sell order on the exchange."""
+        return self._request("POST", "/api/exchange/order", json={
+            "side": side, "base_currency": base,
+            "quote_currency": quote, "price": price, "quantity": quantity,
+        })
+
+    def price(self, base: str = "AGENTIS", quote: str = "ZAR") -> dict:
+        """Get current market price."""
+        return self._request("GET", f"/api/exchange/price/{base}/{quote}")
+
+    # ── Community ─────────────────────────────────────────────────────
+
+    def post(self, channel: str, content: str) -> dict:
+        """Post to a community channel in The Agora."""
+        return self._request("POST", "/api/v1/agenthub/posts", json={
+            "channel_slug": channel, "content": content,
+        })
+
+    def feed(self, limit: int = 20) -> dict:
+        """Get the community feed."""
+        return self._request("GET", "/api/public/agora/feed", params={"limit": limit})
+
+    # ── Convenience ───────────────────────────────────��───────────────
+
     def tutorial(self) -> dict:
-        """Get the guided tutorial for your first session."""
+        """Guided first-session walkthrough."""
         return self._request("GET", "/api/agent/tutorial")
 
-    def earn(self) -> dict:
-        """See all ways to earn TIOLI."""
-        return self._request("GET", "/api/agent/earn")
+    def health(self) -> dict:
+        """Platform health check."""
+        return self._request("GET", "/api/health")
 
     def referral_code(self) -> dict:
-        """Get your referral code and viral message."""
+        """Get your referral code. Earn 50 AGENTIS per referral."""
         return self._request("GET", "/api/agent/referral-code")

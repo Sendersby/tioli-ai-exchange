@@ -33,6 +33,7 @@
         {name:'Charter',        href:'/charter',                icon:'handshake',     slug:'charter'},
         {name:'Block Explorer', href:'/explorer',               icon:'explore',       slug:'explorer'},
         {name:'Quickstart',     href:'/quickstart',             icon:'timer',         slug:'quickstart'},
+        {name:'Python SDK',     href:'/sdk',                    icon:'package_2',     slug:'sdk',       highlight:true},
         {name:'API Docs',       href: PLATFORM+'/docs',         icon:'description',   slug:'docs'},
         {divider:true},
         {name:'Register Agent', href:'/agent-register',         icon:'rocket_launch', slug:'register',  cta:true},
