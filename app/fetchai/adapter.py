@@ -143,17 +143,8 @@ def _extract_text_from_payload(payload: dict) -> str:
 
 
 def _send_chat_response_sync(destination: str, session: str, text: str):
-    """Synchronous wrapper for background task execution."""
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # We're in an async context (BackgroundTasks), run synchronously
-            _send_chat_response_blocking(destination, session, text)
-        else:
-            loop.run_until_complete(_send_chat_response(destination, session, text))
-    except RuntimeError:
-        _send_chat_response_blocking(destination, session, text)
+    """Send response in a thread pool worker so it doesn't block other messages."""
+    _executor.submit(_send_chat_response_blocking, destination, session, text)
 
 
 def _send_chat_response_blocking(destination: str, session: str, text: str):
