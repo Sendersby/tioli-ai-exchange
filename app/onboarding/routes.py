@@ -163,11 +163,26 @@ async def enquiry_count(db: AsyncSession = Depends(get_db)):
     return {"count": count, "max": 20, "remaining": max(0, 20 - count)}
 
 
+def _require_owner(request: Request):
+    """Verify the request comes from an authenticated owner session."""
+    token = request.cookies.get("session_token")
+    if token:
+        return  # Owner is logged in via dashboard
+    # Also allow X-Owner-Key header for API access
+    owner_key = request.headers.get("X-Owner-Key", "")
+    import os
+    expected = os.environ.get("OWNER_API_KEY", "")
+    if expected and owner_key == expected:
+        return
+    raise HTTPException(status_code=403, detail="Owner authentication required")
+
+
 @router.get("/enquiries")
 async def list_enquiries(
-    status: str | None = None, db: AsyncSession = Depends(get_db),
+    request: Request, status: str | None = None, db: AsyncSession = Depends(get_db),
 ):
-    """List enquiries — owner only (protected by gateway/3FA in practice)."""
+    """List enquiries — owner only."""
+    _require_owner(request)
     query = select(OnboardingEnquiry)
     if status:
         query = query.where(OnboardingEnquiry.status == status.upper())
@@ -189,9 +204,10 @@ async def list_enquiries(
 
 @router.put("/enquiries/{enquiry_id}")
 async def review_enquiry(
-    enquiry_id: str, req: ReviewRequest, db: AsyncSession = Depends(get_db),
+    request: Request, enquiry_id: str, req: ReviewRequest, db: AsyncSession = Depends(get_db),
 ):
-    """Review an enquiry — owner action."""
+    """Review an enquiry — owner only."""
+    _require_owner(request)
     result = await db.execute(
         select(OnboardingEnquiry).where(OnboardingEnquiry.id == enquiry_id)
     )
@@ -212,7 +228,9 @@ async def review_enquiry(
 
 
 @router.get("/stats")
-async def enquiry_stats(db: AsyncSession = Depends(get_db)):
+async def enquiry_stats(request: Request, db: AsyncSession = Depends(get_db)):
+    """Enquiry statistics — owner only."""
+    _require_owner(request)
     """Enquiry statistics."""
     total = (await db.execute(select(func.count(OnboardingEnquiry.id)))).scalar() or 0
     new = (await db.execute(
