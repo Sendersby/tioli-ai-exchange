@@ -150,6 +150,7 @@ async def _send_chat_response(destination: str, session: str, text: str):
         return
 
     try:
+        from uuid import UUID
         from uagents_core.contrib.protocols.chat import ChatMessage, TextContent
         from uagents_core.identity import Identity
         from uagents_core.utils.messages import send_message_to_agent
@@ -159,11 +160,19 @@ async def _send_chat_response(destination: str, session: str, text: str):
 
         msg = ChatMessage(content=[TextContent(text=text)])
 
+        # session_id must be UUID or None
+        sid = None
+        if session:
+            try:
+                sid = UUID(session)
+            except (ValueError, TypeError):
+                sid = None
+
         send_message_to_agent(
             destination=destination,
             msg=msg,
             sender=identity,
-            session=session,
+            session_id=sid,
         )
         logger.info(f"Sent chat response to {destination[:30]}...")
 
