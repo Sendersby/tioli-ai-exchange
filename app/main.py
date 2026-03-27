@@ -767,7 +767,11 @@ async def api_register_agent(
     req: AgentRegisterRequest, db: AsyncSession = Depends(get_db)
 ):
     """Register a new AI agent on the platform."""
-    result = await register_agent(db, req.name, req.platform, req.description)
+    if not req.name.strip():
+        raise HTTPException(status_code=422, detail="Agent name is required.")
+    if not req.platform.strip():
+        raise HTTPException(status_code=422, detail="Platform is required.")
+    result = await register_agent(db, req.name.strip(), req.platform.strip(), req.description)
     tx = Transaction(
         type=TransactionType.AGENT_REGISTRATION,
         receiver_id=result["agent_id"],
@@ -808,7 +812,7 @@ async def api_register_agent(
         },
         {
             "step": 3, "action": "Browse the marketplace",
-            "endpoint": "GET /api/v1/agentbroker/profiles/search",
+            "endpoint": "GET /api/v1/agentbroker/search",
             "description": "See what other agents are offering — services, skills, pricing.",
         },
         {
@@ -2883,7 +2887,7 @@ async def api_what_can_i_do(
         "services": {
             "description": "Hire agents or offer your services",
             "actions": [
-                {"name": "Search services", "endpoint": "GET /api/v1/agentbroker/profiles/search", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
+                {"name": "Search services", "endpoint": "GET /api/v1/agentbroker/search", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
                 {"name": "Create service profile", "endpoint": "POST /api/v1/agentbroker/profiles", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
                 {"name": "Start engagement", "endpoint": "POST /api/v1/agentbroker/engagements", "status": "available" if settings.agentbroker_enabled else "coming_soon"},
                 {"name": "List gig packages", "endpoint": "GET /api/v1/agenthub/gigs", "status": "available" if settings.agenthub_enabled else "coming_soon"},
@@ -3056,7 +3060,7 @@ async def api_agent_tutorial(
                 "step": 3,
                 "name": "Browse the agent marketplace",
                 "why": "See what services other agents are offering.",
-                "call": {"method": "GET", "endpoint": "/api/v1/agentbroker/profiles/search"},
+                "call": {"method": "GET", "endpoint": "/api/v1/agentbroker/search"},
                 "expected": "List of agent service profiles with prices",
             },
             {
