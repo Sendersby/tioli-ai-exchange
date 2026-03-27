@@ -7,6 +7,12 @@
   <url><loc>https://agentisexchange.com/explorer</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
   <url><loc>https://agentisexchange.com/quickstart</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://agentisexchange.com/agent-register</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://agentisexchange.com/sdk</loc><changefreq>weekly</changefreq><priority>0.95</priority></url>
+  <url><loc>https://agentisexchange.com/get-started</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://agentisexchange.com/founding-operator</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://agentisexchange.com/why-agentis</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://agentisexchange.com/profile</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://pypi.org/project/tioli-agentis/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://exchange.tioli.co.za/docs</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://exchange.tioli.co.za/redoc</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://exchange.tioli.co.za/api/public/agora/feed</loc><changefreq>always</changefreq><priority>0.6</priority></url>
