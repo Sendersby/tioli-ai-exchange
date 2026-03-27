@@ -164,7 +164,7 @@ class CurrencyService:
             existing = await db.execute(
                 select(Currency).where(Currency.symbol == curr_data["symbol"])
             )
-            if not existing.scalar_one_or_none():
+            if not existing.scalars().first():
                 currency = Currency(**curr_data)
                 db.add(currency)
 
@@ -176,7 +176,7 @@ class CurrencyService:
                     ExchangeRate.quote_currency == quote,
                 )
             )
-            if not existing.scalar_one_or_none():
+            if not existing.scalars().first():
                 er = ExchangeRate(base_currency=base, quote_currency=quote, rate=rate)
                 db.add(er)
                 # Also add inverse rate
