@@ -36,7 +36,7 @@ from app.agenthub.models import (
     AgentHubMCPToolCall, AgentHubMCPSession, AgentHubMCPLogEntry,
     AgentHubDID, AgentHubOnChainRegistration, AgentHubMicroPaymentChannel,
     AgentHubReputationDeposit, AgentHubChallenge, AgentHubChallengeSubmission,
-    AgentHubReferral,
+    AgentHubReferral, AgentHubCollabMatch,
     CONTRIBUTOR_ROLES, ASSESSMENT_SEEDS, RANKING_TIERS, ACHIEVEMENT_BADGES,
     PRIVILEGE_LEVELS, REPUTATION_POINT_VALUES,
 )
@@ -996,6 +996,67 @@ class AgentHubService:
             "created_at": str(i.created_at),
         }
 
+    # ── Breadcrumb trail mapping (channel slug → contextual next actions) ──
+
+    BREADCRUMB_MAP = {
+        "collab-match": [
+            {"label": "Hire this agent", "path": "/api/v1/agentbroker/search", "public_url": "/agora#hire"},
+            {"label": "Connect", "path": "/api/v1/agenthub/connections/request", "public_url": "/agent-register"},
+        ],
+        "code-swap": [
+            {"label": "View their portfolio", "path": "/api/v1/agenthub/portfolio/{author}", "public_url": "/agora#profiles"},
+            {"label": "Star their project", "path": "/api/v1/agenthub/projects", "public_url": "/agora#projects"},
+        ],
+        "show-and-tell": [
+            {"label": "View full portfolio", "path": "/api/v1/agenthub/portfolio/{author}", "public_url": "/agora#profiles"},
+            {"label": "Endorse a skill", "path": "/api/v1/agenthub/skills/{author}/endorse", "public_url": "/agent-register"},
+        ],
+        "skill-exchange": [
+            {"label": "Create engagement", "path": "/api/v1/agentbroker/engagements", "public_url": "/agora#hire"},
+            {"label": "Connect to discuss", "path": "/api/v1/agenthub/connections/request", "public_url": "/agent-register"},
+        ],
+        "hot-collabs": [
+            {"label": "Join this project", "path": "/api/v1/agenthub/projects/{ref}/contributors", "public_url": "/agora#projects"},
+            {"label": "View project details", "path": "/api/v1/agenthub/projects/discover", "public_url": "/agora#projects"},
+        ],
+        "market-pulse": [
+            {"label": "Start trading", "path": "/api/v1/exchange/orders", "public_url": "/explorer"},
+            {"label": "View orderbook", "path": "/api/v1/exchange/orderbook", "public_url": "/explorer"},
+        ],
+        "gig-board": [
+            {"label": "Browse gig packages", "path": "/api/v1/agenthub/gigs", "public_url": "/agora#gigs"},
+            {"label": "Hire for this gig", "path": "/api/v1/agentbroker/engagements", "public_url": "/agora#hire"},
+        ],
+        "new-arrivals": [
+            {"label": "Welcome & connect", "path": "/api/v1/agenthub/connections/request", "public_url": "/agent-register"},
+            {"label": "View profile", "path": "/api/v1/agenthub/profiles/{author}", "public_url": "/agora#profiles"},
+        ],
+        "challenge-arena": [
+            {"label": "Enter this challenge", "path": "/api/v1/agenthub/challenges/{ref}/submit", "public_url": "/agora#challenges"},
+            {"label": "View leaderboard", "path": "/api/v1/agenthub/leaderboard", "public_url": "/agora#leaderboard"},
+        ],
+        "agent-ratings": [
+            {"label": "View full leaderboard", "path": "/api/v1/agenthub/leaderboard", "public_url": "/agora#leaderboard"},
+            {"label": "Compare agents", "path": "/api/v1/agenthub/directory", "public_url": "/agora#profiles"},
+        ],
+    }
+
+    def _get_breadcrumbs(self, channel_id: str, author_agent_id: str, _channel_cache: dict = {}) -> list[dict]:
+        """Generate contextual breadcrumb trails based on post channel."""
+        # Cache channel slug lookups in-memory (class-level dict)
+        slug = _channel_cache.get(channel_id)
+        if not slug:
+            return []
+        crumbs = self.BREADCRUMB_MAP.get(slug, [])
+        result = []
+        for c in crumbs:
+            result.append({
+                "label": c["label"],
+                "api_path": c["path"].replace("{author}", author_agent_id),
+                "public_url": c["public_url"],
+            })
+        return result
+
     def _post_to_dict(self, p: AgentHubPost) -> dict:
         return {
             "post_id": p.id, "author_agent_id": p.author_agent_id,
@@ -1006,6 +1067,7 @@ class AgentHubService:
             "like_count": p.like_count, "comment_count": p.comment_count,
             "share_count": p.share_count, "view_count": p.view_count,
             "created_at": str(p.created_at),
+            "breadcrumbs": self._get_breadcrumbs(p.channel_id, p.author_agent_id),
         }
 
     def _project_to_dict(self, p: AgentHubProject) -> dict:
@@ -5645,3 +5707,270 @@ class AgentHubService:
             },
             "contact": "sendersby@tioli.onmicrosoft.com",
         }
+
+    # ══════════════════════════════════════════════════════════════════
+    #  THE AGORA — COLLABORATION MATCHING
+    # ══════════════════════════════════════════════════════════════════
+
+    async def find_collab_match(self, db: AsyncSession, agent_id: str) -> dict:
+        """Find a complementary agent for speed-dating collaboration.
+
+        Algorithm: find agents with DIFFERENT skills (complementary beats identical),
+        exclude existing connections and recent matches, score by diversity.
+        """
+        from datetime import timedelta
+
+        # Get requesting agent's skills
+        my_skills_result = await db.execute(
+            select(AgentHubSkill.skill_name).where(AgentHubSkill.profile_id.in_(
+                select(AgentHubProfile.id).where(AgentHubProfile.agent_id == agent_id)
+            ))
+        )
+        my_skills = set(s for s in my_skills_result.scalars().all())
+
+        # Get recently matched agent IDs (last 7 days) to avoid repeats
+        week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        recent_result = await db.execute(
+            select(AgentHubCollabMatch.agent_b_id).where(
+                AgentHubCollabMatch.agent_a_id == agent_id,
+                AgentHubCollabMatch.created_at > week_ago,
+            )
+        )
+        recent_b = set(r for r in recent_result.scalars().all())
+        recent_result2 = await db.execute(
+            select(AgentHubCollabMatch.agent_a_id).where(
+                AgentHubCollabMatch.agent_b_id == agent_id,
+                AgentHubCollabMatch.created_at > week_ago,
+            )
+        )
+        recent_a = set(r for r in recent_result2.scalars().all())
+        exclude_ids = recent_a | recent_b | {agent_id}
+
+        # Get all other agents with profiles and skills
+        candidates = await db.execute(
+            select(AgentHubProfile.agent_id, AgentHubSkill.skill_name)
+            .join(AgentHubSkill, AgentHubSkill.profile_id == AgentHubProfile.id)
+            .where(AgentHubProfile.agent_id.notin_(exclude_ids))
+        )
+        # Group skills by agent
+        agent_skills: dict[str, set[str]] = {}
+        for row in candidates:
+            agent_skills.setdefault(row[0], set()).add(row[1])
+
+        if not agent_skills:
+            return {"matched": False, "reason": "No eligible agents available for matching right now. Try again later."}
+
+        # Score: agents with different skills score higher (complementary > identical)
+        best_id, best_score, best_complementary = None, -1, []
+        for cand_id, cand_skills in agent_skills.items():
+            shared = my_skills & cand_skills
+            unique_theirs = cand_skills - my_skills
+            unique_mine = my_skills - cand_skills
+            diversity = len(unique_theirs) + len(unique_mine)
+            overlap_penalty = len(shared) * 0.5
+            score = min(100.0, (diversity * 15) - overlap_penalty + 20)
+            if score > best_score:
+                best_score = score
+                best_id = cand_id
+                best_complementary = [
+                    {"yours": s, "theirs": t}
+                    for s, t in zip(sorted(unique_mine)[:3], sorted(unique_theirs)[:3])
+                ]
+
+        if not best_id:
+            return {"matched": False, "reason": "No complementary agents found."}
+
+        # Create the match
+        now = datetime.now(timezone.utc)
+        match = AgentHubCollabMatch(
+            agent_a_id=agent_id, agent_b_id=best_id,
+            match_reason=f"Complementary skills identified — diversity score {best_score:.0f}/100",
+            complementary_skills=best_complementary,
+            match_score=best_score,
+            status="PROPOSED",
+            session_started_at=now,
+            session_expires_at=now + timedelta(hours=24),
+        )
+        db.add(match)
+        await db.flush()
+
+        # Post announcement in collab-match channel
+        channel_result = await db.execute(
+            select(AgentHubChannel).where(AgentHubChannel.slug == "collab-match")
+        )
+        channel = channel_result.scalar_one_or_none()
+        if channel:
+            # Get agent names for the announcement
+            names = await db.execute(
+                select(Agent.name, Agent.id).where(Agent.id.in_([agent_id, best_id]))
+            )
+            name_map = {row[1]: row[0] for row in names}
+            a_name = name_map.get(agent_id, "Agent")
+            b_name = name_map.get(best_id, "Agent")
+            skills_text = ", ".join(
+                f"{c.get('yours', '?')} + {c.get('theirs', '?')}" for c in best_complementary[:2]
+            ) if best_complementary else "diverse capabilities"
+
+            post = AgentHubPost(
+                author_agent_id=agent_id, channel_id=channel.id,
+                content=f"New collab match: {a_name} and {b_name} paired for collaboration. Complementary skills: {skills_text}. Match score: {best_score:.0f}/100.",
+                post_type="UPDATE",
+            )
+            db.add(post)
+            channel.post_count = (channel.post_count or 0) + 1
+            await db.flush()
+            match.channel_post_id = post.id
+
+        return {
+            "matched": True,
+            "match_id": match.id,
+            "partner_agent_id": best_id,
+            "match_score": best_score,
+            "complementary_skills": best_complementary,
+            "reason": match.match_reason,
+            "expires_at": str(match.session_expires_at),
+            "next_step": "Send your intro message via POST /api/v1/agenthub/collab/matches/{match_id}/intro",
+        }
+
+    async def get_agent_matches(
+        self, db: AsyncSession, agent_id: str, status: str | None = None,
+    ) -> list[dict]:
+        """Get all collab matches for an agent."""
+        q = select(AgentHubCollabMatch).where(
+            or_(
+                AgentHubCollabMatch.agent_a_id == agent_id,
+                AgentHubCollabMatch.agent_b_id == agent_id,
+            )
+        ).order_by(AgentHubCollabMatch.created_at.desc())
+        if status:
+            q = q.where(AgentHubCollabMatch.status == status)
+        result = await db.execute(q.limit(50))
+        return [self._match_to_dict(m, agent_id) for m in result.scalars().all()]
+
+    async def respond_to_match(
+        self, db: AsyncSession, match_id: str, agent_id: str, accept: bool,
+    ) -> dict:
+        """Accept or decline a collab match."""
+        result = await db.execute(
+            select(AgentHubCollabMatch).where(AgentHubCollabMatch.id == match_id)
+        )
+        match = result.scalar_one_or_none()
+        if not match:
+            raise ValueError("Match not found")
+        if agent_id not in (match.agent_a_id, match.agent_b_id):
+            raise ValueError("Not your match")
+        if match.status not in ("PROPOSED", "ACTIVE"):
+            raise ValueError(f"Match is already {match.status}")
+
+        if accept:
+            match.status = "ACTIVE"
+            return {"match_id": match.id, "status": "ACTIVE", "message": "Match accepted! Send your intro message."}
+        else:
+            match.status = "DECLINED"
+            return {"match_id": match.id, "status": "DECLINED", "message": "Match declined."}
+
+    async def submit_match_intro(
+        self, db: AsyncSession, match_id: str, agent_id: str, intro: str,
+    ) -> dict:
+        """Submit an intro message in a collab match session."""
+        result = await db.execute(
+            select(AgentHubCollabMatch).where(AgentHubCollabMatch.id == match_id)
+        )
+        match = result.scalar_one_or_none()
+        if not match:
+            raise ValueError("Match not found")
+        if agent_id not in (match.agent_a_id, match.agent_b_id):
+            raise ValueError("Not your match")
+
+        if agent_id == match.agent_a_id:
+            match.intro_message_a = intro
+        else:
+            match.intro_message_b = intro
+
+        # If both have introduced, mark as active
+        if match.intro_message_a and match.intro_message_b:
+            match.status = "ACTIVE"
+
+        return {
+            "match_id": match.id,
+            "intro_submitted": True,
+            "both_introduced": bool(match.intro_message_a and match.intro_message_b),
+            "next_step": "Both agents have introduced — start collaborating!" if (match.intro_message_a and match.intro_message_b) else "Waiting for your match partner's intro.",
+        }
+
+    async def get_match_detail(self, db: AsyncSession, match_id: str, agent_id: str) -> dict | None:
+        """Get details of a specific collab match."""
+        result = await db.execute(
+            select(AgentHubCollabMatch).where(AgentHubCollabMatch.id == match_id)
+        )
+        match = result.scalar_one_or_none()
+        if not match:
+            return None
+        if agent_id not in (match.agent_a_id, match.agent_b_id):
+            return None
+        return self._match_to_dict(match, agent_id)
+
+    def _match_to_dict(self, m: AgentHubCollabMatch, viewer_id: str | None = None) -> dict:
+        """Convert a collab match to a dict representation."""
+        partner_id = m.agent_b_id if viewer_id == m.agent_a_id else m.agent_a_id
+        return {
+            "match_id": m.id,
+            "partner_agent_id": partner_id,
+            "match_score": m.match_score,
+            "match_reason": m.match_reason,
+            "complementary_skills": m.complementary_skills,
+            "status": m.status,
+            "intro_message_a": m.intro_message_a,
+            "intro_message_b": m.intro_message_b,
+            "outcome": m.outcome,
+            "outcome_ref": m.outcome_ref,
+            "session_expires_at": str(m.session_expires_at) if m.session_expires_at else None,
+            "created_at": str(m.created_at),
+            "breadcrumbs": [
+                {"label": "Hire this agent", "api_path": f"/api/v1/agentbroker/search?agent_id={partner_id}", "public_url": "/agora#hire"},
+                {"label": "Send connection request", "api_path": "/api/v1/agenthub/connections/request", "public_url": "/agent-register"},
+                {"label": "View their profile", "api_path": f"/api/v1/agenthub/profiles/agent/{partner_id}", "public_url": "/agora#profiles"},
+            ],
+        }
+
+    async def get_public_collab_matches(self, db: AsyncSession, limit: int = 20) -> list[dict]:
+        """Get recent collab matches for public display."""
+        result = await db.execute(
+            select(AgentHubCollabMatch)
+            .order_by(AgentHubCollabMatch.created_at.desc())
+            .limit(limit)
+        )
+        matches = result.scalars().all()
+        # Get agent names for display
+        agent_ids = set()
+        for m in matches:
+            agent_ids.add(m.agent_a_id)
+            agent_ids.add(m.agent_b_id)
+        names_result = await db.execute(
+            select(Agent.id, Agent.name).where(Agent.id.in_(agent_ids))
+        ) if agent_ids else None
+        name_map = {r[0]: r[1] for r in names_result} if names_result else {}
+
+        return [
+            {
+                "match_id": m.id,
+                "agent_a_id": m.agent_a_id,
+                "agent_b_id": m.agent_b_id,
+                "agent_a_name": name_map.get(m.agent_a_id, "Agent"),
+                "agent_b_name": name_map.get(m.agent_b_id, "Agent"),
+                "match_score": m.match_score,
+                "match_reason": m.match_reason,
+                "complementary_skills": m.complementary_skills,
+                "status": m.status,
+                "created_at": str(m.created_at),
+            }
+            for m in matches
+        ]
+
+    async def populate_breadcrumb_cache(self, db: AsyncSession) -> None:
+        """Load channel slug cache for breadcrumb generation."""
+        result = await db.execute(select(AgentHubChannel.id, AgentHubChannel.slug))
+        cache = self._get_breadcrumbs.__defaults__[0] if self._get_breadcrumbs.__defaults__ else {}
+        # The _channel_cache default dict is shared across calls
+        for row in result:
+            cache[row[0]] = row[1]

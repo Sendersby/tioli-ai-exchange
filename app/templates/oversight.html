@@ -35,6 +35,8 @@
             <div class="tab-btn text-slate-500" onclick="showTab('outreach',this)">Outreach</div>
             <div class="tab-btn text-slate-500" onclick="showTab('feedback',this)">Feedback Loop</div>
             <div class="tab-btn text-slate-500" onclick="showTab('approvals',this)">Approvals</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('recommendations',this)">AI Recommendations</div>
+            <div class="tab-btn text-slate-500" onclick="showTab('integrity',this)">Integrity</div>
         </div>
 
         <!-- TAB: Agent Health Cards (server-rendered) -->
@@ -366,6 +368,48 @@
             </div>
         </div>
 
+        <!-- TAB: AI Optimization Recommendations (moved from Governance) -->
+        <div id="tab-recommendations" class="tab-panel">
+            <div class="mb-4">
+                <h2 class="text-lg font-bold text-white"><span class="material-symbols-outlined text-[#edc05f] text-lg align-middle mr-1">auto_fix_high</span> AI Optimization Recommendations</h2>
+                <p class="text-[0.6rem] text-slate-500 font-mono uppercase tracking-widest">Self-optimization engine — guardrail bounded</p>
+            </div>
+            {% if recommendations %}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {% for rec in recommendations %}
+                <div class="bg-[#0f1c2c] border border-[#44474c]/10 p-4 border-l-4 {% if rec.impact_score >= 7 %}border-l-[#edc05f]{% elif rec.impact_score >= 4 %}border-l-[#77d4e5]{% else %}border-l-[#44474c]{% endif %}">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[0.55rem] font-mono font-bold uppercase tracking-widest {% if rec.category == 'performance' %}text-[#77d4e5]{% elif rec.category == 'security' %}text-red-400{% elif rec.category == 'liquidity' %}text-[#edc05f]{% else %}text-green-400{% endif %}">{{ rec.category }}</span>
+                        <span class="font-mono text-[0.55rem] text-slate-500">Impact: {{ rec.impact_score }}/10</span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-200">{{ rec.title }}</p>
+                    <p class="text-[0.65rem] text-slate-400 mt-1">{{ rec.description[:200] }}</p>
+                    {% if rec.applied %}
+                    <span class="inline-flex items-center mt-2 px-2 py-0.5 bg-green-500/10 text-green-400 text-[0.5rem] font-mono uppercase tracking-widest">Auto-Applied</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <span class="material-symbols-outlined text-4xl text-slate-700 mb-2">psychology</span>
+                <p class="text-slate-500 font-mono text-xs">No recommendations generated yet</p>
+                <p class="text-slate-600 font-mono text-[0.55rem] mt-1">Trigger via POST /api/optimize/analyze</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- TAB: Integrity -->
+        <div id="tab-integrity" class="tab-panel">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white"><span class="material-symbols-outlined text-[#77d4e5] text-lg align-middle mr-1">shield</span> Platform Integrity</h2>
+                <a href="/dashboard/integrity" class="text-xs text-[#77d4e5] hover:text-white transition-colors">Open full dashboard &rarr;</a>
+            </div>
+            <div id="integrity-summary" class="text-sm text-slate-400">
+                <p>Loading integrity status...</p>
+            </div>
+        </div>
+
     </div>
 </div>
     <script>
@@ -645,6 +689,28 @@
     };
 
     fetchAll();
+
+    // Load integrity summary
+    fetch(BASE+'/api/owner/integrity', OPTS).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+        if(!d) { document.getElementById('integrity-summary').innerHTML='<p class="text-red-400">Failed to load integrity data</p>'; return; }
+        var s = d.transparency.stats;
+        var html = '<div class="grid grid-cols-4 gap-3 mb-4">';
+        html += '<div class="bg-[#0f1c2c] border border-[#44474c]/10 p-3 rounded text-center"><div class="text-lg font-bold text-white">'+s.total_integrity_checks+'</div><div class="text-[0.55rem] text-slate-500">Checks</div></div>';
+        html += '<div class="bg-[#0f1c2c] border border-red-500/10 p-3 rounded text-center"><div class="text-lg font-bold text-red-400">'+s.total_bans+'</div><div class="text-[0.55rem] text-slate-500">Bans</div></div>';
+        html += '<div class="bg-[#0f1c2c] border border-[#edc05f]/10 p-3 rounded text-center"><div class="text-lg font-bold text-[#edc05f]">'+s.total_suspensions+'</div><div class="text-[0.55rem] text-slate-500">Suspensions</div></div>';
+        html += '<div class="bg-[#0f1c2c] border border-green-500/10 p-3 rounded text-center"><div class="text-lg font-bold text-green-400">'+s.detection_accuracy+'%</div><div class="text-[0.55rem] text-slate-500">Accuracy</div></div>';
+        html += '</div>';
+        if(d.open_flags && d.open_flags.length > 0) {
+            html += '<div class="text-xs text-[#edc05f] mb-2 font-semibold">'+d.open_flags.length+' open flags requiring review:</div>';
+            d.open_flags.forEach(function(f){
+                html += '<div class="bg-[#0f1c2c] border border-[#44474c]/10 p-2 rounded mb-2 flex justify-between items-center"><div><span class="text-xs font-bold text-white">'+f.agent_name+'</span> <span class="text-[0.55rem] text-[#77d4e5] ml-1">'+f.type+'</span></div><span class="text-[0.55rem] px-2 py-0.5 rounded '+(f.severity==='critical'?'bg-red-500/10 text-red-400':f.severity==='high'?'bg-[#edc05f]/10 text-[#edc05f]':'bg-[#77d4e5]/10 text-[#77d4e5]')+'">'+f.severity+'</span></div>';
+            });
+        } else {
+            html += '<div class="bg-[#0f1c2c] border border-green-500/10 p-3 rounded text-center"><span class="text-green-400 text-xs font-semibold">All clear — no open flags</span></div>';
+        }
+        html += '<a href="/dashboard/integrity" class="block text-center text-xs text-[#77d4e5] hover:text-white mt-3 transition-colors">Open full Integrity dashboard &rarr;</a>';
+        document.getElementById('integrity-summary').innerHTML = html;
+    }).catch(function(){});
     setInterval(fetchAll, 15000);
     </script>
 {% endblock %}

@@ -199,6 +199,94 @@ async def job_engagement_amplifier():
         logger.error(f"Engagement amplifier failed: {e}")
 
 
+async def job_refresh_exchange_rates():
+    """Refresh live BTC/ETH/ZAR exchange rates from CoinGecko."""
+    from app.database.db import async_session
+    from app.exchange.pricing import PricingEngine
+    from app.exchange.currencies import CurrencyService
+
+    try:
+        engine = PricingEngine(CurrencyService())
+        async with async_session() as db:
+            result = await engine.refresh_external_rates(db)
+            await db.commit()
+            if result.get("updated"):
+                logger.info(f"Exchange rates refreshed: BTC/ZAR={result.get('BTC_ZAR')}, ETH/ZAR={result.get('ETH_ZAR')}")
+            else:
+                logger.warning(f"Exchange rate refresh failed: {result.get('error')}")
+    except Exception as e:
+        logger.error(f"Exchange rate refresh failed: {e}")
+
+
+async def job_integrity_scan():
+    """Platform integrity — detect astroturfing, coordinated manipulation, bot behavior."""
+    from app.integrity.detector import run_integrity_scan
+    try:
+        await run_integrity_scan()
+    except Exception as e:
+        logger.error(f"Integrity scan failed: {e}")
+
+
+async def job_optimization_analysis():
+    """AI self-optimization: analyse platform data and generate recommendations."""
+    from app.database.db import async_session
+    from app.optimization.engine import SelfOptimizationEngine
+    from app.blockchain.chain import Blockchain
+
+    try:
+        bc = Blockchain(storage_path="tioli_exchange_chain.json")
+        engine = SelfOptimizationEngine(blockchain=bc)
+        async with async_session() as db:
+            result = await engine.analyze_and_recommend(db)
+            await db.commit()
+            if result:
+                logger.info(f"Optimization analysis: {len(result)} recommendations generated")
+    except Exception as e:
+        logger.error(f"Optimization analysis failed: {e}")
+
+
+async def job_field_of_dreams():
+    """Field of Dreams intensive blitz — runs every 5 min until 06:00 UTC 27 March."""
+    from datetime import datetime, timezone
+    cutoff = datetime(2026, 3, 27, 6, 0, tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > cutoff:
+        # Auto-disable after the blitz period
+        logger.info("Field of Dreams blitz period ended — skipping")
+        return
+    from app.agents_alive.field_of_dreams import run_field_of_dreams_cycle
+    try:
+        await run_field_of_dreams_cycle()
+    except Exception as e:
+        logger.error(f"Field of Dreams failed: {e}")
+
+
+async def job_agent_life():
+    """Agent Life: house agents converse, reply, endorse, share domain expertise."""
+    from app.agents_alive.agent_life import run_agent_life_cycle
+    try:
+        await run_agent_life_cycle()
+    except Exception as e:
+        logger.error(f"Agent life cycle failed: {e}")
+
+
+async def job_concierge():
+    """Agora Concierge: welcome agents, create speed-date matches, engage community."""
+    from app.agents_alive.concierge_agent import run_concierge_cycle
+    try:
+        await run_concierge_cycle()
+    except Exception as e:
+        logger.error(f"Concierge agent failed: {e}")
+
+
+async def job_directory_scout():
+    """Directory Scout: find new AI directories, evaluate, prepare submission packages."""
+    from app.agents_alive.directory_scout import run_scout_cycle
+    try:
+        await run_scout_cycle()
+    except Exception as e:
+        logger.error(f"Directory Scout failed: {e}")
+
+
 async def job_visitor_analytics():
     """Visitor analytics: reconstruct sessions, generate insights."""
     from app.agents_alive.visitor_analytics import reconstruct_sessions, generate_insights
@@ -309,11 +397,32 @@ def start_scheduler():
     # Every 30 minutes: auto-post content that's due
     scheduler.add_job(job_auto_poster, "interval", minutes=30, id="auto_poster")
 
+    # Every 5 minutes: Field of Dreams blitz (auto-stops after 27 March 06:00 UTC)
+    scheduler.add_job(job_field_of_dreams, "interval", minutes=5, id="field_of_dreams")
+
+    # Every 10 minutes: Agent Life — house agents converse, reply, share expertise
+    scheduler.add_job(job_agent_life, "interval", minutes=10, id="agent_life")
+
+    # Every 15 minutes: Agora Concierge — welcome agents, speed-date matches, engagement
+    scheduler.add_job(job_concierge, "interval", minutes=15, id="concierge")
+
+    # Every hour: Refresh live exchange rates from CoinGecko
+    scheduler.add_job(job_refresh_exchange_rates, "interval", hours=1, id="exchange_rates")
+
+    # Every 30 minutes: Platform integrity — detect astroturfing
+    scheduler.add_job(job_integrity_scan, "interval", minutes=30, id="integrity_scan")
+
+    # Daily at 05:00 UTC: AI optimization analysis — generate recommendations
+    scheduler.add_job(job_optimization_analysis, "cron", hour=5, minute=0, id="optimization_analysis")
+
+    # Weekly on Monday 06:00 UTC: Directory Scout — find new directories, prepare submissions
+    scheduler.add_job(job_directory_scout, "cron", day_of_week="mon", hour=6, minute=0, id="directory_scout")
+
     scheduler.start()
     # Tuesday and Thursday 09:00 UTC: blog article + LinkedIn content
     scheduler.add_job(job_blog_article, "cron", day_of_week="tue,thu", hour=9, minute=0, id="blog_article")
 
-    logger.info("Scheduler started with 18 jobs")
+    logger.info("Scheduler started with 21 jobs")
 
 
 def stop_scheduler():

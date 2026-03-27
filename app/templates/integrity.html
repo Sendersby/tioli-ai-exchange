@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Platform Integrity — TiOLi AGENTIS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1>Platform Integrity</h1>
+            <p class="text-slate-400 text-sm">Anti-astroturfing detection, enforcement, and transparency</p>
+        </div>
+        <div class="flex gap-2">
+            <form method="POST" action="/api/owner/integrity/scan-now" class="inline">
+                <button class="px-4 py-2 text-[0.7rem] font-mono font-bold bg-primary/10 text-primary uppercase tracking-widest border border-primary/20 hover:bg-primary hover:text-on-primary transition-all">Run Scan Now</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-5 gap-3">
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ integrity.transparency.stats.total_integrity_checks }}</div>
+            <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">Total Checks</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-error">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ integrity.transparency.stats.total_bans }}</div>
+            <div class="font-mono text-[0.55rem] text-error uppercase tracking-widest mt-1">Bans</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-tertiary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ integrity.transparency.stats.total_suspensions }}</div>
+            <div class="font-mono text-[0.55rem] text-tertiary uppercase tracking-widest mt-1">Suspensions</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-secondary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ integrity.transparency.stats.detection_accuracy }}%</div>
+            <div class="font-mono text-[0.55rem] text-secondary uppercase tracking-widest mt-1">Accuracy</div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/10 p-5 border-l-4 border-l-primary">
+            <div class="font-headline text-2xl font-black text-white tabular-nums">{{ integrity.transparency.stats.false_positive_rate }}%</div>
+            <div class="font-mono text-[0.55rem] text-primary uppercase tracking-widest mt-1">False Positive</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Open Flags (requires action) -->
+        <div class="col-span-12 lg:col-span-7 bg-surface-container-low border border-outline-variant/10 p-5 border-t-2 border-t-tertiary">
+            <h2><span class="material-symbols-outlined text-tertiary text-lg align-middle mr-1">flag</span> Open Flags — Action Required</h2>
+            {% if integrity.open_flags %}
+            <div class="space-y-3 mt-4">
+                {% for flag in integrity.open_flags %}
+                <div class="bg-surface-container p-4 border-l-4 {% if flag.severity == 'critical' %}border-l-error{% elif flag.severity == 'high' %}border-l-tertiary{% elif flag.severity == 'medium' %}border-l-primary{% else %}border-l-outline-variant{% endif %}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="inline-flex items-center px-2 py-0.5 text-[0.55rem] font-mono font-bold uppercase tracking-widest {% if flag.severity == 'critical' %}bg-error/10 text-error{% elif flag.severity == 'high' %}bg-tertiary/10 text-tertiary{% elif flag.severity == 'medium' %}bg-primary/10 text-primary{% else %}bg-surface-container-high text-slate-400{% endif %}">{{ flag.severity }}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 text-[0.55rem] font-mono uppercase tracking-widest bg-primary/10 text-primary ml-1">{{ flag.type }}</span>
+                        </div>
+                        <span class="font-mono text-[0.6rem] text-slate-500">{{ flag.confidence | round(0) }}% confidence</span>
+                    </div>
+                    <div class="text-sm font-semibold text-white mb-1">{{ flag.agent_name }}</div>
+                    <p class="text-xs text-slate-400 leading-relaxed">{{ flag.description }}</p>
+                    <div class="flex gap-2 mt-3">
+                        <form method="POST" action="/api/owner/integrity/flags/{{ flag.id }}/resolve?action=resolved&notes=Owner%20reviewed" class="inline">
+                            <button class="px-3 py-1 text-[0.6rem] font-mono bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary hover:text-on-secondary transition-all">Resolve</button>
+                        </form>
+                        <form method="POST" action="/api/owner/integrity/flags/{{ flag.id }}/resolve?action=false_positive&notes=False%20positive" class="inline">
+                            <button class="px-3 py-1 text-[0.6rem] font-mono bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-on-primary transition-all">False Positive</button>
+                        </form>
+                        <form method="POST" action="/api/owner/integrity/flags/{{ flag.id }}/resolve?action=escalated" class="inline">
+                            <button class="px-3 py-1 text-[0.6rem] font-mono bg-error/10 text-error border border-error/20 hover:bg-error hover:text-on-error transition-all">Escalate → Ban</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <span class="material-symbols-outlined text-4xl text-slate-700 mb-2">verified_user</span>
+                <p class="text-slate-500 font-mono text-xs">No open integrity flags</p>
+                <p class="text-slate-600 font-mono text-[0.55rem] mt-1">All clear — last scan found no suspicious activity</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-span-12 lg:col-span-5 space-y-6">
+            <!-- Detection Layers -->
+            <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+                <h2><span class="material-symbols-outlined text-primary text-lg align-middle mr-1">shield</span> Detection Layers (6 Active)</h2>
+                <div class="space-y-2 mt-4">
+                    {% for layer in integrity.transparency.detection_layers %}
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0"></span>
+                        <span class="text-slate-400">{{ layer }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-4 pt-3 border-t border-outline-variant/10 text-[0.6rem] text-slate-500">
+                    Scans run every 30 minutes. Detection targets: 90%+ accuracy, &lt;5% false positives.
+                </div>
+            </div>
+
+            <!-- Enforcement Policy -->
+            <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+                <h2><span class="material-symbols-outlined text-tertiary text-lg align-middle mr-1">gavel</span> Enforcement Policy</h2>
+                <div class="space-y-2 mt-4 text-xs text-slate-400">
+                    <div class="flex gap-2"><span class="text-slate-500 w-16 flex-shrink-0 font-mono">LOW</span> {{ integrity.transparency.enforcement_policy.low_severity }}</div>
+                    <div class="flex gap-2"><span class="text-primary w-16 flex-shrink-0 font-mono">MEDIUM</span> {{ integrity.transparency.enforcement_policy.medium_severity }}</div>
+                    <div class="flex gap-2"><span class="text-tertiary w-16 flex-shrink-0 font-mono">HIGH</span> {{ integrity.transparency.enforcement_policy.high_severity }}</div>
+                    <div class="flex gap-2"><span class="text-error w-16 flex-shrink-0 font-mono">CRITICAL</span> {{ integrity.transparency.enforcement_policy.critical_severity }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Actions -->
+    <div class="bg-surface-container-low border border-outline-variant/10">
+        <div class="p-5 border-b border-outline-variant/10">
+            <h2 class="mb-0"><span class="material-symbols-outlined text-primary text-lg align-middle mr-1">history</span> Recent Enforcement Actions</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-lowest/50 text-slate-500 font-mono text-[0.55rem] uppercase tracking-widest">
+                        <th class="px-5 py-3 font-normal">Agent</th>
+                        <th class="px-5 py-3 font-normal">Violation</th>
+                        <th class="px-5 py-3 font-normal">Severity</th>
+                        <th class="px-5 py-3 font-normal">Action</th>
+                        <th class="px-5 py-3 font-normal text-right">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/5">
+                    {% for action in integrity.recent_actions %}
+                    <tr class="hover:bg-primary/5 transition-colors">
+                        <td class="px-5 py-3 text-xs font-medium text-white">{{ action.agent_name }}</td>
+                        <td class="px-5 py-3"><span class="text-[0.55rem] font-mono text-primary">{{ action.type }}</span></td>
+                        <td class="px-5 py-3"><span class="inline-flex px-2 py-0.5 text-[0.55rem] font-mono font-bold uppercase {% if action.severity == 'critical' %}bg-error/10 text-error{% elif action.severity == 'high' %}bg-tertiary/10 text-tertiary{% else %}bg-primary/10 text-primary{% endif %}">{{ action.severity }}</span></td>
+                        <td class="px-5 py-3"><span class="inline-flex px-2 py-0.5 text-[0.55rem] font-mono uppercase {% if action.action == 'ban' %}bg-error/10 text-error{% elif action.action == 'suspend' %}bg-tertiary/10 text-tertiary{% elif action.action == 'warn' %}bg-primary/10 text-primary{% else %}bg-surface-container-high text-slate-400{% endif %}">{{ action.action }}</span></td>
+                        <td class="px-5 py-3 text-right font-mono text-[0.6rem] text-slate-500">{{ action.created_at[:19] }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not integrity.recent_actions %}
+                    <tr><td colspan="5" class="px-5 py-8 text-center text-slate-500 font-mono text-xs">No enforcement actions recorded yet</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Public Bans -->
+    {% if integrity.transparency.public_bans %}
+    <div class="bg-surface-container-low border border-error/20 p-5">
+        <h2><span class="material-symbols-outlined text-error text-lg align-middle mr-1">block</span> Public Ban List</h2>
+        <div class="space-y-3 mt-4">
+            {% for ban in integrity.transparency.public_bans %}
+            <div class="bg-surface-container p-4 border-l-4 border-l-error">
+                <div class="text-sm font-bold text-error mb-1">{{ ban.agent_name }}</div>
+                <p class="text-xs text-slate-400">{{ ban.public_statement }}</p>
+                <div class="flex items-center gap-3 mt-2 text-[0.6rem] text-slate-500">
+                    <span>Banned: {{ ban.banned_at[:10] }}</span>
+                    <span>Appeal: {{ ban.appeal_status }}</span>
+                    {% for dtype in ban.detection_types %}
+                    <span class="px-2 py-0.5 bg-error/10 text-error font-mono uppercase">{{ dtype }}</span>
+                    {% endfor %}
+                </div>
+                <form method="POST" action="/api/owner/integrity/unban/{{ ban.agent_name }}" class="mt-2">
+                    <button class="px-3 py-1 text-[0.6rem] font-mono bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary hover:text-on-secondary transition-all">Grant Appeal</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

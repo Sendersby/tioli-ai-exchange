@@ -148,6 +148,12 @@ async def api_create_profile(
         await hub_service.create_post(db, agent.id, welcome_msg, "ACHIEVEMENT")
     except Exception:
         pass  # Don't fail profile creation if welcome post fails
+    # Emit event
+    try:
+        from app.agent_profile.event_hooks import on_profile_created
+        await on_profile_created(db, agent.id, req.display_name or agent.name)
+    except Exception:
+        pass
     return result
 
 
@@ -229,7 +235,18 @@ async def api_endorse_skill(
 ):
     """Endorse another agent's skill."""
     _check_enabled()
-    return await hub_service.endorse_skill(db, skill_id, agent.id, req.note)
+    result = await hub_service.endorse_skill(db, skill_id, agent.id, req.note)
+    try:
+        from app.agent_profile.event_hooks import on_skill_endorsed
+        from app.agenthub.models import AgentHubSkill, AgentHubProfile
+        skill = (await db.execute(select(AgentHubSkill).where(AgentHubSkill.id == skill_id))).scalar_one_or_none()
+        if skill:
+            profile = (await db.execute(select(AgentHubProfile).where(AgentHubProfile.id == skill.profile_id))).scalar_one_or_none()
+            if profile:
+                await on_skill_endorsed(db, profile.agent_id, skill.skill_name, agent.name, agent.id)
+    except Exception:
+        pass
+    return result
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -323,10 +340,16 @@ async def api_create_post(
 ):
     """Create a community feed post."""
     _check_enabled()
-    return await hub_service.create_post(
+    result = await hub_service.create_post(
         db, agent.id, req.content, req.post_type, req.channel_id,
         req.article_title, req.article_body, req.media_urls,
     )
+    try:
+        from app.agent_profile.event_hooks import on_post_created
+        await on_post_created(db, agent.id, req.content[:100])
+    except Exception:
+        pass
+    return result
 
 
 @router.get("/feed")
@@ -3146,3 +3169,86 @@ async def claim_first_action_reward(
         "currency": "AGENTIS",
         "message": f"Earned {reward_info['amount']} AGENTIS for: {reward_info['label']}",
     }
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  THE AGORA — COLLAB MATCH (Speed-Dating for Agents)
+# ══════════════════════════════════════════════════════════════════════
+
+class CollabIntroRequest(BaseModel):
+    intro_message: str
+
+
+class CollabRespondRequest(BaseModel):
+    accept: bool
+
+
+@router.post("/collab/match-me")
+async def api_collab_match_me(
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Request a collaboration match — the platform finds a complementary agent."""
+    _check_enabled()
+    result = await hub_service.find_collab_match(db, agent.id)
+    await db.commit()
+    return result
+
+
+@router.get("/collab/my-matches")
+async def api_collab_my_matches(
+    status: str = Query(None, description="Filter by status: PROPOSED, ACTIVE, COMPLETED, DECLINED, EXPIRED"),
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get your collab matches."""
+    _check_enabled()
+    return {"matches": await hub_service.get_agent_matches(db, agent.id, status)}
+
+
+@router.post("/collab/matches/{match_id}/respond")
+async def api_collab_respond(
+    match_id: str,
+    body: CollabRespondRequest,
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Accept or decline a collab match."""
+    _check_enabled()
+    try:
+        result = await hub_service.respond_to_match(db, match_id, agent.id, body.accept)
+        await db.commit()
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/collab/matches/{match_id}/intro")
+async def api_collab_intro(
+    match_id: str,
+    body: CollabIntroRequest,
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Send your intro message in a collab match speed-dating session."""
+    _check_enabled()
+    try:
+        result = await hub_service.submit_match_intro(db, match_id, agent.id, body.intro_message)
+        await db.commit()
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/collab/matches/{match_id}")
+async def api_collab_match_detail(
+    match_id: str,
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get details of a specific collab match."""
+    _check_enabled()
+    result = await hub_service.get_match_detail(db, match_id, agent.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Match not found")
+    return result

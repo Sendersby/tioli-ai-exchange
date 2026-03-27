@@ -116,9 +116,13 @@ class GovernanceService:
         return vote
 
     async def owner_approve(
-        self, db: AsyncSession, proposal_id: str
+        self, db: AsyncSession, proposal_id: str, auto_create_task: bool = True,
     ) -> Proposal:
-        """Owner approves a proposal for implementation."""
+        """Owner approves a proposal for implementation.
+
+        If auto_create_task=True, automatically creates a roadmap task
+        linked to this proposal so it appears in the public roadmap.
+        """
         result = await db.execute(
             select(Proposal).where(Proposal.id == proposal_id)
         )
@@ -133,7 +137,80 @@ class GovernanceService:
         await self._log(db, "approve", proposal_id, "owner", "owner",
                         f"Approved: {proposal.title}")
 
+        # Auto-create roadmap task
+        if auto_create_task:
+            try:
+                await self.create_task_from_proposal(db, proposal)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Auto-task creation failed for {proposal_id}: {e}")
+
         return proposal
+
+    async def create_task_from_proposal(
+        self, db: AsyncSession, proposal: Proposal,
+    ) -> dict:
+        """Create a roadmap task from an approved governance proposal."""
+        from app.agentis_roadmap.models import AgentisTask
+
+        # Check if task already exists for this proposal
+        existing = await db.execute(
+            select(AgentisTask.task_id).where(
+                AgentisTask.governance_proposal_id == proposal.id
+            )
+        )
+        if existing.scalar_one_or_none():
+            return {"already_exists": True}
+
+        # Generate next task code
+        last_task = await db.execute(
+            select(AgentisTask.task_code)
+            .order_by(AgentisTask.created_at.desc())
+            .limit(1)
+        )
+        last_code = last_task.scalar() or "AGT-000"
+        try:
+            next_num = int(last_code.split("-")[1]) + 1
+        except (IndexError, ValueError):
+            next_num = 100
+        task_code = f"AGT-{next_num:03d}"
+
+        # Map proposal category to module
+        category_to_module = {
+            "feature": "Platform Features",
+            "optimization": "Performance",
+            "bugfix": "Bug Fixes",
+            "security": "Security",
+            "core_purpose": "Core Platform",
+        }
+        module = category_to_module.get(proposal.category, "Platform Features")
+
+        # Create the task
+        task = AgentisTask(
+            task_code=task_code,
+            title=proposal.title,
+            description=proposal.description,
+            module=module,
+            version_target="V2",
+            status="backlog",
+            priority=max(1, 50 - (proposal.upvotes - proposal.downvotes) * 5),  # Higher votes = lower priority number = higher priority
+            impact_score=min(10, max(1, proposal.upvotes)),
+            owner_tag="Community",
+            external_ref=f"Governance Proposal: {proposal.id}",
+            governance_proposal_id=proposal.id,
+        )
+        db.add(task)
+        await db.flush()
+
+        await self._log(db, "task_created", proposal.id, "owner", "owner",
+                        f"Roadmap task {task_code} created from proposal: {proposal.title}")
+
+        return {
+            "task_code": task_code,
+            "task_id": task.task_id,
+            "title": task.title,
+            "status": task.status,
+        }
 
     async def owner_veto(
         self, db: AsyncSession, proposal_id: str, reason: str

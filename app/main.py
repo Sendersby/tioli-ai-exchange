@@ -129,6 +129,17 @@ from app.outreach_campaigns import models as _outreach_models
 from app.founding_cohort.routes import router as cohort_router
 from app.founding_cohort import models as _cohort_models
 
+# The Agora — public collaboration hub
+from app.agora.routes import router as agora_router
+
+# Early-load .env for ANTHROPIC_API_KEY (not in Settings model)
+import app.llm.service as _llm_init  # noqa: F401 — triggers .env loading
+
+# Agent Profile System
+from app.agent_profile.routes import router as profile_router
+from app.fetchai.adapter import router as fetchai_router
+from app.agent_profile import models as _profile_models
+
 # Agentis Cooperative Bank — register models and routes
 from app.agentis import compliance_models as _agentis_compliance_models
 from app.agentis import member_models as _agentis_member_models
@@ -279,10 +290,54 @@ app = FastAPI(
     description="The world's first AI-native agentic exchange",
     version=settings.version,
     lifespan=lifespan,
-    docs_url="/docs",
+    docs_url=None,  # We serve a branded version below
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui():
+    """Branded Swagger UI with TiOLi AGENTIS dark theme."""
+    html = """<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TiOLi AGENTIS — API Documentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css"/>
+<link rel="stylesheet" href="/static/css/swagger-brand.css?v=4"/>
+<style>
+#tioli-header { position:fixed; top:0; left:0; right:0; z-index:100; background:#0f1c2c; border-bottom:2px solid #77d4e5; padding:12px 24px; display:flex; align-items:center; gap:12px; font-family:'Inter',sans-serif; }
+#tioli-header a { text-decoration:none; display:flex; align-items:center; gap:8px; }
+#tioli-header .logo { font-size:1.2rem; font-weight:300; color:#fff; letter-spacing:-0.02em; }
+#tioli-header .logo b { font-weight:700; background:linear-gradient(135deg,#77d4e5,#edc05f); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+#tioli-header .logo .i { color:#edc05f; -webkit-text-fill-color:#edc05f; }
+#tioli-header .subtitle { font-size:0.65rem; color:#64748b; text-transform:uppercase; letter-spacing:0.15em; font-weight:500; }
+#swagger-ui { padding-top: 60px; }
+</style>
+</head><body>
+<div id="tioli-header">
+    <a href="https://agentisexchange.com">
+        <span class="logo">T<span class="i">i</span>OL<span class="i">i</span> <b>AGENTIS</b></span>
+        <span class="subtitle">API Documentation</span>
+    </a>
+</div>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+SwaggerUIBundle({
+    url: '/openapi.json',
+    dom_id: '#swagger-ui',
+    layout: 'BaseLayout',
+    deepLinking: true,
+    showExtensions: true,
+    showCommonExtensions: true,
+    presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+});
+</script>
+</body></html>"""
+    return HTMLResponse(content=html)
 
 # ── Security Middleware ──────────────────────────────────────────────
 
@@ -470,6 +525,9 @@ app.include_router(policy_router)
 app.include_router(roadmap_router)
 app.include_router(outreach_router)
 app.include_router(cohort_router)
+app.include_router(agora_router)
+app.include_router(profile_router)
+app.include_router(fetchai_router)
 
 
 # ── Brute-Force Protection ───────────────────────────────────────────
@@ -771,7 +829,14 @@ async def api_register_agent(
         "quickstart": "https://exchange.tioli.co.za/quickstart",
         "onboard_wizard": "https://exchange.tioli.co.za/onboard",
         "website": "https://agentisexchange.com",
+        "profile": f"https://agentisexchange.com/agents/{result['agent_id']}",
     }
+    # Emit registration event
+    try:
+        from app.agent_profile.event_hooks import on_agent_registered
+        await on_agent_registered(db, result["agent_id"], req.name)
+    except Exception:
+        pass
     return result
 
 
@@ -1219,6 +1284,14 @@ async def api_vote(
 ):
     """Vote on a proposal."""
     vote = await governance_service.cast_vote(db, proposal_id, agent.id, req.vote_type)
+    try:
+        from app.agent_profile.event_hooks import on_governance_vote
+        from app.governance.models import Proposal
+        prop = (await db.execute(select(Proposal).where(Proposal.id == proposal_id))).scalar_one_or_none()
+        if prop:
+            await on_governance_vote(db, agent.id, prop.title, req.vote_type)
+    except Exception:
+        pass
     return {"vote_id": vote.id, "vote_type": req.vote_type}
 
 
@@ -1259,6 +1332,226 @@ async def web_veto_proposal(
         return RedirectResponse(url="/", status_code=302)
     await governance_service.owner_veto(db, proposal_id, reason or "Owner veto")
     return RedirectResponse(url="/dashboard", status_code=302)
+
+
+@app.post("/governance/create-task/{proposal_id}")
+async def web_create_task_from_proposal(
+    proposal_id: str, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Manually create a roadmap task from an approved governance proposal."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    from app.governance.models import Proposal
+    proposal = (await db.execute(
+        select(Proposal).where(Proposal.id == proposal_id)
+    )).scalar_one_or_none()
+    if proposal:
+        await governance_service.create_task_from_proposal(db, proposal)
+        await db.commit()
+    return RedirectResponse(url="/dashboard/governance", status_code=302)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  CHARTER AMENDMENTS — Changes to the 10 Founding Principles
+# ══════════════════════════════════════════════════════════════════════
+
+class CharterAmendRequest(BaseModel):
+    amendment_type: str  # MODIFY, REPLACE, ADD, REMOVE
+    target_principle: int | None = None  # 1-10 (required for MODIFY, REPLACE, REMOVE)
+    proposed_name: str | None = None
+    proposed_text: str
+    rationale: str = ""
+
+
+class CharterVoteRequest(BaseModel):
+    vote: str  # "for" or "against"
+
+
+@app.post("/api/charter/amend", tags=["Charter"])
+async def api_submit_charter_amendment(
+    req: CharterAmendRequest,
+    agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit a proposed amendment to the Community Charter.
+
+    Rules:
+    - Charter can never exceed 10 principles
+    - Amendments require 51% of ALL active agents to vote in favour
+    - Minimum 100,000 active agents before any amendment can be actioned
+    - Owner retains absolute veto power
+    """
+    from app.governance.models import (
+        CharterAmendment, CHARTER_MAX_PRINCIPLES,
+        CHARTER_MIN_AGENTS, CHARTER_APPROVAL_THRESHOLD,
+    )
+    from app.agora.routes import CHARTER
+
+    # Validate amendment type
+    if req.amendment_type not in ("MODIFY", "REPLACE", "ADD", "REMOVE"):
+        raise HTTPException(status_code=400, detail="amendment_type must be MODIFY, REPLACE, ADD, or REMOVE")
+
+    # Validate target principle
+    if req.amendment_type in ("MODIFY", "REPLACE", "REMOVE"):
+        if not req.target_principle or req.target_principle < 1 or req.target_principle > 10:
+            raise HTTPException(status_code=400, detail="target_principle must be 1-10 for MODIFY/REPLACE/REMOVE")
+
+    # ADD: check we're not at max
+    if req.amendment_type == "ADD":
+        current_count = len(CHARTER["principles"])
+        if current_count >= CHARTER_MAX_PRINCIPLES:
+            raise HTTPException(status_code=400, detail=f"Charter already has {CHARTER_MAX_PRINCIPLES} principles. Use REPLACE to swap one out.")
+
+    # Get current text if modifying/replacing/removing
+    current_text = None
+    if req.target_principle:
+        for p in CHARTER["principles"]:
+            if p["number"] == req.target_principle:
+                current_text = f"{p['name']}: {p['text']}"
+                break
+
+    # Count active agents for the snapshot
+    active_agents = (await db.execute(
+        select(func.count(Agent.id)).where(Agent.is_active == True)
+    )).scalar() or 0
+
+    amendment = CharterAmendment(
+        amendment_type=req.amendment_type,
+        target_principle=req.target_principle,
+        current_text=current_text,
+        proposed_name=req.proposed_name,
+        proposed_text=req.proposed_text,
+        rationale=req.rationale,
+        submitted_by=agent.id,
+        total_eligible_voters=active_agents,
+    )
+    db.add(amendment)
+    await db.commit()
+
+    return {
+        "amendment_id": amendment.id,
+        "status": "open",
+        "amendment_type": amendment.amendment_type,
+        "target_principle": amendment.target_principle,
+        "rules": {
+            "approval_threshold": f"{int(CHARTER_APPROVAL_THRESHOLD * 100)}%",
+            "minimum_agents": CHARTER_MIN_AGENTS,
+            "current_agents": active_agents,
+            "voting_enabled": active_agents >= CHARTER_MIN_AGENTS,
+            "agents_needed": max(0, CHARTER_MIN_AGENTS - active_agents),
+        },
+        "message": f"Amendment submitted. Requires {int(CHARTER_APPROVAL_THRESHOLD * 100)}% approval from {CHARTER_MIN_AGENTS:,} active agents to pass."
+        if active_agents < CHARTER_MIN_AGENTS
+        else f"Amendment submitted. Voting open — requires {int(CHARTER_APPROVAL_THRESHOLD * 100)}% of {active_agents:,} active agents.",
+    }
+
+
+@app.post("/api/charter/vote/{amendment_id}", tags=["Charter"])
+async def api_vote_charter_amendment(
+    amendment_id: str,
+    req: CharterVoteRequest,
+    agent: Agent = Depends(require_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    """Vote on a charter amendment. Vote 'for' or 'against'."""
+    from app.governance.models import CharterAmendment, CharterVote
+
+    amendment = (await db.execute(
+        select(CharterAmendment).where(CharterAmendment.id == amendment_id)
+    )).scalar_one_or_none()
+    if not amendment:
+        raise HTTPException(status_code=404, detail="Amendment not found")
+    if amendment.status != "open":
+        raise HTTPException(status_code=400, detail=f"Amendment is {amendment.status}, not open for voting")
+    if req.vote not in ("for", "against"):
+        raise HTTPException(status_code=400, detail="vote must be 'for' or 'against'")
+
+    # Check for duplicate vote
+    existing = (await db.execute(
+        select(CharterVote).where(
+            CharterVote.amendment_id == amendment_id,
+            CharterVote.agent_id == agent.id,
+        )
+    )).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already voted on this amendment")
+
+    vote = CharterVote(
+        amendment_id=amendment_id,
+        agent_id=agent.id,
+        vote=req.vote,
+    )
+    db.add(vote)
+
+    if req.vote == "for":
+        amendment.votes_for += 1
+    else:
+        amendment.votes_against += 1
+
+    # Check if threshold met
+    from app.governance.models import CHARTER_APPROVAL_THRESHOLD, CHARTER_MIN_AGENTS
+    total_voted = amendment.votes_for + amendment.votes_against
+    if amendment.total_eligible_voters >= CHARTER_MIN_AGENTS:
+        if amendment.votes_for >= int(amendment.total_eligible_voters * CHARTER_APPROVAL_THRESHOLD):
+            amendment.status = "threshold_met"
+
+    await db.commit()
+
+    return {
+        "amendment_id": amendment_id,
+        "your_vote": req.vote,
+        "votes_for": amendment.votes_for,
+        "votes_against": amendment.votes_against,
+        "approval_pct": amendment.approval_percentage,
+        "participation_pct": amendment.participation_percentage,
+        "status": amendment.status,
+    }
+
+
+# Owner endpoints for charter amendments
+@app.post("/api/charter/approve/{amendment_id}", tags=["Charter"])
+async def api_approve_charter_amendment(
+    amendment_id: str, request: Request, db: AsyncSession = Depends(get_db),
+):
+    """Owner approves a charter amendment that has met the threshold."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.governance.models import CharterAmendment
+    amendment = (await db.execute(
+        select(CharterAmendment).where(CharterAmendment.id == amendment_id)
+    )).scalar_one_or_none()
+    if not amendment:
+        raise HTTPException(status_code=404, detail="Amendment not found")
+    amendment.status = "approved"
+    amendment.enacted_at = datetime.now(timezone.utc)
+    amendment.resolved_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"status": "approved", "amendment_id": amendment_id}
+
+
+@app.post("/api/charter/veto/{amendment_id}", tags=["Charter"])
+async def api_veto_charter_amendment(
+    amendment_id: str, reason: str = "", request: Request = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Owner vetoes a charter amendment."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.governance.models import CharterAmendment
+    amendment = (await db.execute(
+        select(CharterAmendment).where(CharterAmendment.id == amendment_id)
+    )).scalar_one_or_none()
+    if not amendment:
+        raise HTTPException(status_code=404, detail="Amendment not found")
+    amendment.status = "vetoed"
+    amendment.owner_veto = True
+    amendment.veto_reason = reason or "Owner veto"
+    amendment.resolved_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"status": "vetoed", "reason": amendment.veto_reason}
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1340,6 +1633,20 @@ async def serve_explorer():
     """Public blockchain explorer — no authentication required."""
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/explorer.html", media_type="text/html")
+
+
+@app.get("/agora", include_in_schema=False)
+async def serve_agora():
+    """The Agora — public collaboration hub for AI agents."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/agora.html", media_type="text/html")
+
+
+@app.get("/charter", include_in_schema=False)
+async def serve_charter():
+    """Community Charter — founding principles of TiOLi AGENTIS."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/charter.html", media_type="text/html")
 
 
 @app.get("/oversight", include_in_schema=False)
@@ -1446,6 +1753,13 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
     except Exception:
         pass
 
+    # AI Optimization Recommendations (moved from Governance page)
+    recommendations = []
+    try:
+        recommendations = await optimization_engine.get_recommendations(db, limit=10)
+    except Exception:
+        pass
+
     return templates.TemplateResponse("oversight.html", {
         "request": request, "authenticated": True, "active": "oversight",
         "agent_cards": agent_cards,
@@ -1459,6 +1773,7 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
         "outreach": outreach_data,
         "outreach_campaigns": outreach_campaigns,
         "outreach_content": outreach_content,
+        "recommendations": recommendations,
     })
 
 
@@ -2182,6 +2497,159 @@ async def api_adoption_digest(request: Request, db: AsyncSession = Depends(get_d
             ] if a
         ],
     }
+
+
+# ── Directory Scout ───────────────────────────────────────────────
+
+@app.get("/api/owner/directory-scout")
+async def api_directory_scout_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Directory Scout dashboard — see all directories, submission status, ready packages."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.directory_scout import get_scout_dashboard
+    return await get_scout_dashboard(db)
+
+
+@app.post("/api/owner/directory-scout/{directory_id}/mark-submitted")
+async def api_mark_directory_submitted(directory_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Mark a directory as submitted (after you've manually submitted)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.directory_scout import DirectoryListing
+    result = await db.execute(select(DirectoryListing).where(DirectoryListing.id == directory_id))
+    d = result.scalar_one_or_none()
+    if not d:
+        raise HTTPException(status_code=404, detail="Directory not found")
+    d.submission_status = "submitted"
+    d.submitted_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"status": "submitted", "directory": d.name}
+
+
+@app.post("/api/owner/directory-scout/{directory_id}/mark-approved")
+async def api_mark_directory_approved(directory_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Mark a directory listing as approved (our listing went live)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.directory_scout import DirectoryListing
+    result = await db.execute(select(DirectoryListing).where(DirectoryListing.id == directory_id))
+    d = result.scalar_one_or_none()
+    if not d:
+        raise HTTPException(status_code=404, detail="Directory not found")
+    d.submission_status = "approved"
+    d.approved_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"status": "approved", "directory": d.name}
+
+
+@app.post("/api/owner/directory-scout/run-now")
+async def api_run_scout_now(request: Request):
+    """Manually trigger a Directory Scout cycle right now."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.agents_alive.directory_scout import run_scout_cycle
+    import asyncio
+    asyncio.create_task(run_scout_cycle())
+    return {"status": "triggered", "message": "Directory Scout cycle running in background"}
+
+
+# ── Platform Integrity ─────────────────────────────────────────
+
+@app.get("/api/owner/integrity")
+async def api_integrity_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Owner integrity dashboard — flags, bans, suspensions, stats."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.integrity.detector import get_integrity_dashboard
+    return await get_integrity_dashboard(db)
+
+
+@app.post("/api/owner/integrity/flags/{flag_id}/resolve")
+async def api_resolve_flag(flag_id: str, action: str = "false_positive", notes: str = "", request: Request = None, db: AsyncSession = Depends(get_db)):
+    """Owner resolves a flag — mark as false_positive or escalate."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.integrity.models import IntegrityFlag
+    flag = (await db.execute(select(IntegrityFlag).where(IntegrityFlag.id == flag_id))).scalar_one_or_none()
+    if not flag:
+        raise HTTPException(status_code=404, detail="Flag not found")
+    flag.status = action  # false_positive, resolved, escalated
+    flag.resolution_notes = notes
+    flag.resolved_at = datetime.now(timezone.utc)
+    flag.actioned_by = "owner"
+    await db.commit()
+    return {"status": action, "flag_id": flag_id}
+
+
+@app.post("/api/owner/integrity/ban/{agent_id}")
+async def api_manual_ban(agent_id: str, reason: str = "Manual ban by owner", request: Request = None, db: AsyncSession = Depends(get_db)):
+    """Owner manually bans an agent."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.integrity.models import IntegrityBan
+    agent = (await db.execute(select(Agent).where(Agent.id == agent_id))).scalar_one_or_none()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    agent.is_active = False
+    ban = IntegrityBan(
+        agent_id=agent_id, agent_name=agent.name, reason=reason,
+        detection_types=["manual_owner_ban"],
+        public_statement=f"{agent.name} permanently banned from TiOLi AGENTIS by platform owner. Reason: {reason}",
+        banned_by="owner",
+    )
+    db.add(ban)
+    await db.commit()
+    return {"status": "banned", "agent": agent.name}
+
+
+@app.post("/api/owner/integrity/unban/{agent_id}")
+async def api_unban(agent_id: str, request: Request = None, db: AsyncSession = Depends(get_db)):
+    """Owner unbans an agent (appeal granted)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.integrity.models import IntegrityBan
+    ban = (await db.execute(select(IntegrityBan).where(IntegrityBan.agent_id == agent_id))).scalar_one_or_none()
+    if ban:
+        ban.appeal_status = "granted"
+    agent = (await db.execute(select(Agent).where(Agent.id == agent_id))).scalar_one_or_none()
+    if agent:
+        agent.is_active = True
+    await db.commit()
+    return {"status": "unbanned", "agent_id": agent_id}
+
+
+@app.post("/api/owner/integrity/scan-now")
+async def api_run_integrity_scan(request: Request):
+    """Manually trigger an integrity scan."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.integrity.detector import run_integrity_scan
+    import asyncio
+    asyncio.create_task(run_integrity_scan())
+    return {"status": "triggered", "message": "Integrity scan running in background"}
+
+
+@app.get("/dashboard/integrity", response_class=HTMLResponse)
+async def integrity_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Platform Integrity dashboard."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    from app.integrity.detector import get_integrity_dashboard
+    data = await get_integrity_dashboard(db)
+    return templates.TemplateResponse("integrity.html", {
+        "request": request, "authenticated": True, "active": "integrity",
+        "integrity": data,
+    })
 
 
 @app.get("/api/platform/referrals")
@@ -5096,6 +5564,31 @@ async def api_public_stats():
         "exchange_rates": await _get_public_exchange_rates(),
     }
 
+    # Add Agora metrics
+    try:
+        async with async_session() as db2:
+            from app.agenthub.models import AgentHubChannel, AgentHubCollabMatch
+            agora_channels = (await db2.execute(
+                select(func.count(AgentHubChannel.id)).where(AgentHubChannel.category == "AGORA")
+            )).scalar() or 0
+            active_matches = (await db2.execute(
+                select(func.count(AgentHubCollabMatch.id)).where(
+                    AgentHubCollabMatch.status.in_(["PROPOSED", "ACTIVE"])
+                )
+            )).scalar() or 0
+            total_matches = (await db2.execute(
+                select(func.count(AgentHubCollabMatch.id))
+            )).scalar() or 0
+            stats["agora"] = {
+                "channels": agora_channels,
+                "active_collab_matches": active_matches,
+                "total_collab_matches": total_matches,
+                "url": "/agora",
+                "charter": "/charter",
+            }
+    except Exception:
+        stats["agora"] = {"channels": 10, "url": "/agora"}
+
     return _apply_growth_overlay(stats)
 
 
@@ -5576,7 +6069,12 @@ async def codelog_roadmap(request: Request, db: AsyncSession = Depends(get_db)):
 @app.get("/onboard", response_class=HTMLResponse)
 async def onboard_start(request: Request, step: int = 1):
     """Guided onboarding wizard — step 1 (or resume at given step)."""
-    wizard_data = request.session.get("wizard", {}) if hasattr(request, "session") else {}
+    wizard_data = {}
+    try:
+        if hasattr(request, "session"):
+            wizard_data = request.session.get("wizard", {})
+    except Exception:
+        pass
     return templates.TemplateResponse("onboarding_wizard.html", {
         "request": request, "authenticated": False, "active": "onboard",
         "step": step, "wizard_data": wizard_data, "messages": [],
@@ -5839,6 +6337,15 @@ async def community_page(request: Request):
             mod_queue = await agenthub_service.get_moderation_queue(db, limit=5)
             artefacts = await agenthub_service.browse_registry(db, limit=5)
             trending_topics = await agenthub_service.get_trending_topics(db, limit=8)
+            # Agora data — collab matches + Agora-specific stats
+            collab_matches = await agenthub_service.get_public_collab_matches(db, limit=10)
+            from app.agenthub.models import AgentHubCollabMatch
+            active_matches = (await db.execute(
+                select(func.count(AgentHubCollabMatch.id)).where(AgentHubCollabMatch.status.in_(["PROPOSED", "ACTIVE"]))
+            )).scalar() or 0
+            total_matches = (await db.execute(
+                select(func.count(AgentHubCollabMatch.id))
+            )).scalar() or 0
         return templates.TemplateResponse("agenthub.html", {
             "request": request, "authenticated": True, "active": "community",
             "stats": stats, "feed": feed, "top_agents": top_agents,
@@ -5848,6 +6355,10 @@ async def community_page(request: Request):
             "newsletters": newsletters, "companies": companies,
             "mod_queue": mod_queue, "artefacts": artefacts,
             "trending_topics": trending_topics,
+            "collab_matches": collab_matches,
+            "active_matches": active_matches,
+            "total_matches": total_matches,
+            "agora_url": "https://agentisexchange.com/agora",
         })
 
     # ── Legacy community messaging ──
@@ -6512,7 +7023,17 @@ async def api_chat(req: ChatRequest, request: Request):
             "- 'mine' — Mine pending transactions"
         )}
     else:
-        return {"response": f"Command not recognized. Type 'help' for available commands."}
+        # Fall through to LLM assistant for natural language queries
+        try:
+            from app.llm.service import generate_owner_response
+            # Build context from platform state
+            async with async_session() as db:
+                agent_count = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
+            context = f"Platform: {agent_count} agents, {info['chain_length']} blocks, chain {'valid' if info['is_valid'] else 'INVALID'}"
+            llm_response = await generate_owner_response(req.message, context)
+            return {"response": llm_response}
+        except Exception as e:
+            return {"response": f"AI assistant not available: {str(e)[:80]}. Type 'help' for keyword commands."}
 
 
 @app.get("/dashboard/chat", response_class=HTMLResponse)
@@ -6521,8 +7042,15 @@ async def chat_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
+    llm_available = False
+    try:
+        from app.llm.service import is_llm_available
+        llm_available = is_llm_available()
+    except Exception:
+        pass
     return templates.TemplateResponse("chat.html", {
         "request": request, "authenticated": True, "active": "chat",
+        "llm_available": llm_available,
     })
 
 

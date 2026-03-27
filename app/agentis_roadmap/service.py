@@ -118,6 +118,18 @@ class RoadmapService:
 
         if updates.get("status") == "done" and not task.completed_at:
             task.completed_at = datetime.now(timezone.utc)
+            # Reverse sync: auto-close linked governance proposal
+            if task.governance_proposal_id:
+                try:
+                    from app.governance.models import Proposal
+                    prop = (await db.execute(
+                        select(Proposal).where(Proposal.id == task.governance_proposal_id)
+                    )).scalar_one_or_none()
+                    if prop and prop.status == "approved":
+                        prop.status = "implemented"
+                        prop.resolved_at = datetime.now(timezone.utc)
+                except Exception:
+                    pass  # Don't break task update if proposal sync fails
 
         task.updated_at = datetime.now(timezone.utc)
         await db.flush()
@@ -299,6 +311,7 @@ class RoadmapService:
             "data_objects": t.data_objects, "requires_approval": t.requires_approval,
             "requires_3fa": t.requires_3fa, "immutable_check": t.immutable_check,
             "depends_on": t.depends_on, "external_ref": t.external_ref,
+            "governance_proposal_id": t.governance_proposal_id,
             "created_at": str(t.created_at), "updated_at": str(t.updated_at),
             "completed_at": str(t.completed_at) if t.completed_at else None,
         }

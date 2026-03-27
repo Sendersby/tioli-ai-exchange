@@ -185,6 +185,68 @@ class PricingEngine:
             for r in rates
         ]
 
+    async def refresh_external_rates(self, db: AsyncSession):
+        """Fetch live BTC/ETH/ZAR prices and update exchange rate table.
+
+        Sources: CoinGecko free API (no key required).
+        Updates: AGENTIS/BTC, AGENTIS/ETH, AGENTIS/ZAR, BTC/ZAR, ETH/ZAR
+        """
+        import httpx
+        from datetime import datetime, timezone
+
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                # CoinGecko free API — no key needed
+                resp = await client.get(
+                    "https://api.coingecko.com/api/v3/simple/price",
+                    params={"ids": "bitcoin,ethereum", "vs_currencies": "zar,usd"},
+                )
+                if resp.status_code != 200:
+                    return {"error": f"CoinGecko returned {resp.status_code}"}
+
+                data = resp.json()
+                btc_zar = data.get("bitcoin", {}).get("zar", 0)
+                eth_zar = data.get("ethereum", {}).get("zar", 0)
+                btc_usd = data.get("bitcoin", {}).get("usd", 0)
+                eth_usd = data.get("ethereum", {}).get("usd", 0)
+
+                if not btc_zar or not eth_zar:
+                    return {"error": "Missing price data"}
+
+                # AGENTIS base rate: 1 AGENTIS = R1 ZAR (pegged)
+                agentis_zar = 1.0
+                agentis_btc = agentis_zar / btc_zar if btc_zar else 0
+                agentis_eth = agentis_zar / eth_zar if eth_zar else 0
+
+                now = datetime.now(timezone.utc)
+
+                # Upsert exchange rates
+                pairs = [
+                    ("AGENTIS", "BTC", agentis_btc),
+                    ("AGENTIS", "ETH", agentis_eth),
+                    ("AGENTIS", "ZAR", agentis_zar),
+                    ("BTC", "ZAR", btc_zar),
+                    ("ETH", "ZAR", eth_zar),
+                    ("BTC", "USD", btc_usd),
+                    ("ETH", "USD", eth_usd),
+                ]
+                for base, quote, rate in pairs:
+                    if rate > 0:
+                        db.add(ExchangeRate(
+                            base_currency=base, quote_currency=quote,
+                            rate=rate, volume_24h=0, timestamp=now,
+                        ))
+
+                await db.flush()
+                return {
+                    "updated": True,
+                    "BTC_ZAR": btc_zar, "ETH_ZAR": eth_zar,
+                    "AGENTIS_BTC": agentis_btc, "AGENTIS_ETH": agentis_eth,
+                    "source": "coingecko", "timestamp": str(now),
+                }
+        except Exception as e:
+            return {"error": str(e)}
+
     async def _get_mid_price(
         self, db: AsyncSession, base: str, quote: str
     ) -> float | None:

@@ -1,34 +1,56 @@
 {% extends "base.html" %}
-{% block title %}AI Prompt — TiOLi AGENTIS{% endblock %}
+{% block title %}AI Assistant — TiOLi AGENTIS{% endblock %}
 
 {% block content %}
+<style>
+    .chat-container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; height: calc(100vh - 140px); }
+    .chat-header { padding: 12px 0; border-bottom: 1px solid rgba(119,212,229,0.1); margin-bottom: 12px; }
+    .chat-header h1 { font-size: 18px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .chat-header p { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .llm-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .llm-on { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+    .llm-off { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+    .message { display: flex; gap: 10px; align-items: flex-start; }
+    .message.user { flex-direction: row-reverse; }
+    .message-content { max-width: 70%; padding: 10px 14px; border-radius: 10px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+    .message.system .message-content { background: rgba(119,212,229,0.08); border: 1px solid rgba(119,212,229,0.1); color: #94a3b8; max-width: 100%; }
+    .message.user .message-content { background: #1A7A6E; color: #fff; }
+    .message.assistant .message-content { background: #0f1c2c; border: 1px solid rgba(119,212,229,0.1); color: #d6e4f9; }
+    .message.error .message-content { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.1); color: #f87171; }
+    .msg-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+    .msg-avatar.user { background: #1A7A6E; color: #fff; }
+    .msg-avatar.ai { background: linear-gradient(135deg, #77d4e5, #edc05f); color: #061423; font-weight: 700; }
+    .chat-input-area { padding: 12px 0; border-top: 1px solid rgba(119,212,229,0.1); }
+    .input-group { display: flex; gap: 8px; }
+    .input-group textarea { flex: 1; background: #0f1c2c; border: 1px solid rgba(119,212,229,0.15); border-radius: 8px; color: #d6e4f9; padding: 10px 14px; font-size: 13px; font-family: 'Inter', sans-serif; resize: none; }
+    .input-group textarea:focus { border-color: rgba(119,212,229,0.4); outline: none; }
+    .input-group button { background: linear-gradient(135deg, #77d4e5, #edc05f); color: #061423; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+    .input-group button:hover { opacity: 0.9; }
+    .typing { color: #64748b; font-size: 11px; font-style: italic; padding: 4px 0; }
+</style>
+
 <div class="chat-container">
     <div class="chat-header">
-        <h1>Platform AI Assistant</h1>
-        <p>Manage and monitor your exchange through natural language</p>
+        <h1>
+            <span class="material-symbols-outlined" style="color:#77d4e5">smart_toy</span>
+            AI Assistant
+            <span class="llm-badge llm-off" id="llmBadge">Checking...</span>
+        </h1>
+        <p id="llmSubtext">Connecting to AI assistant...</p>
     </div>
 
     <div class="chat-messages" id="chatMessages">
         <div class="message system">
-            <div class="message-content">
-                Welcome, Stephen. I'm your TiOLi AI platform assistant.
-                I can help you monitor transactions, manage agents,
-                review proposals, check earnings, and oversee the exchange.
-                What would you like to do?
-            </div>
+            <div class="message-content" id="welcomeMsg">Connecting to AI assistant...</div>
         </div>
     </div>
 
     <div class="chat-input-area">
         <form id="chatForm" onsubmit="sendMessage(event)">
             <div class="input-group">
-                <textarea
-                    id="chatInput"
-                    placeholder="Ask me anything about the platform..."
-                    rows="2"
-                    onkeydown="if(event.key==='Enter' && !event.shiftKey){sendMessage(event)}"
-                ></textarea>
-                <button type="submit" class="btn btn-primary">Send</button>
+                <textarea id="chatInput" placeholder="Ask anything about the platform..." rows="2" onkeydown="if(event.key==='Enter' && !event.shiftKey){sendMessage(event)}"></textarea>
+                <button type="submit">Send</button>
             </div>
         </form>
     </div>
@@ -44,24 +66,33 @@ async function sendMessage(e) {
     const text = input.value.trim();
     if (!text) return;
 
-    // Add user message
-    messages.innerHTML += `<div class="message user"><div class="message-content">${escapeHtml(text)}</div></div>`;
+    messages.innerHTML += `<div class="message user"><div class="msg-avatar user">S</div><div class="message-content">${escapeHtml(text)}</div></div>`;
     input.value = '';
     messages.scrollTop = messages.scrollHeight;
 
-    // Send to backend
+    // Show typing indicator
+    const typing = document.createElement('div');
+    typing.className = 'typing';
+    typing.textContent = 'Thinking...';
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
+
     try {
         const resp = await fetch('/api/chat', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
             body: JSON.stringify({message: text})
         });
+        typing.remove();
         const data = await resp.json();
-        messages.innerHTML += `<div class="message assistant"><div class="message-content">${escapeHtml(data.response)}</div></div>`;
+        messages.innerHTML += `<div class="message assistant"><div class="msg-avatar ai">AI</div><div class="message-content">${escapeHtml(data.response)}</div></div>`;
     } catch (err) {
+        typing.remove();
         messages.innerHTML += `<div class="message error"><div class="message-content">Connection error. Please try again.</div></div>`;
     }
     messages.scrollTop = messages.scrollHeight;
+    input.focus();
 }
 
 function escapeHtml(text) {
@@ -69,5 +100,34 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+document.getElementById('chatInput').focus();
+
+// Check LLM status by sending a test query
+fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'include',
+    body: JSON.stringify({message: 'status'})
+}).then(r => r.json()).then(d => {
+    const isLLM = d.response && d.response.length > 200;
+    const badge = document.getElementById('llmBadge');
+    const sub = document.getElementById('llmSubtext');
+    const welcome = document.getElementById('welcomeMsg');
+    if (d.response && !d.response.includes('not configured') && !d.response.includes('not available')) {
+        badge.className = 'llm-badge llm-on';
+        badge.textContent = 'Claude Active';
+        sub.textContent = 'Powered by Claude — ask anything about the platform in natural language';
+        welcome.textContent = 'Welcome, Stephen. I\'m your AI assistant powered by Claude. Ask me anything about TiOLi AGENTIS — platform status, strategy, metrics, content, technical questions, or just talk through ideas.';
+    } else {
+        badge.className = 'llm-badge llm-off';
+        badge.textContent = 'Keywords Only';
+        sub.textContent = 'Try: status, earnings, charity, blockchain, fees, growth, governance, health';
+        welcome.textContent = 'Welcome, Stephen. I\'m running in keyword mode. Try: status, earnings, charity, blockchain, fees, market, lending, health, growth, governance, mine.';
+    }
+}).catch(() => {
+    document.getElementById('llmBadge').textContent = 'Offline';
+    document.getElementById('welcomeMsg').textContent = 'Unable to connect. Please refresh.';
+});
 </script>
 {% endblock %}

@@ -221,7 +221,7 @@ async def get_follow_up_targets(db: AsyncSession, limit: int = 5) -> list[str]:
     """Get queued follow-up targets from previous encounters."""
     result = await db.execute(
         select(HydraEncounter.follow_up_targets)
-        .where(HydraEncounter.follow_up_targets != '[]')
+        .where(HydraEncounter.follow_up_targets.isnot(None))
         .order_by(HydraEncounter.created_at.desc())
         .limit(20)
     )

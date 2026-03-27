@@ -153,6 +153,16 @@ async def submit_enquiry(req: EnquiryRequest, request: Request, db: AsyncSession
     }
 
 
+@router.get("/enquiry/count")
+async def enquiry_count(db: AsyncSession = Depends(get_db)):
+    """Public count of founding operator applications. No sensitive data exposed."""
+    count = (await db.execute(
+        select(func.count(OnboardingEnquiry.id))
+        .where(OnboardingEnquiry.enquiry_type == "founding_operator")
+    )).scalar() or 0
+    return {"count": count, "max": 20, "remaining": max(0, 20 - count)}
+
+
 @router.get("/enquiries")
 async def list_enquiries(
     status: str | None = None, db: AsyncSession = Depends(get_db),

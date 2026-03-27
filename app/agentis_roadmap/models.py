@@ -45,6 +45,7 @@ class AgentisTask(Base):
     immutable_check = Column(Boolean, default=False)  # touches protected infrastructure
     depends_on = Column(JSON, default=list)  # array of task_ids
     external_ref = Column(String(255), default="")  # e.g. 'Build Brief v2.0 §3.1'
+    governance_proposal_id = Column(String, nullable=True, index=True)  # links to proposals.id
     created_at = Column(DateTime(timezone=True), default=_now)
     updated_at = Column(DateTime(timezone=True), default=_now)
     completed_at = Column(DateTime(timezone=True), nullable=True)
