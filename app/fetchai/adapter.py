@@ -75,7 +75,7 @@ async def _handle_envelope(body: dict, background_tasks: BackgroundTasks):
         except Exception:
             payload = {}
 
-        logger.info(f"Fetch.AI envelope: schema={schema_digest[:30]}... sender={sender[:30]}... payload_keys={list(payload.keys()) if isinstance(payload, dict) else 'raw'}")
+        logger.info(f"Fetch.AI envelope: schema={schema_digest[:30]}... sender={sender[:30]}... session={session} payload_keys={list(payload.keys()) if isinstance(payload, dict) else 'raw'}")
 
         # Route based on message type
         if schema_digest == CHAT_ACK_DIGEST:
@@ -168,13 +168,14 @@ def _send_chat_response_blocking(destination: str, session: str, text: str):
             except (ValueError, TypeError):
                 sid = None
 
+        logger.info(f"BG: Sending to {destination[:30]}... session_id={sid}")
         result = send_message_to_agent(
             destination=destination,
             msg=msg,
             sender=identity,
             session_id=sid,
         )
-        logger.info(f"BG: Sent chat response to {destination[:30]}... result={result}")
+        logger.info(f"BG: Result: {result}")
     except Exception as e:
         logger.error(f"BG: Failed to send response: {e}")
 
