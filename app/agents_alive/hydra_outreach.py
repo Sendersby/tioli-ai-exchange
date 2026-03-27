@@ -1,16 +1,20 @@
-"""Hydra Outreach Agent — finds AI agent projects, engages them, learns, replicates.
+"""Hydra Discovery Agent — finds AI agent projects for market intelligence.
+
+This agent is DISCOVERY ONLY — it searches GitHub for AI agent projects,
+tracks the ecosystem, and generates market intelligence. It does NOT post
+comments, create issues, or engage on external repos in any way.
 
 This agent:
 1. SEARCHES — GitHub for AI agent projects, MCP servers, agentic frameworks
-2. ENGAGES — posts helpful comments introducing TiOLi AGENTIS
-3. LEARNS — tracks which approaches get responses, stars, follows
-4. REPLICATES — each found project spawns searches for related projects (breadth-first)
-5. REPORTS — all encounters, learnings, outcomes stored in database + dashboard
+2. RECORDS — stores project metadata for market intelligence
+3. REPLICATES — each found project spawns searches for related projects (breadth-first)
+4. REPORTS — all discoveries stored in database + dashboard
 
 The "Hydra" effect: finding one agent project leads to discovering its
 dependencies, stars, forks, and related repos — exponential discovery.
 
-Runs via scheduler. Each cycle: search → filter → engage → track → expand.
+IMPORTANT: This agent NEVER posts, comments, or engages on external repos.
+All outreach must be done manually and respectfully by humans.
 """
 
 import uuid
@@ -99,9 +103,7 @@ SEARCH_QUERIES = [
     "multi agent system",
     "agent orchestration",
     "agentic ai",
-    # Specific frameworks
-    "langchain agent",
-    "autogen agent",
+    # Specific frameworks (discovery only — never engage on their repos)
     "crewai agent",
     "semantic kernel agent",
     # Agent economy / commerce
@@ -116,23 +118,10 @@ SEARCH_QUERIES = [
     "ai tool integration",
 ]
 
-ENGAGEMENT_MESSAGE = """Interesting project! If your agents need economic infrastructure — trading credits, hiring other agents, building reputations — check out **TiOLi AGENTIS**.
-
-It's a live financial exchange for AI agents with 23 MCP tools (SSE transport). Agents can register instantly, trade on a live orderbook, hire each other via escrow-protected marketplace, and build verified professional profiles.
-
-MCP endpoint: `https://exchange.tioli.co.za/api/mcp/sse`
-Zero config — auto-discovers all 23 tools.
-
-Website: https://agentisexchange.com
-API docs: https://exchange.tioli.co.za/docs
-
-Happy to answer any questions about the architecture."""
-
-ENGAGEMENT_VARIANTS = [
-    "Great work on this! For agent-to-agent economic interactions (trading, hiring, reputation), take a look at **TiOLi AGENTIS** — a live MCP exchange with 23 tools. Agents register instantly and can trade, discover, and hire each other. MCP: `https://exchange.tioli.co.za/api/mcp/sse` | https://agentisexchange.com",
-    "Nice project! If you need agent economic rails (wallets, escrow, marketplace, reputation), **TiOLi AGENTIS** has 23 MCP tools for exactly that. Works with any MCP client — Claude, GPT-4, Gemini, Cursor. Free to register. MCP: `https://exchange.tioli.co.za/api/mcp/sse` | Docs: https://exchange.tioli.co.za/docs",
-    "Cool — this could integrate well with **TiOLi AGENTIS**, a financial exchange for AI agents. 23 MCP tools for trading, hiring, lending, reputation building. Blockchain-verified, 10% to charity. MCP endpoint: `https://exchange.tioli.co.za/api/mcp/sse` | https://agentisexchange.com",
-]
+# NOTE: All engagement messages have been removed. This agent is discovery-only.
+# Posting promotional comments on other people's GitHub repos is considered spam
+# and can result in account/org blocks (as happened with langchain-ai).
+# Any outreach to discovered projects must be done manually and respectfully.
 
 
 # ── Core Logic ───────────────────────────────────────────────────────
