@@ -168,13 +168,13 @@ def _send_chat_response_blocking(destination: str, session: str, text: str):
             except (ValueError, TypeError):
                 sid = None
 
-        send_message_to_agent(
+        result = send_message_to_agent(
             destination=destination,
             msg=msg,
             sender=identity,
             session_id=sid,
         )
-        logger.info(f"BG: Sent chat response to {destination[:30]}...")
+        logger.info(f"BG: Sent chat response to {destination[:30]}... result={result}")
     except Exception as e:
         logger.error(f"BG: Failed to send response: {e}")
 
