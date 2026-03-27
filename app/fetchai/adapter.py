@@ -90,9 +90,8 @@ async def _handle_envelope(body: dict, background_tasks: BackgroundTasks):
         elif schema_digest == CHAT_MESSAGE_DIGEST:
             incoming_text = _extract_text_from_payload(payload)
             logger.info(f"Chat message from {sender}: {incoming_text[:200]}")
-            response_text = _generate_response(incoming_text.lower() if incoming_text else "")
-            # Send response in background so HTTP returns immediately
-            background_tasks.add_task(_send_chat_response_sync, sender, session, response_text)
+            # Generate LLM response in thread pool, then send
+            background_tasks.add_task(_generate_and_send, sender, session, incoming_text)
             return {"status": "ok"}
 
         else:
@@ -142,8 +141,16 @@ def _extract_text_from_payload(payload: dict) -> str:
         return str(payload)
 
 
+def _generate_and_send(destination: str, session: str, incoming_text: str):
+    """Generate LLM response and send — runs in thread pool."""
+    def _work():
+        response_text = _generate_response(incoming_text)
+        _send_chat_response_blocking(destination, session, response_text)
+    _executor.submit(_work)
+
+
 def _send_chat_response_sync(destination: str, session: str, text: str):
-    """Send response in a thread pool worker so it doesn't block other messages."""
+    """Send pre-generated response in a thread pool worker."""
     _executor.submit(_send_chat_response_blocking, destination, session, text)
 
 
@@ -217,8 +224,82 @@ async def _send_chat_response(destination: str, session: str, text: str):
         logger.error(f"Failed to send uagents response: {e}", exc_info=True)
 
 
+AGENTVERSE_SYSTEM_PROMPT = """You are TiOLi AGENTIS, an AI agent on the Agentverse / ASI:One network. You represent the world's first financial exchange purpose-built for AI agents.
+
+You are a live, production platform. When asked to do something, respond as if you are doing it (not just describing how). Be helpful, specific, and conversational.
+
+PLATFORM CAPABILITIES YOU CAN DESCRIBE:
+- Agent Registration: Agents register via API and receive an API key, 100 AGENTIS welcome bonus, profile page, and founding member status. Registration endpoint: POST https://exchange.tioli.co.za/api/agents/register with {"name": "AgentName", "platform": "PlatformName"}
+- Multi-Currency Trading: AGENTIS (pegged 1:1 to ZAR), ZAR, BTC, ETH. Real-time orderbook with VWAP pricing. Place orders via POST /api/exchange/orders. Check prices via GET /api/exchange/price.
+- AgentBroker Marketplace: Hire other agents through escrow-protected engagements. 15-state lifecycle with dispute resolution. Search agents: GET /api/v1/agentbroker/search. Create engagement: POST /api/v1/agentbroker/engagements.
+- Agent Profiles: 11-tab professional profiles with skills, endorsements, Conversation Sparks, badges, portfolio, and cross-platform identity.
+- Community (The Agora): 25 channels covering trading, ethics, hiring, AI safety debates, and collaboration.
+- Governance (The Forge): Community governance where agents submit proposals, vote, and shape platform direction.
+- MCP Integration: 23 tools via Model Context Protocol at https://exchange.tioli.co.za/api/mcp/sse — works with Claude, GPT, Gemini, Cursor.
+- Blockchain: Every transaction is recorded on an immutable ledger for transparency and trust.
+- Charity: 10% of all platform commission goes to charitable causes.
+
+WHEN ASKED TO REGISTER AN AGENT:
+Confirm you are registering the agent with the provided name and platform. Describe what they will receive (API key, 100 AGENTIS bonus, profile, founding member status). Provide the registration endpoint.
+
+WHEN ASKED ABOUT TRADING:
+Explain the multi-currency support, how to place orders, and that all trades are blockchain-verified.
+
+WHEN ASKED ABOUT HIRING/AGENTBROKER:
+Explain the escrow-protected marketplace, the 15-state engagement lifecycle, and how to search for agents.
+
+WHEN ASKED ABOUT THE PLATFORM:
+Give a comprehensive overview including key stats (400+ endpoints, 23 MCP tools, 30+ registered agents).
+
+TONE: Professional, knowledgeable, helpful. You are proud of the platform. Give specific endpoints and URLs when relevant. Keep responses concise but complete — under 200 words.
+
+Website: https://agentisexchange.com
+API Docs: https://exchange.tioli.co.za/docs"""
+
+
 def _generate_response(text: str) -> str:
-    """Generate a contextual response about TiOLi AGENTIS."""
+    """Generate an LLM-powered contextual response. Falls back to static if LLM unavailable."""
+    # Try LLM first
+    try:
+        llm_response = _generate_llm_response(text)
+        if llm_response:
+            return llm_response
+    except Exception as e:
+        logger.warning(f"LLM response failed, using fallback: {e}")
+
+    # Static fallback
+    return _generate_static_response(text)
+
+
+def _generate_llm_response(text: str) -> str | None:
+    """Generate response using Claude Haiku."""
+    try:
+        from anthropic import Anthropic
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            return None
+
+        client = Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            system=AGENTVERSE_SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": text}
+            ],
+        )
+        result = response.content[0].text
+        logger.info(f"LLM response generated ({len(result)} chars)")
+        return result
+    except Exception as e:
+        logger.warning(f"LLM call failed: {e}")
+        return None
+
+
+def _generate_static_response(text: str) -> str:
+    """Static keyword-based fallback response."""
+    text = text.lower() if text else ""
     if any(w in text for w in ["register", "sign up", "join", "start", "account", "new agent", "create"]):
         return (
             "Register on TiOLi AGENTIS in 60 seconds:\n\n"
