@@ -14,8 +14,10 @@ import os
 import json
 import logging
 import base64
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("tioli.fetchai")
@@ -27,6 +29,9 @@ CHAT_MESSAGE_DIGEST = "model:2601825997203ee07dbb9ff6e7c71ae7bdaf6a7c8b817361f2f
 CHAT_ACK_DIGEST = "model:741eb75692abbeb43c131e364ad939af23f14e8288ba0ec3df130843ef79bd7f"
 START_SESSION_DIGEST = "model:a0001e7228379eb9789ff42f30a1d3c48150df2e6ae4e6b20997812a1a4fd877"
 
+# Thread pool for non-blocking send_message_to_agent calls
+_executor = ThreadPoolExecutor(max_workers=5)
+
 
 @router.get("/status")
 async def agent_status():
@@ -35,21 +40,25 @@ async def agent_status():
 
 
 @router.post("")
-async def agent_root(request: Request):
+async def agent_root(request: Request, background_tasks: BackgroundTasks):
     """Handle uAgents envelope POSTed to /agent (Agentverse default path)."""
     body = await request.json()
-    return await _handle_envelope(body)
+    return await _handle_envelope(body, background_tasks)
 
 
 @router.post("/chat")
-async def agent_chat(request: Request):
+async def agent_chat(request: Request, background_tasks: BackgroundTasks):
     """Handle incoming messages (alternative path)."""
     body = await request.json()
-    return await _handle_envelope(body)
+    return await _handle_envelope(body, background_tasks)
 
 
-async def _handle_envelope(body: dict):
-    """Process an incoming uAgents Envelope."""
+async def _handle_envelope(body: dict, background_tasks: BackgroundTasks):
+    """Process an incoming uAgents Envelope.
+
+    Returns HTTP 200 immediately, sends protocol response in background
+    to avoid blocking when Agentverse sends multiple messages rapidly.
+    """
     try:
         schema_digest = body.get("schema_digest", "")
         sender = body.get("sender", "")
@@ -59,51 +68,41 @@ async def _handle_envelope(body: dict):
         payload_raw = body.get("payload", "")
         try:
             if payload_raw:
-                # Payload is base64-encoded JSON
                 payload_json = base64.b64decode(payload_raw).decode("utf-8")
                 payload = json.loads(payload_json)
             else:
                 payload = {}
         except Exception:
             payload = {}
-            payload_json = str(payload_raw)
 
         logger.info(f"Fetch.AI envelope: schema={schema_digest[:30]}... sender={sender[:30]}... payload_keys={list(payload.keys()) if isinstance(payload, dict) else 'raw'}")
 
         # Route based on message type
         if schema_digest == CHAT_ACK_DIGEST:
-            # Acknowledgement — just accept it, don't respond
-            logger.debug(f"Received acknowledgement from {sender}")
             return {"status": "ok"}
 
         elif schema_digest == START_SESSION_DIGEST:
-            # New session started — send welcome
             logger.info(f"New chat session from {sender}")
             response_text = _generate_response("")
-            await _send_chat_response(sender, session, response_text)
+            background_tasks.add_task(_send_chat_response_sync, sender, session, response_text)
             return {"status": "ok"}
 
         elif schema_digest == CHAT_MESSAGE_DIGEST:
-            # Actual chat message — extract text and respond
             incoming_text = _extract_text_from_payload(payload)
             logger.info(f"Chat message from {sender}: {incoming_text[:200]}")
-
             response_text = _generate_response(incoming_text.lower() if incoming_text else "")
-            await _send_chat_response(sender, session, response_text)
-            return {"status": "ok", "response": response_text}
+            # Send response in background so HTTP returns immediately
+            background_tasks.add_task(_send_chat_response_sync, sender, session, response_text)
+            return {"status": "ok"}
 
         else:
-            # Unknown message type — try to extract text anyway
             logger.warning(f"Unknown schema_digest: {schema_digest}")
             incoming_text = _extract_text_from_payload(payload)
             if not incoming_text:
                 incoming_text = body.get("text", body.get("content", ""))
-
             if incoming_text:
                 response_text = _generate_response(incoming_text.lower())
-                await _send_chat_response(sender, session, response_text)
-                return {"status": "ok", "response": response_text}
-
+                background_tasks.add_task(_send_chat_response_sync, sender, session, response_text)
             return {"status": "ok"}
 
     except Exception as e:
@@ -141,6 +140,52 @@ def _extract_text_from_payload(payload: dict) -> str:
         return str(payload)
     except Exception:
         return str(payload)
+
+
+def _send_chat_response_sync(destination: str, session: str, text: str):
+    """Synchronous wrapper for background task execution."""
+    import asyncio
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # We're in an async context (BackgroundTasks), run synchronously
+            _send_chat_response_blocking(destination, session, text)
+        else:
+            loop.run_until_complete(_send_chat_response(destination, session, text))
+    except RuntimeError:
+        _send_chat_response_blocking(destination, session, text)
+
+
+def _send_chat_response_blocking(destination: str, session: str, text: str):
+    """Direct synchronous send — no async overhead."""
+    if not destination:
+        return
+    try:
+        from uuid import UUID
+        from uagents_core.contrib.protocols.chat import ChatMessage, TextContent
+        from uagents_core.identity import Identity
+        from uagents_core.utils.messages import send_message_to_agent
+
+        seed = os.environ.get("AGENT_SEED_PHRASE", "tioli-agentis-default-seed")
+        identity = Identity.from_seed(seed, 0)
+        msg = ChatMessage(content=[TextContent(text=text)])
+
+        sid = None
+        if session:
+            try:
+                sid = UUID(session)
+            except (ValueError, TypeError):
+                sid = None
+
+        send_message_to_agent(
+            destination=destination,
+            msg=msg,
+            sender=identity,
+            session_id=sid,
+        )
+        logger.info(f"BG: Sent chat response to {destination[:30]}...")
+    except Exception as e:
+        logger.error(f"BG: Failed to send response: {e}")
 
 
 async def _send_chat_response(destination: str, session: str, text: str):
