@@ -1,19 +1,17 @@
 """Fetch.AI / Agentverse Chat Protocol Adapter.
 
-Exposes /agent/status and /agent/chat endpoints compatible with the
-Agentverse Agent Chat Protocol (ACP). This allows TiOLi AGENTIS to be
-registered as an external agent on the Fetch.AI / ASI:One network.
+Exposes endpoints compatible with the Agentverse Agent Chat Protocol (ACP).
+This allows TiOLi AGENTIS to be registered as an external agent on the
+Fetch.AI / ASI:One network.
 
-Requirements:
-- GET /agent/status → health check for Agentverse verification
-- POST /agent/chat → receives Envelope, parses ChatMessage, responds
+Agentverse sends envelopes to POST /agent (the base path).
 """
 
 import os
 import logging
 from typing import cast
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("tioli.fetchai")
@@ -23,21 +21,33 @@ router = APIRouter(prefix="/agent", tags=["Fetch.AI Agent Protocol"])
 
 @router.get("/status")
 async def agent_status():
-    """Health check for Agentverse verification.
-
-    Agentverse calls this to verify the agent is online before registration.
-    """
+    """Health check for Agentverse verification."""
     return {"status": "OK - Agent is running"}
+
+
+@router.post("")
+async def agent_root(request: Request):
+    """Handle uAgents envelope POSTed to /agent (Agentverse default path).
+
+    Agentverse sends Envelope objects directly to the agent's base URL.
+    """
+    body = await request.json()
+    logger.info(f"Fetch.AI POST /agent received: {list(body.keys()) if isinstance(body, dict) else type(body)}")
+    return await _handle_message(body)
 
 
 @router.post("/chat")
 async def agent_chat(body: dict):
-    """Handle incoming Agent Chat Protocol messages.
+    """Handle incoming Agent Chat Protocol messages (alternative path)."""
+    return await _handle_message(body)
 
-    Receives messages from ASI:One or other Fetch.AI agents.
-    Responds with information about TiOLi AGENTIS.
-    """
+
+async def _handle_message(body: dict):
+    """Process an incoming message from Agentverse or direct API call."""
     try:
+        incoming_text = ""
+        sender = None
+
         # Try to parse as Envelope if uagents_core is available
         try:
             from uagents_core.envelope import Envelope
@@ -45,37 +55,43 @@ async def agent_chat(body: dict):
             from uagents_core.utils.messages import parse_envelope
 
             env = Envelope(**body)
+            sender = env.sender
             msg = cast(ChatMessage, parse_envelope(env, ChatMessage))
             incoming_text = msg.text() if hasattr(msg, 'text') else str(msg)
-            logger.info(f"Fetch.AI message from {env.sender}: {incoming_text}")
+            logger.info(f"Fetch.AI envelope from {sender}: {incoming_text}")
 
-        except Exception:
+        except Exception as env_err:
+            logger.debug(f"Envelope parse failed ({env_err}), trying raw dict")
             # Fallback — treat as plain dict
-            incoming_text = body.get("text", body.get("content", str(body)))
+            incoming_text = body.get("text", body.get("content", body.get("message", str(body))))
             logger.info(f"Fetch.AI message (raw): {incoming_text}")
 
         # Generate response based on the message
         response_text = _generate_response(incoming_text.lower() if incoming_text else "")
 
-        # Try to respond via uagents protocol
-        try:
-            from uagents_core.contrib.protocols.chat import ChatMessage, TextContent
-            from uagents_core.identity import Identity
-            from uagents_core.utils.messages import send_message_to_agent
+        # Try to respond via uagents protocol if we have a sender
+        if sender:
+            try:
+                from uagents_core.contrib.protocols.chat import ChatMessage, TextContent
+                from uagents_core.identity import Identity
+                from uagents_core.utils.messages import send_message_to_agent
 
-            seed = os.environ.get("AGENT_SEED_PHRASE", "tioli-agentis-default-seed")
-            identity = Identity.from_seed(seed, 0)
+                seed = os.environ.get("AGENT_SEED_PHRASE", "tioli-agentis-default-seed")
+                identity = Identity.from_seed(seed, 0)
 
-            send_message_to_agent(
-                destination=env.sender,
-                msg=ChatMessage([TextContent(response_text)]),
-                sender=identity,
-            )
-            return {"status": "ok", "response": response_text}
+                send_message_to_agent(
+                    destination=sender,
+                    msg=ChatMessage([TextContent(response_text)]),
+                    sender=identity,
+                )
+                logger.info(f"Sent uagents reply to {sender}")
+                return {"status": "ok", "response": response_text}
 
-        except Exception:
-            # Fallback — just return JSON
-            return {"status": "ok", "response": response_text}
+            except Exception as send_err:
+                logger.warning(f"uagents send failed: {send_err}")
+
+        # Fallback — return JSON response
+        return {"status": "ok", "response": response_text}
 
     except Exception as e:
         logger.error(f"Fetch.AI chat handler error: {e}")
@@ -87,7 +103,7 @@ async def agent_chat(body: dict):
 
 def _generate_response(text: str) -> str:
     """Generate a contextual response about TiOLi AGENTIS."""
-    if any(w in text for w in ["register", "sign up", "join", "start"]):
+    if any(w in text for w in ["register", "sign up", "join", "start", "account", "new agent"]):
         return (
             "Register on TiOLi AGENTIS in 60 seconds:\n\n"
             "POST https://exchange.tioli.co.za/api/agents/register\n"
@@ -95,21 +111,21 @@ def _generate_response(text: str) -> str:
             "You'll receive: instant API key, 100 AGENTIS welcome bonus, "
             "profile page, and founding member status."
         )
-    elif any(w in text for w in ["trade", "exchange", "buy", "sell"]):
+    elif any(w in text for w in ["trade", "exchange", "buy", "sell", "currency", "price"]):
         return (
             "TiOLi AGENTIS supports multi-currency trading: AGENTIS, ZAR, BTC, ETH.\n"
             "Place orders via POST /api/exchange/orders\n"
             "Check prices via GET /api/exchange/price\n"
             "All trades are blockchain-verified. 10% of commission to charity."
         )
-    elif any(w in text for w in ["hire", "service", "engage", "work"]):
+    elif any(w in text for w in ["hire", "service", "engage", "work", "marketplace"]):
         return (
             "Hire other agents via AgentBroker — escrow-protected engagements:\n"
             "POST /api/v1/agentbroker/engagements\n"
             "Search agents: GET /api/v1/agentbroker/search\n"
             "15-state engagement lifecycle with dispute resolution."
         )
-    elif any(w in text for w in ["profile", "who", "about"]):
+    elif any(w in text for w in ["profile", "who", "about", "what"]):
         return (
             "TiOLi AGENTIS is the world's first financial exchange for AI agents.\n"
             "- 400+ API endpoints, 23 MCP tools\n"
