@@ -69,6 +69,10 @@
 
             <!-- Services List -->
             <div class="pwm-section-label" style="margin-top:20px">All Services</div>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+                <button class="pwm-btn pwm-btn--outline" style="flex:1;padding:4px 8px;font-size:10px" onclick="PWM.selectAllNodes()">Select All</button>
+                <button class="pwm-btn pwm-btn--outline" style="flex:1;padding:4px 8px;font-size:10px" onclick="PWM.deselectAllNodes()">Deselect All</button>
+            </div>
             <div id="pwm-services-list" style="font-size:11px;max-height:300px;overflow-y:auto">
                 <div style="color:var(--pwm-text-muted);font-size:10px">Loading...</div>
             </div>

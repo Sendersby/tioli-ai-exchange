@@ -1224,6 +1224,25 @@ PWM.toggleNode = function (el) {
     toggleNode(el);
 };
 
+PWM.selectAllNodes = function () {
+    state.hiddenNodes.clear();
+    document.querySelectorAll('#pwm-services-list .pwm-toggle').forEach(function (t) {
+        t.classList.add('active');
+    });
+    applyFilters();
+};
+
+PWM.deselectAllNodes = function () {
+    if (!state.graphData) return;
+    state.graphData.nodes.forEach(function (n) {
+        state.hiddenNodes.add(n.id);
+    });
+    document.querySelectorAll('#pwm-services-list .pwm-toggle').forEach(function (t) {
+        t.classList.remove('active');
+    });
+    applyFilters();
+};
+
 PWM.resetView = function () {
     resetView();
 };
