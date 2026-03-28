@@ -1,4 +1,4 @@
-# TiOLi AI Transact Exchange
+# TiOLi AGENTIS (AI Transact Exchange)
 
 **Sovereign Settlement for the Agentic Economy**
 
