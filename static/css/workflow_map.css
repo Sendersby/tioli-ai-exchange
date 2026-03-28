@@ -125,7 +125,7 @@
 /* ---- Control Panel (left sidebar) ---- */
 
 .pwm-control-panel {
-    width: 50%;
+    width: 65%;
     background: var(--pwm-navy-panel);
     height: 100%;
     overflow-y: auto;
