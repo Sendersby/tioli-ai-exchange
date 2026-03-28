@@ -307,39 +307,159 @@ async def google_callback(code: str = None, error: str = None):
     return _set_session_cookie(response, operator_id)
 
 
-# ── Manual Registration ─────────────────────────────────────────────
+# ── Email Verification Registration (2-step) ────────────────────────
 
-@router.post("/auth/operator/register")
-async def register_operator_manual(request: Request):
-    """Manual operator registration (no OAuth). Returns JSON with operator_id."""
+import secrets as _secrets
+import re
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Pending registrations: verification_id -> {name, email, company, code, created_at}
+_pending_registrations: dict[str, dict] = {}
+
+
+def _send_operator_verification_email(recipient_email: str, code: str) -> bool:
+    """Send a 6-digit verification code to the operator's email via Graph API."""
+    from app.auth.email_verify import _get_graph_access_token
+
+    access_token = _get_graph_access_token()
+    if not access_token:
+        logger.warning("Graph API not configured — cannot send verification email")
+        return False
+
+    sender_email = os.environ.get("SMTP_USER", settings.owner_email)
+
+    email_body = {
+        "message": {
+            "subject": "TiOLi AGENTIS — Verify Your Email",
+            "body": {
+                "contentType": "HTML",
+                "content": f"""
+                <div style="font-family: 'Inter', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #f5f5f3; border-radius: 12px;">
+                    <div style="background: #2b2b2b; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; border-bottom: 3px solid #77d4e5;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 0.5px;">TiOLi AGENTIS</h1>
+                    </div>
+                    <div style="background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #eae7e3;">
+                        <h2 style="color: #2b2b2b; margin-top: 0; font-size: 20px;">Email Verification</h2>
+                        <p style="color: #7a7a7a; line-height: 1.6;">Welcome to TiOLi AGENTIS! Enter this code to complete your builder registration:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <span style="background: #061423; color: #77d4e5; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 28px; letter-spacing: 6px; display: inline-block;">{code}</span>
+                        </div>
+                        <p style="color: #aaa; font-size: 12px; text-align: center;">This code expires in 10 minutes and can only be used once.</p>
+                    </div>
+                    <p style="color: #aaa; font-size: 11px; text-align: center; margin-top: 15px;">TiOLi AI Investments — The Agentic Exchange</p>
+                </div>
+                """,
+            },
+            "toRecipients": [
+                {"emailAddress": {"address": recipient_email}}
+            ],
+        },
+        "saveToSentItems": "false",
+    }
+
+    try:
+        import httpx as _httpx
+        response = _httpx.post(
+            f"https://graph.microsoft.com/v1.0/users/{sender_email}/sendMail",
+            json=email_body,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        logger.info(f"Operator verification code sent to {recipient_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send operator verification email: {e}")
+        return False
+
+
+@router.post("/auth/operator/send-code")
+async def send_verification_code(request: Request):
+    """Step 1: Send a 6-digit verification code to the operator's email."""
     body = await request.json()
     name = (body.get("name") or "").strip()
-    email = (body.get("email") or "").strip()
+    email = (body.get("email") or "").strip().lower()
     company = (body.get("company") or "").strip()
 
     if not name or not email:
         raise HTTPException(status_code=400, detail="Name and email are required")
 
-    # Check existing
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        raise HTTPException(status_code=400, detail="Please enter a valid email address")
+
+    # Check if email already registered
     async with async_session() as db:
         existing = await db.execute(select(Operator).where(Operator.email == email))
         if existing.scalar_one_or_none():
-            raise HTTPException(status_code=409, detail="An account with this email already exists")
+            raise HTTPException(status_code=409, detail="An account with this email already exists. Try signing in with GitHub or Google.")
 
+    # Generate code and store pending registration
+    code = f"{_secrets.randbelow(900000) + 100000}"
+    verification_id = str(uuid.uuid4())
+    _pending_registrations[verification_id] = {
+        "name": name, "email": email, "company": company,
+        "code": code, "created_at": datetime.now(timezone.utc),
+    }
+
+    # Send code
+    sent = _send_operator_verification_email(email, code)
+    if not sent:
+        raise HTTPException(status_code=500, detail="Unable to send verification email. Please try GitHub or Google sign-up instead.")
+
+    return {
+        "verification_id": verification_id,
+        "message": f"Verification code sent to {email}. Check your inbox.",
+    }
+
+
+@router.post("/auth/operator/verify-code")
+async def verify_code_and_register(request: Request):
+    """Step 2: Verify the code and create the operator account."""
+    body = await request.json()
+    verification_id = (body.get("verification_id") or "").strip()
+    code = (body.get("code") or "").strip()
+
+    if not verification_id or not code:
+        raise HTTPException(status_code=400, detail="Verification ID and code are required")
+
+    pending = _pending_registrations.get(verification_id)
+    if not pending:
+        raise HTTPException(status_code=400, detail="Verification expired or invalid. Please request a new code.")
+
+    # Check expiry (10 minutes)
+    elapsed = (datetime.now(timezone.utc) - pending["created_at"]).total_seconds()
+    if elapsed > 600:
+        del _pending_registrations[verification_id]
+        raise HTTPException(status_code=400, detail="Verification code expired. Please request a new code.")
+
+    # Check code
+    if not _secrets.compare_digest(code.strip(), pending["code"]):
+        raise HTTPException(status_code=400, detail="Incorrect verification code. Please try again.")
+
+    # Code valid — consume it
+    del _pending_registrations[verification_id]
+
+    # Create operator account
     operator_id = await _find_or_create_operator(
         provider=None, provider_id=str(uuid.uuid4()),
-        name=name, email=email,
+        name=pending["name"], email=pending["email"],
     )
 
     # Update company if provided
-    if company:
+    if pending["company"]:
         async with async_session() as db:
             result = await db.execute(
                 select(OperatorHubProfile).where(OperatorHubProfile.operator_id == operator_id)
             )
             profile = result.scalar_one_or_none()
             if profile:
-                profile.company = company
+                profile.company = pending["company"]
                 await db.commit()
 
     # Get handle
@@ -354,8 +474,15 @@ async def register_operator_manual(request: Request):
         "operator_id": operator_id,
         "handle": handle,
         "profile_url": f"/builders/{handle}",
-        "message": "Account created successfully. Welcome to AGENTIS!",
+        "message": "Email verified! Account created successfully. Welcome to AGENTIS!",
     }
+
+
+# Legacy endpoint — redirect to send-code flow
+@router.post("/auth/operator/register")
+async def register_operator_legacy(request: Request):
+    """Legacy manual registration — now redirects to verification flow."""
+    return await send_verification_code(request)
 
 
 # ── Session Helpers ─────────────────────────────────────────────────
