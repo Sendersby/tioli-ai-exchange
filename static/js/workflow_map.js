@@ -155,8 +155,11 @@ function init() {
     }
 
     var rect = container.getBoundingClientRect();
-    state.svgWidth  = rect.width  || 1200;
-    state.svgHeight = rect.height || 800;
+    // If SVG has no dimensions yet (flex layout not computed), use parent or fallback
+    state.svgWidth  = rect.width  || (container.parentElement ? container.parentElement.clientWidth : 0) || 1200;
+    state.svgHeight = rect.height || (container.parentElement ? container.parentElement.clientHeight : 0) || 800;
+    if (state.svgWidth < 100) state.svgWidth = 1200;
+    if (state.svgHeight < 100) state.svgHeight = 800;
 
     svg = d3.select('#pwm-svg')
         .attr('width', state.svgWidth)
@@ -255,7 +258,7 @@ function renderGraph(data) {
           .attr('opacity', 0.7);
 
         // Arrow for directed edges
-        if (d.direction === 'forward' || d.direction === 'directed') {
+        if (d.direction === 'DIRECTED' || d.direction === 'forward' || d.direction === 'directed') {
             var cat = getCategoryForEdge(d);
             el.attr('marker-end', 'url(#arrow-' + cat + ')');
         } else {

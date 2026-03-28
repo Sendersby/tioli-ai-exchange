@@ -24,8 +24,10 @@
 
 .pwm-container {
     width: 100%;
-    height: 100%;
+    height: calc(100vh - 80px);
+    min-height: 600px;
     display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
@@ -124,7 +126,7 @@
 .pwm-control-panel {
     width: 240px;
     background: var(--pwm-navy-panel);
-    height: calc(100vh - 48px - 60px);
+    height: 100%;
     overflow-y: auto;
     padding: 16px;
     flex-shrink: 0;
@@ -240,9 +242,11 @@
     position: relative;
     overflow: hidden;
     background: var(--pwm-navy-dark);
+    min-height: 400px;
 }
 
 .pwm-canvas-wrap svg {
+    display: block;
     width: 100%;
     height: 100%;
 }
