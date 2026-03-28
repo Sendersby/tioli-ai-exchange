@@ -125,23 +125,6 @@
     </div>
 </div>
 
-<div id="pwm-debug" style="position:fixed;bottom:0;left:240px;right:0;background:#1a0a0a;border-top:2px solid #C0392B;padding:8px 16px;font-family:monospace;font-size:11px;color:#ff6b6b;z-index:100;max-height:120px;overflow-y:auto">PWM Debug: Loading...</div>
-<script>
-var _dbg = document.getElementById('pwm-debug');
-function dbg(msg) { _dbg.innerHTML += '<br>' + new Date().toLocaleTimeString() + ' ' + msg; _dbg.scrollTop = _dbg.scrollHeight; }
-window.onerror = function(m,s,l,c,e) { dbg('<span style="color:#ff0000">JS ERROR: ' + m + ' at ' + s + ':' + l + '</span>'); };
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" onload="dbg('D3 loaded: ' + (typeof d3))" onerror="dbg('<span style=color:red>D3 FAILED TO LOAD</span>')"></script>
-<script>
-dbg('d3 type: ' + typeof d3);
-</script>
-<script src="/static/js/workflow_map.js" onload="dbg('workflow_map.js loaded')" onerror="dbg('<span style=color:red>workflow_map.js FAILED TO LOAD</span>')"></script>
-<script>
-dbg('PWM type: ' + typeof PWM);
-// Test fetch directly
-fetch('/api/v1/owner/workflow-map/graph', {credentials:'same-origin'})
-    .then(function(r) { dbg('Graph fetch status: ' + r.status); return r.text(); })
-    .then(function(t) { dbg('Graph response length: ' + t.length + ' chars'); try { var d = JSON.parse(t); dbg('Nodes: ' + (d.nodes?d.nodes.length:'?') + ', Edges: ' + (d.edges?d.edges.length:'?')); } catch(e) { dbg('Parse error: ' + e.message + ' | Body: ' + t.substring(0,200)); } })
-    .catch(function(e) { dbg('<span style=color:red>Fetch error: ' + e.message + '</span>'); });
-</script>
+<script src="/static/js/d3.v7.min.js"></script>
+<script src="/static/js/workflow_map.js"></script>
 {% endblock %}
