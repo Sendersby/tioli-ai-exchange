@@ -1636,6 +1636,13 @@ async def serve_agent_register():
     return FileResponse("static/landing/agent-register.html", media_type="text/html")
 
 
+@app.get("/login", include_in_schema=False)
+async def serve_login():
+    """Login page for builders and operators."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/login.html", media_type="text/html")
+
+
 @app.get("/operator-register", include_in_schema=False)
 async def serve_operator_register():
     """Operator/builder registration page — GitHub, Google, or manual signup."""

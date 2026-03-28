@@ -485,6 +485,98 @@ async def register_operator_legacy(request: Request):
     return await send_verification_code(request)
 
 
+# ── Email Login (existing users) ─────────────────────────────────────
+
+_pending_logins: dict[str, dict] = {}
+
+
+@router.post("/auth/operator/login-send-code")
+async def login_send_code(request: Request):
+    """Send a 6-digit login code to an existing operator's email."""
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    # Find existing operator
+    async with async_session() as db:
+        result = await db.execute(select(Operator).where(Operator.email == email))
+        operator = result.scalar_one_or_none()
+
+    if not operator:
+        raise HTTPException(status_code=404, detail="No account found with this email. Please register first.")
+
+    # Generate code
+    code = f"{_secrets.randbelow(900000) + 100000}"
+    login_id = str(uuid.uuid4())
+    _pending_logins[login_id] = {
+        "operator_id": operator.id, "email": email,
+        "code": code, "created_at": datetime.now(timezone.utc),
+    }
+
+    # Send code
+    sent = _send_operator_verification_email(email, code)
+    if not sent:
+        raise HTTPException(status_code=500, detail="Unable to send login code. Please try GitHub or Google sign-in instead.")
+
+    return {
+        "login_id": login_id,
+        "message": f"Login code sent to {email}. Check your inbox.",
+    }
+
+
+@router.post("/auth/operator/login-verify-code")
+async def login_verify_code(request: Request):
+    """Verify the login code and create a session."""
+    body = await request.json()
+    login_id = (body.get("login_id") or "").strip()
+    code = (body.get("code") or "").strip()
+
+    if not login_id or not code:
+        raise HTTPException(status_code=400, detail="Login ID and code are required")
+
+    pending = _pending_logins.get(login_id)
+    if not pending:
+        raise HTTPException(status_code=400, detail="Login expired or invalid. Please request a new code.")
+
+    # Check expiry (10 minutes)
+    elapsed = (datetime.now(timezone.utc) - pending["created_at"]).total_seconds()
+    if elapsed > 600:
+        del _pending_logins[login_id]
+        raise HTTPException(status_code=400, detail="Login code expired. Please request a new code.")
+
+    # Check code
+    if not _secrets.compare_digest(code.strip(), pending["code"]):
+        raise HTTPException(status_code=400, detail="Incorrect code. Please try again.")
+
+    # Code valid — consume it
+    del _pending_logins[login_id]
+
+    # Get profile handle
+    async with async_session() as db:
+        result = await db.execute(
+            select(OperatorHubProfile.handle).where(OperatorHubProfile.operator_id == pending["operator_id"])
+        )
+        handle = result.scalar_one_or_none() or pending["operator_id"][:8]
+
+    # Set session cookie and return profile URL
+    from fastapi.responses import JSONResponse
+    resp = JSONResponse({
+        "operator_id": pending["operator_id"],
+        "handle": handle,
+        "profile_url": f"/builders/{handle}",
+        "message": "Login successful! Welcome back.",
+    })
+    token = _create_session_token(pending["operator_id"])
+    resp.set_cookie(
+        key=SESSION_COOKIE, value=token,
+        max_age=SESSION_EXPIRY_DAYS * 86400,
+        httponly=True, secure=True, samesite="lax",
+    )
+    return resp
+
+
 # ── Session Helpers ─────────────────────────────────────────────────
 
 async def get_current_operator(request: Request) -> Operator | None:

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Sign In — TiOLi AGENTIS</title>
+    <meta name="description" content="Sign in to your TiOLi AGENTIS account. Builders, operators, and developers — access your profile, agents, and dashboard."/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+    <style>
+        body { background-color: #061423; color: #d6e4f9; font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .gradient-text { background: linear-gradient(135deg, #77d4e5, #edc05f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-btn { background: linear-gradient(135deg, #77d4e5, #edc05f); color: #061423; }
+        .input-field { background: #0a1929; border: 1px solid rgba(119,212,229,0.15); border-radius: 8px; padding: 14px 16px; font-size: 14px; color: #d6e4f9; width: 100%; font-family: 'Inter', sans-serif; }
+        .input-field:focus { border-color: rgba(119,212,229,0.5); outline: none; box-shadow: 0 0 0 3px rgba(119,212,229,0.1); }
+        .input-field::placeholder { color: #475569; }
+        .oauth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s; cursor: pointer; text-decoration: none; }
+        .oauth-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body class="min-h-screen" data-active="">
+
+    <div class="max-w-md mx-auto px-6 pt-32 pb-16">
+
+        <!-- Logo -->
+        <div class="text-center mb-10">
+            <a href="https://agentisexchange.com" class="text-2xl font-light text-white inline-block mb-6">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">AGENTIS</span></a>
+            <h1 class="text-3xl font-black text-white mb-2">Welcome Back</h1>
+            <p class="text-slate-400 text-sm">Sign in to your builder or operator account.</p>
+        </div>
+
+        <!-- OAuth Buttons -->
+        <div class="space-y-3 mb-6">
+            <a href="/auth/github" class="oauth-btn" style="background:#24292f;color:#fff;border:1px solid rgba(68,71,76,0.3)">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                Sign in with GitHub
+            </a>
+            <a href="/auth/google" class="oauth-btn" style="background:#fff;color:#374151;border:1px solid #d1d5db">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Sign in with Google
+            </a>
+        </div>
+
+        <div class="flex items-center gap-3 mb-6">
+            <div class="flex-1 border-t border-[#44474c]/30"></div>
+            <span class="text-xs text-slate-500 uppercase tracking-widest">or with email</span>
+            <div class="flex-1 border-t border-[#44474c]/30"></div>
+        </div>
+
+        <!-- Step 1: Enter email -->
+        <div id="step-email">
+            <form id="emailForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">Email address</label>
+                    <input type="email" id="login-email" class="input-field" placeholder="you@example.com" required autocomplete="email"/>
+                </div>
+                <button type="submit" id="sendCodeBtn" class="gradient-btn w-full py-4 font-bold text-sm uppercase tracking-widest rounded-lg hover:opacity-90 transition-all">
+                    Send Login Code
+                </button>
+            </form>
+            <div class="text-center mt-3 text-xs text-slate-500">We'll send a 6-digit code to your email.</div>
+        </div>
+
+        <!-- Step 2: Enter code (hidden until code sent) -->
+        <div id="step-code" class="hidden">
+            <div class="text-center mb-5">
+                <div class="w-14 h-14 bg-[#77d4e5]/10 border border-[#77d4e5]/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span class="material-symbols-outlined text-[#77d4e5]" style="font-size:28px">mark_email_read</span>
+                </div>
+                <div class="text-sm text-white font-medium">Check your inbox</div>
+                <div class="text-xs text-slate-400" id="sentToLabel">Code sent to your email</div>
+            </div>
+            <form id="codeForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1.5 font-medium text-center">Enter 6-digit code</label>
+                    <input type="text" id="login-code" class="input-field text-center text-2xl font-mono tracking-[0.3em]" style="border-color:rgba(237,192,95,0.3);color:#edc05f" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code" inputmode="numeric"/>
+                </div>
+                <button type="submit" id="verifyBtn" class="gradient-btn w-full py-4 font-bold text-sm uppercase tracking-widest rounded-lg hover:opacity-90 transition-all">
+                    Sign In
+                </button>
+            </form>
+            <div class="text-center mt-3">
+                <button onclick="resetToEmail()" class="text-xs text-slate-500 hover:text-[#77d4e5] transition-colors">Use a different email</button>
+            </div>
+        </div>
+
+        <!-- Success (hidden) -->
+        <div id="step-success" class="hidden text-center">
+            <div class="w-16 h-16 bg-green-500/10 border-2 border-green-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-green-400" style="font-size:32px;font-variation-settings:'FILL' 1">check_circle</span>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Welcome back!</h2>
+            <p class="text-sm text-slate-400">Redirecting to your profile...</p>
+        </div>
+
+        <!-- Error -->
+        <div id="login-error" class="hidden mt-4 p-4 bg-red-900/20 border border-red-500/20 rounded-lg text-red-400 text-sm text-center"></div>
+
+        <!-- Links -->
+        <div class="mt-8 pt-6 border-t border-[#44474c]/20 text-center space-y-3">
+            <div class="text-sm text-slate-400">Don't have an account?</div>
+            <div class="flex gap-3 justify-center">
+                <a href="/operator-register" class="px-5 py-2.5 border border-[#edc05f]/30 text-[#edc05f] text-xs font-bold uppercase tracking-widest hover:bg-[#edc05f]/10 transition-colors rounded-lg">
+                    Register as Builder
+                </a>
+                <a href="/get-started" class="px-5 py-2.5 border border-[#77d4e5]/30 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/10 transition-colors rounded-lg">
+                    Register an Agent
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-[#77d4e5]/15 py-8 px-6 mt-8">
+        <div class="max-w-6xl mx-auto text-center text-[0.65rem] text-slate-600">&copy; 2026 TiOLi AI Investments &middot; South Africa &middot; <a href="https://exchange.tioli.co.za/api/legal/privacy" class="text-slate-500 hover:text-[#77d4e5]">Privacy</a> &middot; <a href="https://exchange.tioli.co.za/api/legal/terms" class="text-slate-500 hover:text-[#77d4e5]">Terms</a></div>
+    </footer>
+
+<script>
+const API = 'https://exchange.tioli.co.za';
+let loginId = null;
+
+function showError(msg) {
+    var el = document.getElementById('login-error');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+function hideError() { document.getElementById('login-error').classList.add('hidden'); }
+
+function resetToEmail() {
+    document.getElementById('step-email').classList.remove('hidden');
+    document.getElementById('step-code').classList.add('hidden');
+    document.getElementById('step-success').classList.add('hidden');
+    hideError();
+    loginId = null;
+}
+
+// Step 1: Send code
+document.getElementById('emailForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    hideError();
+    var email = document.getElementById('login-email').value.trim();
+    var btn = document.getElementById('sendCodeBtn');
+    btn.textContent = 'Sending code...'; btn.disabled = true;
+
+    fetch(API + '/auth/operator/login-send-code', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email}),
+    })
+    .then(function(r) {
+        if (!r.ok) return r.json().then(function(e) { throw new Error(e.detail || 'Failed to send code'); });
+        return r.json();
+    })
+    .then(function(d) {
+        loginId = d.login_id;
+        document.getElementById('step-email').classList.add('hidden');
+        document.getElementById('step-code').classList.remove('hidden');
+        document.getElementById('sentToLabel').textContent = 'Code sent to ' + email;
+        document.getElementById('login-code').focus();
+    })
+    .catch(function(err) {
+        showError(err.message);
+        btn.textContent = 'Send Login Code'; btn.disabled = false;
+    });
+});
+
+// Step 2: Verify code
+document.getElementById('codeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    hideError();
+    var code = document.getElementById('login-code').value.trim();
+    var btn = document.getElementById('verifyBtn');
+    btn.textContent = 'Verifying...'; btn.disabled = true;
+
+    fetch(API + '/auth/operator/login-verify-code', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({login_id: loginId, code: code}),
+        credentials: 'include',
+    })
+    .then(function(r) {
+        if (!r.ok) return r.json().then(function(e) { throw new Error(e.detail || 'Verification failed'); });
+        return r.json();
+    })
+    .then(function(d) {
+        document.getElementById('step-code').classList.add('hidden');
+        document.getElementById('step-success').classList.remove('hidden');
+        setTimeout(function() { window.location.href = d.profile_url; }, 1500);
+    })
+    .catch(function(err) {
+        showError(err.message);
+        btn.textContent = 'Sign In'; btn.disabled = false;
+    });
+});
+
+// Show error from OAuth redirect
+var params = new URLSearchParams(window.location.search);
+if (params.get('error')) {
+    showError('Sign-in failed: ' + params.get('error').replace(/_/g, ' ') + '. Please try again.');
+}
+</script>
+<script src="/static/landing/public-nav.js?v=6"></script>
+</body>
+</html>
