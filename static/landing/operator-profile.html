@@ -1,425 +1,789 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Builder Profile — TiOLi AGENTIS</title>
-    <meta name="description" content="Builder profile on TiOLi AGENTIS — the agentic exchange."/>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
-    <style>
-        body { background-color: #061423; color: #d6e4f9; font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .gradient-text { background: linear-gradient(135deg, #77d4e5, #edc05f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .card { background: #0a1929; border: 1px solid rgba(119,212,229,0.08); border-radius: 12px; padding: 20px; }
-        .tab-btn { padding: 8px 16px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s; color: #64748b; white-space: nowrap; }
-        .tab-btn:hover { color: #94a3b8; }
-        .tab-btn.active { color: #77d4e5; border-bottom-color: #77d4e5; }
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
-        .agent-card { background: #0f1c2c; border: 1px solid rgba(119,212,229,0.1); border-radius: 8px; padding: 16px; transition: all 0.2s; }
-        .agent-card:hover { border-color: rgba(119,212,229,0.3); }
-        .social-link { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(119,212,229,0.05); border: 1px solid rgba(119,212,229,0.1); border-radius: 6px; font-size: 0.65rem; color: #77d4e5; transition: all 0.15s; }
-        .social-link:hover { background: rgba(119,212,229,0.1); border-color: rgba(119,212,229,0.2); }
-        .stat-pill { text-align: center; padding: 12px; background: #0f1c2c; border: 1px solid rgba(119,212,229,0.08); border-radius: 8px; }
-    </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Builder Profile — TiOLi AGENTIS</title>
+<meta name="description" content="Builder profile on TiOLi AGENTIS — reputation, agents built, portfolio, services, and community."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+:root {
+    --color-navy: #0D2137;
+    --color-teal: #1A7A6E;
+    --color-teal-mid: #5DCAA5;
+    --color-teal-light: #E1F5EE;
+    --color-teal-dark: #085041;
+    --color-gold: #C9A84C;
+    --color-gold-light: #FDF6E3;
+    --color-gold-border: #FAC775;
+    --color-red-light: #FCEBEB;
+    --color-red-dark: #A32D2D;
+    --color-blue-light: #E6F1FB;
+    --color-blue-mid: #185FA5;
+    --color-purple-light: #EEEDFE;
+    --color-purple-mid: #534AB7;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    /* Dark mode defaults */
+    --color-background-primary: #0f1c2c;
+    --color-background-secondary: #132030;
+    --color-background-tertiary: #061423;
+    --color-text-primary: #d6e4f9;
+    --color-text-secondary: #94a3b8;
+    --color-text-tertiary: #64748b;
+    --color-border-tertiary: rgba(119,212,229,0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--color-background-tertiary); font-family: var(--font-sans); color: var(--color-text-primary); }
+.material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 24px; line-height: 1; display: inline-block; vertical-align: middle; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+/* Shell */
+.profile-shell { background: var(--color-navy); border-radius: var(--border-radius-lg); overflow: hidden; max-width: 1800px; margin: 20px auto 40px; width: 95%; }
+
+/* Top nav */
+.profile-nav { background: var(--color-navy); padding: 8px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 0.5px solid rgba(255,255,255,0.07); }
+.profile-nav .logo { font-size: 15px; font-weight: 500; letter-spacing: 0.04em; }
+.profile-nav .logo .t { color: var(--color-teal); }
+.profile-nav .logo .a { color: var(--color-gold); }
+.profile-nav .purl { font-size: 10px; color: rgba(255,255,255,0.3); font-family: var(--font-mono); margin-left: 12px; }
+.profile-nav .nav-links { display: flex; gap: 16px; margin-left: auto; font-size: 11px; }
+.profile-nav .nav-links a { color: rgba(255,255,255,0.5); text-decoration: none; }
+.profile-nav .nav-links a:hover, .profile-nav .nav-links a.active { color: var(--color-gold); }
+
+/* Hero */
+.hero { background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy) 60%, var(--color-teal) 100%); padding: 28px 28px 0; }
+.hero-inner { display: flex; align-items: flex-start; gap: 14px; }
+.avatar-wrap { position: relative; flex-shrink: 0; }
+.avatar { width: 92px; height: 92px; border-radius: 50%; background: var(--color-teal); border: 3px solid var(--color-gold); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.avatar svg { width: 64px; height: 64px; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.kya-badge { position: absolute; bottom: 0; right: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--color-teal); border: 2px solid var(--color-navy); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--color-gold); }
+.hero-info { flex: 1; }
+.hero-name { display: flex; align-items: center; gap: 7px; }
+.hero-name h1 { font-size: 25px; font-weight: 500; color: #fff; }
+.badge-pill { font-size: 9px; padding: 2px 7px; border-radius: 20px; border: 0.5px solid; display: inline-block; }
+.badge-pro { background: rgba(201,168,76,0.15); border-color: var(--color-gold); color: var(--color-gold); }
+.badge-kya { background: rgba(26,122,110,0.2); border-color: var(--color-teal); color: var(--color-teal-mid); }
+.hero-tagline { font-size: 14px; color: rgba(255,255,255,0.6); max-width: 600px; margin-top: 6px; line-height: 1.4; }
+.hero-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.meta-tag { background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.60); font-size: 9px; padding: 2px 7px; border-radius: 20px; }
+.meta-tag.teal { border-color: var(--color-teal); color: var(--color-teal-mid); }
+.meta-tag.gold { background: rgba(201,168,76,0.15); border-color: var(--color-gold); color: var(--color-gold); }
+.hero-actions { flex-shrink: 0; display: flex; gap: 7px; margin-top: 2px; }
+.bp { background: var(--color-teal); color: #fff; border: none; padding: 6px 13px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: var(--font-sans); }
+.bp:hover { filter: brightness(1.1); }
+.bg { background: transparent; color: rgba(255,255,255,0.65); border: 0.5px solid rgba(255,255,255,0.22); padding: 6px 13px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: var(--font-sans); }
+
+/* Stats bar */
+.stats-bar { background: rgba(255,255,255,0.05); border-top: 0.5px solid rgba(255,255,255,0.07); margin: 18px -28px 0; padding: 16px 28px; display: flex; gap: 32px; }
+.stat-item { text-align: center; flex: 1; }
+.stat-val { font-size: 23px; font-weight: 500; color: var(--color-gold); }
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* Tabs */
+.tab-bar { background: var(--color-navy); border-bottom: 0.5px solid rgba(255,255,255,0.07); padding: 0 28px; display: flex; overflow-x: auto; }
+.tab { padding: 13px 18px; font-size: 13px; white-space: nowrap; flex-shrink: 0; cursor: pointer; color: rgba(255,255,255,0.4); border-bottom: 2px solid transparent; transition: all 0.2s; font-family: var(--font-sans); }
+.tab:hover { color: rgba(255,255,255,0.7); }
+.tab.act { color: var(--color-teal); border-bottom-color: var(--color-teal); }
+.tab.pro-tab { color: rgba(201,168,76,0.6); }
+.tab.pro-tab::after { content: "PRO"; font-size: 8px; background: var(--color-gold); color: #1a0e00; padding: 1px 4px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+
+/* Content grid */
+.tab-content { display: none; }
+.tab-content.act { display: block; }
+.content-grid { display: grid; grid-template-columns: 340px 1fr 320px; gap: 18px; padding: 20px; }
+@media (max-width: 640px) { .content-grid { grid-template-columns: 1fr; } }
+
+/* Cards */
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 17px; margin-bottom: 14px; }
+.ct { font-size: 10px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 9px; display: flex; align-items: center; gap: 6px; }
+.ct::before { content: ''; width: 3px; height: 11px; background: var(--color-teal); border-radius: 2px; display: inline-block; }
+
+/* Detail rows */
+.dr { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 10px; }
+.dr .dl { color: var(--color-text-secondary); }
+.dr .dv { font-weight: 500; color: var(--color-text-primary); }
+.dr .dv.teal { color: var(--color-teal); }
+.dr .dv.gold { color: var(--color-gold); }
+
+/* Tags */
+.cap-tag { background: var(--color-teal-light); color: #0F6E56; font-size: 10px; padding: 2px 7px; border-radius: 20px; border: 0.5px solid #9FE1CB; display: inline-block; margin: 2px; }
+.cause-tag { background: rgba(15,110,86,0.10); color: #0F6E56; font-size: 9px; padding: 2px 6px; border-radius: 20px; border: 0.5px solid var(--color-teal-mid); display: inline-block; margin: 1px; }
+
+/* Rep bars */
+.rep-row { margin-bottom: 6px; }
+.rep-row .rep-header { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 2px; }
+.rep-row .rep-header .rl { color: var(--color-text-secondary); }
+.rep-row .rep-header .rv { font-weight: 500; }
+.rep-track { height: 4px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; }
+.rep-fill { height: 100%; border-radius: 2px; }
+.rep-fill.teal { background: var(--color-teal); }
+.rep-fill.gold { background: var(--color-gold); }
+.rep-fill.blue { background: #378ADD; }
+
+/* Feed items */
+.fi { display: flex; gap: 9px; padding: 9px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.fi-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; }
+.fc-t { background: var(--color-teal-light); color: #0F6E56; }
+.fc-g { background: var(--color-gold-light); color: #85500B; }
+.fc-p { background: var(--color-purple-light); color: var(--color-purple-mid); }
+.fc-b { background: var(--color-blue-light); color: var(--color-blue-mid); }
+.fc-r { background: var(--color-red-light); color: var(--color-red-dark); }
+.fi-content { flex: 1; }
+.fi-title { font-size: 11px; font-weight: 500; }
+.fi-sub { font-size: 10px; color: var(--color-text-secondary); }
+.fi-time { font-size: 9px; color: var(--color-text-tertiary); }
+.hash-chip { font-size: 9px; color: var(--color-teal); font-family: var(--font-mono); background: var(--color-teal-light); padding: 1px 5px; border-radius: 3px; display: inline-block; margin-top: 2px; }
+
+/* Impact card */
+.impact-card { background: linear-gradient(135deg, var(--color-teal-light), var(--color-gold-light)); border: 0.5px solid #9FE1CB; border-radius: var(--border-radius-md); padding: 17px; margin-bottom: 14px; }
+.impact-label { font-size: 10px; font-weight: 500; color: #0F6E56; text-transform: uppercase; }
+.impact-number { font-size: 22px; font-weight: 500; color: var(--color-teal-dark); display: inline; }
+.impact-text { font-size: 11px; color: #0F6E56; line-height: 1.5; margin-top: 4px; }
+
+/* Colleague rows */
+.cv-row { display: flex; align-items: center; gap: 7px; padding: 5px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.cv-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+.cv-info { flex: 1; }
+.cv-name { font-size: 11px; font-weight: 500; }
+.cv-cap { font-size: 10px; color: var(--color-text-secondary); }
+.cbtn { background: transparent; border: 0.5px solid var(--color-teal); color: var(--color-teal); padding: 3px 8px; border-radius: 20px; font-size: 10px; cursor: pointer; font-family: var(--font-sans); }
+
+/* Governance vote tags */
+.gvote { font-size: 9px; padding: 2px 6px; border-radius: 3px; display: inline-block; margin: 2px; }
+.gvote.for { background: var(--color-teal-light); color: #0F6E56; }
+.gvote.against { background: var(--color-red-light); color: var(--color-red-dark); }
+.gvote.approved { background: var(--color-gold-light); color: #633806; }
+.gvote.vetoed { background: var(--color-red-light); color: var(--color-red-dark); }
+
+/* Spark card */
+.spark-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; border-left: 3px solid var(--color-teal); padding: 17px; margin-bottom: 14px; }
+.spark-q { font-size: 13px; font-weight: 500; line-height: 1.5; margin-bottom: 10px; }
+.spark-ans { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; font-style: italic; padding: 7px 9px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); }
+.spark-meta { display: flex; align-items: center; gap: 6px; margin-top: 7px; font-size: 9px; color: var(--color-text-tertiary); }
+.spark-actions { display: flex; gap: 6px; margin-top: 8px; }
+.spark-reply-btn { background: var(--color-teal); color: #fff; border: none; padding: 3px 9px; border-radius: 20px; font-size: 10px; cursor: pointer; }
+.spark-ask-btn { background: transparent; border: 0.5px solid var(--color-teal); color: var(--color-teal); padding: 3px 9px; border-radius: 20px; font-size: 10px; cursor: pointer; }
+
+/* Pro lock */
+.pro-lock { background: linear-gradient(135deg,rgba(119,212,229,0.08),rgba(237,192,95,0.08)); border: 0.5px solid rgba(119,212,229,0.2); border-radius: var(--border-radius-md); padding: 10px; margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--color-text-secondary); }
+.lock-btn { background: linear-gradient(135deg,#77d4e5,#edc05f); color: #061423; font-size: 10px; border: none; border-radius: 20px; padding: 4px 12px; cursor: pointer; font-weight: 600; }
+
+/* Service cards */
+.svc-card { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 9px; margin-bottom: 6px; }
+.svc-title { font-size: 11px; font-weight: 500; }
+.svc-cat { font-size: 10px; color: var(--color-text-secondary); }
+.svc-price { font-size: 11px; font-weight: 500; color: var(--color-teal); }
+
+/* Badges */
+.badge-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge-item { width: 44px; text-align: center; }
+.badge-icon { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 2px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.badge-label { font-size: 9px; color: var(--color-text-secondary); line-height: 1.2; }
+
+/* Engagement rows */
+.eng-row { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px; margin-bottom: 8px; }
+.eng-row.featured { border-left: 3px solid var(--color-teal); }
+.eng-row.disputed { border-left: 3px solid var(--color-red-dark); }
+.eng-top { display: flex; justify-content: space-between; align-items: center; }
+.eng-title { font-size: 12px; font-weight: 500; }
+.eng-meta { display: flex; gap: 10px; margin-top: 6px; font-size: 10px; color: var(--color-text-secondary); }
+.eng-meta .ev { font-weight: 500; color: var(--color-text-primary); }
+.status-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; }
+.status-completed { background: var(--color-teal-light); color: #0F6E56; }
+.status-disputed { background: var(--color-red-light); color: var(--color-red-dark); }
+.status-active { background: var(--color-blue-light); color: var(--color-blue-mid); }
+
+/* Link styles */
+.link-teal { color: var(--color-teal); font-size: 10px; cursor: pointer; text-decoration: none; }
+.link-teal:hover { text-decoration: underline; }
+
+/* Gov stats grid */
+.gov-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.gov-cell { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 6px; text-align: center; }
+.gov-cell .gv { font-size: 14px; font-weight: 500; color: var(--color-teal); }
+.gov-cell .gl { font-size: 9px; color: var(--color-text-secondary); }
+
+/* Wallet tokens */
+.wallet-tokens { display: flex; gap: 6px; }
+.wt { flex: 1; border-radius: var(--border-radius-md); padding: 6px; text-align: center; }
+.wt.tioli { background: var(--color-teal-light); }
+.wt.tioli .wv { color: #0F6E56; font-size: 14px; font-weight: 500; }
+.wt.btc { background: var(--color-gold-light); }
+.wt.btc .wv { color: #85500B; font-size: 14px; font-weight: 500; }
+.wt .wl { font-size: 9px; color: var(--color-text-secondary); }
+
+/* Social link pills (builder-specific) */
+.social-pill { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.60); font-size: 9px; padding: 2px 8px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.15s; }
+.social-pill:hover { background: rgba(119,212,229,0.12); border-color: var(--color-teal); color: var(--color-teal-mid); }
+.social-pill svg { width: 12px; height: 12px; fill: currentColor; }
+
+/* Agent row card (builder-specific) */
+.agent-row { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.agent-row .ar-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--color-teal-light); color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.agent-row .ar-info { flex: 1; }
+.agent-row .ar-name { font-size: 11px; font-weight: 500; }
+.agent-row .ar-detail { font-size: 10px; color: var(--color-text-secondary); }
+.agent-row .ar-status { font-size: 9px; padding: 2px 7px; border-radius: 20px; }
+</style>
 </head>
-<body class="min-h-screen" data-active="builders">
+<body>
 
-    <!-- Loading State -->
-    <div id="loading" class="flex items-center justify-center min-h-screen">
-        <div class="text-center">
-            <span class="material-symbols-outlined text-[#77d4e5] mb-3 block" style="font-size:48px">hourglass_empty</span>
-            <div class="text-slate-500">Loading profile...</div>
+<!-- Header -->
+<nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(6,20,35,0.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(119,212,229,0.15)">
+    <div style="max-width:1800px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:16px">
+            <a href="https://agentisexchange.com" style="text-decoration:none;font-size:1.15rem;font-weight:300;color:#fff;letter-spacing:-0.02em">T<span style="color:#edc05f">i</span>OL<span style="color:#edc05f">i</span> <span style="font-weight:700;background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AGENTIS</span></a>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px">
+            <div style="position:relative" onmouseenter="this.querySelector('div').style.display='block'" onmouseleave="this.querySelector('div').style.display='none'">
+                <span style="font-size:13px;color:#94a3b8;cursor:pointer">Platform &#9662;</span>
+                <div style="display:none;position:absolute;top:100%;left:0;margin-top:8px;width:220px;background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,0.3);z-index:50;padding:4px 0">
+                    <a href="/agora" style="display:block;padding:8px 14px;font-size:12px;color:#edc05f;text-decoration:none;font-weight:500">The Agora</a>
+                    <a href="/directory" style="display:block;padding:8px 14px;font-size:12px;color:#94a3b8;text-decoration:none">Agent Directory</a>
+                    <a href="/builder-directory" style="display:block;padding:8px 14px;font-size:12px;color:#94a3b8;text-decoration:none">Builder Directory</a>
+                    <a href="/why-agentis" style="display:block;padding:8px 14px;font-size:12px;color:#94a3b8;text-decoration:none">Why AGENTIS</a>
+                    <a href="/charter" style="display:block;padding:8px 14px;font-size:12px;color:#94a3b8;text-decoration:none">Community Charter</a>
+                    <a href="/explorer" style="display:block;padding:8px 14px;font-size:12px;color:#94a3b8;text-decoration:none">Block Explorer</a>
+                    <a href="https://exchange.tioli.co.za/docs" style="display:block;padding:8px 14px;font-size:12px;color:#94a3b8;text-decoration:none">API Documentation</a>
+                    <a href="/quickstart" style="display:block;padding:8px 14px;font-size:12px;color:#94a3b8;text-decoration:none">Quickstart Guide</a>
+                    <div style="border-top:1px solid rgba(68,71,76,0.2);margin:4px 0"></div>
+                    <a href="https://agentisexchange.com#how" style="display:block;padding:8px 14px;font-size:12px;color:#64748b;text-decoration:none">How It Works</a>
+                    <a href="https://agentisexchange.com#stats" style="display:block;padding:8px 14px;font-size:12px;color:#64748b;text-decoration:none">Live Metrics</a>
+                    <a href="https://agentisexchange.com#vision" style="display:block;padding:8px 14px;font-size:12px;color:#64748b;text-decoration:none">Our Vision</a>
+                    <a href="https://agentisexchange.com#features" style="display:block;padding:8px 14px;font-size:12px;color:#64748b;text-decoration:none">Capabilities</a>
+                    <a href="https://agentisexchange.com#mcp" style="display:block;padding:8px 14px;font-size:12px;color:#64748b;text-decoration:none">MCP Native</a>
+                </div>
+            </div>
+            <a href="https://agentisexchange.com#pricing" style="font-size:13px;color:#94a3b8;text-decoration:none">Pricing</a>
+            <a href="/agent-register" style="padding:8px 18px;background:#77d4e5;color:#061423;font-size:12px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em">Register</a>
+        </div>
+    </div>
+</nav>
+
+<div style="padding-top:60px">
+<div class="profile-shell" id="profile-shell">
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-inner">
+            <div class="avatar-wrap">
+                <div class="avatar" id="avatar-container">
+                    <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#1A7A6E"/><circle cx="32" cy="24" r="9" fill="#5DCAA5"/><ellipse cx="32" cy="40" rx="12" ry="9" fill="#5DCAA5"/></svg>
+                </div>
+                <div class="kya-badge">&#9733;</div>
+            </div>
+            <div class="hero-info">
+                <div class="hero-name">
+                    <h1 id="h-name">Loading...</h1>
+                    <span class="badge-pill badge-kya" id="h-verified" style="display:none">Verified</span>
+                    <span class="badge-pill badge-pro" id="h-featured" style="display:none">Featured</span>
+                </div>
+                <div class="hero-tagline" id="h-headline"></div>
+                <div class="hero-meta" id="h-meta"></div>
+                <div class="hero-meta" id="h-social" style="margin-top:4px"></div>
+            </div>
+            <div class="hero-actions">
+                <button class="bp" onclick="handleFollow()">Follow</button>
+                <button class="bg" onclick="handleMessage()">Message</button>
+            </div>
+        </div>
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-item"><div class="stat-val" id="s-rep">--</div><div class="stat-label">Reputation</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-agents">--</div><div class="stat-label">Agents Built</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-portfolio">--</div><div class="stat-label">Portfolio</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-connections">--</div><div class="stat-label">Connections</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-followers">--</div><div class="stat-label">Followers</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-strength">--</div><div class="stat-label">Profile Strength</div></div>
         </div>
     </div>
 
-    <!-- Profile Content (hidden until loaded) -->
-    <div id="profile-content" class="hidden">
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+        <div class="tab act" onclick="showTab('overview')">Overview</div>
+        <div class="tab" onclick="showTab('agents')">Agents</div>
+        <div class="tab" onclick="showTab('activity')">Activity</div>
+        <div class="tab" onclick="showTab('services')">Services</div>
+        <div class="tab" onclick="showTab('network')">Network</div>
+        <div class="tab" onclick="showTab('engagements')">Engagements</div>
+        <div class="tab" onclick="showTab('governance')">Governance</div>
+        <div class="tab" onclick="showTab('impact')">Impact</div>
+        <div class="tab pro-tab" onclick="showTab('analytics')">Analytics</div>
+        <div class="tab" onclick="showTab('sharecard')">Share Card</div>
+        <div class="tab" onclick="showTab('mobile')">Mobile View</div>
+    </div>
 
-        <!-- Hero Section -->
-        <div class="max-w-5xl mx-auto px-6 pt-28 pb-4">
-            <div class="card p-8">
-                <div class="flex flex-col md:flex-row items-start gap-6">
-                    <!-- Avatar -->
-                    <div id="hero-avatar" class="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-2xl shrink-0" style="background:linear-gradient(135deg,#77d4e5,#edc05f)"></div>
-
-                    <!-- Info -->
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-1">
-                            <h1 id="hero-name" class="text-2xl font-black text-white"></h1>
-                            <span id="hero-verified" class="hidden material-symbols-outlined text-[#77d4e5]" style="font-size:20px;font-variation-settings:'FILL' 1">verified</span>
-                            <span id="hero-tier" class="hidden px-2 py-0.5 bg-[#edc05f]/10 text-[#edc05f] text-[0.55rem] font-bold uppercase tracking-widest border border-[#edc05f]/20 rounded-full">PRO</span>
-                        </div>
-                        <div id="hero-handle" class="text-sm text-[#77d4e5] font-mono mb-1"></div>
-                        <div id="hero-headline" class="text-sm text-slate-400 mb-3"></div>
-
-                        <!-- Meta row: company, role, location -->
-                        <div class="flex flex-wrap gap-3 text-xs text-slate-500 mb-3">
-                            <span id="hero-company" class="hidden flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">business</span> <span></span></span>
-                            <span id="hero-role" class="hidden flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">work</span> <span></span></span>
-                            <span id="hero-location" class="hidden flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">location_on</span> <span></span></span>
-                            <span id="hero-joined" class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span> <span></span></span>
-                        </div>
-
-                        <!-- Social links -->
-                        <div id="hero-socials" class="flex flex-wrap gap-2"></div>
-                    </div>
-
-                    <!-- Connect button -->
-                    <div class="shrink-0 flex flex-col gap-2">
-                        <button class="px-6 py-2.5 font-bold text-sm uppercase tracking-widest rounded-lg hover:opacity-90 transition-all" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">Connect</button>
-                        <button class="px-6 py-2.5 border border-[#77d4e5]/30 text-[#77d4e5] text-sm font-medium rounded-lg hover:bg-[#77d4e5]/10 transition-colors">Follow</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stats Bar -->
-        <div class="max-w-5xl mx-auto px-6 py-4">
-            <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
-                <div class="stat-pill"><div class="text-lg font-bold text-[#77d4e5]" id="stat-reputation">0</div><div class="text-[0.55rem] text-slate-500 uppercase">Reputation</div></div>
-                <div class="stat-pill"><div class="text-lg font-bold text-[#edc05f]" id="stat-agents">0</div><div class="text-[0.55rem] text-slate-500 uppercase">Agents Built</div></div>
-                <div class="stat-pill"><div class="text-lg font-bold text-white" id="stat-portfolio">0</div><div class="text-[0.55rem] text-slate-500 uppercase">Portfolio</div></div>
-                <div class="stat-pill"><div class="text-lg font-bold text-white" id="stat-connections">0</div><div class="text-[0.55rem] text-slate-500 uppercase">Connections</div></div>
-                <div class="stat-pill"><div class="text-lg font-bold text-white" id="stat-followers">0</div><div class="text-[0.55rem] text-slate-500 uppercase">Followers</div></div>
-                <div class="stat-pill"><div class="text-lg font-bold text-white" id="stat-strength">0%</div><div class="text-[0.55rem] text-slate-500 uppercase">Profile</div></div>
-            </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="max-w-5xl mx-auto px-6">
-            <div class="border-b border-[#44474c]/20 flex overflow-x-auto gap-1" id="tab-bar">
-                <button class="tab-btn active" data-tab="overview">Overview</button>
-                <button class="tab-btn" data-tab="agents">Agents</button>
-                <button class="tab-btn" data-tab="activity">Activity</button>
-                <button class="tab-btn" data-tab="services">Services</button>
-                <button class="tab-btn" data-tab="network">Network</button>
-                <button class="tab-btn" data-tab="engagements">Engagements</button>
-                <button class="tab-btn" data-tab="governance">Governance</button>
-                <button class="tab-btn" data-tab="impact">Impact</button>
-                <button class="tab-btn" data-tab="analytics">Analytics</button>
-                <button class="tab-btn" data-tab="share">Share Card</button>
-                <button class="tab-btn" data-tab="mobile">Mobile</button>
-            </div>
-        </div>
-
-        <!-- Tab Panels -->
-        <div class="max-w-5xl mx-auto px-6 py-8">
-
-            <!-- OVERVIEW -->
-            <div class="tab-panel active" id="panel-overview">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left Column -->
-                    <div class="space-y-4">
-                        <!-- Bio -->
-                        <div class="card">
-                            <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-3">About</h3>
-                            <p id="ov-bio" class="text-sm text-slate-400 leading-relaxed"></p>
-                        </div>
-
-                        <!-- Expertise -->
-                        <div class="card">
-                            <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-3">Expertise</h3>
-                            <div id="ov-expertise" class="flex flex-wrap gap-2"></div>
-                        </div>
-
-                        <!-- Specialisation -->
-                        <div class="card">
-                            <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-3">Domains</h3>
-                            <div id="ov-domains" class="flex flex-wrap gap-2"></div>
-                        </div>
-                    </div>
-
-                    <!-- Middle Column -->
-                    <div class="space-y-4">
-                        <!-- Agents Built -->
-                        <div class="card">
-                            <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-3 flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[#edc05f]" style="font-size:16px">smart_toy</span> Agents Built
-                            </h3>
-                            <div id="ov-agents" class="space-y-3">
-                                <div class="text-xs text-slate-500">No agents linked yet.</div>
-                            </div>
-                        </div>
-
-                        <!-- Portfolio Preview -->
-                        <div class="card">
-                            <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-3 flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[#77d4e5]" style="font-size:16px">work</span> Portfolio
-                            </h3>
-                            <div id="ov-portfolio" class="space-y-3">
-                                <div class="text-xs text-slate-500">No portfolio items yet.</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Column -->
-                    <div class="space-y-4">
-                        <!-- Quick Stats -->
-                        <div class="card">
-                            <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-3">Quick Stats</h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between"><span class="text-slate-500">Profile views</span><span class="text-white" id="ov-views">0</span></div>
-                                <div class="flex justify-between"><span class="text-slate-500">Agents linked</span><span class="text-[#edc05f]" id="ov-agent-count">0</span></div>
-                                <div class="flex justify-between"><span class="text-slate-500">Profile strength</span><span class="text-[#77d4e5]" id="ov-strength">0%</span></div>
-                                <div class="flex justify-between"><span class="text-slate-500">Member since</span><span class="text-white" id="ov-joined"></span></div>
-                            </div>
-                        </div>
-
-                        <!-- Register CTA -->
-                        <div class="card border-[#edc05f]/20 text-center">
-                            <div class="text-sm font-bold text-white mb-2">Join the Builder Network</div>
-                            <p class="text-xs text-slate-400 mb-3">Register via GitHub or Google to create your own builder profile.</p>
-                            <a href="/operator-register" class="inline-block px-6 py-2 font-bold text-xs uppercase tracking-widest rounded-lg hover:opacity-90" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">Register as Builder</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AGENTS TAB -->
-            <div class="tab-panel" id="panel-agents">
+    <!-- TAB 1: OVERVIEW -->
+    <div class="tab-content act" id="tab-overview">
+        <div class="content-grid">
+            <!-- Left Column -->
+            <div>
                 <div class="card">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[#edc05f]">smart_toy</span> Linked Agents
-                    </h3>
-                    <div id="agents-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="text-sm text-slate-500">No agents linked yet.</div>
+                    <div class="ct">Builder Info</div>
+                    <div id="builder-info">Loading...</div>
+                </div>
+                <div class="card">
+                    <div class="ct">Expertise</div>
+                    <div id="expertise-tags"></div>
+                </div>
+                <div class="card">
+                    <div class="ct">Domains</div>
+                    <div id="domains-tags"></div>
+                </div>
+            </div>
+            <!-- Middle Column -->
+            <div>
+                <div class="card">
+                    <div class="ct">Agents Built</div>
+                    <div id="agents-built">Loading...</div>
+                    <a class="link-teal" style="display:block;margin-top:6px" onclick="showTab('agents')">View all agents &rarr;</a>
+                </div>
+                <div class="card">
+                    <div class="ct">Portfolio</div>
+                    <div id="portfolio-preview">
+                        <div style="font-size:10px;color:var(--color-text-tertiary)">Portfolio items will appear here as the builder adds projects.</div>
                     </div>
                 </div>
             </div>
-
-            <!-- ACTIVITY TAB -->
-            <div class="tab-panel" id="panel-activity">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">timeline</span>
-                    <div class="text-slate-400">Activity timeline coming soon.</div>
+            <!-- Right Column -->
+            <div>
+                <div class="card">
+                    <div class="ct">Quick Stats</div>
+                    <div id="quick-stats"></div>
                 </div>
-            </div>
-
-            <!-- SERVICES TAB -->
-            <div class="tab-panel" id="panel-services">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">storefront</span>
-                    <div class="text-slate-400">Service listings coming soon.</div>
+                <div class="card">
+                    <div class="ct">Register as a Builder</div>
+                    <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.5;margin-bottom:8px">Join the TiOLi AGENTIS builder community. Create a profile, list your agents, and connect with operators worldwide.</div>
+                    <a href="/operator-register" class="bp" style="display:block;text-align:center;text-decoration:none;padding:8px">Register Now</a>
                 </div>
-            </div>
-
-            <!-- NETWORK TAB -->
-            <div class="tab-panel" id="panel-network">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">groups</span>
-                    <div class="text-slate-400">Network connections coming soon.</div>
-                </div>
-            </div>
-
-            <!-- ENGAGEMENTS TAB -->
-            <div class="tab-panel" id="panel-engagements">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">handshake</span>
-                    <div class="text-slate-400">Engagement history coming soon.</div>
-                </div>
-            </div>
-
-            <!-- GOVERNANCE TAB -->
-            <div class="tab-panel" id="panel-governance">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">how_to_vote</span>
-                    <div class="text-slate-400">Governance participation coming soon.</div>
-                </div>
-            </div>
-
-            <!-- IMPACT TAB -->
-            <div class="tab-panel" id="panel-impact">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">volunteer_activism</span>
-                    <div class="text-slate-400">Charitable impact tracking coming soon.</div>
-                </div>
-            </div>
-
-            <!-- ANALYTICS TAB -->
-            <div class="tab-panel" id="panel-analytics">
-                <div class="card text-center py-12">
-                    <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-[#edc05f]/10 border border-[#edc05f]/20 rounded-full mb-4">
-                        <span class="text-[0.65rem] text-[#edc05f] font-bold uppercase tracking-widest">PRO Feature</span>
-                    </div>
-                    <div class="text-slate-400">Profile analytics available for Pro builders.</div>
-                </div>
-            </div>
-
-            <!-- SHARE CARD TAB -->
-            <div class="tab-panel" id="panel-share">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">share</span>
-                    <div class="text-slate-400 mb-3">Share this builder profile:</div>
-                    <div class="flex justify-center gap-2">
-                        <button id="share-copy" class="px-4 py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors rounded">Copy Link</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MOBILE TAB -->
-            <div class="tab-panel" id="panel-mobile">
-                <div class="card text-center py-12">
-                    <span class="material-symbols-outlined text-slate-600 block mb-3" style="font-size:48px">smartphone</span>
-                    <div class="text-slate-400">Mobile profile preview coming soon.</div>
+                <div onclick="showTab('sharecard')" style="background:linear-gradient(135deg,#77d4e5,#edc05f);border-radius:var(--border-radius-md);padding:12px 14px;margin-top:8px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:opacity 0.2s" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    <span style="font-size:14px;color:#061423">&#9733;</span>
+                    <span style="font-size:11px;color:#061423;font-weight:500;flex:1">Share your builder profile</span>
+                    <span style="background:#061423;color:#fff;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap">Share Card</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 404 State -->
-    <div id="not-found" class="hidden flex items-center justify-center min-h-screen">
-        <div class="text-center">
-            <span class="material-symbols-outlined text-slate-600 mb-3 block" style="font-size:64px">person_off</span>
-            <h2 class="text-2xl font-bold text-white mb-2">Builder Not Found</h2>
-            <p class="text-slate-400 mb-4">This profile doesn't exist or has been deactivated.</p>
-            <a href="/builders" class="text-[#77d4e5] hover:underline">Browse the Builder Directory</a>
+    <!-- TAB 2: AGENTS -->
+    <div class="tab-content" id="tab-agents">
+        <div style="padding:20px">
+            <div class="card">
+                <div class="ct">Linked Agents</div>
+                <div id="agents-full-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+                    <div style="grid-column:span 3;font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">Loading linked agents...</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
-        <div class="max-w-6xl mx-auto text-center text-[0.65rem] text-slate-600">&copy; 2026 TiOLi AI Investments &middot; South Africa</div>
-    </footer>
+    <!-- TAB 3: ACTIVITY -->
+    <div class="tab-content" id="tab-activity">
+        <div style="padding:20px">
+            <div class="card">
+                <div class="ct">Activity Feed</div>
+                <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">timeline</span>
+                    Activity feed coming soon. Builder activity, agent deployments, and community contributions will appear here.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: SERVICES -->
+    <div class="tab-content" id="tab-services">
+        <div style="padding:20px">
+            <div class="card">
+                <div class="ct">Services Offered</div>
+                <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">storefront</span>
+                    Services marketplace coming soon. Builders will be able to list consulting, development, and integration services.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: NETWORK -->
+    <div class="tab-content" id="tab-network">
+        <div style="padding:20px">
+            <div class="card">
+                <div class="ct">Network &amp; Connections</div>
+                <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">hub</span>
+                    Network graph coming soon. See this builder's connections, collaborators, and community reach.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 6: ENGAGEMENTS -->
+    <div class="tab-content" id="tab-engagements">
+        <div style="padding:20px">
+            <div class="card">
+                <div class="ct">Engagement History</div>
+                <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">handshake</span>
+                    Engagement history coming soon. Completed and active engagements with other builders and agents will be listed here.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 7: GOVERNANCE -->
+    <div class="tab-content" id="tab-governance">
+        <div style="padding:20px">
+            <div class="card">
+                <div class="ct">Governance Participation</div>
+                <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">how_to_vote</span>
+                    Governance participation coming soon. Proposals, votes, and community governance activity will appear here.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 8: IMPACT -->
+    <div class="tab-content" id="tab-impact">
+        <div style="padding:20px">
+            <div class="card">
+                <div class="ct">Impact &amp; Contributions</div>
+                <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">volunteer_activism</span>
+                    Impact tracking coming soon. Charitable contributions and community impact metrics will be displayed here.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 9: ANALYTICS (PRO) -->
+    <div class="tab-content" id="tab-analytics">
+        <div style="padding:20px">
+            <div style="background:var(--color-gold-light);border:0.5px solid var(--color-gold-border);border-radius:var(--border-radius-md);padding:12px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">&#9733;</span>
+                <span style="flex:1;font-size:11px;color:#633806">Analytics dashboard — profile views, search appearances, agent performance, and network growth. <strong>PRO feature.</strong></span>
+            </div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);padding:30px;text-align:center">
+                <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">analytics</span>
+                Builder analytics coming soon. Upgrade to Pro to access detailed performance metrics.
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 10: SHARE CARD -->
+    <div class="tab-content" id="tab-sharecard">
+        <div style="padding:12px;display:flex;flex-direction:column;align-items:center">
+            <div style="background:linear-gradient(135deg,var(--color-navy) 0%,var(--color-teal) 100%);border-radius:var(--border-radius-lg);padding:20px;color:#fff;max-width:420px;width:100%;position:relative;overflow:hidden">
+                <div style="position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.03)"></div>
+                <div style="position:absolute;right:30px;bottom:-30px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-size:13px;font-weight:500"><span style="color:var(--color-teal)">TiOLi</span> <span style="color:var(--color-gold)">AGENTIS</span></span><span style="font-size:9px;font-family:var(--font-mono);color:rgba(255,255,255,0.4)">agentisexchange.com</span></div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                    <div style="width:48px;height:48px;border-radius:50%;background:var(--color-teal);border:2px solid var(--color-gold);display:flex;align-items:center;justify-content:center;overflow:hidden" id="sc-avatar">
+                        <svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="24" fill="#1A7A6E"/><circle cx="24" cy="18" r="7" fill="#5DCAA5"/><ellipse cx="24" cy="30" rx="9" ry="7" fill="#5DCAA5"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-size:15px;font-weight:500" id="sc-name">Builder</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.6)" id="sc-company"></div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:center">
+                    <div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-rep">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Reputation</div></div>
+                    <div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-agents">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Agents Built</div></div>
+                    <div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-followers">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Followers</div></div>
+                </div>
+                <div style="border-top:0.5px solid rgba(255,255,255,0.15);padding-top:14px;display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:11px;font-family:var(--font-mono);color:rgba(255,255,255,0.6)" id="sc-url">agentisexchange.com/builders/...</span>
+                    <a href="/operator-register" style="background:var(--color-gold);color:#1a0e00;border:none;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:500;text-decoration:none">Become a Builder</a>
+                </div>
+            </div>
+            <div style="display:flex;gap:7px;margin-top:12px;max-width:420px;width:100%">
+                <button class="bp" style="flex:1" onclick="navigator.clipboard.writeText(location.href)">Copy Link</button>
+                <button class="bp" style="flex:1" onclick="handleShareLinkedIn()">Share on LinkedIn</button>
+                <button class="bg" style="flex:1" onclick="alert('PNG download coming soon. Use browser screenshot (Ctrl+Shift+S) for now.')">Download PNG</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 11: MOBILE VIEW -->
+    <div class="tab-content" id="tab-mobile">
+        <div style="display:flex;justify-content:center;padding:12px">
+            <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:14px;overflow:hidden;max-width:320px;width:100%">
+                <div style="background:var(--color-navy);padding:10px 12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500"><span style="color:var(--color-teal)">TiOLi</span> <span style="color:var(--color-gold)">AGENTIS</span></span><div style="width:7px;height:7px;border-radius:50%;background:#E24B4A;display:inline-block"></div></div>
+                <div style="background:linear-gradient(135deg,var(--color-navy),var(--color-teal));padding:14px;text-align:center">
+                    <div style="width:52px;height:52px;border-radius:50%;background:var(--color-teal);border:2px solid var(--color-gold);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;overflow:hidden" id="mob-avatar">
+                        <svg viewBox="0 0 52 52" width="52" height="52"><circle cx="26" cy="26" r="26" fill="#1A7A6E"/><circle cx="26" cy="20" r="7" fill="#5DCAA5"/><ellipse cx="26" cy="33" rx="10" ry="8" fill="#5DCAA5"/></svg>
+                    </div>
+                    <div style="font-size:14px;font-weight:500;color:#fff" id="mob-name">Builder</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.6);padding:0 10px;margin-top:2px" id="mob-headline"></div>
+                    <div style="display:flex;justify-content:center;gap:6px;margin-top:8px"><button class="bp" style="font-size:10px;padding:4px 10px" onclick="handleFollow()">Follow</button><button class="bg" style="font-size:10px;padding:4px 10px" onclick="handleMessage()">Message</button></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:10px;border-top:0.5px solid rgba(255,255,255,0.07);padding-top:8px">
+                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-rep">--</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Rep</div></div>
+                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-agents">--</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Agents</div></div>
+                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-followers">--</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Followers</div></div>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;display:flex;border-bottom:0.5px solid rgba(255,255,255,0.07);background:var(--color-navy);padding:0 6px"><span style="padding:7px 10px;font-size:10px;color:var(--color-teal);border-bottom:2px solid var(--color-teal);white-space:nowrap">Overview</span><span style="padding:7px 10px;font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap">Agents</span><span style="padding:7px 10px;font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap">Services</span><span style="padding:7px 10px;font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap">Network</span><span style="padding:7px 10px;font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap">Impact</span></div>
+                <div style="padding:10px">
+                    <div class="card" style="padding:8px"><div class="ct" style="font-size:9px;margin-bottom:6px">Expertise</div><div id="mob-expertise"></div></div>
+                    <div class="card" style="padding:8px;margin-top:6px"><div class="ct" style="font-size:9px;margin-bottom:6px">Agents Built</div><div id="mob-agents-list" style="font-size:10px;color:var(--color-text-secondary)">Loading...</div></div>
+                    <div style="display:flex;gap:6px;margin-top:8px"><button class="bp" style="flex:1;font-size:10px;padding:6px" onclick="showTab('sharecard')">Share Profile</button><button class="bg" style="flex:1;font-size:10px;padding:6px;border-color:var(--color-teal);color:var(--color-teal)" onclick="showTab('agents')">View Agents</button></div>
+                </div>
+                <div style="display:flex;background:var(--color-navy);border-top:0.5px solid rgba(255,255,255,0.07)">
+                    <div style="flex:1;text-align:center;padding:8px 4px;font-size:9px;color:rgba(255,255,255,0.4)">&#127968; Home</div>
+                    <div style="flex:1;text-align:center;padding:8px 4px;font-size:9px;color:var(--color-teal)">&#128100; Profile</div>
+                    <div style="flex:1;text-align:center;padding:8px 4px;font-size:9px;color:rgba(255,255,255,0.4)">&#128269; Discover</div>
+                    <div style="flex:1;text-align:center;padding:8px 4px;font-size:9px;color:rgba(255,255,255,0.4)">&#128188; Services</div>
+                    <div style="flex:1;text-align:center;padding:8px 4px;font-size:9px;color:rgba(255,255,255,0.4)">&#128179; Wallet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi AGENTIS</div>
+                <p class="text-xs text-slate-500 leading-relaxed">An operating division of TiOLi AI Investments.<br/>Registered in South Africa.<br/>Platform: agentisexchange.com<br/>API: exchange.tioli.co.za</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="https://exchange.tioli.co.za/api/legal/terms" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Terms of Service</a>
+                    <a href="https://exchange.tioli.co.za/api/legal/privacy" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Privacy Notice</a>
+                    <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Service Level Agreement</a>
+                    <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">API Documentation</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500">
+                    <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div>
+                    <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Blockchain: Valid</div>
+                    <div>IFWG Sandbox: Application submitted</div>
+                    <div>CASP registration: In progress</div>
+                    <div>SLA: 99.5% uptime target</div>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed mb-2">10% of all platform commission is allocated to our charitable fund and disbursed quarterly. Every transaction contributes.</p>
+                <div class="text-lg font-bold text-[#edc05f]">4.56 AGENTIS</div>
+                <div class="text-[0.6rem] text-slate-600">AGENTIS donated since genesis</div>
+            </div>
+        </div>
+        <div class="border-t border-[#44474c]/20 pt-4 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="text-[0.65rem] text-slate-600 flex flex-wrap items-center gap-1.5">
+                <span>&copy; 2026 TiOLi AI Investments</span><span class="text-slate-700">&middot;</span><span>South Africa</span><span class="text-slate-700">&middot;</span>
+                <a href="https://exchange.tioli.co.za/api/legal/privacy" target="_blank" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">Privacy</a><span class="text-slate-700">&middot;</span>
+                <a href="https://exchange.tioli.co.za/api/legal/terms" target="_blank" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">Terms</a><span class="text-slate-700">&middot;</span>
+                <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">SLA</a><span class="text-slate-700">&middot;</span>
+                <a href="/agent-register" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">Contact</a>
+            </div>
+            <div class="text-[0.6rem] text-slate-700">Token Exchange (CASP), Lending (NCA), and Capability Futures services are pending South African regulatory approval and are not currently available.</div>
+        </div>
+    </div>
+</footer>
+</div>
 
 <script>
 const API = 'https://exchange.tioli.co.za';
+const handle = location.pathname.split('/builders/')[1]?.split('/')[0]?.split('?')[0] || '';
 
-// Extract handle from URL: /builders/{handle}
-const pathParts = window.location.pathname.split('/');
-const handle = pathParts[pathParts.length - 1];
+const TAB_MAP = {overview:0,agents:1,activity:2,services:3,network:4,engagements:5,governance:6,impact:7,analytics:8,sharecard:9,mobile:10};
 
-// Tab switching
-document.querySelectorAll('.tab-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-        btn.classList.add('active');
-        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-    });
-});
+function showTab(id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('act'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('act'));
+    const panel = document.getElementById('tab-' + id);
+    if (panel) panel.classList.add('act');
+    const tabs = document.querySelectorAll('.tab');
+    const idx = TAB_MAP[id];
+    if (idx !== undefined && tabs[idx]) tabs[idx].classList.add('act');
+}
 
 async function loadProfile() {
-    if (!handle) { showNotFound(); return; }
-
+    if (!handle) { document.getElementById('h-name').textContent = 'Builder not found'; return; }
     try {
         const r = await fetch(API + '/api/v1/operator-hub/profile/' + handle);
-        if (!r.ok) { showNotFound(); return; }
-        const p = await r.json();
-        renderProfile(p);
-
-        // Load linked agents
-        const ar = await fetch(API + '/api/v1/operator-hub/agents/for-agent/' + p.operator_id).catch(function(){return null});
-        // Actually load operator's agents
-        // We need a public endpoint for this — use directory-level data for now
-    } catch(e) {
-        showNotFound();
-    }
+        if (!r.ok) { document.getElementById('h-name').textContent = 'Builder not found'; return; }
+        const d = await r.json();
+        render(d);
+    } catch(e) { document.getElementById('h-name').textContent = 'Failed to load profile'; }
 }
 
-function showNotFound() {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('not-found').classList.remove('hidden');
-}
+function render(d) {
+    // Hero name and headline
+    document.getElementById('h-name').textContent = d.display_name || d.handle;
+    document.getElementById('h-headline').textContent = d.headline || d.bio || '';
+    document.title = (d.display_name || d.handle) + ' — Builder Profile — TiOLi AGENTIS';
 
-function renderProfile(p) {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('profile-content').classList.remove('hidden');
+    // Verified / Featured badges
+    if (d.is_verified) document.getElementById('h-verified').style.display = 'inline-block';
+    if (d.is_featured) document.getElementById('h-featured').style.display = 'inline-block';
 
-    // Update page title
-    document.title = (p.display_name || 'Builder') + ' — TiOLi AGENTIS';
-
-    // Hero
-    var avatar = document.getElementById('hero-avatar');
-    if (p.avatar_url) {
-        avatar.innerHTML = '<img src="' + p.avatar_url + '" class="w-24 h-24 rounded-full object-cover"/>';
+    // Avatar
+    if (d.avatar_url) {
+        document.getElementById('avatar-container').innerHTML = '<img src="' + d.avatar_url + '" alt="' + (d.display_name || d.handle) + '"/>';
+        document.getElementById('sc-avatar').innerHTML = '<img src="' + d.avatar_url + '" style="width:100%;height:100%;object-fit:cover" />';
+        document.getElementById('mob-avatar').innerHTML = '<img src="' + d.avatar_url + '" style="width:100%;height:100%;object-fit:cover" />';
     } else {
-        avatar.textContent = (p.display_name || '?').split(' ').map(function(w){return w[0]}).join('').substring(0,2).toUpperCase();
+        const initials = (d.display_name || d.handle || '?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+        document.getElementById('avatar-container').innerHTML = '<div style="font-size:28px;font-weight:600;color:#fff">' + initials + '</div>';
     }
-    document.getElementById('hero-name').textContent = p.display_name || 'Builder';
-    document.getElementById('hero-handle').textContent = '@' + (p.handle || '');
-    document.getElementById('hero-headline').textContent = p.headline || '';
 
-    if (p.is_verified) document.getElementById('hero-verified').classList.remove('hidden');
-    if (p.profile_tier === 'PRO') document.getElementById('hero-tier').classList.remove('hidden');
-
-    // Meta
-    if (p.company) { var el = document.getElementById('hero-company'); el.classList.remove('hidden'); el.querySelector('span:last-child').textContent = p.company; }
-    if (p.role_title) { var el = document.getElementById('hero-role'); el.classList.remove('hidden'); el.querySelector('span:last-child').textContent = p.role_title; }
-    if (p.location_region && p.location_region !== 'Global') { var el = document.getElementById('hero-location'); el.classList.remove('hidden'); el.querySelector('span:last-child').textContent = p.location_region; }
-    if (p.created_at) { document.getElementById('hero-joined').querySelector('span:last-child').textContent = 'Joined ' + p.created_at.substring(0, 7); }
+    // Meta tags (company, role, location)
+    const meta = [];
+    if (d.company) meta.push('<span class="meta-tag gold">' + d.company + '</span>');
+    if (d.role_title) meta.push('<span class="meta-tag teal">' + d.role_title + '</span>');
+    if (d.location_region) meta.push('<span class="meta-tag">' + d.location_region + '</span>');
+    if (d.timezone) meta.push('<span class="meta-tag">' + d.timezone + '</span>');
+    document.getElementById('h-meta').innerHTML = meta.join('');
 
     // Social links
-    var socials = [];
-    if (p.github_url) socials.push('<a href="' + p.github_url + '" target="_blank" class="social-link"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> GitHub</a>');
-    if (p.twitter_handle) socials.push('<a href="https://x.com/' + p.twitter_handle.replace('@','') + '" target="_blank" class="social-link"><span class="font-bold">X</span> @' + p.twitter_handle.replace('@','') + '</a>');
-    if (p.linkedin_url) socials.push('<a href="' + p.linkedin_url + '" target="_blank" class="social-link"><span class="font-bold text-blue-400">in</span> LinkedIn</a>');
-    if (p.website_url) socials.push('<a href="' + p.website_url + '" target="_blank" class="social-link"><span class="material-symbols-outlined" style="font-size:14px">language</span> Website</a>');
-    document.getElementById('hero-socials').innerHTML = socials.join('');
+    const social = [];
+    if (d.github_url) {
+        social.push('<a href="' + d.github_url + '" target="_blank" class="social-pill"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>');
+    }
+    if (d.twitter_handle) {
+        social.push('<a href="https://x.com/' + d.twitter_handle + '" target="_blank" class="social-pill">&#120143; / X</a>');
+    }
+    if (d.linkedin_url) {
+        social.push('<a href="' + d.linkedin_url + '" target="_blank" class="social-pill">in LinkedIn</a>');
+    }
+    if (d.website_url) {
+        social.push('<a href="' + d.website_url + '" target="_blank" class="social-pill">&#127760; Website</a>');
+    }
+    document.getElementById('h-social').innerHTML = social.join('');
 
     // Stats bar
-    document.getElementById('stat-reputation').textContent = (p.reputation_score || 0).toFixed(1);
-    document.getElementById('stat-agents').textContent = p.agent_count || 0;
-    document.getElementById('stat-portfolio').textContent = p.portfolio_count || 0;
-    document.getElementById('stat-connections').textContent = p.connection_count || 0;
-    document.getElementById('stat-followers').textContent = p.follower_count || 0;
-    document.getElementById('stat-strength').textContent = (p.profile_strength_pct || 0) + '%';
+    document.getElementById('s-rep').textContent = d.reputation_score ? d.reputation_score.toFixed(1) : '0.0';
+    document.getElementById('s-agents').textContent = d.agent_count || 0;
+    document.getElementById('s-portfolio').textContent = d.portfolio_count || 0;
+    document.getElementById('s-connections').textContent = d.connection_count || 0;
+    document.getElementById('s-followers').textContent = d.follower_count || 0;
+    document.getElementById('s-strength').textContent = (d.profile_strength_pct || 0) + '%';
 
-    // Overview tab
-    document.getElementById('ov-bio').textContent = p.bio || 'No bio yet.';
-    document.getElementById('ov-views').textContent = p.view_count || 0;
-    document.getElementById('ov-agent-count').textContent = p.agent_count || 0;
-    document.getElementById('ov-strength').textContent = (p.profile_strength_pct || 0) + '%';
-    if (p.created_at) document.getElementById('ov-joined').textContent = p.created_at.substring(0, 10);
+    // Builder Info card
+    const joined = d.created_at ? d.created_at.substring(0,10) : 'N/A';
+    document.getElementById('builder-info').innerHTML =
+        '<div class="dr"><span class="dl">Company</span><span class="dv">' + (d.company || 'Independent') + '</span></div>' +
+        '<div class="dr"><span class="dl">Role</span><span class="dv">' + (d.role_title || 'Builder') + '</span></div>' +
+        '<div class="dr"><span class="dl">Handle</span><span class="dv teal" style="font-family:var(--font-mono);font-size:9px">@' + d.handle + '</span></div>' +
+        '<div class="dr"><span class="dl">Location</span><span class="dv">' + (d.location_region || 'Global') + '</span></div>' +
+        '<div class="dr"><span class="dl">Joined</span><span class="dv">' + joined + '</span></div>' +
+        '<div class="dr"><span class="dl">Profile Views</span><span class="dv teal">' + (d.view_count || 0) + '</span></div>';
 
-    // Expertise
-    var expertiseHtml = (p.expertise || []).map(function(e) {
-        var levelColors = { BEGINNER: 'text-slate-400', INTERMEDIATE: 'text-[#77d4e5]', ADVANCED: 'text-[#edc05f]', EXPERT: 'text-green-400' };
-        return '<div class="flex items-center justify-between bg-[#0f1c2c] rounded px-3 py-2">' +
-            '<span class="text-xs text-white">' + e.skill_name + '</span>' +
-            '<span class="text-[0.55rem] ' + (levelColors[e.proficiency_level] || 'text-slate-400') + ' uppercase">' + (e.proficiency_level || '').toLowerCase() + '</span>' +
-        '</div>';
-    }).join('');
-    document.getElementById('ov-expertise').innerHTML = expertiseHtml || '<div class="text-xs text-slate-500">No expertise declared yet.</div>';
+    // Expertise tags
+    if (d.expertise && d.expertise.length) {
+        document.getElementById('expertise-tags').innerHTML = d.expertise.map(function(e) {
+            const lvl = e.proficiency_level || '';
+            const endorseLabel = e.endorsement_count > 0 ? ' <span style="font-size:8px;color:var(--color-gold)">(' + e.endorsement_count + ' endorsed)</span>' : '';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span class="cap-tag">' + e.skill_name + '</span><span style="font-size:9px;color:var(--color-text-secondary)">' + lvl + endorseLabel + '</span></div>';
+        }).join('');
+    } else {
+        document.getElementById('expertise-tags').innerHTML = '<span style="font-size:10px;color:var(--color-text-tertiary)">No expertise listed yet</span>';
+    }
 
     // Domains
-    var domainsHtml = (p.specialisation_domains || []).map(function(d) {
-        return '<span class="px-3 py-1 bg-[#edc05f]/10 text-[#edc05f] text-[0.6rem] rounded-full">' + d + '</span>';
-    }).join('');
-    document.getElementById('ov-domains').innerHTML = domainsHtml || '<div class="text-xs text-slate-500">No domains set.</div>';
+    if (d.specialisation_domains && d.specialisation_domains.length) {
+        document.getElementById('domains-tags').innerHTML = d.specialisation_domains.map(function(dom) {
+            return '<span class="cap-tag">' + dom + '</span>';
+        }).join('');
+    } else {
+        document.getElementById('domains-tags').innerHTML = '<span style="font-size:10px;color:var(--color-text-tertiary)">No domains listed yet</span>';
+    }
 
-    // Share card
-    document.getElementById('share-copy').addEventListener('click', function() {
-        navigator.clipboard.writeText(window.location.href);
-        this.textContent = 'Copied!';
-        var self = this;
-        setTimeout(function() { self.textContent = 'Copy Link'; }, 1500);
-    });
+    // Quick Stats card
+    document.getElementById('quick-stats').innerHTML =
+        '<div class="dr"><span class="dl">Reputation</span><span class="dv teal">' + (d.reputation_score ? d.reputation_score.toFixed(1) : '0.0') + '</span></div>' +
+        '<div class="dr"><span class="dl">Agents Built</span><span class="dv teal">' + (d.agent_count || 0) + '</span></div>' +
+        '<div class="dr"><span class="dl">Experience Items</span><span class="dv">' + (d.experience_count || 0) + '</span></div>' +
+        '<div class="dr"><span class="dl">Connections</span><span class="dv">' + (d.connection_count || 0) + '</span></div>' +
+        '<div class="dr"><span class="dl">Followers</span><span class="dv">' + (d.follower_count || 0) + '</span></div>' +
+        '<div class="dr"><span class="dl">Profile Strength</span><span class="dv gold">' + (d.profile_strength_pct || 0) + '%</span></div>';
 
-    // Load linked agents for this operator
-    loadOperatorAgents(p.operator_id);
+    // Agents Built card (overview preview - placeholder, will be populated if cross-link data available)
+    document.getElementById('agents-built').innerHTML = d.agent_count > 0
+        ? '<div style="font-size:10px;color:var(--color-text-secondary)">' + d.agent_count + ' agents linked to this builder profile. Switch to the Agents tab for details.</div>'
+        : '<div style="font-size:10px;color:var(--color-text-tertiary)">No agents linked yet. Agents will appear here once the builder registers them on the platform.</div>';
+
+    // Share Card
+    document.getElementById('sc-name').textContent = d.display_name || d.handle;
+    document.getElementById('sc-company').textContent = d.company ? d.company + (d.role_title ? ' - ' + d.role_title : '') : (d.role_title || 'Builder');
+    document.getElementById('sc-rep').textContent = d.reputation_score ? d.reputation_score.toFixed(1) : '0';
+    document.getElementById('sc-agents').textContent = d.agent_count || 0;
+    document.getElementById('sc-followers').textContent = d.follower_count || 0;
+    document.getElementById('sc-url').textContent = 'agentisexchange.com/builders/' + d.handle;
+
+    // Mobile View
+    document.getElementById('mob-name').textContent = d.display_name || d.handle;
+    document.getElementById('mob-headline').textContent = d.headline || '';
+    document.getElementById('mob-rep').textContent = d.reputation_score ? d.reputation_score.toFixed(1) : '0';
+    document.getElementById('mob-agents').textContent = d.agent_count || 0;
+    document.getElementById('mob-followers').textContent = d.follower_count || 0;
+    if (d.expertise && d.expertise.length) {
+        document.getElementById('mob-expertise').innerHTML = d.expertise.slice(0,4).map(function(e) {
+            return '<span class="cap-tag" style="font-size:9px">' + e.skill_name + '</span>';
+        }).join('');
+    }
+    document.getElementById('mob-agents-list').textContent = d.agent_count > 0 ? d.agent_count + ' agents registered' : 'No agents yet';
+
+    // Fetch linked agents for Overview and Agents tab
+    loadLinkedAgents(d.operator_id);
 }
 
-async function loadOperatorAgents(operatorId) {
-    // Use the cross-link endpoint — but we need operator's agents, not agent's operators
-    // Try fetching from /api/v1/operator-hub/directory and match, or use a dedicated endpoint
-    try {
-        // For now, show placeholder if no public agents endpoint
-        // The agents tab will be populated when operator is logged in
-        var agentsGrid = document.getElementById('agents-grid');
-        var ovAgents = document.getElementById('ov-agents');
+function loadLinkedAgents(operatorId) {
+    if (!operatorId) return;
+    fetch(API + '/api/v1/operator-hub/agents/for-operator/' + operatorId).then(function(r) { return r.json(); }).then(function(agents) {
+        if (!agents || !agents.length) return;
 
-        // Try fetching linked agents (this endpoint exists but needs auth for "mine")
-        // For public profiles, we'll show agent count but not details until we add a public endpoint
-        agentsGrid.innerHTML = '<div class="col-span-full text-center py-8"><span class="material-symbols-outlined text-slate-600 block mb-2" style="font-size:36px">smart_toy</span><div class="text-sm text-slate-500">Agent details visible to connected builders.</div><a href="/directory" class="text-[#77d4e5] text-xs hover:underline mt-1 inline-block">Browse Agent Directory</a></div>';
-        ovAgents.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">Agent showcase visible to connected builders.<br/><a href="/directory" class="text-[#77d4e5] hover:underline">Browse Agent Directory</a></div>';
-    } catch(e) {}
+        // Overview preview (first 3)
+        document.getElementById('agents-built').innerHTML = agents.slice(0, 3).map(function(a) {
+            const statusClass = a.status === 'active' ? 'status-active' : (a.status === 'completed' ? 'status-completed' : '');
+            return '<div class="agent-row">' +
+                '<div class="ar-icon"><span class="material-symbols-outlined" style="font-size:16px">smart_toy</span></div>' +
+                '<div class="ar-info"><div class="ar-name">' + (a.name || a.agent_name || 'Agent') + '</div>' +
+                '<div class="ar-detail">' + (a.platform || '') + (a.model ? ' / ' + a.model : '') + '</div></div>' +
+                '<span class="ar-status ' + statusClass + '">' + (a.status || 'linked') + '</span>' +
+                '</div>';
+        }).join('') + (agents.length > 3 ? '<a class="link-teal" style="display:block;margin-top:6px" onclick="showTab(\'agents\')">' + agents.length + ' agents total &rarr;</a>' : '');
+
+        // Full agents grid
+        document.getElementById('agents-full-grid').innerHTML = agents.map(function(a) {
+            return '<div class="card" style="padding:12px">' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+                '<div style="width:36px;height:36px;border-radius:50%;background:var(--color-teal-light);color:#0F6E56;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:18px">smart_toy</span></div>' +
+                '<div><div style="font-size:12px;font-weight:500">' + (a.name || a.agent_name || 'Agent') + '</div>' +
+                '<div style="font-size:10px;color:var(--color-text-secondary)">' + (a.platform || 'Platform N/A') + '</div></div></div>' +
+                (a.description ? '<div style="font-size:10px;color:var(--color-text-secondary);line-height:1.4;margin-bottom:6px">' + a.description.substring(0,120) + '</div>' : '') +
+                '<div style="display:flex;justify-content:space-between;align-items:center">' +
+                '<span style="font-size:9px;color:var(--color-text-tertiary)">' + (a.model || '') + '</span>' +
+                (a.agent_id ? '<a href="/agents/' + a.agent_id + '" class="link-teal" style="font-size:10px">View Profile &rarr;</a>' : '') +
+                '</div></div>';
+        }).join('');
+
+    }).catch(function() {});
+}
+
+function handleFollow() {
+    alert('Follow builder via API:\n\nPOST /api/v1/operator-hub/follow\n\nBody: {"handle": "' + handle + '"}\n\nRequires authentication.');
+}
+
+function handleMessage() {
+    alert('Message builder via API:\n\nPOST /api/v1/operator-hub/message\n\nBody: {"handle": "' + handle + '", "message": "..."}\n\nRequires authentication.');
+}
+
+function handleShareLinkedIn() {
+    const url = encodeURIComponent('https://agentisexchange.com/builders/' + handle);
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + url, '_blank');
 }
 
 loadProfile();
 </script>
-<script src="/static/landing/public-nav.js?v=6"></script>
 </body>
 </html>
