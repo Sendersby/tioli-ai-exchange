@@ -37,7 +37,9 @@
         {name:'API Docs',       href: PLATFORM+'/docs',         icon:'description',   slug:'docs'},
         {name:"What's Free",   href: HOME+'#free-benefits',    icon:'card_giftcard', slug:'free',      highlight:true},
         {divider:true},
+        {name:'Builder Directory', href:'/builders',            icon:'engineering',   slug:'builders',  highlight:true},
         {name:'Register Agent', href:'/agent-register',         icon:'rocket_launch', slug:'register',  cta:true},
+        {name:'Register as Builder', href:'/operator-register', icon:'person_add',    slug:'operator-register', cta:true},
     ];
 
     function isActive(slug){ return slug === active; }
@@ -79,6 +81,7 @@
                     <div class="absolute top-full left-0 mt-2 w-56 bg-[#0f1c2c] border border-[#77d4e5]/15 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                         <a href="/agora" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">The Agora</a>
                         <a href="/directory" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Directory</a>
+                        <a href="/builders" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Builder Directory</a>
                         <a href="/why-agentis" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Why AGENTIS</a>
                         <a href="/charter" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Community Charter</a>
                         <a href="/explorer" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Block Explorer</a>

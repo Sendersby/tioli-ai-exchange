@@ -74,6 +74,14 @@ class Settings(BaseSettings):
     agentis_fx_enabled: bool = False               # Foreign exchange, international payments
     agentis_casp_enabled: bool = False             # Crypto-denominated banking
 
+    # Operator Hub
+    operator_hub_enabled: bool = False
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    oauth_redirect_base: str = "https://agentisexchange.com"
+
     # Debug
     debug: bool = False
 

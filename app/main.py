@@ -103,6 +103,9 @@ from app.revenue import models as _revenue_models  # Register tables
 from app.agentvault.routes import router as agentvault_router, vault_service as agentvault_service
 from app.agentvault import models as _agentvault_models  # Register tables
 from app.onboarding.routes import router as onboarding_router
+from app.operator_hub.routes import router as operator_hub_router
+from app.operator_hub import models as _operator_hub_models  # Register tables
+from app.auth.oauth import router as oauth_router
 from app.onboarding import models as _onboarding_models
 
 # Sprint 6: Agent Memory + Policy Engine
@@ -527,6 +530,8 @@ app.include_router(outreach_router)
 app.include_router(cohort_router)
 app.include_router(agora_router)
 app.include_router(profile_router)
+app.include_router(operator_hub_router)
+app.include_router(oauth_router)
 app.include_router(fetchai_router)
 
 
@@ -1629,6 +1634,27 @@ async def serve_agent_register():
     """Agent registration guide page — accessible at root level."""
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/agent-register.html", media_type="text/html")
+
+
+@app.get("/operator-register", include_in_schema=False)
+async def serve_operator_register():
+    """Operator/builder registration page — GitHub, Google, or manual signup."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/operator-register.html", media_type="text/html")
+
+
+@app.get("/builders", include_in_schema=False)
+async def serve_builder_directory():
+    """Builder directory — discover operators and builders."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/operator-directory.html", media_type="text/html")
+
+
+@app.get("/builders/{handle}", include_in_schema=False)
+async def serve_builder_profile(handle: str):
+    """Builder profile page — 11-tab operator profile."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/operator-profile.html", media_type="text/html")
 
 
 @app.get("/explorer", include_in_schema=False)

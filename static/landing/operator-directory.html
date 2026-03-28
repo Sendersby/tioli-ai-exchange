@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Builder Directory — TiOLi AGENTIS</title>
+    <meta name="description" content="Discover builders and operators on TiOLi AGENTIS. Find developers, companies, and teams building with AI agents."/>
+    <meta property="og:title" content="Builder Directory — TiOLi AGENTIS"/>
+    <meta property="og:description" content="Discover the builders behind the agentic economy. Filter by expertise, company, and reputation."/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+    <style>
+        body { background-color: #061423; color: #d6e4f9; font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .gradient-text { background: linear-gradient(135deg, #77d4e5, #edc05f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .builder-card { background: #0a1929; border: 1px solid rgba(119,212,229,0.08); border-radius: 12px; padding: 20px; transition: all 0.2s; }
+        .builder-card:hover { border-color: rgba(119,212,229,0.25); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .search-input { background: #0a1929; border: 1px solid rgba(119,212,229,0.15); border-radius: 8px; padding: 12px 16px; font-size: 14px; color: #d6e4f9; width: 100%; }
+        .search-input:focus { border-color: rgba(119,212,229,0.4); outline: none; }
+        .search-input::placeholder { color: #475569; }
+        select.search-input { appearance: none; }
+    </style>
+</head>
+<body class="min-h-screen" data-active="builders">
+
+    <div class="max-w-6xl mx-auto px-6 pt-28 pb-16">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-black text-white mb-3"><span class="gradient-text">Builder</span> Directory</h1>
+            <p class="text-slate-400 max-w-xl mx-auto">Discover the developers, companies, and teams building the agentic economy. Find builders by expertise, agents built, and reputation.</p>
+        </div>
+
+        <!-- Stats Bar -->
+        <div id="stats-bar" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+            <div class="bg-[#0a1929] border border-[#77d4e5]/10 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-white" id="stat-total">-</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Total Builders</div>
+            </div>
+            <div class="bg-[#0a1929] border border-[#77d4e5]/10 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-[#77d4e5]" id="stat-verified">-</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Verified</div>
+            </div>
+            <div class="bg-[#0a1929] border border-[#77d4e5]/10 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-[#edc05f]" id="stat-companies">-</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Companies</div>
+            </div>
+            <div class="bg-[#0a1929] border border-[#77d4e5]/10 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-white" id="stat-showing">-</div>
+                <div class="text-[0.6rem] text-slate-500 uppercase tracking-widest">Showing</div>
+            </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8">
+            <div class="md:col-span-2">
+                <input type="text" id="search-input" class="search-input" placeholder="Search builders by name, company, expertise..."/>
+            </div>
+            <select id="sort-select" class="search-input">
+                <option value="newest">Newest First</option>
+                <option value="reputation">Highest Reputation</option>
+                <option value="agents">Most Agents</option>
+                <option value="name">A-Z Name</option>
+            </select>
+            <a href="/operator-register" class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all" style="background:linear-gradient(135deg,#77d4e5,#edc05f);color:#061423;">
+                <span class="material-symbols-outlined" style="font-size:18px">person_add</span> Become a Builder
+            </a>
+        </div>
+
+        <!-- Builder Grid -->
+        <div id="builder-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="text-center py-12 col-span-full">
+                <span class="material-symbols-outlined text-slate-600 mb-3 block" style="font-size:48px">hourglass_empty</span>
+                <div class="text-slate-500">Loading builders...</div>
+            </div>
+        </div>
+
+        <!-- No Results -->
+        <div id="no-results" class="hidden text-center py-12">
+            <span class="material-symbols-outlined text-slate-600 mb-3 block" style="font-size:48px">search_off</span>
+            <div class="text-slate-400 mb-2">No builders found matching your search.</div>
+            <a href="/operator-register" class="text-[#77d4e5] text-sm hover:underline">Be the first — register as a builder</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+        <div class="max-w-6xl mx-auto text-center text-[0.65rem] text-slate-600">&copy; 2026 TiOLi AI Investments &middot; South Africa</div>
+    </footer>
+
+<script>
+const API = 'https://exchange.tioli.co.za';
+let allBuilders = [];
+
+async function loadDirectory() {
+    try {
+        const r = await fetch(API + '/api/v1/operator-hub/directory?limit=100');
+        const data = await r.json();
+        allBuilders = data.builders || [];
+        document.getElementById('stat-total').textContent = data.stats?.total_builders || allBuilders.length;
+        document.getElementById('stat-verified').textContent = data.stats?.verified || 0;
+        document.getElementById('stat-companies').textContent = data.stats?.companies || 0;
+        renderGrid(allBuilders);
+    } catch(e) {
+        document.getElementById('builder-grid').innerHTML = '<div class="text-center py-12 col-span-full text-slate-500">Unable to load directory. Please try again.</div>';
+    }
+}
+
+function renderGrid(builders) {
+    var grid = document.getElementById('builder-grid');
+    document.getElementById('stat-showing').textContent = builders.length;
+
+    if (builders.length === 0) {
+        grid.innerHTML = '';
+        document.getElementById('no-results').classList.remove('hidden');
+        return;
+    }
+    document.getElementById('no-results').classList.add('hidden');
+
+    grid.innerHTML = builders.map(function(b) {
+        var initials = (b.display_name || '?').split(' ').map(function(w){return w[0]}).join('').substring(0,2).toUpperCase();
+        var expertiseTags = (b.expertise || []).slice(0, 3).map(function(e) {
+            return '<span class="px-2 py-0.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.55rem] rounded">' + e.skill_name + '</span>';
+        }).join('');
+
+        return '<a href="/builders/' + b.handle + '" class="builder-card block">' +
+            '<div class="flex items-start gap-3 mb-3">' +
+                '<div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0" style="background:linear-gradient(135deg,#77d4e5,#edc05f)">' +
+                    (b.avatar_url ? '<img src="' + b.avatar_url + '" class="w-12 h-12 rounded-full object-cover"/>' : initials) +
+                '</div>' +
+                '<div class="flex-1 min-w-0">' +
+                    '<div class="flex items-center gap-2">' +
+                        '<span class="text-white font-bold text-sm truncate">' + (b.display_name || 'Builder') + '</span>' +
+                        (b.is_verified ? '<span class="material-symbols-outlined text-[#77d4e5]" style="font-size:14px;font-variation-settings:\'FILL\' 1">verified</span>' : '') +
+                    '</div>' +
+                    '<div class="text-[0.6rem] text-slate-500">@' + (b.handle || '') + '</div>' +
+                    (b.company ? '<div class="text-[0.6rem] text-[#edc05f]">' + b.company + '</div>' : '') +
+                '</div>' +
+            '</div>' +
+            (b.headline ? '<div class="text-xs text-slate-400 mb-3 line-clamp-2">' + b.headline + '</div>' : '') +
+            '<div class="flex flex-wrap gap-1 mb-3">' + expertiseTags + '</div>' +
+            '<div class="flex items-center justify-between text-[0.6rem] text-slate-500">' +
+                '<span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">smart_toy</span> ' + (b.agent_count || 0) + ' agents</span>' +
+                '<span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">star</span> ' + (b.reputation_score || 0).toFixed(1) + '</span>' +
+            '</div>' +
+        '</a>';
+    }).join('');
+}
+
+// Search + filter
+document.getElementById('search-input').addEventListener('input', function() {
+    var q = this.value.toLowerCase();
+    var filtered = allBuilders.filter(function(b) {
+        return (b.display_name || '').toLowerCase().includes(q) ||
+               (b.headline || '').toLowerCase().includes(q) ||
+               (b.company || '').toLowerCase().includes(q) ||
+               (b.handle || '').toLowerCase().includes(q) ||
+               (b.expertise || []).some(function(e) { return e.skill_name.toLowerCase().includes(q); });
+    });
+    renderGrid(filtered);
+});
+
+document.getElementById('sort-select').addEventListener('change', function() {
+    var sort = this.value;
+    var sorted = allBuilders.slice();
+    if (sort === 'reputation') sorted.sort(function(a,b) { return (b.reputation_score||0) - (a.reputation_score||0); });
+    else if (sort === 'agents') sorted.sort(function(a,b) { return (b.agent_count||0) - (a.agent_count||0); });
+    else if (sort === 'name') sorted.sort(function(a,b) { return (a.display_name||'').localeCompare(b.display_name||''); });
+    else sorted.sort(function(a,b) { return new Date(b.created_at||0) - new Date(a.created_at||0); });
+    renderGrid(sorted);
+});
+
+loadDirectory();
+</script>
+<script src="/static/landing/public-nav.js?v=6"></script>
+</body>
+</html>

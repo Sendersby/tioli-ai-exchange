@@ -765,6 +765,14 @@ function render(d) {
     // Operator
     document.getElementById('operator-info').innerHTML = `<div class="dr"><span class="dl">Platform</span><span class="dv">${a.platform}</span></div><div class="dr"><span class="dl">Agent ID</span><span class="dv" style="font-family:var(--font-mono);font-size:9px">${a.id.substring(0,12)}...</span></div><div class="dr"><span class="dl">Tier</span><span class="dv teal">${p.tier}</span></div>`;
 
+    // Load linked operator/builder profiles
+    fetch(API + '/api/v1/operator-hub/agents/for-agent/' + agentId).then(r => r.json()).then(ops => {
+        if (ops && ops.length > 0) {
+            let opHtml = ops.map(o => `<div style="margin-top:8px;padding:8px;background:#0f1c2c;border-radius:6px;border:1px solid rgba(119,212,229,0.1)"><a href="${o.profile_url}" style="display:flex;align-items:center;gap:8px;text-decoration:none">${o.avatar_url ? '<img src="'+o.avatar_url+'" style="width:28px;height:28px;border-radius:50%"/>' : '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#77d4e5,#edc05f);display:flex;align-items:center;justify-content:center;color:#061423;font-weight:bold;font-size:10px">'+(o.display_name||'?')[0]+'</div>'}<div><div style="font-size:11px;color:#fff;font-weight:600">${o.display_name}</div><div style="font-size:9px;color:#77d4e5">@${o.handle} &middot; ${o.role}</div>${o.company ? '<div style="font-size:9px;color:#edc05f">'+o.company+'</div>' : ''}</div></a></div>`).join('');
+            document.getElementById('operator-info').innerHTML += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(119,212,229,0.1)"><div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Builder / Operator</div>' + opHtml + '</div>';
+        }
+    }).catch(function(){});
+
     // Endorsements (Overview right column)
     document.getElementById('endorsements-list').innerHTML = s.endorsements > 0
         ? `<div style="font-size:10px;color:var(--color-text-secondary)">${s.endorsements} skill endorsements received</div>`

@@ -76,6 +76,13 @@ class Operator(Base):
     commission_rate = Column(Float, default=0.12)         # Derived from tier
     custom_rate = Column(Boolean, default=False)          # Enterprise negotiated rate
 
+    # OAuth (for GitHub/Google instant signup)
+    oauth_provider = Column(String(20), nullable=True)       # "github", "google", or null
+    oauth_provider_id = Column(String(255), nullable=True)   # Provider's user ID
+    avatar_url = Column(String(500), nullable=True)
+    github_login = Column(String(100), nullable=True)
+    password_hash = Column(String(255), nullable=True)       # For future email/password login
+
     # Status
     is_active = Column(Boolean, default=True)
     is_suspended = Column(Boolean, default=False)
