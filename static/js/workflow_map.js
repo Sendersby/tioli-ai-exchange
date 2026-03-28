@@ -1140,7 +1140,7 @@ function renderServicesList(data) {
         if (n.category !== currentCat) {
             currentCat = n.category;
             var catColour = CATEGORY_COLOURS[currentCat] || '#888';
-            html += '<div style="margin-top:10px;margin-bottom:4px;font-size:9px;font-weight:600;color:' + catColour + ';text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:3px">' + currentCat.replace('_', ' ') + '</div>';
+            html += '<div style="margin-top:14px;margin-bottom:6px;font-size:12px;font-weight:700;color:' + catColour + ';text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:4px">' + currentCat.replace('_', ' ') + '</div>';
         }
 
         var statusCol = STATUS_COLOURS[n.status] || '#6C757D';
@@ -1148,10 +1148,10 @@ function renderServicesList(data) {
         var linkStyle = n.url_path ? 'color:' + statusCol + ';text-decoration:none;' : 'color:' + statusCol + ';cursor:default;';
         var tag = n.url_path ? 'a' : 'span';
 
-        html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.03)">';
-        html += '<span style="width:6px;height:6px;border-radius:50%;background:' + statusCol + ';flex-shrink:0"></span>';
-        html += '<' + tag + link + ' style="' + linkStyle + 'flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + n.label + ' — ' + n.status + '">' + n.label + '</' + tag + '>';
-        html += '<span style="font-size:8px;color:' + statusCol + ';flex-shrink:0;opacity:0.7">' + n.status.substring(0, 3) + '</span>';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)">';
+        html += '<span style="width:8px;height:8px;border-radius:50%;background:' + statusCol + ';flex-shrink:0"></span>';
+        html += '<' + tag + link + ' style="' + linkStyle + 'flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + n.label + ' — ' + n.status + '">' + n.label + '</' + tag + '>';
+        html += '<span style="font-size:10px;color:' + statusCol + ';flex-shrink:0;font-weight:500">' + n.status.substring(0, 3).toUpperCase() + '</span>';
         html += '</div>';
     });
 
