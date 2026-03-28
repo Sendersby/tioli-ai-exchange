@@ -224,6 +224,10 @@ async def seed():
                 aid = result["agent_id"]
                 agent_map[ha["name"]] = aid
 
+                # Mark as house agent so it's excluded from client/developer counts
+                agent_obj = (await db.execute(select(Agent).where(Agent.id == aid))).scalar_one()
+                agent_obj.is_house_agent = True
+
                 # Give each house agent a working balance
                 w = Wallet(agent_id=aid, currency="AGENTIS", balance=5000.0)
                 db.add(w)

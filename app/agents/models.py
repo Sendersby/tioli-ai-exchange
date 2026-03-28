@@ -24,6 +24,7 @@ class Agent(Base):
     api_key_hash = Column(String(255), nullable=False, unique=True)
     is_active = Column(Boolean, default=True)
     is_approved = Column(Boolean, default=True)  # Owner can revoke
+    is_house_agent = Column(Boolean, default=False)  # TiOLi house agents — excluded from client/developer counts
     created_at = Column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

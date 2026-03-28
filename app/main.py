@@ -2413,13 +2413,15 @@ async def api_adoption_digest(request: Request, db: AsyncSession = Depends(get_d
     day_ago = now - timedelta(hours=24)
     week_ago = now - timedelta(days=7)
 
-    # Agent counts
+    # Agent counts (separate house agents from real clients/developers)
     total_agents = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
+    house_agents = (await db.execute(select(func.count(Agent.id)).where(Agent.is_house_agent == True))).scalar() or 0
+    client_agents = total_agents - house_agents
     new_24h = (await db.execute(
-        select(func.count(Agent.id)).where(Agent.created_at >= day_ago)
+        select(func.count(Agent.id)).where(Agent.created_at >= day_ago, Agent.is_house_agent == False)
     )).scalar() or 0
     new_7d = (await db.execute(
-        select(func.count(Agent.id)).where(Agent.created_at >= week_ago)
+        select(func.count(Agent.id)).where(Agent.created_at >= week_ago, Agent.is_house_agent == False)
     )).scalar() or 0
 
     # Profile conversion (registered → created profile)
@@ -2463,12 +2465,14 @@ async def api_adoption_digest(request: Request, db: AsyncSession = Depends(get_d
 
     return {
         "digest_date": now.strftime("%Y-%m-%d %H:%M UTC"),
-        "headline": f"{total_agents} agents registered ({'+' + str(new_24h) if new_24h else 'no change'} today, {'+' + str(new_7d) if new_7d else 'no change'} this week)",
+        "headline": f"{total_agents} agents registered ({house_agents} house, {client_agents} client/developer) — {'+' + str(new_24h) if new_24h else 'no change'} real signups today, {'+' + str(new_7d) if new_7d else 'no change'} this week",
         "registration": {
             "total_agents": total_agents,
+            "house_agents": house_agents,
+            "client_agents": client_agents,
             "new_last_24h": new_24h,
             "new_last_7d": new_7d,
-            "daily_growth_rate": round((new_24h / max(total_agents - new_24h, 1)) * 100, 2),
+            "daily_growth_rate": round((new_24h / max(client_agents - new_24h, 1)) * 100, 2),
         },
         "funnel": {
             "registered": total_agents,
@@ -5489,6 +5493,7 @@ async def api_stats():
     async with async_session() as db:
         result = await db.execute(select(func.count(Agent.id)))
         agent_count = result.scalar() or 0
+        house_count = (await db.execute(select(func.count(Agent.id)).where(Agent.is_house_agent == True))).scalar() or 0
         # Issue #9: include transaction volume metrics
         adoption = await growth_engine.get_adoption_metrics(db)
 
@@ -5496,6 +5501,8 @@ async def api_stats():
         "chain_length": info["chain_length"],
         "total_transactions": info["total_transactions"],
         "agent_count": agent_count,
+        "house_agents": house_count,
+        "client_agents": agent_count - house_count,
         "founder_earnings": founder_earnings,
         "charity_total": charity_total,
         "is_valid": info["is_valid"],
@@ -5516,6 +5523,8 @@ async def api_public_stats():
 
     async with async_session() as db:
         agent_count = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
+        house_count = (await db.execute(select(func.count(Agent.id)).where(Agent.is_house_agent == True))).scalar() or 0
+        client_count = agent_count - house_count
 
         hub_stats = {"total_profiles": 0, "total_posts": 0, "total_connections": 0,
                      "total_endorsements": 0, "total_portfolio_items": 0, "active_channels": 0}
@@ -5541,6 +5550,8 @@ async def api_public_stats():
         "live_since": "2026-03-15T00:00:00Z",
         "agents": {
             "registered": agent_count,
+            "house_agents": house_count,
+            "client_agents": client_count,
             "profiles": hub_stats["total_profiles"],
         },
         "community": {
