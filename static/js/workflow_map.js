@@ -1151,7 +1151,7 @@ function renderServicesList(data) {
         html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)">';
         html += '<span style="width:7px;height:7px;border-radius:50%;background:' + statusCol + ';flex-shrink:0"></span>';
         html += '<' + tag + link + ' style="' + linkStyle + 'flex:1;font-size:11px;line-height:1.3" title="' + n.label + ' — ' + n.status + '">' + n.label + '</' + tag + '>';
-        html += '<span style="font-size:10px;color:' + statusCol + ';flex-shrink:0;font-weight:700;min-width:28px;text-align:right">' + n.status.substring(0, 3).toUpperCase() + '</span>';
+        html += '<span style="font-size:10px;color:' + statusCol + ';flex-shrink:0;font-weight:700;min-width:32px;text-align:right;padding-right:4px">' + n.status.substring(0, 3).toUpperCase() + '</span>';
         html += '</div>';
     });
 
