@@ -38,8 +38,8 @@ var NODE_SIZES = {
 var FORCE_PARAMS = {
     linkDistance:   100,
     linkStrength:   0.6,
-    manyBody:     -250,
-    collideRadius:  85
+    manyBody:     -350,
+    collideRadius:  95
 };
 
 var CANVAS_BG       = '#0A1520';
