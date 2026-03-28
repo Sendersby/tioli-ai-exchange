@@ -2,7 +2,7 @@
 {% block title %}Platform Workflow Map — TiOLi AGENTIS{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="/static/css/workflow_map.css?v=7"/>
+<link rel="stylesheet" href="/static/css/workflow_map.css?t={{ range(100000) | random }}"/>
 
 <!-- Break out of parent padding/max-width container -->
 <style>
@@ -133,5 +133,5 @@
 </div>
 
 <script src="/static/js/d3.v7.min.js"></script>
-<script src="/static/js/workflow_map.js?v=10"></script>
+<script src="/static/js/workflow_map.js?t={{ range(100000) | random }}"></script>
 {% endblock %}
