@@ -734,6 +734,9 @@ async def seed_workflow_map(db):
         metadata_={"build_phase": 3, "module": "ACC", "last_updated": "2026-03-28T00:00:00Z"},
     ))
 
+    # Flush nodes so FK constraints work for edges
+    await db.flush()
+
     # ── EDGES ────────────────────────────────────────────────────────────
 
     # --- Registration flow ---
