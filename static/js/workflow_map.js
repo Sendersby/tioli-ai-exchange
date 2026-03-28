@@ -39,7 +39,7 @@ var FORCE_PARAMS = {
     linkDistance:   80,
     linkStrength:   0.7,
     manyBody:     -150,
-    collideRadius:  50
+    collideRadius:  65
 };
 
 var CANVAS_BG       = '#0A1520';
@@ -473,8 +473,8 @@ function setupSimulation(nodes, edges) {
         .force('charge', d3.forceManyBody()
             .strength(FORCE_PARAMS.manyBody)
         )
-        .force('x', d3.forceX(width / 2).strength(0.15))
-        .force('y', d3.forceY(height / 2).strength(0.15))
+        .force('x', d3.forceX(width / 2).strength(0.08))
+        .force('y', d3.forceY(height / 2).strength(0.08))
         .force('collide', d3.forceCollide(FORCE_PARAMS.collideRadius))
         .force('cluster', clusterForce(nodes))
         .alphaTarget(0)
