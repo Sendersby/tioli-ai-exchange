@@ -84,6 +84,7 @@ function fetchGraph() {
             state.graphData = data;
             renderGraph(data);
             updateStats();
+            renderServicesList(data);
             console.log('[PWM] Graph loaded:', data.meta.total_nodes, 'nodes,', data.meta.total_edges, 'edges');
         })
         .catch(function (err) {
@@ -404,8 +405,9 @@ function applyFilters() {
         visibleNodeIds = filtered;
     }
 
-    // Apply opacity to nodes
+    // Apply opacity to nodes — interrupt any existing transition first
     graphGroup.selectAll('.pwm-node')
+        .interrupt()
         .transition().duration(300)
         .attr('opacity', function (d) {
             return visibleNodeIds.has(d.id) ? 1.0 : 0.15;
@@ -426,13 +428,15 @@ function applyFilters() {
             }
         });
 
-    // Apply opacity to edges
+    // Apply opacity to edges — also check flow_type against active categories
     graphGroup.selectAll('.pwm-edge')
+        .interrupt()
         .transition().duration(300)
         .attr('opacity', function (d) {
             var srcId = d.source.id || d.source;
             var tgtId = d.target.id || d.target;
-            return (visibleNodeIds.has(srcId) && visibleNodeIds.has(tgtId)) ? 0.7 : 0.05;
+            var catVisible = state.activeCategories.has(d.flow_type);
+            return (catVisible && visibleNodeIds.has(srcId) && visibleNodeIds.has(tgtId)) ? 0.7 : 0.05;
         });
 }
 
@@ -981,10 +985,10 @@ function toggleCategory(el) {
 
 function filterStatus() {
     state.activeStatuses.clear();
-    ALL_STATUSES.forEach(function (s) {
-        var cb = document.getElementById('pwm-cb-' + s.toLowerCase());
-        if (cb && cb.checked) {
-            state.activeStatuses.add(s);
+    var checkboxes = document.querySelectorAll('#pwm-status-filters input[type=checkbox]');
+    checkboxes.forEach(function (cb) {
+        if (cb.checked && cb.dataset.status) {
+            state.activeStatuses.add(cb.dataset.status);
         }
     });
     applyFilters();
@@ -1113,6 +1117,45 @@ function applyStoredPositions(nodes, stored) {
             n.y = stored[n.id].y;
         }
     });
+}
+
+
+// === SECTION 12A: SERVICES LIST ===
+
+function renderServicesList(data) {
+    var container = document.getElementById('pwm-services-list');
+    if (!container || !data || !data.nodes) return;
+
+    // Sort by category then label
+    var sorted = data.nodes.slice().sort(function (a, b) {
+        if (a.category !== b.category) return a.category.localeCompare(b.category);
+        return a.label.localeCompare(b.label);
+    });
+
+    var currentCat = '';
+    var html = '';
+
+    sorted.forEach(function (n) {
+        // Category header
+        if (n.category !== currentCat) {
+            currentCat = n.category;
+            var catColour = CATEGORY_COLOURS[currentCat] || '#888';
+            html += '<div style="margin-top:10px;margin-bottom:4px;font-size:9px;font-weight:600;color:' + catColour + ';text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:3px">' + currentCat.replace('_', ' ') + '</div>';
+        }
+
+        var statusCol = STATUS_COLOURS[n.status] || '#6C757D';
+        var link = n.url_path ? ' href="' + n.url_path + '" target="_blank"' : '';
+        var linkStyle = n.url_path ? 'color:' + statusCol + ';text-decoration:none;' : 'color:' + statusCol + ';cursor:default;';
+        var tag = n.url_path ? 'a' : 'span';
+
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.03)">';
+        html += '<span style="width:6px;height:6px;border-radius:50%;background:' + statusCol + ';flex-shrink:0"></span>';
+        html += '<' + tag + link + ' style="' + linkStyle + 'flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + n.label + ' — ' + n.status + '">' + n.label + '</' + tag + '>';
+        html += '<span style="font-size:8px;color:' + statusCol + ';flex-shrink:0;opacity:0.7">' + n.status.substring(0, 3) + '</span>';
+        html += '</div>';
+    });
+
+    container.innerHTML = html;
 }
 
 

@@ -66,6 +66,12 @@
             <button class="pwm-btn pwm-btn--outline pwm-btn--full" onclick="PWM.fitAll()">Fit All</button>
             <div class="pwm-toggle-row" style="margin-top:8px"><span>Critical Paths Only</span><div class="pwm-toggle" id="pwm-critical-toggle" onclick="PWM.toggleCriticalPaths(this)"><div class="pwm-toggle-knob"></div></div></div>
             <button class="pwm-btn pwm-btn--primary pwm-btn--full" style="margin-top:12px" onclick="PWM.exportPNG()">Export PNG</button>
+
+            <!-- Services List -->
+            <div class="pwm-section-label" style="margin-top:20px">All Services</div>
+            <div id="pwm-services-list" style="font-size:11px;max-height:300px;overflow-y:auto">
+                <div style="color:var(--pwm-text-muted);font-size:10px">Loading...</div>
+            </div>
         </div>
 
         <!-- Canvas + Info Panel -->
