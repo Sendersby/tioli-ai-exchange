@@ -1,0 +1,527 @@
+/* ============================================
+   Platform Workflow Map — Scoped Styles
+   All classes prefixed .pwm-
+   ============================================ */
+
+:root {
+    --pwm-navy: #0D1B2A;
+    --pwm-navy-dark: #0A1520;
+    --pwm-navy-panel: #111D2B;
+    --pwm-teal: #028090;
+    --pwm-gold: #D4A94A;
+    --pwm-sage: #8fa88b;
+    --pwm-blue: #4A90D9;
+    --pwm-purple: #9B59B6;
+    --pwm-orange: #E67E22;
+    --pwm-grey: #6C757D;
+    --pwm-red: #C0392B;
+    --pwm-text-light: #FFFFFF;
+    --pwm-text-muted: #888888;
+    --pwm-border: rgba(255,255,255,0.08);
+}
+
+/* ---- Layout ---- */
+
+.pwm-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+}
+
+/* ---- Stats Bar ---- */
+
+.pwm-stats-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    background: var(--pwm-navy);
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--pwm-border);
+    justify-content: space-between;
+    z-index: 10;
+}
+
+.pwm-stats-pills {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.pwm-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.pwm-stat-pill--active {
+    background: rgba(2,128,144,0.2);
+    border-color: var(--pwm-teal);
+    color: var(--pwm-teal);
+}
+
+.pwm-stat-pill--restricted {
+    background: rgba(212,169,74,0.2);
+    border-color: var(--pwm-gold);
+    color: var(--pwm-gold);
+}
+
+.pwm-stat-pill--inactive {
+    background: rgba(108,117,125,0.2);
+    border-color: var(--pwm-grey);
+    color: var(--pwm-grey);
+}
+
+.pwm-stat-pill--planned {
+    background: rgba(143,168,139,0.2);
+    border-color: var(--pwm-sage);
+    color: var(--pwm-sage);
+}
+
+.pwm-stat-pill--deprecated {
+    background: rgba(192,57,43,0.2);
+    border-color: var(--pwm-red);
+    color: var(--pwm-red);
+}
+
+.pwm-stat-pill .pwm-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.pwm-stats-time {
+    font-size: 12px;
+    color: var(--pwm-text-muted);
+}
+
+.pwm-refresh-btn {
+    background: transparent;
+    border: 1px solid var(--pwm-border);
+    color: var(--pwm-text-muted);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.pwm-refresh-btn:hover {
+    border-color: var(--pwm-teal);
+    color: var(--pwm-teal);
+}
+
+/* ---- Control Panel (left sidebar) ---- */
+
+.pwm-control-panel {
+    width: 240px;
+    background: var(--pwm-navy-panel);
+    height: calc(100vh - 48px - 60px);
+    overflow-y: auto;
+    padding: 16px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--pwm-border);
+}
+
+.pwm-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--pwm-teal);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    margin-top: 16px;
+}
+
+.pwm-search-input {
+    width: 100%;
+    background: var(--pwm-navy-dark);
+    border: 1px solid var(--pwm-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--pwm-text-light);
+    outline: none;
+}
+
+.pwm-search-input:focus {
+    border-color: var(--pwm-teal);
+}
+
+.pwm-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 12px;
+    color: var(--pwm-text-light);
+}
+
+.pwm-toggle {
+    width: 36px;
+    height: 20px;
+    background: var(--pwm-grey);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.pwm-toggle.active {
+    background: var(--pwm-teal);
+}
+
+.pwm-toggle .pwm-toggle-knob {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left 0.2s;
+}
+
+.pwm-toggle.active .pwm-toggle-knob {
+    left: 18px;
+}
+
+.pwm-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 12px;
+    color: var(--pwm-text-light);
+}
+
+.pwm-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.pwm-btn--primary {
+    background: var(--pwm-teal);
+    color: white;
+}
+
+.pwm-btn--outline {
+    background: transparent;
+    border: 1px solid var(--pwm-border);
+    color: var(--pwm-text-muted);
+}
+
+.pwm-btn--outline:hover {
+    border-color: var(--pwm-teal);
+}
+
+.pwm-btn--full {
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+/* ---- Canvas ---- */
+
+.pwm-canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--pwm-navy-dark);
+}
+
+.pwm-canvas-wrap svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* ---- Info Panel ---- */
+
+.pwm-info-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 280px;
+    background: var(--pwm-navy-panel);
+    border-top: 2px solid var(--pwm-teal);
+    transform: translateY(100%);
+    transition: transform 300ms ease;
+    z-index: 20;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.pwm-info-panel.open {
+    transform: translateY(0);
+}
+
+.pwm-info-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.pwm-info-header .pwm-status-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.pwm-info-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--pwm-text-light);
+    flex: 1;
+}
+
+.pwm-info-close {
+    background: transparent;
+    border: none;
+    color: var(--pwm-text-muted);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.pwm-info-close:hover {
+    color: white;
+}
+
+.pwm-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.pwm-info-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--pwm-border);
+}
+
+.pwm-info-detail-row .pwm-dl {
+    color: var(--pwm-text-muted);
+}
+
+.pwm-info-detail-row .pwm-dv {
+    color: var(--pwm-text-light);
+    font-weight: 500;
+}
+
+.pwm-info-endpoints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.pwm-endpoint-chip {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: var(--pwm-navy-dark);
+    border: 1px solid var(--pwm-border);
+    border-radius: 4px;
+    color: var(--pwm-teal);
+    font-family: monospace;
+}
+
+.pwm-go-btn {
+    background: var(--pwm-teal);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pwm-go-btn:disabled,
+.pwm-go-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pwm-status-select {
+    background: var(--pwm-navy-dark);
+    border: 1px solid var(--pwm-border);
+    color: var(--pwm-text-light);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* ---- Minimap ---- */
+
+.pwm-minimap {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 140px;
+    background: rgba(10,21,32,0.85);
+    border: 1px solid var(--pwm-teal);
+    border-radius: 6px;
+    z-index: 15;
+    overflow: hidden;
+}
+
+.pwm-minimap-viewport {
+    stroke: white;
+    stroke-width: 1;
+    fill: rgba(255,255,255,0.08);
+    cursor: move;
+}
+
+/* ---- Tooltip ---- */
+
+.pwm-tooltip {
+    position: absolute;
+    background: var(--pwm-navy-panel);
+    border: 1px solid var(--pwm-teal);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--pwm-text-light);
+    max-width: 280px;
+    pointer-events: none;
+    z-index: 30;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 200ms;
+}
+
+.pwm-tooltip.visible {
+    opacity: 1;
+}
+
+.pwm-tooltip .pwm-tt-label {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.pwm-tooltip .pwm-tt-status {
+    font-size: 10px;
+    margin-bottom: 4px;
+}
+
+.pwm-tooltip .pwm-tt-desc {
+    font-size: 11px;
+    color: var(--pwm-text-muted);
+}
+
+/* ---- Status Badge Colours (reusable) ---- */
+
+.pwm-status--active {
+    background: rgba(2,128,144,0.2);
+    color: var(--pwm-teal);
+    border-color: var(--pwm-teal);
+}
+
+.pwm-status--restricted {
+    background: rgba(212,169,74,0.2);
+    color: var(--pwm-gold);
+    border-color: var(--pwm-gold);
+}
+
+.pwm-status--inactive {
+    background: rgba(108,117,125,0.2);
+    color: var(--pwm-grey);
+    border-color: var(--pwm-grey);
+}
+
+.pwm-status--planned {
+    background: rgba(143,168,139,0.2);
+    color: var(--pwm-sage);
+    border-color: var(--pwm-sage);
+}
+
+.pwm-status--deprecated {
+    background: rgba(192,57,43,0.2);
+    color: var(--pwm-red);
+    border-color: var(--pwm-red);
+}
+
+/* ---- Category Colour Line Indicators ---- */
+
+.pwm-cat-indicator {
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.pwm-cat-indicator--registration {
+    background: var(--pwm-teal);
+}
+
+.pwm-cat-indicator--payment {
+    background: var(--pwm-gold);
+    height: 4px;
+}
+
+.pwm-cat-indicator--compliance {
+    background: repeating-linear-gradient(
+        90deg,
+        var(--pwm-sage) 0px,
+        var(--pwm-sage) 4px,
+        transparent 4px,
+        transparent 6px
+    );
+}
+
+.pwm-cat-indicator--agent_service {
+    background: var(--pwm-blue);
+}
+
+.pwm-cat-indicator--navigation {
+    background: repeating-linear-gradient(
+        90deg,
+        var(--pwm-grey) 0px,
+        var(--pwm-grey) 2px,
+        transparent 2px,
+        transparent 4px
+    );
+}
+
+.pwm-cat-indicator--api {
+    background: var(--pwm-purple);
+}
+
+.pwm-cat-indicator--mcp {
+    background: var(--pwm-orange);
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 1024px) {
+    .pwm-control-panel {
+        width: 200px;
+    }
+
+    .pwm-minimap {
+        width: 160px;
+        height: 110px;
+    }
+}

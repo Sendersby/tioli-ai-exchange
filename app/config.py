@@ -76,6 +76,9 @@ class Settings(BaseSettings):
 
     # Operator Hub
     operator_hub_enabled: bool = False
+
+    # Platform Workflow Map (owner tool)
+    platform_workflow_map_enabled: bool = False
     github_client_id: str = ""
     github_client_secret: str = ""
     google_client_id: str = ""

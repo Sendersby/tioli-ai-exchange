@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Platform Workflow Map — TiOLi AGENTIS{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/workflow_map.css"/>
+
+<!-- Breadcrumb -->
+<div style="padding:8px 20px;font-size:12px;color:#888">
+    <a href="/dashboard" style="color:#77d4e5;text-decoration:none">Owner Dashboard</a> &rsaquo; <span>Platform Workflow Map</span>
+</div>
+
+<div class="pwm-container" id="pwm-app">
+
+    <!-- Stats Bar -->
+    <div class="pwm-stats-bar">
+        <div class="pwm-stats-pills" id="pwm-stats-pills">
+            <div class="pwm-stat-pill pwm-stat-pill--active"><span class="pwm-dot" style="background:var(--pwm-teal)"></span> Active <span id="pwm-count-active">0</span></div>
+            <div class="pwm-stat-pill pwm-stat-pill--restricted"><span class="pwm-dot" style="background:var(--pwm-gold)"></span> Restricted <span id="pwm-count-restricted">0</span></div>
+            <div class="pwm-stat-pill pwm-stat-pill--inactive"><span class="pwm-dot" style="background:var(--pwm-grey)"></span> Inactive <span id="pwm-count-inactive">0</span></div>
+            <div class="pwm-stat-pill pwm-stat-pill--planned"><span class="pwm-dot" style="background:var(--pwm-sage)"></span> Planned <span id="pwm-count-planned">0</span></div>
+            <div class="pwm-stat-pill pwm-stat-pill--deprecated"><span class="pwm-dot" style="background:var(--pwm-red)"></span> Deprecated <span id="pwm-count-deprecated">0</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+            <span class="pwm-stats-time" id="pwm-last-updated">Last updated: —</span>
+            <button class="pwm-refresh-btn" onclick="PWM.refresh()" title="Refresh data">&#8635; Refresh</button>
+        </div>
+    </div>
+
+    <!-- Main content area -->
+    <div style="display:flex;height:calc(100vh - 48px - 60px)">
+
+        <!-- Control Panel (Left Sidebar) -->
+        <div class="pwm-control-panel" id="pwm-controls">
+
+            <!-- Search -->
+            <div class="pwm-section-label">Search</div>
+            <input type="text" class="pwm-search-input" id="pwm-search" placeholder="Search nodes..." autocomplete="off"/>
+
+            <!-- Category Toggles -->
+            <div class="pwm-section-label" style="margin-top:20px">Workflow Lines</div>
+            <div id="pwm-category-toggles">
+                <div class="pwm-toggle-row"><span><span class="pwm-cat-indicator pwm-cat-indicator--registration"></span>Registration</span><div class="pwm-toggle active" data-category="REGISTRATION" onclick="PWM.toggleCategory(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-cat-indicator pwm-cat-indicator--payment"></span>Payment</span><div class="pwm-toggle active" data-category="PAYMENT" onclick="PWM.toggleCategory(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-cat-indicator pwm-cat-indicator--compliance"></span>Compliance</span><div class="pwm-toggle active" data-category="COMPLIANCE" onclick="PWM.toggleCategory(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-cat-indicator pwm-cat-indicator--agent_service"></span>Agent Service</span><div class="pwm-toggle active" data-category="AGENT_SERVICE" onclick="PWM.toggleCategory(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-cat-indicator pwm-cat-indicator--navigation"></span>Navigation</span><div class="pwm-toggle active" data-category="NAVIGATION" onclick="PWM.toggleCategory(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-cat-indicator pwm-cat-indicator--api"></span>API</span><div class="pwm-toggle active" data-category="API" onclick="PWM.toggleCategory(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-cat-indicator pwm-cat-indicator--mcp"></span>MCP</span><div class="pwm-toggle active" data-category="MCP" onclick="PWM.toggleCategory(this)"><div class="pwm-toggle-knob"></div></div></div>
+            </div>
+
+            <!-- Status Filters -->
+            <div class="pwm-section-label" style="margin-top:20px">Status Filter</div>
+            <div id="pwm-status-filters">
+                <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="ACTIVE" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-teal)"></span> Active</label>
+                <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="RESTRICTED" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-gold)"></span> Restricted</label>
+                <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="INACTIVE" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-grey)"></span> Inactive</label>
+                <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="PLANNED" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-sage)"></span> Planned</label>
+                <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="DEPRECATED" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-red)"></span> Deprecated</label>
+            </div>
+
+            <!-- View Controls -->
+            <div class="pwm-section-label" style="margin-top:20px">View</div>
+            <button class="pwm-btn pwm-btn--outline pwm-btn--full" onclick="PWM.resetView()">Reset View</button>
+            <button class="pwm-btn pwm-btn--outline pwm-btn--full" onclick="PWM.fitAll()">Fit All</button>
+            <div class="pwm-toggle-row" style="margin-top:8px"><span>Critical Paths Only</span><div class="pwm-toggle" id="pwm-critical-toggle" onclick="PWM.toggleCriticalPaths(this)"><div class="pwm-toggle-knob"></div></div></div>
+            <button class="pwm-btn pwm-btn--primary pwm-btn--full" style="margin-top:12px" onclick="PWM.exportPNG()">Export PNG</button>
+        </div>
+
+        <!-- Canvas + Info Panel -->
+        <div class="pwm-canvas-wrap" id="pwm-canvas-wrap">
+            <svg id="pwm-svg"></svg>
+
+            <!-- Minimap -->
+            <div class="pwm-minimap" id="pwm-minimap">
+                <svg id="pwm-minimap-svg"></svg>
+            </div>
+
+            <!-- Tooltip -->
+            <div class="pwm-tooltip" id="pwm-tooltip">
+                <div class="pwm-tt-label" id="pwm-tt-label"></div>
+                <div class="pwm-tt-status" id="pwm-tt-status"></div>
+                <div class="pwm-tt-desc" id="pwm-tt-desc"></div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="pwm-info-panel" id="pwm-info-panel">
+                <div class="pwm-info-header">
+                    <span class="pwm-status-badge" id="pwm-info-status"></span>
+                    <h2 id="pwm-info-label"></h2>
+                    <a class="pwm-go-btn" id="pwm-info-go" href="#" style="display:none">Go There &rarr;</a>
+                    <button class="pwm-info-close" onclick="PWM.closeInfoPanel()">&times;</button>
+                </div>
+                <div class="pwm-info-grid">
+                    <div>
+                        <div style="font-size:11px;font-weight:500;color:var(--pwm-teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Description</div>
+                        <div id="pwm-info-desc" style="font-size:12px;color:var(--pwm-text-muted);line-height:1.6"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:500;color:var(--pwm-teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Details</div>
+                        <div id="pwm-info-details"></div>
+                    </div>
+                </div>
+                <div style="margin-top:16px">
+                    <div style="font-size:11px;font-weight:500;color:var(--pwm-teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Linked Endpoints</div>
+                    <div class="pwm-info-endpoints" id="pwm-info-endpoints"></div>
+                </div>
+                <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
+                    <div style="font-size:11px;font-weight:500;color:var(--pwm-teal);text-transform:uppercase;letter-spacing:1px">Change Status</div>
+                    <select class="pwm-status-select" id="pwm-info-status-select">
+                        <option value="ACTIVE">Active</option>
+                        <option value="RESTRICTED">Restricted</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="PLANNED">Planned</option>
+                        <option value="DEPRECATED">Deprecated</option>
+                    </select>
+                    <button class="pwm-btn pwm-btn--primary" onclick="PWM.changeStatus()" style="padding:6px 14px;font-size:11px">Save</button>
+                </div>
+                <div style="margin-top:12px">
+                    <div style="font-size:11px;font-weight:500;color:var(--pwm-teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Status History</div>
+                    <div id="pwm-info-history" style="font-size:11px;color:var(--pwm-text-muted)"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="/static/js/workflow_map.js"></script>
+{% endblock %}

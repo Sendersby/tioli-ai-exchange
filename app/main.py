@@ -106,6 +106,8 @@ from app.onboarding.routes import router as onboarding_router
 from app.operator_hub.routes import router as operator_hub_router
 from app.operator_hub import models as _operator_hub_models  # Register tables
 from app.auth.oauth import router as oauth_router
+from app.workflow_map.routes import router as workflow_map_router
+from app.workflow_map import models as _workflow_map_models  # Register tables
 from app.onboarding import models as _onboarding_models
 
 # Sprint 6: Agent Memory + Policy Engine
@@ -260,6 +262,10 @@ async def lifespan(app: FastAPI):
             await agentvault_service.seed_tiers(db)
         # Agentis — seed feature flags (always, regardless of enabled state)
         await agentis_compliance.seed_feature_flags(db)
+        # Workflow Map — seed nodes and edges if enabled
+        if settings.platform_workflow_map_enabled:
+            from app.workflow_map.seed import seed_workflow_map
+            await seed_workflow_map(db)
         await db.commit()
     print(f"\n{'='*60}")
     print(f"  TiOLi AGENTIS v{settings.version}")
@@ -532,6 +538,8 @@ app.include_router(agora_router)
 app.include_router(profile_router)
 app.include_router(operator_hub_router)
 app.include_router(oauth_router)
+if settings.platform_workflow_map_enabled:
+    app.include_router(workflow_map_router)
 app.include_router(fetchai_router)
 
 
@@ -1634,6 +1642,19 @@ async def serve_agent_register():
     """Agent registration guide page — accessible at root level."""
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/agent-register.html", media_type="text/html")
+
+
+@app.get("/owner/workflow-map", include_in_schema=False)
+async def serve_workflow_map(request: Request):
+    """Platform Workflow Map — owner-only interactive node graph."""
+    if not settings.platform_workflow_map_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse("owner/workflow_map.html", {
+        "request": request, "authenticated": True, "active": "workflow-map",
+    })
 
 
 @app.get("/login", include_in_schema=False)
