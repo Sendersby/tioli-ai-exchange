@@ -36,16 +36,16 @@ var NODE_SIZES = {
 };
 
 var FORCE_PARAMS = {
-    linkDistance:   120,
-    linkStrength:   0.5,
-    manyBody:     -300,
-    collideRadius:  70
+    linkDistance:   80,
+    linkStrength:   0.7,
+    manyBody:     -150,
+    collideRadius:  50
 };
 
 var CANVAS_BG       = '#0A1520';
 var ZOOM_MIN        = 0.2;
 var ZOOM_MAX        = 4.0;
-var CLUSTER_STRENGTH = 0.03;
+var CLUSTER_STRENGTH = 0.08;
 var SIM_TICKS       = 300;
 var POLL_INTERVAL   = 60000;
 var TOOLTIP_DELAY   = 400;
