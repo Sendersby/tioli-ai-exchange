@@ -75,7 +75,7 @@ var state = {
 // === SECTION 3: DATA FETCHING ===
 
 function fetchGraph() {
-    return fetch('/api/v1/owner/workflow-map/graph')
+    return fetch('/api/v1/owner/workflow-map/graph', { credentials: 'same-origin' })
         .then(function (res) {
             if (!res.ok) throw new Error('Graph fetch failed: ' + res.status);
             return res.json();
@@ -84,14 +84,23 @@ function fetchGraph() {
             state.graphData = data;
             renderGraph(data);
             updateStats();
+            console.log('[PWM] Graph loaded:', data.meta.total_nodes, 'nodes,', data.meta.total_edges, 'edges');
         })
         .catch(function (err) {
             console.error('[PWM] fetchGraph error:', err);
+            // Show error visually on canvas
+            var wrap = document.getElementById('pwm-canvas-wrap');
+            if (wrap) {
+                var msg = document.createElement('div');
+                msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#C0392B;font-size:14px;z-index:5';
+                msg.innerHTML = '<div style="font-size:48px;margin-bottom:12px">&#9888;</div><div style="font-weight:600;margin-bottom:8px">Failed to load graph</div><div style="color:#888;font-size:12px">' + err.message + '</div><div style="color:#888;font-size:11px;margin-top:8px">Check browser console (F12) for details</div>';
+                wrap.appendChild(msg);
+            }
         });
 }
 
 function fetchNodeDetail(nodeId) {
-    return fetch('/api/v1/owner/workflow-map/node/' + encodeURIComponent(nodeId))
+    return fetch('/api/v1/owner/workflow-map/node/' + encodeURIComponent(nodeId), { credentials: 'same-origin' })
         .then(function (res) {
             if (!res.ok) throw new Error('Node detail fetch failed: ' + res.status);
             return res.json();
@@ -99,7 +108,7 @@ function fetchNodeDetail(nodeId) {
 }
 
 function fetchStatusSummary() {
-    return fetch('/api/v1/owner/workflow-map/status-summary')
+    return fetch('/api/v1/owner/workflow-map/status-summary', { credentials: 'same-origin' })
         .then(function (res) {
             if (!res.ok) throw new Error('Status summary fetch failed: ' + res.status);
             return res.json();
