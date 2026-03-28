@@ -33,8 +33,6 @@
 
         <!-- Control Panel (Left Sidebar) -->
         <div class="pwm-control-panel" id="pwm-controls">
-            <!-- Resize handle -->
-            <div id="pwm-resize-handle" style="position:absolute;top:0;right:0;width:6px;height:100%;cursor:col-resize;background:rgba(2,128,144,0.3);z-index:5;transition:background 0.15s" onmouseenter="this.style.background='rgba(2,128,144,0.7)'" onmouseleave="this.style.background='rgba(2,128,144,0.3)'"></div>
 
             <!-- Search -->
             <div class="pwm-section-label">Search</div>
@@ -134,35 +132,6 @@
     </div>
 </div>
 
-<script>
-// Sidebar resize drag
-(function() {
-    var handle = document.getElementById('pwm-resize-handle');
-    var panel = document.getElementById('pwm-controls');
-    if (!handle || !panel) return;
-    var dragging = false;
-    handle.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        dragging = true;
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', function(e) {
-        if (!dragging) return;
-        var newWidth = e.clientX - panel.getBoundingClientRect().left;
-        if (newWidth < 240) newWidth = 240;
-        if (newWidth > 700) newWidth = 700;
-        panel.style.width = newWidth + 'px';
-    });
-    document.addEventListener('mouseup', function() {
-        if (dragging) {
-            dragging = false;
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-        }
-    });
-})();
-</script>
 <script src="/static/js/d3.v7.min.js"></script>
-<script src="/static/js/workflow_map.js?v=6"></script>
+<script src="/static/js/workflow_map.js?v=7"></script>
 {% endblock %}
