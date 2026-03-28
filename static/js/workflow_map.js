@@ -1148,10 +1148,10 @@ function renderServicesList(data) {
         var linkStyle = n.url_path ? 'color:' + statusCol + ';text-decoration:none;' : 'color:' + statusCol + ';cursor:default;';
         var tag = n.url_path ? 'a' : 'span';
 
-        html += '<div style="display:flex;align-items:baseline;gap:4px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)">';
-        html += '<span style="width:6px;height:6px;border-radius:50%;background:' + statusCol + ';flex-shrink:0;margin-top:4px"></span>';
-        html += '<' + tag + link + ' style="' + linkStyle + 'font-size:12px;line-height:1.3" title="' + n.label + ' — ' + n.status + '">' + n.label + '</' + tag + '>';
-        html += '<span style="font-size:9px;color:' + statusCol + ';flex-shrink:0;font-weight:500;opacity:0.8">' + n.status.substring(0, 3).toUpperCase() + '</span>';
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)">';
+        html += '<span style="width:7px;height:7px;border-radius:50%;background:' + statusCol + ';flex-shrink:0"></span>';
+        html += '<' + tag + link + ' style="' + linkStyle + 'flex:1;font-size:11px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + n.label + ' — ' + n.status + '">' + n.label + '</' + tag + '>';
+        html += '<span style="font-size:10px;color:' + statusCol + ';flex-shrink:0;font-weight:700;min-width:28px;text-align:right">' + n.status.substring(0, 3).toUpperCase() + '</span>';
         html += '</div>';
     });
 
