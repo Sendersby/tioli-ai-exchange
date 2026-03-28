@@ -4,10 +4,11 @@
 {% block content %}
 <link rel="stylesheet" href="/static/css/workflow_map.css"/>
 
-<!-- Breadcrumb -->
-<div style="padding:8px 20px;font-size:12px;color:#888">
-    <a href="/dashboard" style="color:#77d4e5;text-decoration:none">Owner Dashboard</a> &rsaquo; <span>Platform Workflow Map</span>
-</div>
+<!-- Break out of parent padding/max-width container -->
+<style>
+    #mainContent > div { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+    #mainContent { padding-top: 56px !important; }
+</style>
 
 <div class="pwm-container" id="pwm-app">
 
