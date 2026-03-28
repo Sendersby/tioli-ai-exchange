@@ -126,12 +126,16 @@
 
 .pwm-control-panel {
     width: 300px;
+    min-width: 240px;
+    max-width: 700px;
     background: var(--pwm-navy-panel);
     height: 100%;
     overflow-y: auto;
     padding: 16px;
+    padding-right: 24px;
     flex-shrink: 0;
-    border-right: 1px solid var(--pwm-border);
+    border-right: none;
+    position: relative;
 }
 
 .pwm-section-label {
