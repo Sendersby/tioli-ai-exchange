@@ -61,6 +61,7 @@ var state = {
     selectedNodeId:   null,
     activeCategories: new Set(ALL_CATEGORIES),
     activeStatuses:   new Set(ALL_STATUSES),
+    hiddenNodes:      new Set(),
     searchQuery:      '',
     criticalPathsOnly: false,
     zoomTransform:    null,
@@ -383,7 +384,8 @@ function applyFilters() {
         var statusMatch = state.activeStatuses.has(n.status);
         var searchMatch = !query || n.label.toLowerCase().indexOf(query) !== -1
                           || (n.description && n.description.toLowerCase().indexOf(query) !== -1);
-        if (catMatch && statusMatch && searchMatch) {
+        var notHidden = !state.hiddenNodes.has(n.id);
+        if (catMatch && statusMatch && searchMatch && notHidden) {
             visibleNodeIds.add(n.id);
         }
     });
@@ -995,6 +997,20 @@ function filterStatus() {
     applyFilters();
 }
 
+function toggleNode(el) {
+    var nodeId = el.dataset.node;
+    if (!nodeId) return;
+
+    el.classList.toggle('active');
+
+    if (el.classList.contains('active')) {
+        state.hiddenNodes.delete(nodeId);
+    } else {
+        state.hiddenNodes.add(nodeId);
+    }
+    applyFilters();
+}
+
 function toggleCriticalPaths(el) {
     el.classList.toggle('active');
     state.criticalPathsOnly = el.classList.contains('active');
@@ -1150,6 +1166,7 @@ function renderServicesList(data) {
         var tag = n.url_path ? 'a' : 'span';
 
         html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)">';
+        html += '<div class="pwm-toggle active" data-node="' + n.id + '" onclick="PWM.toggleNode(this)" style="width:28px;height:14px;flex-shrink:0"><div class="pwm-toggle-knob" style="width:10px;height:10px;top:2px;left:2px"></div></div>';
         html += '<span style="width:7px;height:7px;border-radius:50%;background:' + statusCol + ';flex-shrink:0"></span>';
         html += '<' + tag + link + ' style="' + linkStyle + 'flex:1;font-size:11px;line-height:1.3" title="' + n.label + ' — ' + n.status + '">' + n.label + '</' + tag + '>';
         html += '<span style="font-size:10px;color:' + statusCol + ';flex-shrink:0;font-weight:700;min-width:32px;text-align:right;padding-right:4px">' + n.status.substring(0, 3).toUpperCase() + '</span>';
@@ -1201,6 +1218,10 @@ PWM.filterStatus = function () {
 
 PWM.toggleCriticalPaths = function (el) {
     toggleCriticalPaths(el);
+};
+
+PWM.toggleNode = function (el) {
+    toggleNode(el);
 };
 
 PWM.resetView = function () {

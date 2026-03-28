@@ -198,6 +198,18 @@
     left: 18px;
 }
 
+/* Small toggle variant for service list */
+.pwm-toggle[style*="width:28px"] .pwm-toggle-knob {
+    width: 10px !important;
+    height: 10px !important;
+    top: 2px !important;
+    left: 2px !important;
+}
+
+.pwm-toggle[style*="width:28px"].active .pwm-toggle-knob {
+    left: 14px !important;
+}
+
 .pwm-checkbox-row {
     display: flex;
     align-items: center;
