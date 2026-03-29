@@ -1396,9 +1396,9 @@ function initMinimap() {
     // Viewport rectangle
     minimapViewport = minimapSvg.append('rect')
         .attr('class', 'pwm-minimap-viewport')
-        .attr('fill', 'rgba(255,255,255,0.08)')
-        .attr('stroke', '#ffffff')
-        .attr('stroke-width', 1)
+        .attr('fill', 'rgba(2,128,144,0.15)')
+        .attr('stroke', '#028090')
+        .attr('stroke-width', 2)
         .attr('rx', 2);
 
     // Click on minimap to pan

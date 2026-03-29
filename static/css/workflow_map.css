@@ -410,10 +410,15 @@
 }
 
 .pwm-minimap-viewport {
-    stroke: white;
-    stroke-width: 1;
-    fill: rgba(255,255,255,0.08);
+    stroke: var(--pwm-teal);
+    stroke-width: 2;
+    fill: rgba(2, 128, 144, 0.15);
     cursor: move;
+    transition: stroke-width 0.15s;
+}
+.pwm-minimap-viewport:hover {
+    stroke-width: 2.5;
+    fill: rgba(2, 128, 144, 0.22);
 }
 
 /* ---- Tooltip ---- */
