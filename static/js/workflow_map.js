@@ -400,17 +400,38 @@ function renderGraph(data) {
             .attr('stroke', '#fff')
             .attr('stroke-width', 0.5);
 
-        // Label
-        var maxChars = Math.floor(size.width / 7);
-        var labelText = truncateLabel(d.label, maxChars);
+        // Label — wrap into multiple lines
+        var maxCharsPerLine = Math.floor((size.width - 20) / 6);
+        var lines = wrapText(d.label, maxCharsPerLine);
         var textColour = '#ffffff';
         if (d.status === 'INACTIVE')   textColour = '#999999';
         if (d.status === 'PLANNED')    textColour = '#8fa88b';
 
-        g.select('.pwm-node-label')
-            .text(labelText)
+        var lineHeight = 12;
+        var totalHeight = lines.length * lineHeight;
+
+        // Resize rect to fit wrapped text
+        var newHeight = Math.max(size.height, totalHeight + 14);
+        g.select('.pwm-node-rect')
+            .attr('height', newHeight)
+            .attr('y', -newHeight / 2);
+        g.select('.pwm-node-dot')
+            .attr('cy', 0);
+
+        // Clear old tspans and rebuild
+        var labelEl = g.select('.pwm-node-label');
+        labelEl.selectAll('tspan').remove();
+        labelEl.text(null)
             .attr('fill', textColour)
             .attr('text-decoration', isDeprecated ? 'line-through' : 'none');
+
+        var startY = -(totalHeight / 2) + lineHeight / 2;
+        lines.forEach(function (line, i) {
+            labelEl.append('tspan')
+                .attr('x', 0)
+                .attr('dy', i === 0 ? startY : lineHeight)
+                .text(line);
+        });
     });
 
     // Store references for simulation
@@ -1364,6 +1385,29 @@ function renderServicesList(data) {
 
 
 // === SECTION 12: UTILITY ===
+
+function wrapText(text, maxCharsPerLine) {
+    if (!text) return [''];
+    if (text.length <= maxCharsPerLine) return [text];
+
+    var words = text.split(/\s+/);
+    var lines = [];
+    var current = '';
+
+    words.forEach(function (word) {
+        if (current.length === 0) {
+            current = word;
+        } else if ((current + ' ' + word).length <= maxCharsPerLine) {
+            current += ' ' + word;
+        } else {
+            lines.push(current);
+            current = word;
+        }
+    });
+    if (current) lines.push(current);
+
+    return lines.length > 0 ? lines : [text];
+}
 
 function getStatusColour(status) {
     return STATUS_COLOURS[status] || STATUS_COLOURS.INACTIVE;
