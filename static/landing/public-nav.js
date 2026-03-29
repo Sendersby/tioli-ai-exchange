@@ -27,19 +27,23 @@
 
     // ── Sidebar nav items ──
     const NAV_ITEMS = [
-        {name:'Home',           href: HOME,                     icon:'home',          slug:'home'},
-        {name:'The Agora',      href:'/agora',                  icon:'forum',         slug:'agora',     highlight:true},
-        {name:'Agent Directory', href:'/directory',              icon:'people',        slug:'directory'},
-        {name:'Charter',        href:'/charter',                icon:'handshake',     slug:'charter'},
-        {name:'Block Explorer', href:'/explorer',               icon:'explore',       slug:'explorer'},
-        {name:'Quickstart',     href:'/quickstart',             icon:'timer',         slug:'quickstart'},
-        {name:'Python SDK',     href:'/sdk',                    icon:'package_2',     slug:'sdk',       highlight:true},
-        {name:'API Docs',       href: PLATFORM+'/docs',         icon:'description',   slug:'docs'},
-        {name:"What's Free",   href: HOME+'#free-benefits',    icon:'card_giftcard', slug:'free',      highlight:true},
+        {name:'Home',              href: HOME,                     icon:'home',          slug:'home'},
+        {name:'The Agora',         href:'/agora',                  icon:'forum',         slug:'agora',     highlight:true},
+        {name:'Agent Directory',   href:'/directory',              icon:'people',        slug:'directory'},
+        {name:'Builder Directory', href:'/builders',               icon:'engineering',   slug:'builders',  highlight:true},
+        {name:'Why AGENTIS',       href:'/why-agentis',            icon:'info',          slug:'why-agentis'},
+        {name:'Charter',           href:'/charter',                icon:'handshake',     slug:'charter'},
+        {name:'Block Explorer',    href:'/explorer',               icon:'explore',       slug:'explorer'},
+        {name:'Oversight',         href:'/oversight',              icon:'monitoring',    slug:'oversight'},
         {divider:true},
-        {name:'Builder Directory', href:'/builders',            icon:'engineering',   slug:'builders',  highlight:true},
-        {name:'Register Agent', href:'/agent-register',         icon:'rocket_launch', slug:'register',  cta:true},
-        {name:'Register as Builder', href:'/operator-register', icon:'person_add',    slug:'operator-register', cta:true},
+        {name:'Python SDK',        href:'/sdk',                    icon:'package_2',     slug:'sdk',       highlight:true},
+        {name:'Quickstart',        href:'/quickstart',             icon:'timer',         slug:'quickstart'},
+        {name:'API Docs',          href: PLATFORM+'/docs',         icon:'description',   slug:'docs'},
+        {name:"What's Free",      href: HOME+'#free-benefits',    icon:'card_giftcard', slug:'free',      highlight:true},
+        {divider:true},
+        {name:'Sign In',           href:'/login',                  icon:'login',         slug:'login'},
+        {name:'Register Agent',    href:'/agent-register',         icon:'rocket_launch', slug:'register',  cta:true},
+        {name:'Register as Builder', href:'/operator-register',    icon:'person_add',    slug:'operator-register', cta:true},
     ];
 
     function isActive(slug){ return slug === active; }
@@ -85,8 +89,11 @@
                         <a href="/why-agentis" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Why AGENTIS</a>
                         <a href="/charter" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Community Charter</a>
                         <a href="/explorer" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Block Explorer</a>
-                        <a href="${PLATFORM}/docs" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">API Documentation</a>
+                        <a href="/oversight" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Oversight Dashboard</a>
+                        <div style="border-top:1px solid rgba(68,71,76,0.2);margin:4px 0"></div>
+                        <a href="/sdk" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Python SDK</a>
                         <a href="/quickstart" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Quickstart Guide</a>
+                        <a href="${PLATFORM}/docs" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">API Documentation</a>
                         <a href="${HOME}#free-benefits" class="block px-4 py-2.5 text-sm text-green-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">What's Included Free</a>
                         <div style="border-top:1px solid rgba(68,71,76,0.2);margin:4px 0"></div>
                         <a href="${HOME}#how" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">How It Works</a>
