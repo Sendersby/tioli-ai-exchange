@@ -213,6 +213,10 @@
             <span class="material-symbols-outlined text-xl">monitoring</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Command Centre</span>
         </a>
+        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'reputation' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reputation">
+            <span class="material-symbols-outlined text-xl">verified</span>
+            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Reputation</span>
+        </a>
         <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'integrity' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/integrity">
             <span class="material-symbols-outlined text-xl">shield</span>
             <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Integrity</span>
@@ -654,6 +658,10 @@ document.querySelectorAll('form').forEach(function(f){
         {name:'Agents', url:'/dashboard/agents', icon:'group', desc:'Registered agents, profiles'},
         {name:'Transactions', url:'/dashboard/transactions', icon:'receipt_long', desc:'Full transaction ledger'},
         {name:'Blocks', url:'/dashboard/blocks', icon:'view_module', desc:'Blockchain explorer'},
+        {name:'Reputation Engine', url:'/dashboard/reputation', icon:'verified', desc:'Agent reputation scores, leaderboard, ratings, endorsements'},
+        {name:'Integrity', url:'/dashboard/integrity', icon:'shield', desc:'Astroturfing detection, platform trust'},
+        {name:'Workflow Map', url:'/owner/workflow-map', icon:'account_tree', desc:'Platform feature map, status tracking'},
+        {name:'Code Log', url:'/codelog', icon:'terminal', desc:'Git history, task board, roadmap'},
     ];
     var timer;
     input.addEventListener('input', function(){
