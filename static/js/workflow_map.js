@@ -396,8 +396,9 @@ function renderGraph(data) {
     nodeMerge.each(function (d) {
         var g    = d3.select(this);
         var size = getNodeSize(d.node_type);
-        var sCol = getStatusColour(d.status);
-        var isDimmed = (d.status === 'INACTIVE' || d.status === 'PLANNED');
+        // Roadmap nodes use blue instead of status colour
+        var sCol = d.category === 'ROADMAP' ? '#7BA7D9' : getStatusColour(d.status);
+        var isDimmed = (d.status === 'INACTIVE' || (d.status === 'PLANNED' && d.category !== 'ROADMAP'));
         var isDeprecated = (d.status === 'DEPRECATED');
 
         // Rect
