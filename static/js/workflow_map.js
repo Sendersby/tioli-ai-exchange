@@ -729,18 +729,22 @@ function renderZones() {
                     .attr('stroke-linejoin', 'round')
                     .attr('pointer-events', 'none');
 
-                // Label at top-left of bounding box of hull
-                var hMinX = Infinity, hMinY = Infinity;
+                // Label placement: Frontend bottom-right, Backend top-left
+                var hMinX = Infinity, hMinY = Infinity, hMaxX = -Infinity, hMaxY = -Infinity;
                 hull.forEach(function(p) {
                     if (p[0] < hMinX) hMinX = p[0];
                     if (p[1] < hMinY) hMinY = p[1];
+                    if (p[0] > hMaxX) hMaxX = p[0];
+                    if (p[1] > hMaxY) hMaxY = p[1];
                 });
                 var labels = { FRONTEND: 'FRONTEND', BACKEND: 'BACKEND (OWNER)' };
                 var labelColours = { FRONTEND: 'rgba(119,212,229,0.6)', BACKEND: 'rgba(237,192,95,0.6)' };
+                var lx = zoneKey === 'FRONTEND' ? hMaxX - 80 : hMinX + 10;
+                var ly = zoneKey === 'FRONTEND' ? hMaxY - 8 : hMinY + 16;
                 zoneGroup.append('text')
                     .attr('class', 'pwm-zone')
-                    .attr('x', hMinX + 10)
-                    .attr('y', hMinY + 16)
+                    .attr('x', lx)
+                    .attr('y', ly)
                     .attr('font-size', 11)
                     .attr('font-weight', 700)
                     .attr('letter-spacing', '2px')
