@@ -269,21 +269,20 @@
 
 .pwm-info-panel {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 280px;
+    width: 420px;
+    max-height: 400px;
     background: var(--pwm-navy-panel);
-    border-top: 2px solid var(--pwm-teal);
-    transform: translateY(100%);
-    transition: transform 300ms ease;
+    border: 1px solid var(--pwm-teal);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     z-index: 20;
-    padding: 20px;
+    padding: 16px;
     overflow-y: auto;
+    display: none;
 }
 
 .pwm-info-panel.open {
-    transform: translateY(0);
+    display: block;
 }
 
 .pwm-info-header {

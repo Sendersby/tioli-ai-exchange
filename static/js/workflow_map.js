@@ -1111,10 +1111,27 @@ function openInfoPanel(nodeDetail) {
     var panel = document.getElementById('pwm-info-panel');
     if (!panel || !nodeDetail) return;
 
-    panel.classList.add('open');
-
     var node = nodeDetail.node || nodeDetail;
     var meta = node.metadata || {};
+
+    // Position panel near the clicked node
+    var wrap = document.getElementById('pwm-canvas-wrap');
+    var wrapRect = wrap ? wrap.getBoundingClientRect() : { left: 0, top: 0, width: 1200, height: 800 };
+    var transform = state.zoomTransform || d3.zoomIdentity;
+    var screenX = transform.applyX(node.x || 0) + wrapRect.left - (wrap ? wrap.scrollLeft : 0);
+    var screenY = transform.applyY(node.y || 0) + wrapRect.top - (wrap ? wrap.scrollTop : 0);
+
+    // Offset to the right of the node, keep within viewport
+    var panelW = 420;
+    var panelLeft = screenX + 80 - wrapRect.left;
+    var panelTop = screenY - 60 - wrapRect.top;
+    if (panelLeft + panelW > wrapRect.width) panelLeft = screenX - panelW - 20 - wrapRect.left;
+    if (panelTop < 10) panelTop = 10;
+    if (panelTop + 400 > wrapRect.height) panelTop = wrapRect.height - 410;
+
+    panel.style.left = Math.max(10, panelLeft) + 'px';
+    panel.style.top = Math.max(10, panelTop) + 'px';
+    panel.classList.add('open');
 
     // Status badge
     var badgeEl = document.getElementById('pwm-info-status');
