@@ -30,13 +30,14 @@ var CATEGORY_COLOURS = {
 };
 
 var TIER_COLOURS = {
+    Arch:   '#FF4757',
     Domain: '#FF6B6B',
     Ops:    '#FECA57',
     Task:   '#48DBFB',
     Tool:   '#1DD1A1'
 };
 
-var ALL_TIERS = ['Domain', 'Ops', 'Task', 'Tool'];
+var ALL_TIERS = ['Arch', 'Domain', 'Ops', 'Task', 'Tool'];
 
 var NODE_SIZES = {
     PAGE:        { width: 120, height: 36 },
@@ -447,7 +448,7 @@ function renderGraph(data) {
         d._computedHeight = newHeight;
 
         if (isHouseAgent) {
-            // Hexagon path
+            // Hexagon path with tier-coloured outline
             var hw = size.width / 2;
             var hh = newHeight / 2;
             g.select('.pwm-node-rect')
@@ -455,8 +456,21 @@ function renderGraph(data) {
                 .attr('fill', sCol)
                 .attr('fill-opacity', isDimmed ? 0.35 : 0.9)
                 .attr('stroke', tierCol || sCol)
-                .attr('stroke-width', 2)
+                .attr('stroke-width', tierCol ? 2.5 : 2)
                 .attr('stroke-dasharray', isDimmed ? '4,2' : 'none');
+
+            // Outer glow ring in tier colour for extra visibility
+            g.selectAll('.pwm-tier-glow').remove();
+            if (tierCol && !isDimmed) {
+                g.insert('path', '.pwm-node-rect')
+                    .attr('class', 'pwm-tier-glow')
+                    .attr('d', hexagonPath(hw + 3, hh + 3))
+                    .attr('fill', 'none')
+                    .attr('stroke', tierCol)
+                    .attr('stroke-width', 1)
+                    .attr('stroke-opacity', 0.4)
+                    .attr('pointer-events', 'none');
+            }
         } else {
             // Standard rect
             g.select('.pwm-node-rect')

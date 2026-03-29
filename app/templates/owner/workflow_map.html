@@ -55,12 +55,13 @@
 
             <!-- Agent Taxonomy -->
             <div class="pwm-section-label" style="margin-top:20px">Agent Taxonomy</div>
-            <div style="font-size:10px;color:var(--pwm-text-muted);margin-bottom:8px;line-height:1.4">Hierarchy tiers for House Agents</div>
+            <div style="font-size:10px;color:var(--pwm-text-muted);margin-bottom:4px;line-height:1.4">Hierarchy tiers — outline colour on map</div>
             <div id="pwm-taxonomy-toggles">
-                <div class="pwm-toggle-row"><span><span class="pwm-tier-indicator pwm-tier-indicator--domain"></span>Domain</span><div class="pwm-toggle active" data-tier="Domain" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
-                <div class="pwm-toggle-row"><span><span class="pwm-tier-indicator pwm-tier-indicator--ops"></span>Ops</span><div class="pwm-toggle active" data-tier="Ops" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
-                <div class="pwm-toggle-row"><span><span class="pwm-tier-indicator pwm-tier-indicator--task"></span>Task</span><div class="pwm-toggle active" data-tier="Task" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
-                <div class="pwm-toggle-row"><span><span class="pwm-tier-indicator pwm-tier-indicator--tool"></span>Tool</span><div class="pwm-toggle active" data-tier="Tool" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-tier-swatch" style="border-color:var(--pwm-tier-arch)"></span>Arch <span style="font-size:9px;color:var(--pwm-text-muted)">(future)</span></span><div class="pwm-toggle active" data-tier="Arch" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-tier-swatch" style="border-color:var(--pwm-tier-domain)"></span>Domain</span><div class="pwm-toggle active" data-tier="Domain" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-tier-swatch" style="border-color:var(--pwm-tier-ops)"></span>Ops</span><div class="pwm-toggle active" data-tier="Ops" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-tier-swatch" style="border-color:var(--pwm-tier-task)"></span>Task</span><div class="pwm-toggle active" data-tier="Task" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
+                <div class="pwm-toggle-row"><span><span class="pwm-tier-swatch" style="border-color:var(--pwm-tier-tool)"></span>Tool</span><div class="pwm-toggle active" data-tier="Tool" onclick="PWM.toggleTier(this)"><div class="pwm-toggle-knob"></div></div></div>
             </div>
             <div style="display:flex;gap:6px;margin-top:6px">
                 <button class="pwm-btn pwm-btn--outline" style="flex:1;padding:3px 6px;font-size:9px" onclick="PWM.toggleAllTiers(true)">All Tiers</button>

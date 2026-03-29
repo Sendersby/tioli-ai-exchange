@@ -16,6 +16,7 @@
     --pwm-grey: #6C757D;
     --pwm-red: #C0392B;
     --pwm-magenta: #E84393;
+    --pwm-tier-arch: #FF4757;
     --pwm-tier-domain: #FF6B6B;
     --pwm-tier-ops: #FECA57;
     --pwm-tier-task: #48DBFB;
@@ -543,19 +544,19 @@
     width: 22px;
 }
 
-/* ---- Agent Taxonomy Tier Indicators ---- */
+/* ---- Agent Taxonomy Tier Swatches (hexagon outline preview) ---- */
 
-.pwm-tier-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+.pwm-tier-swatch {
+    width: 14px;
+    height: 14px;
     display: inline-block;
     margin-right: 6px;
+    background: var(--pwm-magenta);
+    opacity: 0.7;
+    border: 2.5px solid transparent;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    vertical-align: middle;
 }
-.pwm-tier-indicator--domain { background: var(--pwm-tier-domain); }
-.pwm-tier-indicator--ops { background: var(--pwm-tier-ops); }
-.pwm-tier-indicator--task { background: var(--pwm-tier-task); }
-.pwm-tier-indicator--tool { background: var(--pwm-tier-tool); }
 
 /* ---- House Agent Hexagon Glow ---- */
 .pwm-node-hexagon {
