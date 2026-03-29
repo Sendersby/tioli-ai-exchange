@@ -42,7 +42,7 @@
     height: 48px;
     display: flex;
     align-items: center;
-    padding: 0 20px 0 140px;
+    padding: 0 20px 0 280px;
     border-bottom: 1px solid var(--pwm-border);
     justify-content: space-between;
     z-index: 10;
