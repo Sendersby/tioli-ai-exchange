@@ -43,6 +43,39 @@ var FORCE_PARAMS = {
 };
 
 var CANVAS_BG       = '#0A1520';
+
+// Zone colours — translucent, won't interfere with existing palette
+var ZONE_COLOURS = {
+    FRONTEND:  'rgba(119, 212, 229, 0.06)',  // very faint teal
+    BACKEND:   'rgba(237, 192, 95, 0.06)',   // very faint gold
+    ISOLATED:  'rgba(192, 57, 43, 0.08)',    // very faint red
+};
+var ZONE_BORDERS = {
+    FRONTEND:  'rgba(119, 212, 229, 0.25)',
+    BACKEND:   'rgba(237, 192, 95, 0.25)',
+    ISOLATED:  'rgba(192, 57, 43, 0.3)',
+};
+
+// Frontend nodes: public pages, agent registration, operator registration
+var FRONTEND_PREFIXES = ['node_nav_', 'node_reg_', 'node_mcp_'];
+// Backend nodes: owner dashboard, tools
+var BACKEND_PREFIXES = ['node_owner_', 'node_dash_', 'node_tool_'];
+
+function classifyNode(nodeId, edges) {
+    if (FRONTEND_PREFIXES.some(function(p) { return nodeId.indexOf(p) === 0; })) return 'FRONTEND';
+    if (BACKEND_PREFIXES.some(function(p) { return nodeId.indexOf(p) === 0; })) return 'BACKEND';
+    // Check if node has any edges — if not, it's isolated
+    var hasEdge = edges.some(function(e) {
+        var src = e.source.id || e.source;
+        var tgt = e.target.id || e.target;
+        return src === nodeId || tgt === nodeId;
+    });
+    if (!hasEdge) return 'ISOLATED';
+    // Everything else (services, payments, compliance, API, banking) — check connections
+    // If connected to backend nodes, classify as backend; if to frontend, frontend
+    // Default: neither — not in a zone
+    return null;
+}
 var ZOOM_MIN        = 0.2;
 var ZOOM_MAX        = 4.0;
 var CLUSTER_STRENGTH = 0.08;
@@ -62,6 +95,7 @@ var state = {
     activeCategories: new Set(ALL_CATEGORIES),
     activeStatuses:   new Set(ALL_STATUSES),
     hiddenNodes:      new Set(),
+    zonesVisible:     { FRONTEND: false, BACKEND: false, ISOLATED: false },
     searchQuery:      '',
     criticalPathsOnly: false,
     zoomTransform:    null,
@@ -548,6 +582,102 @@ function onSimulationTick() {
 
     // Update minimap
     renderMinimapNodes();
+
+    // Update zone hulls
+    renderZones();
+}
+
+function renderZones() {
+    if (!state.graphData || !graphGroup) return;
+
+    var nodes = state.graphData.nodes;
+    var edges = state.graphData.edges;
+
+    // Classify nodes into zones
+    var zones = { FRONTEND: [], BACKEND: [], ISOLATED: [] };
+    nodes.forEach(function (n) {
+        if (!n.x && n.x !== 0) return;
+        var zone = classifyNode(n.id, edges);
+        if (zone && zones[zone]) {
+            zones[zone].push(n);
+        }
+    });
+
+    // Also find truly isolated nodes (no edges at all)
+    var connectedIds = new Set();
+    edges.forEach(function (e) {
+        connectedIds.add(e.source.id || e.source);
+        connectedIds.add(e.target.id || e.target);
+    });
+    nodes.forEach(function (n) {
+        if (!connectedIds.has(n.id) && n.x) {
+            // Remove from other zones, add to isolated
+            zones.FRONTEND = zones.FRONTEND.filter(function(fn) { return fn.id !== n.id; });
+            zones.BACKEND = zones.BACKEND.filter(function(fn) { return fn.id !== n.id; });
+            if (!zones.ISOLATED.some(function(fn) { return fn.id === n.id; })) {
+                zones.ISOLATED.push(n);
+            }
+        }
+    });
+
+    // Remove old zones
+    graphGroup.selectAll('.pwm-zone').remove();
+
+    // Create zone group BEHIND everything else
+    var zoneGroup = graphGroup.insert('g', ':first-child').attr('class', 'pwm-zones-container');
+
+    ['FRONTEND', 'BACKEND', 'ISOLATED'].forEach(function (zoneKey) {
+        if (!state.zonesVisible[zoneKey]) return;
+        var zoneNodes = zones[zoneKey];
+        if (zoneNodes.length < 1) return;
+
+        // Compute bounding box with padding
+        var pad = 40;
+        var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        zoneNodes.forEach(function (n) {
+            var size = getNodeSize(n.node_type);
+            var hw = size.width / 2 + pad;
+            var hh = size.height / 2 + pad;
+            if (n.x - hw < minX) minX = n.x - hw;
+            if (n.y - hh < minY) minY = n.y - hh;
+            if (n.x + hw > maxX) maxX = n.x + hw;
+            if (n.y + hh > maxY) maxY = n.y + hh;
+        });
+
+        var rx = 16;
+        zoneGroup.append('rect')
+            .attr('class', 'pwm-zone')
+            .attr('x', minX)
+            .attr('y', minY)
+            .attr('width', maxX - minX)
+            .attr('height', maxY - minY)
+            .attr('rx', rx)
+            .attr('ry', rx)
+            .attr('fill', ZONE_COLOURS[zoneKey])
+            .attr('stroke', ZONE_BORDERS[zoneKey])
+            .attr('stroke-width', 1.5)
+            .attr('stroke-dasharray', '8,4')
+            .attr('pointer-events', 'none');
+
+        // Label
+        var labels = { FRONTEND: 'FRONTEND', BACKEND: 'BACKEND (OWNER)', ISOLATED: 'ISOLATED' };
+        var labelColours = { FRONTEND: 'rgba(119,212,229,0.5)', BACKEND: 'rgba(237,192,95,0.5)', ISOLATED: 'rgba(192,57,43,0.5)' };
+        zoneGroup.append('text')
+            .attr('class', 'pwm-zone')
+            .attr('x', minX + 12)
+            .attr('y', minY + 18)
+            .attr('font-size', 10)
+            .attr('font-weight', 700)
+            .attr('letter-spacing', '2px')
+            .attr('fill', labelColours[zoneKey])
+            .attr('pointer-events', 'none')
+            .text(labels[zoneKey]);
+    });
+}
+
+function toggleZone(zoneKey) {
+    state.zonesVisible[zoneKey] = !state.zonesVisible[zoneKey];
+    renderZones();
 }
 
 
@@ -1222,6 +1352,10 @@ PWM.toggleCriticalPaths = function (el) {
 
 PWM.toggleNode = function (el) {
     toggleNode(el);
+};
+
+PWM.toggleZone = function (zoneKey) {
+    toggleZone(zoneKey);
 };
 
 PWM.selectAllNodes = function () {
