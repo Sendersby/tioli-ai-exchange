@@ -84,6 +84,12 @@ class DeliverRequest(BaseModel):
 class VerifyRequest(BaseModel):
     accepted: bool
 
+class RateEngagementRequest(BaseModel):
+    quality_rating: int = Field(..., ge=1, le=5, description="1-5 star rating")
+    rating_tags: list[str] = []
+    review_text: str | None = None
+
+
 class DisputeRequest(BaseModel):
     dispute_type: str
     description: str
@@ -317,6 +323,99 @@ async def verify_delivery(
 ):
     _check_enabled()
     return await engagement_service.verify_delivery(db, engagement_id, agent.id, req.accepted)
+
+
+@router.post("/engagements/{engagement_id}/rate")
+async def rate_engagement(
+    engagement_id: str, req: RateEngagementRequest,
+    agent: Agent = Depends(require_agent_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rate a completed engagement (client rates provider). Records on blockchain."""
+    _check_enabled()
+    from app.agentbroker.models import AgentEngagement
+    result = await db.execute(
+        select(AgentEngagement).where(
+            AgentEngagement.engagement_id == engagement_id
+        )
+    )
+    engagement = result.scalar_one_or_none()
+    if not engagement:
+        raise HTTPException(status_code=404, detail="Engagement not found")
+    if engagement.current_state != "COMPLETED":
+        raise HTTPException(status_code=400, detail="Can only rate completed engagements")
+    if agent.id != engagement.client_agent_id:
+        raise HTTPException(status_code=403, detail="Only the client can rate")
+
+    try:
+        from app.reputation.models import TaskOutcome
+        from app.reputation.scorer import ReputationScorer
+        import uuid as _uuid
+
+        # Check if already rated
+        existing = await db.execute(
+            select(TaskOutcome).where(
+                TaskOutcome.engagement_id == engagement_id
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Already rated")
+
+        # Determine on-time
+        on_time = True
+        if engagement.deadline and engagement.completed_at:
+            on_time = engagement.completed_at <= engagement.deadline
+
+        outcome = TaskOutcome(
+            outcome_id=str(_uuid.uuid4()),
+            task_id=engagement_id,
+            dispatch_id=engagement_id,
+            engagement_id=engagement_id,
+            agent_id=engagement.provider_agent_id,
+            rated_by_agent_id=agent.id,
+            quality_rating=req.quality_rating,
+            rating_tags=req.rating_tags,
+            review_text=req.review_text,
+            on_time=on_time,
+        )
+
+        # Record on blockchain
+        try:
+            from app.blockchain.blockchain import blockchain
+            tx_id = blockchain.add_transaction(
+                sender=agent.id,
+                recipient=engagement.provider_agent_id,
+                amount=0,
+                transaction_type="task_outcome",
+                metadata={
+                    "engagement_id": engagement_id,
+                    "quality_rating": req.quality_rating,
+                    "on_time": on_time,
+                    "rating_tags": req.rating_tags,
+                },
+            )
+            outcome.blockchain_tx_id = tx_id
+        except Exception:
+            pass
+
+        db.add(outcome)
+
+        # Recalculate reputation
+        scorer = ReputationScorer()
+        score = await scorer.calculate(db, engagement.provider_agent_id)
+        await db.commit()
+
+        return {
+            "outcome_id": outcome.outcome_id,
+            "quality_rating": req.quality_rating,
+            "on_time": on_time,
+            "new_reputation_score": score.overall_score,
+            "blockchain_tx_id": outcome.blockchain_tx_id,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/engagements/{engagement_id}/dispute")

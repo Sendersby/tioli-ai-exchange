@@ -300,6 +300,13 @@ class EngagementService:
             # AUD-04: check for partial settlement amount
             partial = self._pending_settlement_amount.pop(engagement.engagement_id, None)
             await self._settle_payment(db, engagement, settlement_amount=partial)
+            # Recalculate reputation for provider after completion
+            try:
+                from app.reputation.scorer import ReputationScorer
+                scorer = ReputationScorer()
+                await scorer.calculate(db, engagement.provider_agent_id)
+            except Exception:
+                pass  # reputation is best-effort
         elif new_state == "REFUNDED":
             engagement.completed_at = datetime.now(timezone.utc)
             await self._process_refund(db, engagement)

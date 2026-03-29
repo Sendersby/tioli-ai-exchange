@@ -312,6 +312,44 @@ async def seed_workflow_map(db):
         feature_flag="agenthub_enabled",
         metadata_={"build_phase": 1, "module": "AgentHub", "last_updated": "2026-03-28T00:00:00Z"},
     ))
+    # --- Reputation Engine ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_svc_reputation_engine",
+        label="Reputation Engine",
+        category="AGENT_SERVICE",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Task allocation, dispatch, SLA tracking, quality ratings (1-5), peer endorsements, "
+                    "and 90-day rolling reputation scores with decay. Blockchain-recorded outcomes.",
+        url_path="/dashboard/reputation",
+        feature_flag="reputation_engine_enabled",
+        metadata_={"build_phase": 1, "module": "Reputation", "last_updated": "2026-03-29T00:00:00Z"},
+    ))
+    # --- Telegram Bot ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_svc_telegram_bot",
+        label="Telegram Bot",
+        category="AGENT_SERVICE",
+        status="ACTIVE",
+        node_type="INTEGRATION",
+        description="Webhook-based Telegram bot for agent interaction via chat. Commands: /discover, "
+                    "/engage, /status, /wallet, /reputation. Push notifications for task dispatches and ratings.",
+        api_endpoint="POST /api/v1/telegram/webhook",
+        feature_flag="telegram_bot_enabled",
+        metadata_={"build_phase": 1, "module": "Telegram", "last_updated": "2026-03-29T00:00:00Z"},
+    ))
+    # --- Docker Self-Hosted ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_svc_docker_selfhost",
+        label="Docker Self-Hosted",
+        category="AGENT_SERVICE",
+        status="ACTIVE",
+        node_type="INTEGRATION",
+        description="One-command self-hosted deployment via Docker Compose. Full stack: FastAPI + "
+                    "PostgreSQL 16 + Redis 7 with auto-seeding, health checks, and blockchain persistence.",
+        feature_flag="standalone_mode",
+        metadata_={"build_phase": 1, "module": "Infrastructure", "last_updated": "2026-03-29T00:00:00Z"},
+    ))
     add_node_if_new(WorkflowMapNode(
         node_id="node_svc_pipeline",
         label="Agent Pipeline Assembly",
@@ -890,6 +928,45 @@ async def seed_workflow_map(db):
         flow_type="AGENT_SERVICE",
         direction="DIRECTED",
         is_critical_path=True,
+    ))
+
+    # --- Reputation Engine connections ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_reputation_to_broker",
+        source_node_id="node_svc_reputation_engine",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="AGENT_SERVICE", direction="DIRECTED",
+        label="Scores feed discovery ranking",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_reputation_to_profile",
+        source_node_id="node_svc_reputation_engine",
+        target_node_id="node_svc_agent_profile",
+        flow_type="AGENT_SERVICE", direction="DIRECTED",
+        label="Score displayed on profile",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_reputation_from_deliver",
+        source_node_id="node_svc_agentbroker_deliver",
+        target_node_id="node_svc_reputation_engine",
+        flow_type="AGENT_SERVICE", direction="DIRECTED",
+        label="Delivery triggers rating",
+    ))
+
+    # --- Telegram Bot connections ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_telegram_to_broker",
+        source_node_id="node_svc_telegram_bot",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="AGENT_SERVICE", direction="DIRECTED",
+        label="/discover command",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_telegram_to_reputation",
+        source_node_id="node_svc_telegram_bot",
+        target_node_id="node_svc_reputation_engine",
+        flow_type="AGENT_SERVICE", direction="DIRECTED",
+        label="/reputation command",
     ))
 
     # --- Payment flow ---

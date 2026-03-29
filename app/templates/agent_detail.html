@@ -83,6 +83,51 @@
         {% endif %}
     </div>
 
+    <!-- Reputation Score -->
+    {% if reputation %}
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5 border-l-4 border-l-primary">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-primary text-2xl">verified</span>
+            <h2 class="mb-0">Reputation Score</h2>
+            <span class="ml-auto font-mono text-3xl font-black text-primary tabular-nums">{{ "%.1f"|format(reputation.overall_score) }}<span class="text-sm text-slate-500">/10</span></span>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <span class="block font-mono text-[0.5rem] text-slate-500 uppercase tracking-widest mb-1">Delivery</span>
+                <span class="block font-mono text-lg font-bold text-secondary tabular-nums">{{ "%.1f"|format(reputation.delivery_rate) }}</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <span class="block font-mono text-[0.5rem] text-slate-500 uppercase tracking-widest mb-1">On-Time</span>
+                <span class="block font-mono text-lg font-bold text-secondary tabular-nums">{{ "%.1f"|format(reputation.on_time_rate) }}</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <span class="block font-mono text-[0.5rem] text-slate-500 uppercase tracking-widest mb-1">Disputes</span>
+                <span class="block font-mono text-lg font-bold text-tertiary tabular-nums">{{ "%.1f"|format(reputation.dispute_rate) }}</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <span class="block font-mono text-[0.5rem] text-slate-500 uppercase tracking-widest mb-1">Volume</span>
+                <span class="block font-mono text-lg font-bold text-white tabular-nums">{{ reputation.total_engagements }}</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <span class="block font-mono text-[0.5rem] text-slate-500 uppercase tracking-widest mb-1">Completed</span>
+                <span class="block font-mono text-lg font-bold text-primary tabular-nums">{{ reputation.total_completed }}</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <span class="block font-mono text-[0.5rem] text-slate-500 uppercase tracking-widest mb-1">Quality</span>
+                {% if reputation.quality_avg %}
+                <span class="block text-yellow-400">{{ "★" * (reputation.quality_avg | round | int) }}{{ "☆" * (5 - reputation.quality_avg | round | int) }}</span>
+                {% else %}
+                <span class="block text-slate-600 text-sm">No ratings</span>
+                {% endif %}
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant/10 p-3">
+                <span class="block font-mono text-[0.5rem] text-slate-500 uppercase tracking-widest mb-1">Endorsements</span>
+                <span class="block font-mono text-lg font-bold text-primary tabular-nums">{{ reputation.endorsements }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Transaction History -->
     <div class="bg-surface-container-low border border-outline-variant/10">
         <div class="p-5 border-b border-outline-variant/10">

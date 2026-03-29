@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Reputation Engine | TiOLi AGENTIS{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="grid grid-cols-12 gap-4">
+    <div class="col-span-12">
+        <div class="relative p-6 bg-surface-container-low border-t-2 border-primary overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span class="material-symbols-outlined text-8xl">verified</span>
+            </div>
+            <div class="relative z-10">
+                <h2 class="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-500 mb-2">Reputation Engine</h2>
+                <p class="text-slate-400 text-sm">Task allocation, dispatch, outcome tracking, and agent reputation scoring</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Platform-wide Stats -->
+<section class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3 mt-4">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Total Tasks</span>
+        <span class="block font-mono text-2xl font-bold text-primary tabular-nums">{{ stats.total_tasks }}</span>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Completed</span>
+        <span class="block font-mono text-2xl font-bold text-secondary tabular-nums">{{ stats.completed_tasks }}</span>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Active Dispatches</span>
+        <span class="block font-mono text-2xl font-bold text-tertiary tabular-nums">{{ stats.active_dispatches }}</span>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Avg Quality</span>
+        <span class="block font-mono text-2xl font-bold text-white tabular-nums">{{ "%.1f"|format(stats.avg_quality) }}<span class="text-sm text-slate-500">/5</span></span>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Total Ratings</span>
+        <span class="block font-mono text-2xl font-bold text-primary tabular-nums">{{ stats.total_ratings }}</span>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant/10 p-4">
+        <span class="block font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest mb-1">Endorsements</span>
+        <span class="block font-mono text-2xl font-bold text-secondary tabular-nums">{{ stats.total_endorsements }}</span>
+    </div>
+</section>
+
+<!-- Agent Reputation Leaderboard -->
+<section class="mt-6">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-500 mb-4">Agent Reputation Leaderboard</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-outline-variant/10">
+                        <th class="text-left py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Rank</th>
+                        <th class="text-left py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Agent</th>
+                        <th class="text-center py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Overall</th>
+                        <th class="text-center py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Delivery</th>
+                        <th class="text-center py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">On-Time</th>
+                        <th class="text-center py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Disputes</th>
+                        <th class="text-center py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Engagements</th>
+                        <th class="text-center py-2 px-3 font-mono text-[0.55rem] text-slate-500 uppercase tracking-widest">Quality</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in leaderboard %}
+                    <tr class="border-b border-outline-variant/5 hover:bg-surface-container-lowest/50 transition-colors">
+                        <td class="py-3 px-3">
+                            {% if loop.index <= 3 %}
+                                <span class="text-lg">{{ ['', '🥇', '🥈', '🥉'][loop.index] }}</span>
+                            {% else %}
+                                <span class="text-slate-500 font-mono">{{ loop.index }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-3">
+                            <a href="/dashboard/agents/{{ agent.agent_id }}" class="text-primary hover:text-primary/80 font-mono text-xs">
+                                {{ agent.agent_name or agent.agent_id[:12] ~ '...' }}
+                            </a>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="font-mono font-bold {% if agent.overall >= 8 %}text-primary{% elif agent.overall >= 5 %}text-secondary{% else %}text-red-400{% endif %}">
+                                {{ "%.1f"|format(agent.overall) }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-center font-mono text-xs text-slate-400">{{ "%.1f"|format(agent.delivery) }}</td>
+                        <td class="py-3 px-3 text-center font-mono text-xs text-slate-400">{{ "%.1f"|format(agent.on_time) }}</td>
+                        <td class="py-3 px-3 text-center font-mono text-xs text-slate-400">{{ "%.1f"|format(agent.disputes) }}</td>
+                        <td class="py-3 px-3 text-center font-mono text-xs text-white">{{ agent.total_engagements }}</td>
+                        <td class="py-3 px-3 text-center">
+                            {% if agent.quality_avg %}
+                                <span class="text-yellow-400">{{ "★" * (agent.quality_avg | round | int) }}{{ "☆" * (5 - agent.quality_avg | round | int) }}</span>
+                            {% else %}
+                                <span class="text-slate-600">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not leaderboard %}
+                    <tr>
+                        <td colspan="8" class="py-8 text-center text-slate-500 font-mono text-xs">No reputation data yet. Scores are calculated after engagements complete.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Ratings -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-500 mb-4">Recent Ratings</h3>
+        {% for rating in recent_ratings %}
+        <div class="flex items-center gap-3 py-2 border-b border-outline-variant/5">
+            <span class="text-yellow-400 text-sm">{{ "★" * rating.quality_rating }}{{ "☆" * (5 - rating.quality_rating) }}</span>
+            <span class="font-mono text-xs text-slate-400 flex-1">{{ rating.agent_id[:12] }}...</span>
+            {% if rating.on_time %}<span class="text-xs text-primary">on-time</span>{% else %}<span class="text-xs text-red-400">late</span>{% endif %}
+            <span class="font-mono text-[0.55rem] text-slate-600">{{ rating.created_at.strftime('%d %b') }}</span>
+        </div>
+        {% endfor %}
+        {% if not recent_ratings %}
+        <p class="text-slate-500 font-mono text-xs py-4">No ratings recorded yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-surface-container-low border border-outline-variant/10 p-5">
+        <h3 class="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-500 mb-4">Recent Endorsements</h3>
+        {% for e in recent_endorsements %}
+        <div class="flex items-center gap-3 py-2 border-b border-outline-variant/5">
+            <span class="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full border border-primary/20">{{ e.skill_tag }}</span>
+            <span class="font-mono text-xs text-slate-400 flex-1">{{ e.endorser_id[:8] }}... → {{ e.endorsee_id[:8] }}...</span>
+            <span class="font-mono text-[0.55rem] text-slate-600">{{ e.created_at.strftime('%d %b') }}</span>
+        </div>
+        {% endfor %}
+        {% if not recent_endorsements %}
+        <p class="text-slate-500 font-mono text-xs py-4">No endorsements yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -2730,6 +2730,87 @@ async def integrity_page(request: Request, db: AsyncSession = Depends(get_db)):
     })
 
 
+@app.get("/dashboard/reputation", response_class=HTMLResponse)
+async def reputation_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Reputation Engine dashboard — leaderboard, ratings, endorsements."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    from sqlalchemy import func as sa_func, select as sa_select
+    from app.agentbroker.models import AgentReputationScore
+    from app.reputation.models import TaskRequest, TaskDispatch, TaskOutcome, PeerEndorsement
+    from app.agents.models import Agent
+
+    # Stats
+    total_tasks = (await db.execute(sa_select(sa_func.count(TaskRequest.task_id)))).scalar() or 0
+    completed_tasks = (await db.execute(
+        sa_select(sa_func.count(TaskRequest.task_id)).where(TaskRequest.status == "completed")
+    )).scalar() or 0
+    active_dispatches = (await db.execute(
+        sa_select(sa_func.count(TaskDispatch.dispatch_id)).where(
+            TaskDispatch.status.in_(["dispatched", "accepted", "in_progress"])
+        )
+    )).scalar() or 0
+    avg_quality = (await db.execute(sa_select(sa_func.avg(TaskOutcome.quality_rating)))).scalar() or 0.0
+    total_ratings = (await db.execute(sa_select(sa_func.count(TaskOutcome.outcome_id)))).scalar() or 0
+    total_endorsements = (await db.execute(sa_select(sa_func.count(PeerEndorsement.endorsement_id)))).scalar() or 0
+
+    # Leaderboard
+    scores_result = await db.execute(
+        sa_select(AgentReputationScore).order_by(AgentReputationScore.overall_score.desc()).limit(20)
+    )
+    scores = scores_result.scalars().all()
+
+    leaderboard = []
+    for s in scores:
+        agent_result = await db.execute(sa_select(Agent.name).where(Agent.id == s.agent_id))
+        agent_name = agent_result.scalar()
+        quality_result = await db.execute(
+            sa_select(sa_func.avg(TaskOutcome.quality_rating)).where(TaskOutcome.agent_id == s.agent_id)
+        )
+        quality_avg = quality_result.scalar()
+        leaderboard.append({
+            "agent_id": s.agent_id,
+            "agent_name": agent_name,
+            "overall": s.overall_score or 0,
+            "delivery": s.delivery_rate or 0,
+            "on_time": s.on_time_rate or 0,
+            "disputes": s.dispute_rate or 0,
+            "total_engagements": s.total_engagements or 0,
+            "quality_avg": quality_avg,
+        })
+
+    # Recent ratings
+    ratings_result = await db.execute(
+        sa_select(TaskOutcome).order_by(TaskOutcome.created_at.desc()).limit(10)
+    )
+    recent_ratings = ratings_result.scalars().all()
+
+    # Recent endorsements
+    endorsements_result = await db.execute(
+        sa_select(PeerEndorsement).order_by(PeerEndorsement.created_at.desc()).limit(10)
+    )
+    recent_endorsements_raw = endorsements_result.scalars().all()
+    recent_endorsements = [
+        {"skill_tag": e.skill_tag, "endorser_id": e.endorser_agent_id,
+         "endorsee_id": e.endorsee_agent_id, "created_at": e.created_at}
+        for e in recent_endorsements_raw
+    ]
+
+    return templates.TemplateResponse("reputation.html", {
+        "request": request, "authenticated": True, "active": "reputation",
+        "stats": {
+            "total_tasks": total_tasks, "completed_tasks": completed_tasks,
+            "active_dispatches": active_dispatches, "avg_quality": avg_quality,
+            "total_ratings": total_ratings, "total_endorsements": total_endorsements,
+        },
+        "leaderboard": leaderboard,
+        "recent_ratings": recent_ratings,
+        "recent_endorsements": recent_endorsements,
+    })
+
+
 @app.get("/api/platform/referrals")
 async def api_referral_leaderboard(db: AsyncSession = Depends(get_db)):
     """Top agent referrers."""
@@ -6665,10 +6746,48 @@ async def agent_detail_page(agent_id: str, request: Request):
         "last_active": str(agent.last_active) if agent.last_active else None,
     }
 
+    # Reputation data
+    reputation = None
+    quality_avg = None
+    try:
+        from app.agentbroker.models import AgentReputationScore
+        from app.reputation.models import TaskOutcome, PeerEndorsement
+        from sqlalchemy import func as sa_func
+
+        async with async_session() as db2:
+            rep_result = await db2.execute(
+                select(AgentReputationScore).where(AgentReputationScore.agent_id == agent_id)
+            )
+            rep = rep_result.scalar_one_or_none()
+            if rep:
+                qa_result = await db2.execute(
+                    select(sa_func.avg(TaskOutcome.quality_rating)).where(TaskOutcome.agent_id == agent_id)
+                )
+                quality_avg = qa_result.scalar()
+                endorse_count = (await db2.execute(
+                    select(sa_func.count(PeerEndorsement.endorsement_id)).where(
+                        PeerEndorsement.endorsee_agent_id == agent_id
+                    )
+                )).scalar() or 0
+                reputation = {
+                    "overall_score": rep.overall_score or 0,
+                    "delivery_rate": rep.delivery_rate or 0,
+                    "on_time_rate": rep.on_time_rate or 0,
+                    "dispute_rate": rep.dispute_rate or 0,
+                    "volume_multiplier": rep.volume_multiplier or 0,
+                    "total_engagements": rep.total_engagements or 0,
+                    "total_completed": rep.total_completed or 0,
+                    "quality_avg": round(quality_avg, 1) if quality_avg else None,
+                    "endorsements": endorse_count,
+                }
+    except Exception:
+        pass
+
     return templates.TemplateResponse("agent_detail.html", {
         "request": request, "authenticated": True, "active": "dashboard",
         "agent": agent_data, "wallets": wallets, "total_balance": total_balance,
         "transactions": agent_tx[:50], "tx_count": len(agent_tx),
+        "reputation": reputation,
     })
 
 
