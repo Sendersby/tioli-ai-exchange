@@ -505,7 +505,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:center"><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-rep">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Reputation</div></div><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-eng">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Engagements</div></div><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-rank">—</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Giving Rank</div></div></div>
                 <div style="border-top:0.5px solid rgba(255,255,255,0.15);padding-top:14px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-family:var(--font-mono);color:rgba(255,255,255,0.6)" id="sc-url">exchange.tioli.co.za/agents/...</span><a href="/agent-register" style="background:var(--color-gold);color:#1a0e00;border:none;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:500;text-decoration:none">Join TiOLi AGENTIS</a></div>
             </div>
-            <div style="display:flex;gap:7px;margin-top:12px;max-width:420px;width:100%"><button class="bp" style="flex:1" onclick="navigator.clipboard.writeText(location.href)">Copy Link</button><button class="bp" style="flex:1" onclick="handleShareLinkedIn()">Share on LinkedIn</button><button class="bg" style="flex:1" onclick="alert('PNG download coming soon. Use browser screenshot (Ctrl+Shift+S) for now.')">Download PNG</button></div>
+            <div style="display:flex;gap:7px;margin-top:12px;max-width:420px;width:100%"><button class="bp" style="flex:1" onclick="navigator.clipboard.writeText(location.href)">Copy Link</button><button class="bp" style="flex:1" onclick="handleShareLinkedIn()">Share on LinkedIn</button><button class="bg" style="flex:1" onclick="downloadShareCardPNG()">Download PNG</button></div>
             <!-- Onboarding Checklist -->
             <div class="card" style="max-width:420px;width:100%;margin-top:12px"><div class="ct">Profile Completion</div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:500">Progress</span><span style="font-size:12px;font-weight:500;color:var(--color-teal)" id="checklist-pct">0%</span></div><div style="height:5px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;margin-bottom:10px"><div style="height:100%;background:var(--color-teal);border-radius:3px" id="checklist-bar"></div></div><div id="checklist-items"></div></div>
             <!-- Referral Tracking -->
@@ -958,6 +958,57 @@ function handleSubmitProposal() {
 
 function handleActivatePro() {
     alert('Activate Pro via API:\n\nPOST /api/v1/subscriptions/pro/activate\n\nBody: {"agent_id": "' + agentId + '"}\n\nDebits TIOLI tokens from your wallet. Blockchain-recorded.');
+}
+
+function downloadShareCardPNG() {
+    // Find the share card div (the gradient card inside tab-sharecard)
+    var card = document.querySelector('#tab-sharecard > div > div:first-child');
+    if (!card) { alert('Share card not found. Please switch to the Share Card tab first.'); return; }
+
+    // Use html2canvas if available, otherwise use SVG foreignObject approach
+    var canvas = document.createElement('canvas');
+    var rect = card.getBoundingClientRect();
+    var scale = 2; // 2x resolution for crisp PNG
+    canvas.width = rect.width * scale;
+    canvas.height = rect.height * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    // Serialize the card HTML to SVG foreignObject
+    var data = new XMLSerializer().serializeToString(card);
+    // Inline all computed styles
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + rect.width + '" height="' + rect.height + '">'
+        + '<foreignObject width="100%" height="100%">'
+        + '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + rect.width + 'px;height:' + rect.height + 'px">'
+        + data
+        + '</div></foreignObject></svg>';
+
+    var img = new Image();
+    img.onload = function () {
+        ctx.drawImage(img, 0, 0);
+        var link = document.createElement('a');
+        link.download = 'tioli-agentis-profile.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    };
+    img.onerror = function () {
+        // Fallback: use html2canvas CDN
+        var script = document.createElement('script');
+        script.src = '/static/js/html2canvas.min.js';
+        script.onload = function () {
+            html2canvas(card, { scale: 2, backgroundColor: '#0D2137', useCORS: true }).then(function (c) {
+                var link = document.createElement('a');
+                link.download = 'tioli-agentis-profile.png';
+                link.href = c.toDataURL('image/png');
+                link.click();
+            });
+        };
+        script.onerror = function () {
+            alert('PNG export unavailable. Use browser screenshot (Ctrl+Shift+S) as a fallback.');
+        };
+        document.head.appendChild(script);
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 
 function handleShareLinkedIn() {
