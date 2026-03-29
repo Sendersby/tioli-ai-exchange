@@ -1574,4 +1574,799 @@ async def seed_workflow_map(db):
         flow_type="NAVIGATION", direction="DIRECTED", label="Owner 3FA",
     ))
 
+    # ── ROADMAP NODES ─────────────────────────────────────────────────────
+
+    # --- A2A Commerce ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_a2a_commerce_protocol",
+        label="Agent-to-agent commerce protocol (A2A)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Full purchase and service fulfilment pipeline between agents.",
+        metadata_={"build_phase": 2, "module": "A2A Commerce", "priority_pct": 52},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_a2a_service_purchasing",
+        label="Agent-to-agent service purchasing via AgentBroker",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Agent-to-agent service purchasing via AgentBroker.",
+        metadata_={"build_phase": 2, "module": "A2A Commerce", "priority_pct": 50},
+    ))
+
+    # --- A2A Payments ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_a2a_offline_payments",
+        label="Autonomous offline payments (Fetch.ai pattern)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="V3+ only — not V1 or V2.",
+        metadata_={"build_phase": 4, "module": "A2A Payments", "priority_pct": 10},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_a2a_wallet_messaging",
+        label="Wallet messaging (token payments via messages)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Agents send/receive token payments via wallet messages.",
+        metadata_={"build_phase": 4, "module": "A2A Payments", "priority_pct": 10},
+    ))
+
+    # --- Action Layer ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_action_browser_use",
+        label="Controlled web task layer (Browser Use)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Controlled web task layer (Browser Use).",
+        metadata_={"build_phase": 2, "module": "Action Layer", "priority_pct": 80},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_action_autonomous_toggle",
+        label="Agentic autonomous execution mode toggle",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Switch between conversational and fully autonomous execution.",
+        metadata_={"build_phase": 2, "module": "Action Layer", "priority_pct": 70},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_action_always_on",
+        label="Always-on commerce — 24/7 autonomous agents",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Agents operate 24/7 transacting autonomously.",
+        metadata_={"build_phase": 2, "module": "Action Layer", "priority_pct": 48},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_action_offline_exec",
+        label="Offline autonomous execution",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Agent completes tasks while user is offline.",
+        metadata_={"build_phase": 2, "module": "Action Layer", "priority_pct": 45},
+    ))
+
+    # --- Approval Layer ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_approval_human_gate",
+        label="Human approval gate for outbound actions",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Human approval gate for outbound actions.",
+        metadata_={"build_phase": 2, "module": "Approval Layer", "priority_pct": 90},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_approval_proposal_state",
+        label="Proposal state controls (issue/retract/version)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Proposal state controls (issue/retract/version).",
+        metadata_={"build_phase": 2, "module": "Approval Layer", "priority_pct": 85},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_approval_result_review",
+        label="Result review & consolidated approval view",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="All agent outputs presented in one consolidated dynamic pathway view.",
+        metadata_={"build_phase": 2, "module": "Approval Layer", "priority_pct": 82},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_approval_state_field",
+        label="Approval state field on offer objects",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Approval state field on offer objects.",
+        metadata_={"build_phase": 2, "module": "Approval Layer", "priority_pct": 70},
+    ))
+
+    # --- Blockchain ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_blockchain_cosmwasm",
+        label="CosmWasm smart contracts integration",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="WebAssembly smart contracts. Per ASI Network.",
+        metadata_={"build_phase": 4, "module": "Blockchain", "priority_pct": 5},
+    ))
+
+    # --- Community ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_community_agentis_machina",
+        label="AGENTIS Machina — influencer/creator agent",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Influencers build personal AI agents from social presence.",
+        metadata_={"build_phase": 2, "module": "Community", "priority_pct": 40},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_community_social_layer",
+        label="Public agent community / social layer",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Public agent community / social layer.",
+        metadata_={"build_phase": 4, "module": "Community", "priority_pct": 10},
+    ))
+
+    # --- Dev Tools ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_devtools_fetchcoder",
+        label="FetchCoder-style AI coding assistant",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="AI coding assistant for building autonomous agent systems.",
+        metadata_={"build_phase": 4, "module": "Dev Tools", "priority_pct": 8},
+    ))
+
+    # --- Discovery ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_discovery_search_ranking",
+        label="Intelligent search ranking (metadata + eval)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Rank agents by metadata, evaluation scores.",
+        metadata_={"build_phase": 2, "module": "Discovery", "priority_pct": 50},
+    ))
+
+    # --- Federation ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_federation_domain_names",
+        label="Agent domain names (.agent)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Human-readable agent names. Per Fetch.ai FNS.",
+        metadata_={"build_phase": 4, "module": "Federation", "priority_pct": 15},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_federation_cross_platform",
+        label="Cross-platform federated agent identity",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Cross-platform federated agent identity.",
+        metadata_={"build_phase": 4, "module": "Federation", "priority_pct": 10},
+    ))
+
+    # --- Governance ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_governance_dao_voting",
+        label="DAO governance voting on taxonomy",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="DAO governance voting on taxonomy.",
+        metadata_={"build_phase": 4, "module": "Governance", "priority_pct": 10},
+    ))
+
+    # --- Intelligence ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_intelligence_analytics_tier",
+        label="Analytics Intelligence subscription tier",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Analytics Intelligence subscription tier.",
+        metadata_={"build_phase": 2, "module": "Intelligence", "priority_pct": 45},
+    ))
+
+    # --- Monetisation ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_monetise_metered_billing",
+        label="Metered usage billing for premium skills",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Metered usage billing for premium skills.",
+        metadata_={"build_phase": 2, "module": "Monetisation", "priority_pct": 50},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_monetise_nevermined",
+        label="Nevermined payment rails integration",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Nevermined payment rails integration.",
+        metadata_={"build_phase": 2, "module": "Monetisation", "priority_pct": 40},
+    ))
+
+    # --- Observability ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_quality_eval",
+        label="Agent quality evaluation engine",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Agent quality evaluation engine.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 90},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_dashboard",
+        label="Observability dashboard panel",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Observability dashboard panel.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 85},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_transparent_visibility",
+        label="Transparent agent visibility — real-time",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Users see which agents are active on their request.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 85},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_wire_reputation",
+        label="Wire evaluation to reputation engine",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Wire evaluation to reputation engine.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 80},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_wire_blockchain",
+        label="Wire agent actions to blockchain ledger",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Wire agent actions to blockchain ledger.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 75},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_action_replay",
+        label="Agent action replay / drill-down audit",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Agent action replay / drill-down audit.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 75},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_perf_analytics",
+        label="Performance analytics dashboard per agent",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Track usage stats, query volume, ranking trends per agent.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 74},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_audit_log_ui",
+        label="Auditable action log UI",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Auditable action log UI.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 70},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_obs_ai_evaluations",
+        label="AI evaluations — automated quality testing",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Automated AI tests agent responses for quality.",
+        metadata_={"build_phase": 2, "module": "Observability", "priority_pct": 50},
+    ))
+
+    # --- Offer Registry ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_offer_structured_objects",
+        label="Structured offer/catalog objects",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Machine-readable catalog objects.",
+        metadata_={"build_phase": 2, "module": "Offer Registry", "priority_pct": 92},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_offer_schema",
+        label="Define Structured Offer data schema",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Define Structured Offer data schema.",
+        metadata_={"build_phase": 2, "module": "Offer Registry", "priority_pct": 90},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_offer_seed",
+        label="Seed offer objects",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Seed offer objects.",
+        metadata_={"build_phase": 2, "module": "Offer Registry", "priority_pct": 85},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_offer_card_ui",
+        label="Offer card UI components",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Offer card UI components.",
+        metadata_={"build_phase": 2, "module": "Offer Registry", "priority_pct": 80},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_offer_service_pages",
+        label="Packaged service pages with offers",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Packaged service pages with offers.",
+        metadata_={"build_phase": 2, "module": "Offer Registry", "priority_pct": 75},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_offer_shortlist_ui",
+        label="Buyer-facing shortlist UI",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Buyer-facing shortlist UI.",
+        metadata_={"build_phase": 2, "module": "Offer Registry", "priority_pct": 70},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_offer_live_catalogs",
+        label="Real-time data connection (live catalogs)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Connect brand agents to live product data.",
+        metadata_={"build_phase": 3, "module": "Offer Registry", "priority_pct": 68},
+    ))
+
+    # --- Partner Layer ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_partner_marketplace",
+        label="External partner marketplace",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="External partner marketplace.",
+        metadata_={"build_phase": 2, "module": "Partner Layer", "priority_pct": 40},
+    ))
+
+    # --- Pathway Engine ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_pathway_lead_input",
+        label="Lead input → pathway mapping engine",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Lead input to pathway mapping engine.",
+        metadata_={"build_phase": 2, "module": "Pathway Engine", "priority_pct": 90},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_pathway_nl_input",
+        label="Natural language task input (AI Prompt)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Users describe any request in plain language. AGENTIS routes to appropriate agent.",
+        metadata_={"build_phase": 2, "module": "Pathway Engine", "priority_pct": 88},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_pathway_diagnostic",
+        label="Diagnostic state machine",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Diagnostic state machine.",
+        metadata_={"build_phase": 2, "module": "Pathway Engine", "priority_pct": 85},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_pathway_wire_offers",
+        label="Wire pathway results to offer cards",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Wire pathway results to offer cards.",
+        metadata_={"build_phase": 2, "module": "Pathway Engine", "priority_pct": 80},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_pathway_onboarding",
+        label="Agent onboarding flow — guided setup",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Step-by-step guided setup for brand claiming and new agent creation.",
+        metadata_={"build_phase": 2, "module": "Pathway Engine", "priority_pct": 78},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_pathway_exclusions",
+        label="Exclusions, assumptions, validity fields",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Exclusions, assumptions, validity fields.",
+        metadata_={"build_phase": 2, "module": "Pathway Engine", "priority_pct": 75},
+    ))
+
+    # --- Platform Features ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_platform_pipeline_builder",
+        label="Multi-Agent Pipeline Builder",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Visual tool for chaining agents into automated workflows.",
+        metadata_={"build_phase": 3, "module": "Platform Features", "priority_pct": 60},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_platform_gov_auto_proposal",
+        label="Governance Auto-Proposal from Innovation Lab",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Ideas with 5+ upvotes auto-become governance proposals.",
+        metadata_={"build_phase": 3, "module": "Platform Features", "priority_pct": 55},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_platform_portfolio",
+        label="Public Portfolio Showcase",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Shareable portfolio page — Behance for AI agents.",
+        metadata_={"build_phase": 2, "module": "Platform Features", "priority_pct": 40},
+    ))
+
+    # --- Role Model ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_role_authority_model",
+        label="Role/authority model for agent actions",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Role/authority model for agent actions.",
+        metadata_={"build_phase": 3, "module": "Role Model", "priority_pct": 65},
+    ))
+
+    # --- Skills Layer ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_skills_schema",
+        label="Skill/playbook module schema",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Skill/playbook module schema.",
+        metadata_={"build_phase": 2, "module": "Skills Layer", "priority_pct": 90},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_skills_registry",
+        label="Skill registry (list/install/activate)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Skill registry (list/install/activate).",
+        metadata_={"build_phase": 2, "module": "Skills Layer", "priority_pct": 85},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_skills_seed_playbooks",
+        label="Seed playbook modules from ITDS",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Seed playbook modules from ITDS.",
+        metadata_={"build_phase": 2, "module": "Skills Layer", "priority_pct": 80},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_skills_feature_flag",
+        label="Feature-flag per skill module",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Feature-flag per skill module.",
+        metadata_={"build_phase": 2, "module": "Skills Layer", "priority_pct": 75},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_skills_custom_identity",
+        label="Custom agent identity & personality",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Configure agent name, personality, knowledge, capabilities.",
+        metadata_={"build_phase": 2, "module": "Skills Layer", "priority_pct": 72},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_skills_nocode_builder",
+        label="No-code brand agent builder (visual)",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Visual builder for non-technical agent creation.",
+        metadata_={"build_phase": 2, "module": "Skills Layer", "priority_pct": 45},
+    ))
+
+    # --- Trust & Identity ---
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_trust_verification",
+        label="Agent verification & trust badge system",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Formal verification. Trust badge in directory.",
+        metadata_={"build_phase": 2, "module": "Trust & Identity", "priority_pct": 80},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_trust_brand_claiming",
+        label="Brand agent claiming — verified namespace",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Brands claim official agent namespace in directory.",
+        metadata_={"build_phase": 2, "module": "Trust & Identity", "priority_pct": 75},
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_road_trust_w3c_did",
+        label="W3C DID/VC portable reputation credentials",
+        category="ROADMAP", status="PLANNED", node_type="FEATURE",
+        description="Export reputation as W3C Verifiable Credentials.",
+        metadata_={"build_phase": 3, "module": "Trust & Identity", "priority_pct": 55},
+    ))
+
+    # ── FLUSH before roadmap edges ──────────────────────────────────────
+    await db.flush()
+
+    # ── ROADMAP EDGES ───────────────────────────────────────────────────
+
+    # --- A2A Commerce → node_svc_agentbroker_contract ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_a2a_comm_1",
+        source_node_id="node_road_a2a_commerce_protocol", target_node_id="node_svc_agentbroker_contract",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_a2a_comm_chain_1",
+        source_node_id="node_road_a2a_commerce_protocol", target_node_id="node_road_a2a_service_purchasing",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- A2A Payments → node_pay_credits ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_a2a_pay_1",
+        source_node_id="node_road_a2a_offline_payments", target_node_id="node_pay_credits",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_a2a_pay_chain_1",
+        source_node_id="node_road_a2a_offline_payments", target_node_id="node_road_a2a_wallet_messaging",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Action Layer → node_svc_agentbroker_deliver ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_action_1",
+        source_node_id="node_road_action_browser_use", target_node_id="node_svc_agentbroker_deliver",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_action_chain_1",
+        source_node_id="node_road_action_browser_use", target_node_id="node_road_action_autonomous_toggle",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_action_chain_2",
+        source_node_id="node_road_action_autonomous_toggle", target_node_id="node_road_action_always_on",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_action_chain_3",
+        source_node_id="node_road_action_always_on", target_node_id="node_road_action_offline_exec",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Approval Layer → node_svc_agentbroker_negotiate ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_approval_1",
+        source_node_id="node_road_approval_human_gate", target_node_id="node_svc_agentbroker_negotiate",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_approval_chain_1",
+        source_node_id="node_road_approval_human_gate", target_node_id="node_road_approval_proposal_state",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_approval_chain_2",
+        source_node_id="node_road_approval_proposal_state", target_node_id="node_road_approval_result_review",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_approval_chain_3",
+        source_node_id="node_road_approval_result_review", target_node_id="node_road_approval_state_field",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Blockchain → node_tool_blocks ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_blockchain_1",
+        source_node_id="node_road_blockchain_cosmwasm", target_node_id="node_tool_blocks",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Community → node_dash_community ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_community_1",
+        source_node_id="node_road_community_agentis_machina", target_node_id="node_dash_community",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_community_chain_1",
+        source_node_id="node_road_community_agentis_machina", target_node_id="node_road_community_social_layer",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Dev Tools → node_tool_ai_prompt ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_devtools_1",
+        source_node_id="node_road_devtools_fetchcoder", target_node_id="node_tool_ai_prompt",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Discovery → node_svc_agentbroker_search ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_discovery_1",
+        source_node_id="node_road_discovery_search_ranking", target_node_id="node_svc_agentbroker_search",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Federation → node_mcp_server ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_federation_1",
+        source_node_id="node_road_federation_domain_names", target_node_id="node_mcp_server",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_federation_chain_1",
+        source_node_id="node_road_federation_domain_names", target_node_id="node_road_federation_cross_platform",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Governance → node_dash_governance ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_governance_1",
+        source_node_id="node_road_governance_dao_voting", target_node_id="node_dash_governance",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Intelligence → node_dash_reports ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_intelligence_1",
+        source_node_id="node_road_intelligence_analytics_tier", target_node_id="node_dash_reports",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Monetisation → node_pay_credits ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_monetise_1",
+        source_node_id="node_road_monetise_metered_billing", target_node_id="node_pay_credits",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_monetise_chain_1",
+        source_node_id="node_road_monetise_metered_billing", target_node_id="node_road_monetise_nevermined",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Observability → node_tool_command_centre ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_1",
+        source_node_id="node_road_obs_quality_eval", target_node_id="node_tool_command_centre",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_1",
+        source_node_id="node_road_obs_quality_eval", target_node_id="node_road_obs_dashboard",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_2",
+        source_node_id="node_road_obs_dashboard", target_node_id="node_road_obs_transparent_visibility",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_3",
+        source_node_id="node_road_obs_transparent_visibility", target_node_id="node_road_obs_wire_reputation",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_4",
+        source_node_id="node_road_obs_wire_reputation", target_node_id="node_road_obs_wire_blockchain",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_5",
+        source_node_id="node_road_obs_wire_blockchain", target_node_id="node_road_obs_action_replay",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_6",
+        source_node_id="node_road_obs_action_replay", target_node_id="node_road_obs_perf_analytics",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_7",
+        source_node_id="node_road_obs_perf_analytics", target_node_id="node_road_obs_audit_log_ui",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_obs_chain_8",
+        source_node_id="node_road_obs_audit_log_ui", target_node_id="node_road_obs_ai_evaluations",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Offer Registry → node_svc_agentbroker_profile ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_offer_1",
+        source_node_id="node_road_offer_structured_objects", target_node_id="node_svc_agentbroker_profile",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_offer_chain_1",
+        source_node_id="node_road_offer_structured_objects", target_node_id="node_road_offer_schema",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_offer_chain_2",
+        source_node_id="node_road_offer_schema", target_node_id="node_road_offer_seed",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_offer_chain_3",
+        source_node_id="node_road_offer_seed", target_node_id="node_road_offer_card_ui",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_offer_chain_4",
+        source_node_id="node_road_offer_card_ui", target_node_id="node_road_offer_service_pages",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_offer_chain_5",
+        source_node_id="node_road_offer_service_pages", target_node_id="node_road_offer_shortlist_ui",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_offer_chain_6",
+        source_node_id="node_road_offer_shortlist_ui", target_node_id="node_road_offer_live_catalogs",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Partner Layer → node_svc_agentbroker_search ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_partner_1",
+        source_node_id="node_road_partner_marketplace", target_node_id="node_svc_agentbroker_search",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Pathway Engine → node_svc_agentbroker_search ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_pathway_1",
+        source_node_id="node_road_pathway_lead_input", target_node_id="node_svc_agentbroker_search",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_pathway_chain_1",
+        source_node_id="node_road_pathway_lead_input", target_node_id="node_road_pathway_nl_input",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_pathway_chain_2",
+        source_node_id="node_road_pathway_nl_input", target_node_id="node_road_pathway_diagnostic",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_pathway_chain_3",
+        source_node_id="node_road_pathway_diagnostic", target_node_id="node_road_pathway_wire_offers",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_pathway_chain_4",
+        source_node_id="node_road_pathway_wire_offers", target_node_id="node_road_pathway_onboarding",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_pathway_chain_5",
+        source_node_id="node_road_pathway_onboarding", target_node_id="node_road_pathway_exclusions",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Platform Features → node_dash_operations ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_platform_1",
+        source_node_id="node_road_platform_pipeline_builder", target_node_id="node_dash_operations",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_platform_chain_1",
+        source_node_id="node_road_platform_pipeline_builder", target_node_id="node_road_platform_gov_auto_proposal",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_platform_chain_2",
+        source_node_id="node_road_platform_gov_auto_proposal", target_node_id="node_road_platform_portfolio",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Role Model → node_comp_kya ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_role_1",
+        source_node_id="node_road_role_authority_model", target_node_id="node_comp_kya",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Skills Layer → node_svc_agent_profile ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_skills_1",
+        source_node_id="node_road_skills_schema", target_node_id="node_svc_agent_profile",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_skills_chain_1",
+        source_node_id="node_road_skills_schema", target_node_id="node_road_skills_registry",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_skills_chain_2",
+        source_node_id="node_road_skills_registry", target_node_id="node_road_skills_seed_playbooks",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_skills_chain_3",
+        source_node_id="node_road_skills_seed_playbooks", target_node_id="node_road_skills_feature_flag",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_skills_chain_4",
+        source_node_id="node_road_skills_feature_flag", target_node_id="node_road_skills_custom_identity",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_skills_chain_5",
+        source_node_id="node_road_skills_custom_identity", target_node_id="node_road_skills_nocode_builder",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
+    # --- Trust & Identity → node_comp_kya ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_trust_1",
+        source_node_id="node_road_trust_verification", target_node_id="node_comp_kya",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_trust_chain_1",
+        source_node_id="node_road_trust_verification", target_node_id="node_road_trust_brand_claiming",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_road_trust_chain_2",
+        source_node_id="node_road_trust_brand_claiming", target_node_id="node_road_trust_w3c_did",
+        flow_type="ROADMAP", direction="DIRECTED",
+    ))
+
     await db.commit()
