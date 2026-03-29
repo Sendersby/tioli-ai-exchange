@@ -292,6 +292,9 @@ function init() {
             state.zoomTransform = event.transform;
             graphGroup.attr('transform', event.transform);
             updateMinimapViewport();
+            // Throttled full minimap re-render so world bounds track viewport
+            clearTimeout(state._mmRenderTimer);
+            state._mmRenderTimer = setTimeout(renderMinimap, 120);
         });
     svg.call(zoomBehaviour);
 
@@ -1423,15 +1426,23 @@ function renderMinimap() {
     var nodes = state.graphData.nodes;
     var edges = state.graphData.edges;
 
-    // Compute bounds — use full canvas extent so minimap reflects true position
+    // Compute world bounds: union of all node positions + current visible viewport
+    // This ensures the minimap always shows both where nodes are AND where you're looking
     var bounds = computeNodeBounds(nodes);
     if (!bounds) return;
 
-    var pad = 50;
-    var worldMinX = Math.min(0, bounds.minX - pad);
-    var worldMinY = Math.min(0, bounds.minY - pad);
-    var worldMaxX = Math.max(state.svgWidth, bounds.maxX + pad);
-    var worldMaxY = Math.max(state.svgHeight, bounds.maxY + pad);
+    var t = state.zoomTransform || d3.zoomIdentity;
+    // Current visible area in graph coordinates
+    var viewMinX = -t.x / t.k;
+    var viewMinY = -t.y / t.k;
+    var viewMaxX = viewMinX + state.svgWidth / t.k;
+    var viewMaxY = viewMinY + state.svgHeight / t.k;
+
+    var pad = 40;
+    var worldMinX = Math.min(bounds.minX - pad, viewMinX);
+    var worldMinY = Math.min(bounds.minY - pad, viewMinY);
+    var worldMaxX = Math.max(bounds.maxX + pad, viewMaxX);
+    var worldMaxY = Math.max(bounds.maxY + pad, viewMaxY);
     var worldW = worldMaxX - worldMinX;
     var worldH = worldMaxY - worldMinY;
 
