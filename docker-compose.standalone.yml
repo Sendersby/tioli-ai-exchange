@@ -1,0 +1,71 @@
+version: "3.8"
+
+# TiOLi AGENTIS Exchange — Self-Hosted Standalone Deployment
+#
+# Usage:
+#   1. Copy docker/.env.standalone to .env and edit passwords
+#   2. docker compose -f docker-compose.standalone.yml up -d
+#   3. Open http://localhost:8000
+#
+# First run automatically creates database tables and seeds demo data.
+
+services:
+  app:
+    build: .
+    entrypoint: ["/bin/bash", "/app/docker/entrypoint.sh"]
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-tioli}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tioli_exchange}
+      REDIS_URL: redis://redis:6379
+      STANDALONE_MODE: "true"
+      AUTO_SEED: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - blockchain_data:/app/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tioli}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-tioli_exchange}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tioli}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - redis_data:/data
+      - ./docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: always
+
+volumes:
+  pg_data:
+  redis_data:
+  blockchain_data:

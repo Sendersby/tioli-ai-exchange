@@ -344,6 +344,33 @@ async def job_market_maker_refresh():
         logger.error(f"Market maker refresh failed: {e}")
 
 
+async def job_reputation_recalculation():
+    """Recalculate all agent reputation scores and take snapshots (daily)."""
+    try:
+        from app.reputation.scorer import ReputationScorer
+        svc = ReputationScorer()
+        async with async_session() as db:
+            result = await svc.recalculate_all(db)
+            await db.commit()
+            logger.info(f"Reputation recalculation: {result}")
+    except Exception as e:
+        logger.error(f"Reputation recalculation failed: {e}")
+
+
+async def job_dispatch_timeout_check():
+    """Check for dispatched tasks that have exceeded their SLA deadline."""
+    try:
+        from app.reputation.dispatcher import DispatchService
+        svc = DispatchService()
+        async with async_session() as db:
+            timed_out = await svc.check_timeouts(db)
+            await db.commit()
+            if timed_out:
+                logger.info(f"Dispatch timeout check: {len(timed_out)} timed out")
+    except Exception as e:
+        logger.error(f"Dispatch timeout check failed: {e}")
+
+
 def start_scheduler():
     """Configure and start all scheduled jobs."""
     # Every hour: check proposal timeouts
@@ -418,11 +445,17 @@ def start_scheduler():
     # Weekly on Monday 06:00 UTC: Directory Scout — find new directories, prepare submissions
     scheduler.add_job(job_directory_scout, "cron", day_of_week="mon", hour=6, minute=0, id="directory_scout")
 
+    # Daily at 02:30 UTC: reputation recalculation
+    scheduler.add_job(job_reputation_recalculation, "cron", hour=2, minute=30, id="reputation_recalc")
+
+    # Every 15 minutes: check for SLA timeouts on dispatched tasks
+    scheduler.add_job(job_dispatch_timeout_check, "interval", minutes=15, id="dispatch_timeout")
+
     scheduler.start()
     # Tuesday and Thursday 09:00 UTC: blog article + LinkedIn content
     scheduler.add_job(job_blog_article, "cron", day_of_week="tue,thu", hour=9, minute=0, id="blog_article")
 
-    logger.info("Scheduler started with 21 jobs")
+    logger.info("Scheduler started with 23 jobs")
 
 
 def stop_scheduler():

@@ -126,6 +126,12 @@ from app.agents_alive import seo_content as _seo_models
 from app.agents_alive import engagement_amplifier as _amplifier_models
 from app.agents_alive import feedback_loop as _feedback_models
 
+# Reputation Engine
+from app.reputation import models as _reputation_models
+
+# Telegram Bot
+from app.telegram import models as _telegram_models
+
 # Agentis Roadmap
 from app.agentis_roadmap.routes import router as roadmap_router
 from app.agentis_roadmap import models as _roadmap_models
@@ -541,6 +547,16 @@ app.include_router(oauth_router)
 if settings.platform_workflow_map_enabled:
     app.include_router(workflow_map_router)
 app.include_router(fetchai_router)
+
+# Reputation Engine
+if settings.reputation_engine_enabled:
+    from app.reputation.routes import router as reputation_router
+    app.include_router(reputation_router)
+
+# Telegram Bot
+if settings.telegram_bot_enabled:
+    from app.telegram.routes import router as telegram_router
+    app.include_router(telegram_router)
 
 
 # ── Brute-Force Protection ───────────────────────────────────────────

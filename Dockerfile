@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install system dependencies for PostgreSQL and PDF generation
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev curl && \
+    gcc libpq-dev curl redis-tools postgresql-client && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

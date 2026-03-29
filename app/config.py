@@ -49,6 +49,19 @@ class Settings(BaseSettings):
     agenthub_enabled: bool = False
     agentvault_enabled: bool = False
 
+    # Reputation Engine
+    reputation_engine_enabled: bool = False
+    reputation_decay_days: int = 90
+
+    # Telegram Bot
+    telegram_bot_enabled: bool = False
+    telegram_bot_token: str = ""
+    telegram_webhook_url: str = ""
+
+    # Self-Hosted / Docker
+    standalone_mode: bool = False
+    auto_seed: bool = False
+
     # Agentis Roadmap
     agentis_roadmap_enabled: bool = False
     agentis_roadmap_operator_visible: bool = False
