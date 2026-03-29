@@ -60,12 +60,12 @@ var CANVAS_BG       = '#0A1520';
 var ZONE_COLOURS = {
     FRONTEND:  'rgba(119, 212, 229, 0.06)',  // very faint teal
     BACKEND:   'rgba(237, 192, 95, 0.06)',   // very faint gold
-    ISOLATED:  'rgba(192, 57, 43, 0.08)',    // very faint red
+    ISOLATED:  'rgba(255, 107, 107, 0.14)',   // brighter coral red
 };
 var ZONE_BORDERS = {
     FRONTEND:  'rgba(119, 212, 229, 0.25)',
     BACKEND:   'rgba(237, 192, 95, 0.25)',
-    ISOLATED:  'rgba(192, 57, 43, 0.3)',
+    ISOLATED:  'rgba(255, 107, 107, 0.55)',
 };
 
 // Frontend nodes: public pages, agent registration, MCP
