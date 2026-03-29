@@ -1414,8 +1414,12 @@ function initMinimap() {
 function renderMinimap() {
     if (!minimapGroup || !state.graphData) return;
 
-    var mmWidth  = 200;
-    var mmHeight = 140;
+    // Read actual minimap container size (respects CSS responsive breakpoints)
+    var mmContainer = document.getElementById('pwm-minimap');
+    var mmWidth  = mmContainer ? mmContainer.clientWidth  : 200;
+    var mmHeight = mmContainer ? mmContainer.clientHeight : 140;
+    if (mmWidth < 10) mmWidth = 200;
+    if (mmHeight < 10) mmHeight = 140;
     var nodes = state.graphData.nodes;
     var edges = state.graphData.edges;
 
@@ -1456,7 +1460,17 @@ function renderMinimap() {
         .attr('r', 3 / scale)
         .merge(nodeSel)
         .each(function (d) {
-            d3.select(this).attr('fill', getStatusColour(d.status));
+            // House agents show magenta with tier-coloured stroke; roadmap blue; others by status
+            var fill = d.category === 'HOUSE_AGENT' ? '#E84393'
+                     : d.category === 'ROADMAP' ? '#3B82F6'
+                     : getStatusColour(d.status);
+            var el = d3.select(this).attr('fill', fill);
+            if (d.category === 'HOUSE_AGENT' && d.metadata && d.metadata.hierarchy_tier) {
+                var tc = TIER_COLOURS[d.metadata.hierarchy_tier];
+                if (tc) el.attr('stroke', tc).attr('stroke-width', 1.2 / scale);
+            } else {
+                el.attr('stroke', 'none');
+            }
         });
 
     renderMinimapNodes();
