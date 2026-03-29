@@ -2621,6 +2621,9 @@ async def seed_workflow_map(db):
         },
     ))
 
+    # Flush nodes so FK constraints are satisfied before adding edges
+    await db.flush()
+
     # ── HOUSE AGENT EDGES ───────────────────────────────────────────────
     # Edges connecting house agents to platform components they control/serve
     # and inter-agent hierarchy edges.
