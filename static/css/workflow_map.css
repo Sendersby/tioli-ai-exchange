@@ -547,8 +547,8 @@
 /* ---- Agent Taxonomy Tier Swatches (hexagon outline preview) ---- */
 
 .pwm-tier-swatch {
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     display: inline-block;
     margin-right: 6px;
     background: var(--pwm-magenta);
