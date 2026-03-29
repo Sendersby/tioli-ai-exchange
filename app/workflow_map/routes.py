@@ -45,6 +45,14 @@ async def get_status_summary(request: Request):
         return await service.get_status_summary(db)
 
 
+@router.get("/enrichment")
+async def get_enrichment(request: Request):
+    """Enrichment data: health, traffic, revenue, phases, deps, activity, agent counts."""
+    _require_owner(request)
+    async with async_session() as db:
+        return await service.get_enrichment_data(db)
+
+
 @router.patch("/node/{node_id}/status")
 async def update_node_status(node_id: str, request: Request):
     """Update a node's status. Requires owner auth + 3FA token."""

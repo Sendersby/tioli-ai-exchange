@@ -67,6 +67,10 @@
             <div class="pwm-toggle-row" style="margin-top:8px"><span>Critical Paths Only</span><div class="pwm-toggle" id="pwm-critical-toggle" onclick="PWM.toggleCriticalPaths(this)"><div class="pwm-toggle-knob"></div></div></div>
             <button class="pwm-btn pwm-btn--primary pwm-btn--full" style="margin-top:12px" onclick="PWM.exportPNG()">Export PNG</button>
 
+            <!-- Data Overlays -->
+            <div class="pwm-section-label" style="margin-top:20px">Data Overlays</div>
+            <div class="pwm-toggle-row"><span>Traffic Heatmap</span><div class="pwm-toggle" onclick="this.classList.toggle('active');PWM.toggleHeatmap()"><div class="pwm-toggle-knob"></div></div></div>
+
             <!-- Zone Overlays -->
             <div class="pwm-section-label" style="margin-top:20px">Zone Overlays</div>
             <div class="pwm-toggle-row"><span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(119,212,229,0.3);border:1px solid rgba(119,212,229,0.5);margin-right:6px"></span>Frontend</span><div class="pwm-toggle" id="pwm-zone-frontend" onclick="this.classList.toggle('active');PWM.toggleZone('FRONTEND')"><div class="pwm-toggle-knob"></div></div></div>

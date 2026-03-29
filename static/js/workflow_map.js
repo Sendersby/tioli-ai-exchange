@@ -116,6 +116,8 @@ var state = {
     activeStatuses:   new Set(ALL_STATUSES),
     hiddenNodes:      new Set(),
     zonesVisible:     { FRONTEND: false, BACKEND: false, ISOLATED: false },
+    enrichment:       null,
+    showHeatmap:      false,
     searchQuery:      '',
     criticalPathsOnly: false,
     zoomTransform:    null,
@@ -140,6 +142,7 @@ function fetchGraph() {
             renderGraph(data);
             updateStats();
             renderServicesList(data);
+            fetchEnrichment();
             console.log('[PWM] Graph loaded:', data.meta.total_nodes, 'nodes,', data.meta.total_edges, 'edges');
         })
         .catch(function (err) {
@@ -160,6 +163,22 @@ function fetchNodeDetail(nodeId) {
         .then(function (res) {
             if (!res.ok) throw new Error('Node detail fetch failed: ' + res.status);
             return res.json();
+        });
+}
+
+function fetchEnrichment() {
+    return fetch('/api/v1/owner/workflow-map/enrichment', { credentials: 'same-origin' })
+        .then(function (res) {
+            if (!res.ok) throw new Error('Enrichment fetch failed: ' + res.status);
+            return res.json();
+        })
+        .then(function (data) {
+            state.enrichment = data;
+            applyEnrichment();
+            console.log('[PWM] Enrichment loaded:', Object.keys(data.nodes || {}).length, 'nodes enriched');
+        })
+        .catch(function (err) {
+            console.error('[PWM] fetchEnrichment error:', err);
         });
 }
 
@@ -756,6 +775,147 @@ function renderZones() {
     });
 }
 
+function applyEnrichment() {
+    if (!state.enrichment || !state.enrichment.nodes || !graphGroup) return;
+    var enr = state.enrichment.nodes;
+
+    graphGroup.selectAll('.pwm-node').each(function (d) {
+        var g = d3.select(this);
+        var e = enr[d.id];
+        if (!e) return;
+
+        var size = getNodeSize(d.node_type);
+        var rectH = parseFloat(g.select('.pwm-node-rect').attr('height')) || size.height;
+
+        // Remove old enrichment elements
+        g.selectAll('.pwm-enrich').remove();
+
+        // 1. Health indicator — pulsing dot top-right
+        if (e.health && e.health !== 'unknown') {
+            var hCol = e.health === 'green' ? '#4ade80' : (e.health === 'amber' ? '#f59e0b' : '#ef4444');
+            g.append('circle')
+                .attr('class', 'pwm-enrich')
+                .attr('cx', size.width / 2 - 6)
+                .attr('cy', -rectH / 2 + 6)
+                .attr('r', 4)
+                .attr('fill', hCol)
+                .attr('stroke', '#0A1520')
+                .attr('stroke-width', 1);
+        }
+
+        // 2. Traffic heatmap — glow intensity on node rect
+        if (state.showHeatmap && e.traffic_heat > 0) {
+            var glow = Math.min(e.traffic_heat * 15, 12);
+            g.select('.pwm-node-rect')
+                .attr('filter', null)
+                .style('box-shadow', null);
+            // Use stroke glow effect
+            g.insert('rect', '.pwm-node-rect')
+                .attr('class', 'pwm-enrich')
+                .attr('x', -size.width / 2 - 3)
+                .attr('y', -rectH / 2 - 3)
+                .attr('width', size.width + 6)
+                .attr('height', rectH + 6)
+                .attr('rx', 8)
+                .attr('fill', 'none')
+                .attr('stroke', 'rgba(119,212,229,' + Math.min(e.traffic_heat + 0.2, 0.8) + ')')
+                .attr('stroke-width', glow)
+                .attr('pointer-events', 'none');
+        }
+
+        // 3. Revenue badge — bottom-left, gold
+        if (e.revenue > 0) {
+            var revText = e.revenue >= 1000 ? Math.round(e.revenue / 1000) + 'k' : Math.round(e.revenue);
+            g.append('rect')
+                .attr('class', 'pwm-enrich')
+                .attr('x', -size.width / 2)
+                .attr('y', rectH / 2 - 2)
+                .attr('width', 32)
+                .attr('height', 14)
+                .attr('rx', 3)
+                .attr('fill', '#D4A94A')
+                .attr('pointer-events', 'none');
+            g.append('text')
+                .attr('class', 'pwm-enrich')
+                .attr('x', -size.width / 2 + 16)
+                .attr('y', rectH / 2 + 9)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', 8)
+                .attr('font-weight', 700)
+                .attr('fill', '#0D1B2A')
+                .attr('pointer-events', 'none')
+                .text(revText + '₳');
+        }
+
+        // 4. Build phase badge — top-left
+        if (e.build_phase) {
+            g.append('rect')
+                .attr('class', 'pwm-enrich')
+                .attr('x', -size.width / 2)
+                .attr('y', -rectH / 2 - 14)
+                .attr('width', 20)
+                .attr('height', 13)
+                .attr('rx', 3)
+                .attr('fill', '#8fa88b')
+                .attr('pointer-events', 'none');
+            g.append('text')
+                .attr('class', 'pwm-enrich')
+                .attr('x', -size.width / 2 + 10)
+                .attr('y', -rectH / 2 - 4)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', 8)
+                .attr('font-weight', 700)
+                .attr('fill', '#0D1B2A')
+                .attr('pointer-events', 'none')
+                .text('P' + e.build_phase);
+        }
+
+        // 5. Dependency warning — amber border flash
+        if (e.has_dependency_warning) {
+            g.append('rect')
+                .attr('class', 'pwm-enrich')
+                .attr('x', -size.width / 2 - 2)
+                .attr('y', -rectH / 2 - 2)
+                .attr('width', size.width + 4)
+                .attr('height', rectH + 4)
+                .attr('rx', 7)
+                .attr('fill', 'none')
+                .attr('stroke', '#f59e0b')
+                .attr('stroke-width', 2)
+                .attr('stroke-dasharray', '4,2')
+                .attr('pointer-events', 'none')
+                .attr('opacity', 0.7);
+        }
+
+        // 6. Last activity — shown in tooltip (handled by hover, stored in enrichment)
+
+        // 7. Agent count badge — bottom-right, teal
+        if (e.agent_count > 0) {
+            var acText = e.agent_count >= 1000 ? Math.round(e.agent_count / 1000) + 'k' : e.agent_count;
+            var acWidth = String(acText).length * 6 + 16;
+            g.append('rect')
+                .attr('class', 'pwm-enrich')
+                .attr('x', size.width / 2 - acWidth)
+                .attr('y', rectH / 2 - 2)
+                .attr('width', acWidth)
+                .attr('height', 14)
+                .attr('rx', 3)
+                .attr('fill', '#028090')
+                .attr('pointer-events', 'none');
+            g.append('text')
+                .attr('class', 'pwm-enrich')
+                .attr('x', size.width / 2 - acWidth / 2)
+                .attr('y', rectH / 2 + 9)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', 8)
+                .attr('font-weight', 700)
+                .attr('fill', '#fff')
+                .attr('pointer-events', 'none')
+                .text(acText + ' agents');
+        }
+    });
+}
+
 function toggleZone(zoneKey) {
     state.zonesVisible[zoneKey] = !state.zonesVisible[zoneKey];
     renderZones();
@@ -858,10 +1018,27 @@ function showTooltip(event, d) {
         + getStatusColour(d.status) + ';margin-right:4px;"></span>';
     var desc = d.description ? d.description.split('.')[0] + '.' : '';
 
+    // Enrichment extras for tooltip
+    var extras = '';
+    if (state.enrichment && state.enrichment.nodes && state.enrichment.nodes[d.id]) {
+        var e = state.enrichment.nodes[d.id];
+        if (e.health && e.health !== 'unknown') {
+            var hc = e.health === 'green' ? '#4ade80' : '#ef4444';
+            extras += '<br><span style="color:' + hc + '">&#9679;</span> Health: ' + e.health;
+        }
+        if (e.traffic_count > 0) extras += '<br>Traffic: ' + e.traffic_count + ' hits';
+        if (e.agent_count > 0) extras += '<br>Agents: ' + e.agent_count;
+        if (e.revenue > 0) extras += '<br>Revenue: ' + Math.round(e.revenue) + ' AGENTIS';
+        if (e.build_phase) extras += '<br>Build Phase: P' + e.build_phase;
+        if (e.last_activity) extras += '<br>Last activity: ' + e.last_activity.substring(0, 10);
+        if (e.has_dependency_warning) extras += '<br><span style="color:#f59e0b">&#9888; Dependency blocked</span>';
+    }
+
     tooltip.html(
         '<strong>' + d.label + '</strong><br>'
         + statusBadge + '<em>' + d.status + '</em> &middot; ' + d.category + '<br>'
         + '<span style="color:#aaa;">' + desc + '</span>'
+        + extras
     )
     .style('left', (event.pageX + 12) + 'px')
     .style('top', (event.pageY - 10) + 'px')
@@ -1440,6 +1617,7 @@ var PWM = {};
 PWM.refresh = function () {
     fetchGraph();
     fetchStatusSummary();
+    fetchEnrichment();
 };
 
 PWM.toggleCategory = function (el) {
@@ -1456,6 +1634,11 @@ PWM.toggleCriticalPaths = function (el) {
 
 PWM.toggleNode = function (el) {
     toggleNode(el);
+};
+
+PWM.toggleHeatmap = function () {
+    state.showHeatmap = !state.showHeatmap;
+    applyEnrichment();
 };
 
 PWM.toggleZone = function (zoneKey) {

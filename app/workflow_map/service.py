@@ -1,11 +1,15 @@
-"""Workflow Map Service — graph assembly, caching, and feature flag sync."""
+"""Workflow Map Service — graph assembly, caching, feature flag sync, and enrichment."""
 
 import time
+import httpx
+import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, text
 from app.workflow_map.models import WorkflowMapNode, WorkflowMapEdge, WorkflowMapStatusHistory
 from app.config import Settings
+
+logger = logging.getLogger(__name__)
 
 settings = Settings()
 
@@ -218,3 +222,182 @@ class WorkflowMapService:
 
         _invalidate_cache()
         return _sync_feature_flag_status(_node_to_dict(node))
+
+    async def get_enrichment_data(self, db) -> dict:
+        """Gather all enrichment data for all nodes — health, traffic, revenue,
+        build phases, dependency warnings, last activity, and agent counts."""
+
+        result = await db.execute(select(WorkflowMapNode))
+        nodes = result.scalars().all()
+        edges_result = await db.execute(select(WorkflowMapEdge))
+        edges = edges_result.scalars().all()
+
+        enrichment = {}
+
+        # --- 1. Health check: ping endpoints that have url_path or api_endpoint ---
+        health_endpoints = []
+        for n in nodes:
+            if n.url_path and n.status == 'ACTIVE':
+                health_endpoints.append((n.node_id, n.url_path))
+            elif n.api_endpoint and n.status == 'ACTIVE':
+                # Extract just the path from "GET /api/..." or "POST /api/..."
+                parts = (n.api_endpoint or '').split(' ')
+                path = parts[-1] if parts else None
+                if path and path.startswith('/'):
+                    health_endpoints.append((n.node_id, path))
+
+        health_results = {}
+        try:
+            async with httpx.AsyncClient(base_url='http://127.0.0.1:8000', timeout=3) as client:
+                for node_id, path in health_endpoints[:30]:  # Cap at 30 to avoid slowness
+                    try:
+                        r = await client.get(path)
+                        if r.status_code < 500:
+                            health_results[node_id] = 'green'
+                        else:
+                            health_results[node_id] = 'red'
+                    except Exception:
+                        health_results[node_id] = 'red'
+        except Exception:
+            pass
+
+        # --- 2. Traffic heatmap: count requests from nginx access log ---
+        traffic_counts = {}
+        try:
+            import os
+            log_path = '/var/log/nginx/access.log'
+            if os.path.exists(log_path):
+                with open(log_path, 'r') as f:
+                    lines = f.readlines()[-5000:]  # Last 5000 lines
+                for line in lines:
+                    for n in nodes:
+                        if n.url_path and n.url_path != '/' and n.url_path in line:
+                            traffic_counts[n.node_id] = traffic_counts.get(n.node_id, 0) + 1
+                        elif n.api_endpoint:
+                            parts = (n.api_endpoint or '').split(' ')
+                            path = parts[-1] if parts else ''
+                            if path and path in line:
+                                traffic_counts[n.node_id] = traffic_counts.get(n.node_id, 0) + 1
+        except Exception:
+            pass
+
+        # Normalise traffic to 0-1 scale
+        max_traffic = max(traffic_counts.values()) if traffic_counts else 1
+        traffic_heat = {}
+        for nid, count in traffic_counts.items():
+            traffic_heat[nid] = round(count / max(max_traffic, 1), 3)
+
+        # --- 3. Revenue flow: get transaction volume through payment nodes ---
+        revenue_data = {}
+        try:
+            from app.agents.models import Wallet
+            total_agentis = (await db.execute(
+                select(func.sum(Wallet.balance)).where(Wallet.currency == 'AGENTIS')
+            )).scalar() or 0
+            # Assign revenue to payment nodes proportionally
+            payment_nodes = [n for n in nodes if n.category == 'PAYMENT' and n.status == 'ACTIVE']
+            if payment_nodes:
+                share = round(total_agentis / len(payment_nodes), 1)
+                for n in payment_nodes:
+                    revenue_data[n.node_id] = share
+            revenue_data['_total'] = round(total_agentis, 1)
+        except Exception:
+            pass
+
+        # --- 4. Build phases: extract from node metadata ---
+        build_phases = {}
+        for n in nodes:
+            meta = n.metadata_ or {}
+            phase = meta.get('build_phase')
+            if phase:
+                build_phases[n.node_id] = phase
+
+        # --- 5. Dependency warnings: PLANNED nodes depending on INACTIVE nodes ---
+        dependency_warnings = []
+        node_status_map = {n.node_id: n.status for n in nodes}
+        for e in edges:
+            src_status = node_status_map.get(e.source_node_id, '')
+            tgt_status = node_status_map.get(e.target_node_id, '')
+            # If target is PLANNED but source is INACTIVE — blocked dependency
+            if tgt_status == 'PLANNED' and src_status == 'INACTIVE':
+                dependency_warnings.append({
+                    'blocked_node': e.target_node_id,
+                    'blocking_node': e.source_node_id,
+                    'edge_id': e.edge_id,
+                })
+            # If source is PLANNED but target is INACTIVE — also a concern
+            if src_status == 'PLANNED' and tgt_status == 'INACTIVE':
+                dependency_warnings.append({
+                    'blocked_node': e.source_node_id,
+                    'blocking_node': e.target_node_id,
+                    'edge_id': e.edge_id,
+                })
+
+        # --- 6. Last activity: from platform_events or blockchain ---
+        last_activity = {}
+        try:
+            from app.agent_profile.models import PlatformEvent
+            recent = await db.execute(
+                select(PlatformEvent.related_entity_type, func.max(PlatformEvent.created_at))
+                .group_by(PlatformEvent.related_entity_type)
+            )
+            for entity_type, ts in recent.all():
+                if entity_type and ts:
+                    # Map entity types to node IDs roughly
+                    type_map = {
+                        'engagement': 'node_svc_agentbroker_contract',
+                        'agent': 'node_reg_agent_create',
+                        'governance': 'node_dash_governance',
+                        'wallet': 'node_pay_credits',
+                        'profile': 'node_svc_agent_profile',
+                    }
+                    nid = type_map.get(entity_type)
+                    if nid:
+                        last_activity[nid] = ts.isoformat()
+        except Exception:
+            pass
+
+        # --- 7. Agent counts per service ---
+        agent_counts = {}
+        try:
+            from app.agents.models import Agent
+            total_agents = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
+            # Agent registration
+            agent_counts['node_reg_agent_create'] = total_agents
+            # Agents with profiles
+            from app.agenthub.models import AgentHubProfile
+            profiles = (await db.execute(select(func.count(AgentHubProfile.id)))).scalar() or 0
+            agent_counts['node_svc_agent_profile'] = profiles
+            # Agents with services
+            from app.agentbroker.models import AgentServiceProfile
+            services = (await db.execute(select(func.count(AgentServiceProfile.id)))).scalar() or 0
+            agent_counts['node_svc_agentbroker_profile'] = services
+            # MCP — all agents can use it
+            agent_counts['node_mcp_server'] = total_agents
+            agent_counts['node_mcp_tool_discovery'] = total_agents
+        except Exception:
+            pass
+
+        # Assemble
+        for n in nodes:
+            nid = n.node_id
+            enrichment[nid] = {
+                'health': health_results.get(nid, 'unknown'),
+                'traffic_heat': traffic_heat.get(nid, 0),
+                'traffic_count': traffic_counts.get(nid, 0),
+                'revenue': revenue_data.get(nid, 0),
+                'build_phase': build_phases.get(nid),
+                'agent_count': agent_counts.get(nid, 0),
+                'last_activity': last_activity.get(nid),
+                'has_dependency_warning': any(
+                    w['blocked_node'] == nid or w['blocking_node'] == nid
+                    for w in dependency_warnings
+                ),
+            }
+
+        return {
+            'nodes': enrichment,
+            'revenue_total': revenue_data.get('_total', 0),
+            'dependency_warnings': dependency_warnings,
+            'generated_at': datetime.now(timezone.utc).isoformat(),
+        }
