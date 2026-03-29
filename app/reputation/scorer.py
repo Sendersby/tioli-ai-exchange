@@ -67,7 +67,7 @@ class ReputationScorer:
         on_time_stats = await db.execute(
             select(
                 func.count(TaskOutcome.outcome_id),
-                func.sum(func.cast(TaskOutcome.on_time, sqltype=None)),
+                func.count(TaskOutcome.outcome_id).filter(TaskOutcome.on_time.is_(True)),
             ).where(TaskOutcome.agent_id == agent_id)
         )
         row = on_time_stats.first()
