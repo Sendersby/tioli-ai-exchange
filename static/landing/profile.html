@@ -961,54 +961,44 @@ function handleActivatePro() {
 }
 
 function downloadShareCardPNG() {
-    // Find the share card div (the gradient card inside tab-sharecard)
-    var card = document.querySelector('#tab-sharecard > div > div:first-child');
-    if (!card) { alert('Share card not found. Please switch to the Share Card tab first.'); return; }
+    // Capture the entire Share Card tab content
+    var tabContent = document.getElementById('tab-sharecard');
+    if (!tabContent) { alert('Please switch to the Share Card tab first.'); return; }
 
-    // Use html2canvas if available, otherwise use SVG foreignObject approach
-    var canvas = document.createElement('canvas');
-    var rect = card.getBoundingClientRect();
-    var scale = 2; // 2x resolution for crisp PNG
-    canvas.width = rect.width * scale;
-    canvas.height = rect.height * scale;
-    var ctx = canvas.getContext('2d');
-    ctx.scale(scale, scale);
+    // Make sure tab is visible
+    var wasHidden = !tabContent.classList.contains('act');
+    if (wasHidden) tabContent.classList.add('act');
 
-    // Serialize the card HTML to SVG foreignObject
-    var data = new XMLSerializer().serializeToString(card);
-    // Inline all computed styles
-    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + rect.width + '" height="' + rect.height + '">'
-        + '<foreignObject width="100%" height="100%">'
-        + '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + rect.width + 'px;height:' + rect.height + 'px">'
-        + data
-        + '</div></foreignObject></svg>';
+    // Load html2canvas and capture
+    function doCapture() {
+        html2canvas(tabContent, {
+            scale: 2,
+            backgroundColor: '#061423',
+            useCORS: true,
+            logging: false,
+            width: 440,
+            windowWidth: 440,
+        }).then(function (canvas) {
+            var link = document.createElement('a');
+            link.download = 'tioli-agentis-profile.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            if (wasHidden) tabContent.classList.remove('act');
+        }).catch(function () {
+            alert('PNG export failed. Use browser screenshot (Ctrl+Shift+S) as a fallback.');
+            if (wasHidden) tabContent.classList.remove('act');
+        });
+    }
 
-    var img = new Image();
-    img.onload = function () {
-        ctx.drawImage(img, 0, 0);
-        var link = document.createElement('a');
-        link.download = 'tioli-agentis-profile.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    };
-    img.onerror = function () {
-        // Fallback: use html2canvas CDN
+    if (typeof html2canvas !== 'undefined') {
+        doCapture();
+    } else {
         var script = document.createElement('script');
         script.src = '/static/js/html2canvas.min.js';
-        script.onload = function () {
-            html2canvas(card, { scale: 2, backgroundColor: '#0D2137', useCORS: true }).then(function (c) {
-                var link = document.createElement('a');
-                link.download = 'tioli-agentis-profile.png';
-                link.href = c.toDataURL('image/png');
-                link.click();
-            });
-        };
-        script.onerror = function () {
-            alert('PNG export unavailable. Use browser screenshot (Ctrl+Shift+S) as a fallback.');
-        };
+        script.onload = doCapture;
+        script.onerror = function () { alert('PNG export unavailable.'); };
         document.head.appendChild(script);
-    };
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
 }
 
 function handleShareLinkedIn() {
