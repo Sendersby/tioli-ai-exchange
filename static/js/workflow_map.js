@@ -651,46 +651,56 @@ function renderZones() {
                     .attr('pointer-events', 'none');
             });
         } else {
-            // Single bounding box for frontend/backend
-            var pad = 40;
-            var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            // Convex hull wrapping tightly around zone nodes
+            var pad = 35;
+            // Generate points around each node's bounding box corners
+            var hullPoints = [];
             zoneNodes.forEach(function (n) {
                 var size = getNodeSize(n.node_type);
                 var hw = size.width / 2 + pad;
                 var hh = size.height / 2 + pad;
-                if (n.x - hw < minX) minX = n.x - hw;
-                if (n.y - hh < minY) minY = n.y - hh;
-                if (n.x + hw > maxX) maxX = n.x + hw;
-                if (n.y + hh > maxY) maxY = n.y + hh;
+                // 8 points per node (corners + midpoints) for smoother hull
+                hullPoints.push([n.x - hw, n.y - hh]);
+                hullPoints.push([n.x + hw, n.y - hh]);
+                hullPoints.push([n.x - hw, n.y + hh]);
+                hullPoints.push([n.x + hw, n.y + hh]);
+                hullPoints.push([n.x, n.y - hh]);
+                hullPoints.push([n.x, n.y + hh]);
+                hullPoints.push([n.x - hw, n.y]);
+                hullPoints.push([n.x + hw, n.y]);
             });
 
-            zoneGroup.append('rect')
-                .attr('class', 'pwm-zone')
-                .attr('x', minX)
-                .attr('y', minY)
-                .attr('width', maxX - minX)
-                .attr('height', maxY - minY)
-                .attr('rx', 16)
-                .attr('ry', 16)
-                .attr('fill', ZONE_COLOURS[zoneKey])
-                .attr('stroke', ZONE_BORDERS[zoneKey])
-                .attr('stroke-width', 1.5)
-                .attr('stroke-dasharray', '8,4')
-                .attr('pointer-events', 'none');
+            var hull = d3.polygonHull(hullPoints);
+            if (hull && hull.length > 2) {
+                // Smooth the hull into a curved path
+                var hullPath = 'M' + hull.map(function(p) { return p[0] + ',' + p[1]; }).join(' L') + ' Z';
 
-            // Label
-            var labels = { FRONTEND: 'FRONTEND', BACKEND: 'BACKEND (OWNER)' };
-            var labelColours = { FRONTEND: 'rgba(119,212,229,0.5)', BACKEND: 'rgba(237,192,95,0.5)' };
-            zoneGroup.append('text')
-                .attr('class', 'pwm-zone')
-                .attr('x', minX + 12)
-                .attr('y', minY + 18)
-                .attr('font-size', 10)
-                .attr('font-weight', 700)
-                .attr('letter-spacing', '2px')
-                .attr('fill', labelColours[zoneKey])
-                .attr('pointer-events', 'none')
-                .text(labels[zoneKey]);
+                zoneGroup.append('path')
+                    .attr('class', 'pwm-zone')
+                    .attr('d', hullPath)
+                    .attr('fill', ZONE_COLOURS[zoneKey])
+                    .attr('stroke', ZONE_BORDERS[zoneKey])
+                    .attr('stroke-width', 1.5)
+                    .attr('stroke-dasharray', '8,4')
+                    .attr('stroke-linejoin', 'round')
+                    .attr('pointer-events', 'none');
+
+                // Label at top-left of hull
+                var labelX = hull[0][0] + 10;
+                var labelY = hull[0][1] + 14;
+                var labels = { FRONTEND: 'FRONTEND', BACKEND: 'BACKEND (OWNER)' };
+                var labelColours = { FRONTEND: 'rgba(119,212,229,0.5)', BACKEND: 'rgba(237,192,95,0.5)' };
+                zoneGroup.append('text')
+                    .attr('class', 'pwm-zone')
+                    .attr('x', labelX)
+                    .attr('y', labelY)
+                    .attr('font-size', 10)
+                    .attr('font-weight', 700)
+                    .attr('letter-spacing', '2px')
+                    .attr('fill', labelColours[zoneKey])
+                    .attr('pointer-events', 'none')
+                    .text(labels[zoneKey]);
+            }
         }
     });
 }
