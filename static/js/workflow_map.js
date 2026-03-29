@@ -56,24 +56,44 @@ var ZONE_BORDERS = {
     ISOLATED:  'rgba(192, 57, 43, 0.3)',
 };
 
-// Frontend nodes: public pages, agent registration, operator registration
+// Frontend nodes: public pages, agent registration, MCP
 var FRONTEND_PREFIXES = ['node_nav_', 'node_reg_', 'node_mcp_'];
 // Backend nodes: owner dashboard, tools
 var BACKEND_PREFIXES = ['node_owner_', 'node_dash_', 'node_tool_'];
 
 function classifyNode(nodeId, edges) {
-    if (FRONTEND_PREFIXES.some(function(p) { return nodeId.indexOf(p) === 0; })) return 'FRONTEND';
-    if (BACKEND_PREFIXES.some(function(p) { return nodeId.indexOf(p) === 0; })) return 'BACKEND';
-    // Check if node has any edges — if not, it's isolated
+    // Direct classification by prefix
+    var isFrontend = FRONTEND_PREFIXES.some(function(p) { return nodeId.indexOf(p) === 0; });
+    var isBackend = BACKEND_PREFIXES.some(function(p) { return nodeId.indexOf(p) === 0; });
+    if (isFrontend) return 'FRONTEND';
+    if (isBackend) return 'BACKEND';
+
+    // For services/payments/compliance/API/banking — check what they connect to
+    var connectsToFrontend = false;
+    var connectsToBackend = false;
+    edges.forEach(function(e) {
+        var src = e.source.id || e.source;
+        var tgt = e.target.id || e.target;
+        if (src === nodeId || tgt === nodeId) {
+            var other = (src === nodeId) ? tgt : src;
+            if (FRONTEND_PREFIXES.some(function(p) { return other.indexOf(p) === 0; })) connectsToFrontend = true;
+            if (BACKEND_PREFIXES.some(function(p) { return other.indexOf(p) === 0; })) connectsToBackend = true;
+        }
+    });
+
+    // Nodes connected to both zones appear in BOTH (genuine overlap)
+    if (connectsToFrontend && connectsToBackend) return 'BOTH';
+    if (connectsToFrontend) return 'FRONTEND';
+    if (connectsToBackend) return 'BACKEND';
+
+    // Check if truly isolated (no edges at all)
     var hasEdge = edges.some(function(e) {
         var src = e.source.id || e.source;
         var tgt = e.target.id || e.target;
         return src === nodeId || tgt === nodeId;
     });
     if (!hasEdge) return 'ISOLATED';
-    // Everything else (services, payments, compliance, API, banking) — check connections
-    // If connected to backend nodes, classify as backend; if to frontend, frontend
-    // Default: neither — not in a zone
+
     return null;
 }
 var ZOOM_MIN        = 0.2;
@@ -598,7 +618,10 @@ function renderZones() {
     nodes.forEach(function (n) {
         if (!n.x && n.x !== 0) return;
         var zone = classifyNode(n.id, edges);
-        if (zone && zones[zone]) {
+        if (zone === 'BOTH') {
+            zones.FRONTEND.push(n);
+            zones.BACKEND.push(n);
+        } else if (zone && zones[zone]) {
             zones[zone].push(n);
         }
     });
@@ -685,16 +708,19 @@ function renderZones() {
                     .attr('stroke-linejoin', 'round')
                     .attr('pointer-events', 'none');
 
-                // Label at top-left of hull
-                var labelX = hull[0][0] + 10;
-                var labelY = hull[0][1] + 14;
+                // Label at top-left of bounding box of hull
+                var hMinX = Infinity, hMinY = Infinity;
+                hull.forEach(function(p) {
+                    if (p[0] < hMinX) hMinX = p[0];
+                    if (p[1] < hMinY) hMinY = p[1];
+                });
                 var labels = { FRONTEND: 'FRONTEND', BACKEND: 'BACKEND (OWNER)' };
-                var labelColours = { FRONTEND: 'rgba(119,212,229,0.5)', BACKEND: 'rgba(237,192,95,0.5)' };
+                var labelColours = { FRONTEND: 'rgba(119,212,229,0.6)', BACKEND: 'rgba(237,192,95,0.6)' };
                 zoneGroup.append('text')
                     .attr('class', 'pwm-zone')
-                    .attr('x', labelX)
-                    .attr('y', labelY)
-                    .attr('font-size', 10)
+                    .attr('x', hMinX + 10)
+                    .attr('y', hMinY + 16)
+                    .attr('font-size', 11)
                     .attr('font-weight', 700)
                     .attr('letter-spacing', '2px')
                     .attr('fill', labelColours[zoneKey])
