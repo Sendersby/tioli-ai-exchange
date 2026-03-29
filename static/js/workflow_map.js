@@ -1423,16 +1423,24 @@ function renderMinimap() {
     var nodes = state.graphData.nodes;
     var edges = state.graphData.edges;
 
-    // Compute bounds
+    // Compute bounds — use full canvas extent so minimap reflects true position
     var bounds = computeNodeBounds(nodes);
     if (!bounds) return;
 
-    var scaleX = mmWidth / (bounds.maxX - bounds.minX + 100);
-    var scaleY = mmHeight / (bounds.maxY - bounds.minY + 100);
-    var scale  = Math.min(scaleX, scaleY, 1);
+    var pad = 50;
+    var worldMinX = Math.min(0, bounds.minX - pad);
+    var worldMinY = Math.min(0, bounds.minY - pad);
+    var worldMaxX = Math.max(state.svgWidth, bounds.maxX + pad);
+    var worldMaxY = Math.max(state.svgHeight, bounds.maxY + pad);
+    var worldW = worldMaxX - worldMinX;
+    var worldH = worldMaxY - worldMinY;
 
-    var offsetX = (mmWidth - (bounds.maxX - bounds.minX) * scale) / 2 - bounds.minX * scale;
-    var offsetY = (mmHeight - (bounds.maxY - bounds.minY) * scale) / 2 - bounds.minY * scale;
+    var scaleX = mmWidth / worldW;
+    var scaleY = mmHeight / worldH;
+    var scale  = Math.min(scaleX, scaleY);
+
+    var offsetX = (mmWidth - worldW * scale) / 2 - worldMinX * scale;
+    var offsetY = (mmHeight - worldH * scale) / 2 - worldMinY * scale;
 
     minimapGroup.attr('transform', 'translate(' + offsetX + ',' + offsetY + ') scale(' + scale + ')');
 
