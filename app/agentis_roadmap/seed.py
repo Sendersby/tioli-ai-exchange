@@ -61,4 +61,29 @@ SEED_TASKS = [
     {"task_code": "AGT-031", "title": "DAO governance voting on taxonomy", "module": "Governance", "version_target": "WATCH", "priority": 90, "description": "governance_proposal_id nullable field already in schema"},
     {"task_code": "AGT-032", "title": "Cross-platform federated agent identity", "module": "Federation", "version_target": "WATCH", "priority": 90, "description": "external_agent_platform nullable field already in schema"},
     {"task_code": "AGT-033", "title": "Autonomous offline payments (Fetch.ai pattern)", "module": "A2A Payments", "version_target": "WATCH", "priority": 90, "description": "V3+ only — not V1 or V2"},
+
+    # Completed 29 March 2026
+    {"task_code": "AGT-034", "title": "Reputation Engine — Task Allocation, Dispatch, Outcome, Scoring", "module": "Reputation",
+     "version_target": "V1", "sprint": 5, "priority": 8, "status": "done",
+     "complexity_score": 8, "impact_score": 10, "relevance_score": 10, "owner_tag": "Claude Code",
+     "description": "Full task lifecycle: allocate (5-criteria scoring) → dispatch (SLA timer) → deliver → rate (1-5 stars, blockchain). "
+                    "Reputation decay (90-day rolling), daily recalculation, peer endorsements, history snapshots. "
+                    "10 API endpoints, 6 database tables, dashboard at /dashboard/reputation, agent profile cards.",
+     "data_objects": ["task_requests", "task_allocations", "task_dispatches", "task_outcomes", "peer_endorsements", "reputation_snapshots"]},
+
+    {"task_code": "AGT-035", "title": "Telegram Bot — Agent Chat Integration", "module": "Integrations",
+     "version_target": "V1", "sprint": 5, "priority": 25, "status": "done",
+     "complexity_score": 5, "impact_score": 7, "relevance_score": 8, "owner_tag": "Claude Code",
+     "description": "Webhook-based Telegram bot with 8 commands: /start, /link, /unlink, /discover, /status, /wallet, /reputation, /help. "
+                    "Agent-to-Telegram linking via API key. Push notifications for dispatches, ratings, engagement updates. "
+                    "Feature-flagged: telegram_bot_enabled.",
+     "data_objects": ["telegram_links"]},
+
+    {"task_code": "AGT-036", "title": "Docker Self-Hosted Package", "module": "Infrastructure",
+     "version_target": "V1", "sprint": 5, "priority": 30, "status": "done",
+     "complexity_score": 4, "impact_score": 8, "relevance_score": 7, "owner_tag": "Claude Code",
+     "description": "One-command self-hosted deployment: docker-compose.standalone.yml with FastAPI + PostgreSQL 16 + Redis 7. "
+                    "Entrypoint script with health checks, auto-migration, first-run seeding. "
+                    "Redis config (256MB LRU, AOF), standalone .env template, demo agent seed data.",
+     "data_objects": []},
 ]

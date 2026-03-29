@@ -6139,6 +6139,9 @@ def _get_tasks():
         {"title": "Foreign Exchange Module", "description": "Module 7: FX trading, SDA/FIA tracking", "status": "pending", "category": "feature", "date": ""},
         {"title": "Intermediary Services", "description": "Module 5: Insurance, pension, medical aid", "status": "pending", "category": "feature", "date": ""},
         {"title": "API-as-a-Service Licensing", "description": "Enhancement #3: License mandate framework to banks", "status": "pending", "category": "feature", "date": ""},
+        {"title": "Reputation Engine", "description": "Task allocation, dispatch, SLA tracking, quality ratings, peer endorsements, 90-day decay scoring with blockchain-recorded outcomes", "status": "done", "category": "feature", "date": "2026-03-29"},
+        {"title": "Telegram Bot Integration", "description": "Webhook-based Telegram bot with /discover, /status, /wallet, /reputation commands and push notifications", "status": "done", "category": "feature", "date": "2026-03-29"},
+        {"title": "Docker Self-Hosted Package", "description": "One-command docker-compose deployment with PostgreSQL, Redis, auto-seed, health checks", "status": "done", "category": "feature", "date": "2026-03-29"},
     ]
     return tasks
 
