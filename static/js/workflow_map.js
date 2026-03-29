@@ -1114,84 +1114,108 @@ function openInfoPanel(nodeDetail) {
     panel.classList.add('open');
 
     var node = nodeDetail.node || nodeDetail;
+    var meta = node.metadata || {};
 
     // Status badge
-    var badgeEl = panel.querySelector('.pwm-panel-status');
+    var badgeEl = document.getElementById('pwm-info-status');
     if (badgeEl) {
         badgeEl.textContent = node.status;
-        badgeEl.style.background = getStatusColour(node.status);
-        badgeEl.style.color = '#ffffff';
-        badgeEl.style.padding = '2px 10px';
+        badgeEl.className = 'pwm-status-badge pwm-status--' + node.status.toLowerCase();
+        badgeEl.style.padding = '3px 10px';
         badgeEl.style.borderRadius = '12px';
         badgeEl.style.fontSize = '11px';
+        badgeEl.style.fontWeight = '600';
     }
 
     // Label
-    var labelEl = panel.querySelector('.pwm-panel-label');
+    var labelEl = document.getElementById('pwm-info-label');
     if (labelEl) labelEl.textContent = node.label || '';
 
     // Description
-    var descEl = panel.querySelector('.pwm-panel-description');
-    if (descEl) descEl.textContent = node.description || '';
+    var descEl = document.getElementById('pwm-info-desc');
+    if (descEl) descEl.textContent = node.description || 'No description available.';
 
     // Details grid
-    var detailsEl = panel.querySelector('.pwm-panel-details');
+    var detailsEl = document.getElementById('pwm-info-details');
     if (detailsEl) {
-        var meta = node.metadata || {};
-        detailsEl.innerHTML =
-            '<div class="pwm-detail-row"><span>Category</span><span>' + (node.category || '-') + '</span></div>' +
-            '<div class="pwm-detail-row"><span>Node Type</span><span>' + (node.node_type || '-') + '</span></div>' +
-            '<div class="pwm-detail-row"><span>Feature Flag</span><span>' + (node.feature_flag || '-') + '</span></div>' +
-            '<div class="pwm-detail-row"><span>Build Phase</span><span>' + (meta.build_phase || '-') + '</span></div>' +
-            '<div class="pwm-detail-row"><span>Module</span><span>' + (meta.module || '-') + '</span></div>';
+        var rows = '';
+        rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Category</span><span class="pwm-dv">' + (node.category || '-') + '</span></div>';
+        rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Node Type</span><span class="pwm-dv">' + (node.node_type || '-') + '</span></div>';
+        rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Feature Flag</span><span class="pwm-dv">' + (node.feature_flag || 'none') + '</span></div>';
+        rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Build Phase</span><span class="pwm-dv">' + (meta.build_phase ? 'Phase ' + meta.build_phase : '-') + '</span></div>';
+        rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Module</span><span class="pwm-dv">' + (meta.module || '-') + '</span></div>';
+        if (node.url_path) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">URL</span><span class="pwm-dv" style="color:var(--pwm-teal)">' + node.url_path + '</span></div>';
+        if (node.api_endpoint) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">API</span><span class="pwm-dv" style="font-family:monospace;font-size:10px">' + node.api_endpoint + '</span></div>';
+
+        // Enrichment data
+        var enr = state.enrichment && state.enrichment.nodes ? state.enrichment.nodes[node.id] : null;
+        if (enr) {
+            if (enr.health && enr.health !== 'unknown') {
+                var hCol = enr.health === 'green' ? '#4ade80' : '#ef4444';
+                rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Health</span><span class="pwm-dv" style="color:' + hCol + '">&#9679; ' + enr.health.toUpperCase() + '</span></div>';
+            }
+            if (enr.traffic_count > 0) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Traffic</span><span class="pwm-dv">' + enr.traffic_count + ' recent hits</span></div>';
+            if (enr.agent_count > 0) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Agents Using</span><span class="pwm-dv" style="color:var(--pwm-teal)">' + enr.agent_count + '</span></div>';
+            if (enr.revenue > 0) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Revenue</span><span class="pwm-dv" style="color:var(--pwm-gold)">' + Math.round(enr.revenue) + ' AGENTIS</span></div>';
+            if (enr.last_activity) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Last Activity</span><span class="pwm-dv">' + enr.last_activity.substring(0, 16).replace('T', ' ') + '</span></div>';
+            if (enr.has_dependency_warning) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Warning</span><span class="pwm-dv" style="color:#f59e0b">&#9888; Dependency blocked</span></div>';
+        }
+
+        detailsEl.innerHTML = rows;
     }
 
-    // Linked endpoints as chips
-    var endpointsEl = panel.querySelector('.pwm-panel-endpoints');
+    // Linked endpoints
+    var endpointsEl = document.getElementById('pwm-info-endpoints');
     if (endpointsEl) {
         var endpoints = node.linked_endpoints || [];
         if (endpoints.length > 0) {
             endpointsEl.innerHTML = endpoints.map(function (ep) {
-                return '<span class="pwm-chip">' + ep + '</span>';
+                return '<span class="pwm-endpoint-chip">' + ep + '</span>';
             }).join(' ');
         } else {
-            endpointsEl.innerHTML = '<span style="color:#666;">None</span>';
+            endpointsEl.innerHTML = '<span style="color:var(--pwm-text-muted);font-size:11px">None</span>';
         }
     }
 
     // "Go There" button
-    var goBtn = panel.querySelector('.pwm-panel-go');
+    var goBtn = document.getElementById('pwm-info-go');
     if (goBtn) {
-        if (node.url_path && node.status === 'ACTIVE') {
-            goBtn.style.display = 'inline-block';
+        if (node.url_path && (node.status === 'ACTIVE' || node.status === 'RESTRICTED')) {
+            goBtn.style.display = 'inline-flex';
             goBtn.href = node.url_path;
         } else {
             goBtn.style.display = 'none';
         }
     }
 
-    // Status history (last 3)
-    var historyEl = panel.querySelector('.pwm-panel-history');
+    // Status history
+    var historyEl = document.getElementById('pwm-info-history');
     if (historyEl && nodeDetail.status_history) {
-        var history = nodeDetail.status_history.slice(0, 3);
+        var history = nodeDetail.status_history.slice(0, 5);
         if (history.length > 0) {
             historyEl.innerHTML = history.map(function (h) {
-                return '<div class="pwm-history-entry">'
-                    + '<span class="pwm-history-dot" style="background:' + getStatusColour(h.status) + ';"></span>'
-                    + '<span>' + h.status + '</span>'
-                    + '<span style="color:#666;margin-left:8px;">' + (h.changed_at || h.timestamp || '') + '</span>'
+                var sCol = getStatusColour(h.status);
+                var ts = h.changed_at ? h.changed_at.substring(0, 16).replace('T', ' ') : '';
+                return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--pwm-border)">'
+                    + '<span style="width:8px;height:8px;border-radius:50%;background:' + sCol + ';flex-shrink:0"></span>'
+                    + '<span style="font-size:11px;color:var(--pwm-text-light)">' + h.status + '</span>'
+                    + (h.previous_status ? '<span style="font-size:9px;color:var(--pwm-text-muted)">from ' + h.previous_status + '</span>' : '')
+                    + '<span style="font-size:10px;color:var(--pwm-text-muted);margin-left:auto">' + ts + '</span>'
                     + '</div>';
             }).join('');
         } else {
-            historyEl.innerHTML = '<span style="color:#666;">No history</span>';
+            historyEl.innerHTML = '<span style="color:var(--pwm-text-muted);font-size:11px">No status changes recorded</span>';
         }
     }
 
     // Status select
-    var statusSelect = panel.querySelector('.pwm-panel-status-select');
+    var statusSelect = document.getElementById('pwm-info-status-select');
     if (statusSelect) {
         statusSelect.value = node.status;
     }
+
+    // Store selected node ID for status change
+    state._infoPanelNodeId = node.id;
 }
 
 function closeInfoPanel() {
@@ -1634,6 +1658,36 @@ PWM.toggleCriticalPaths = function (el) {
 
 PWM.toggleNode = function (el) {
     toggleNode(el);
+};
+
+PWM.closeInfoPanel = function () {
+    closeInfoPanel();
+};
+
+PWM.changeStatus = function () {
+    var nodeId = state._infoPanelNodeId;
+    var select = document.getElementById('pwm-info-status-select');
+    if (!nodeId || !select) return;
+    var newStatus = select.value;
+    var reason = prompt('Reason for status change (optional):') || '';
+    // Note: this requires 3FA token in production. For now, attempt without.
+    fetch('/api/v1/owner/workflow-map/node/' + encodeURIComponent(nodeId) + '/status', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, reason: reason }),
+    })
+    .then(function (r) {
+        if (!r.ok) return r.json().then(function (e) { throw new Error(e.detail || 'Failed'); });
+        return r.json();
+    })
+    .then(function () {
+        alert('Status updated to ' + newStatus);
+        PWM.refresh();
+    })
+    .catch(function (err) {
+        alert('Status change failed: ' + err.message);
+    });
 };
 
 PWM.toggleHeatmap = function () {
