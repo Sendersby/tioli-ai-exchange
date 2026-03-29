@@ -25,7 +25,7 @@ var CATEGORY_COLOURS = {
     NAVIGATION:    '#AAAAAA',
     API:           '#9B59B6',
     MCP:           '#E67E22',
-    ROADMAP:       '#7BA7D9'
+    ROADMAP:       '#3B82F6'
 };
 
 var NODE_SIZES = {
@@ -397,7 +397,7 @@ function renderGraph(data) {
         var g    = d3.select(this);
         var size = getNodeSize(d.node_type);
         // Roadmap nodes use blue instead of status colour
-        var sCol = d.category === 'ROADMAP' ? '#7BA7D9' : getStatusColour(d.status);
+        var sCol = d.category === 'ROADMAP' ? '#3B82F6' : getStatusColour(d.status);
         var isDimmed = (d.status === 'INACTIVE' || (d.status === 'PLANNED' && d.category !== 'ROADMAP'));
         var isDeprecated = (d.status === 'DEPRECATED');
 
