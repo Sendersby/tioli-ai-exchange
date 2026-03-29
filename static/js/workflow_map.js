@@ -1123,13 +1123,14 @@ function openInfoPanel(nodeDetail) {
 
     // Place right next to the node with small offset
     var panelW = 420;
+    var minTop = 60;  // Below the stats bar pills
     var panelLeft = nx + 30;
     var panelTop = ny - 20;
 
     // Flip left if too close to right edge
     if (panelLeft + panelW > wrapRect.width - 10) panelLeft = nx - panelW - 30;
-    // Keep within canvas bounds
-    if (panelTop < 5) panelTop = 5;
+    // Keep within canvas bounds — always below stats bar
+    if (panelTop < minTop) panelTop = minTop;
     if (panelTop + 380 > wrapRect.height) panelTop = wrapRect.height - 390;
     if (panelLeft < 5) panelLeft = 5;
 
