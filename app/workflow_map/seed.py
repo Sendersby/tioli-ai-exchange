@@ -2621,8 +2621,13 @@ async def seed_workflow_map(db):
         },
     ))
 
-    # Flush nodes so FK constraints are satisfied before adding edges
-    await db.flush()
+    # Commit house agent nodes so FK constraints are satisfied before adding edges
+    await db.commit()
+
+    # Re-check existing edges after commit (in case of prior partial runs)
+    result3 = await db.execute(select(WorkflowMapEdge.edge_id))
+    for r in result3.all():
+        existing_edge_ids.add(r[0])
 
     # ── HOUSE AGENT EDGES ───────────────────────────────────────────────
     # Edges connecting house agents to platform components they control/serve
