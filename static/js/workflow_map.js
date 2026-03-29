@@ -105,7 +105,7 @@ var POLL_INTERVAL   = 60000;
 var TOOLTIP_DELAY   = 400;
 
 var ALL_CATEGORIES = ['REGISTRATION', 'PAYMENT', 'COMPLIANCE', 'AGENT_SERVICE', 'NAVIGATION', 'API', 'MCP', 'ROADMAP'];
-var ALL_STATUSES   = ['ACTIVE', 'RESTRICTED', 'INACTIVE', 'PLANNED', 'DEPRECATED'];
+var ALL_STATUSES   = ['ACTIVE', 'RESTRICTED', 'INACTIVE', 'PLANNED', 'ROADMAP', 'DEPRECATED'];
 
 
 // === SECTION 2: STATE MANAGEMENT ===
@@ -207,7 +207,9 @@ function updateStats() {
     var counts = {};
     ALL_STATUSES.forEach(function (s) { counts[s] = 0; });
     state.graphData.nodes.forEach(function (n) {
-        if (counts[n.status] !== undefined) counts[n.status]++;
+        // Count roadmap nodes separately from planned
+        var effectiveStatus = n.category === 'ROADMAP' ? 'ROADMAP' : n.status;
+        if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
     });
     ALL_STATUSES.forEach(function (s) {
         var el = document.getElementById('pwm-count-' + s.toLowerCase());
@@ -477,7 +479,9 @@ function applyFilters() {
     var visibleNodeIds = new Set();
     nodes.forEach(function (n) {
         var catMatch    = state.activeCategories.has(n.category);
-        var statusMatch = state.activeStatuses.has(n.status);
+        // Roadmap nodes use 'ROADMAP' as virtual status for filtering
+        var effectiveStatus = n.category === 'ROADMAP' ? 'ROADMAP' : n.status;
+        var statusMatch = state.activeStatuses.has(effectiveStatus);
         var searchMatch = !query || n.label.toLowerCase().indexOf(query) !== -1
                           || (n.description && n.description.toLowerCase().indexOf(query) !== -1);
         var notHidden = !state.hiddenNodes.has(n.id);

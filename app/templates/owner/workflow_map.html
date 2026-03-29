@@ -20,6 +20,7 @@
             <div class="pwm-stat-pill pwm-stat-pill--restricted"><span class="pwm-dot" style="background:var(--pwm-gold)"></span> Restricted <span id="pwm-count-restricted">0</span></div>
             <div class="pwm-stat-pill pwm-stat-pill--inactive"><span class="pwm-dot" style="background:var(--pwm-grey)"></span> Inactive <span id="pwm-count-inactive">0</span></div>
             <div class="pwm-stat-pill pwm-stat-pill--planned"><span class="pwm-dot" style="background:var(--pwm-sage)"></span> Planned <span id="pwm-count-planned">0</span></div>
+            <div class="pwm-stat-pill" style="color:#3B82F6;border-color:rgba(59,130,246,0.3)"><span class="pwm-dot" style="background:#3B82F6"></span> Roadmap <span id="pwm-count-roadmap">0</span></div>
             <div class="pwm-stat-pill pwm-stat-pill--deprecated"><span class="pwm-dot" style="background:var(--pwm-red)"></span> Deprecated <span id="pwm-count-deprecated">0</span></div>
         </div>
         <div style="display:flex;align-items:center;gap:12px">
@@ -58,6 +59,7 @@
                 <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="RESTRICTED" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-gold)"></span> Restricted</label>
                 <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="INACTIVE" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-grey)"></span> Inactive</label>
                 <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="PLANNED" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-sage)"></span> Planned</label>
+                <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="ROADMAP" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:#3B82F6"></span> Roadmap</label>
                 <label class="pwm-checkbox-row"><input type="checkbox" checked data-status="DEPRECATED" onchange="PWM.filterStatus()"/> <span class="pwm-dot" style="background:var(--pwm-red)"></span> Deprecated</label>
             </div>
 
