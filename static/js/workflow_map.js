@@ -30,7 +30,7 @@ var CATEGORY_COLOURS = {
 };
 
 var TIER_COLOURS = {
-    Arch:   '#FF4757',
+    Arch:   '#4A90D9',
     Domain: '#FF6B6B',
     Ops:    '#FECA57',
     Task:   '#48DBFB',
