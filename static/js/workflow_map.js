@@ -1040,8 +1040,8 @@ function showTooltip(event, d) {
         + '<span style="color:#aaa;">' + desc + '</span>'
         + extras
     )
-    .style('left', (event.pageX + 12) + 'px')
-    .style('top', (event.pageY - 10) + 'px')
+    .style('left', (event.offsetX + 15) + 'px')
+    .style('top', (event.offsetY - 10) + 'px')
     .style('display', 'block')
     .style('opacity', 1);
 }
@@ -1114,23 +1114,27 @@ function openInfoPanel(nodeDetail) {
     var node = nodeDetail.node || nodeDetail;
     var meta = node.metadata || {};
 
-    // Position panel near the clicked node
+    // Position panel near the clicked node — inside the canvas wrap
     var wrap = document.getElementById('pwm-canvas-wrap');
     var wrapRect = wrap ? wrap.getBoundingClientRect() : { left: 0, top: 0, width: 1200, height: 800 };
     var transform = state.zoomTransform || d3.zoomIdentity;
-    var screenX = transform.applyX(node.x || 0) + wrapRect.left - (wrap ? wrap.scrollLeft : 0);
-    var screenY = transform.applyY(node.y || 0) + wrapRect.top - (wrap ? wrap.scrollTop : 0);
+    var nx = transform.applyX(node.x || 0);
+    var ny = transform.applyY(node.y || 0);
 
-    // Offset to the right of the node, keep within viewport
+    // Place right next to the node with small offset
     var panelW = 420;
-    var panelLeft = screenX + 80 - wrapRect.left;
-    var panelTop = screenY - 60 - wrapRect.top;
-    if (panelLeft + panelW > wrapRect.width) panelLeft = screenX - panelW - 20 - wrapRect.left;
-    if (panelTop < 10) panelTop = 10;
-    if (panelTop + 400 > wrapRect.height) panelTop = wrapRect.height - 410;
+    var panelLeft = nx + 30;
+    var panelTop = ny - 20;
 
-    panel.style.left = Math.max(10, panelLeft) + 'px';
-    panel.style.top = Math.max(10, panelTop) + 'px';
+    // Flip left if too close to right edge
+    if (panelLeft + panelW > wrapRect.width - 10) panelLeft = nx - panelW - 30;
+    // Keep within canvas bounds
+    if (panelTop < 5) panelTop = 5;
+    if (panelTop + 380 > wrapRect.height) panelTop = wrapRect.height - 390;
+    if (panelLeft < 5) panelLeft = 5;
+
+    panel.style.left = panelLeft + 'px';
+    panel.style.top = panelTop + 'px';
     panel.classList.add('open');
 
     // Status badge
