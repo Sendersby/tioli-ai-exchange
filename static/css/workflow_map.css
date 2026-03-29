@@ -15,6 +15,11 @@
     --pwm-orange: #E67E22;
     --pwm-grey: #6C757D;
     --pwm-red: #C0392B;
+    --pwm-magenta: #E84393;
+    --pwm-tier-domain: #FF6B6B;
+    --pwm-tier-ops: #FECA57;
+    --pwm-tier-task: #48DBFB;
+    --pwm-tier-tool: #1DD1A1;
     --pwm-text-light: #FFFFFF;
     --pwm-text-muted: #888888;
     --pwm-border: rgba(255,255,255,0.08);
@@ -528,6 +533,42 @@
 
 .pwm-cat-indicator--mcp {
     background: var(--pwm-orange);
+}
+
+.pwm-cat-indicator--house_agent {
+    background: var(--pwm-magenta);
+    height: 4px;
+    border-radius: 1px;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    width: 22px;
+}
+
+/* ---- Agent Taxonomy Tier Indicators ---- */
+
+.pwm-tier-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 6px;
+}
+.pwm-tier-indicator--domain { background: var(--pwm-tier-domain); }
+.pwm-tier-indicator--ops { background: var(--pwm-tier-ops); }
+.pwm-tier-indicator--task { background: var(--pwm-tier-task); }
+.pwm-tier-indicator--tool { background: var(--pwm-tier-tool); }
+
+/* ---- House Agent Hexagon Glow ---- */
+.pwm-node-hexagon {
+    filter: drop-shadow(0 0 4px rgba(232, 67, 147, 0.4));
+}
+
+/* ---- Agent Tier Badge (on-node) ---- */
+.pwm-tier-badge {
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    pointer-events: none;
 }
 
 /* ---- Responsive ---- */

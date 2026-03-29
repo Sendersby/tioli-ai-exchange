@@ -25,8 +25,18 @@ var CATEGORY_COLOURS = {
     NAVIGATION:    '#AAAAAA',
     API:           '#9B59B6',
     MCP:           '#E67E22',
+    HOUSE_AGENT:   '#E84393',
     ROADMAP:       '#3B82F6'
 };
+
+var TIER_COLOURS = {
+    Domain: '#FF6B6B',
+    Ops:    '#FECA57',
+    Task:   '#48DBFB',
+    Tool:   '#1DD1A1'
+};
+
+var ALL_TIERS = ['Domain', 'Ops', 'Task', 'Tool'];
 
 var NODE_SIZES = {
     PAGE:        { width: 120, height: 36 },
@@ -104,7 +114,7 @@ var SIM_TICKS       = 300;
 var POLL_INTERVAL   = 60000;
 var TOOLTIP_DELAY   = 400;
 
-var ALL_CATEGORIES = ['REGISTRATION', 'PAYMENT', 'COMPLIANCE', 'AGENT_SERVICE', 'NAVIGATION', 'API', 'MCP', 'ROADMAP'];
+var ALL_CATEGORIES = ['REGISTRATION', 'PAYMENT', 'COMPLIANCE', 'AGENT_SERVICE', 'NAVIGATION', 'API', 'MCP', 'HOUSE_AGENT', 'ROADMAP'];
 var ALL_STATUSES   = ['ACTIVE', 'RESTRICTED', 'INACTIVE', 'PLANNED', 'ROADMAP', 'DEPRECATED'];
 
 
@@ -121,6 +131,7 @@ var state = {
     showHeatmap:      false,
     searchQuery:      '',
     criticalPathsOnly: false,
+    activeTiers:      new Set(ALL_TIERS),
     zoomTransform:    null,
     simulation:       null,
     tooltipTimer:     null,
@@ -338,6 +349,7 @@ function renderGraph(data) {
         var dash   = '';
         if (d.flow_type === 'COMPLIANCE') dash = '6,3';
         else if (d.flow_type === 'NAVIGATION') dash = '2,4';
+        else if (d.flow_type === 'HOUSE_AGENT') dash = '8,3,2,3';
 
         el.attr('stroke', colour)
           .attr('stroke-width', width)
@@ -372,11 +384,19 @@ function renderGraph(data) {
             .on('end', onDragEnd)
         );
 
-    // Background rect
-    nodeEnter.append('rect')
-        .attr('class', 'pwm-node-rect')
-        .attr('rx', 6)
-        .attr('ry', 6);
+    // Background shape — hexagon for house agents, rect for everything else
+    nodeEnter.each(function (d) {
+        var g = d3.select(this);
+        if (d.category === 'HOUSE_AGENT') {
+            g.append('path')
+                .attr('class', 'pwm-node-rect pwm-node-hexagon');
+        } else {
+            g.append('rect')
+                .attr('class', 'pwm-node-rect')
+                .attr('rx', 6)
+                .attr('ry', 6);
+        }
+    });
 
     // Status dot
     nodeEnter.append('circle')
@@ -398,30 +418,19 @@ function renderGraph(data) {
     nodeMerge.each(function (d) {
         var g    = d3.select(this);
         var size = getNodeSize(d.node_type);
-        // Roadmap nodes use blue instead of status colour
-        var sCol = d.category === 'ROADMAP' ? '#3B82F6' : getStatusColour(d.status);
+        var isHouseAgent = d.category === 'HOUSE_AGENT';
+        // Roadmap nodes use blue, house agents use magenta, else status colour
+        var sCol = d.category === 'ROADMAP' ? '#3B82F6'
+                 : isHouseAgent ? '#E84393'
+                 : getStatusColour(d.status);
         var isDimmed = (d.status === 'INACTIVE' || (d.status === 'PLANNED' && d.category !== 'ROADMAP'));
         var isDeprecated = (d.status === 'DEPRECATED');
 
-        // Rect
-        g.select('.pwm-node-rect')
-            .attr('width', size.width)
-            .attr('height', size.height)
-            .attr('x', -size.width / 2)
-            .attr('y', -size.height / 2)
-            .attr('fill', sCol)
-            .attr('fill-opacity', isDimmed ? 0.35 : 0.85)
-            .attr('stroke', sCol)
-            .attr('stroke-width', 1.5)
-            .attr('stroke-dasharray', isDimmed ? '4,2' : 'none');
-
-        // Status dot (left edge)
-        g.select('.pwm-node-dot')
-            .attr('cx', -size.width / 2 + 8)
-            .attr('cy', 0)
-            .attr('fill', sCol)
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 0.5);
+        // House agent tier colour tint
+        var tierCol = null;
+        if (isHouseAgent && d.metadata && d.metadata.hierarchy_tier) {
+            tierCol = TIER_COLOURS[d.metadata.hierarchy_tier] || null;
+        }
 
         // Label — wrap into multiple lines
         var maxCharsPerLine = Math.floor((size.width - 20) / 6);
@@ -432,14 +441,48 @@ function renderGraph(data) {
 
         var lineHeight = 12;
         var totalHeight = lines.length * lineHeight;
-
-        // Resize rect to fit wrapped text
         var newHeight = Math.max(size.height, totalHeight + 14);
-        g.select('.pwm-node-rect')
-            .attr('height', newHeight)
-            .attr('y', -newHeight / 2);
+
+        // Store computed height for enrichment lookups
+        d._computedHeight = newHeight;
+
+        if (isHouseAgent) {
+            // Hexagon path
+            var hw = size.width / 2;
+            var hh = newHeight / 2;
+            g.select('.pwm-node-rect')
+                .attr('d', hexagonPath(hw, hh))
+                .attr('fill', sCol)
+                .attr('fill-opacity', isDimmed ? 0.35 : 0.9)
+                .attr('stroke', tierCol || sCol)
+                .attr('stroke-width', 2)
+                .attr('stroke-dasharray', isDimmed ? '4,2' : 'none');
+        } else {
+            // Standard rect
+            g.select('.pwm-node-rect')
+                .attr('width', size.width)
+                .attr('height', size.height)
+                .attr('x', -size.width / 2)
+                .attr('y', -size.height / 2)
+                .attr('fill', sCol)
+                .attr('fill-opacity', isDimmed ? 0.35 : 0.85)
+                .attr('stroke', sCol)
+                .attr('stroke-width', 1.5)
+                .attr('stroke-dasharray', isDimmed ? '4,2' : 'none');
+
+            // Resize rect to fit wrapped text
+            g.select('.pwm-node-rect')
+                .attr('height', newHeight)
+                .attr('y', -newHeight / 2);
+        }
+
+        // Status dot (left edge)
         g.select('.pwm-node-dot')
-            .attr('cy', 0);
+            .attr('cx', -size.width / 2 + 8)
+            .attr('cy', 0)
+            .attr('fill', isHouseAgent ? (tierCol || sCol) : sCol)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 0.5);
 
         // Clear old tspans and rebuild
         var labelEl = g.select('.pwm-node-label');
@@ -455,6 +498,31 @@ function renderGraph(data) {
                 .attr('dy', i === 0 ? startY : lineHeight)
                 .text(line);
         });
+
+        // Tier badge for house agents (bottom-right)
+        g.selectAll('.pwm-tier-tag').remove();
+        if (isHouseAgent && d.metadata && d.metadata.hierarchy_tier) {
+            var tier = d.metadata.hierarchy_tier;
+            var tc = TIER_COLOURS[tier] || '#E84393';
+            var badgeW = tier.length * 5.5 + 8;
+            g.append('rect')
+                .attr('class', 'pwm-tier-tag')
+                .attr('x', size.width / 2 - badgeW - 2)
+                .attr('y', newHeight / 2 - 2)
+                .attr('width', badgeW)
+                .attr('height', 12)
+                .attr('rx', 2)
+                .attr('fill', tc)
+                .attr('fill-opacity', 0.9)
+                .attr('pointer-events', 'none');
+            g.append('text')
+                .attr('class', 'pwm-tier-tag pwm-tier-badge')
+                .attr('x', size.width / 2 - badgeW / 2 - 2)
+                .attr('y', newHeight / 2 + 8)
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#0A1520')
+                .text(tier.toUpperCase());
+        }
     });
 
     // Store references for simulation
@@ -485,7 +553,14 @@ function applyFilters() {
         var searchMatch = !query || n.label.toLowerCase().indexOf(query) !== -1
                           || (n.description && n.description.toLowerCase().indexOf(query) !== -1);
         var notHidden = !state.hiddenNodes.has(n.id);
-        if (catMatch && statusMatch && searchMatch && notHidden) {
+
+        // Tier filter for house agents
+        var tierMatch = true;
+        if (n.category === 'HOUSE_AGENT' && n.metadata && n.metadata.hierarchy_tier) {
+            tierMatch = state.activeTiers.has(n.metadata.hierarchy_tier);
+        }
+
+        if (catMatch && statusMatch && searchMatch && notHidden && tierMatch) {
             visibleNodeIds.add(n.id);
         }
     });
@@ -791,7 +866,7 @@ function applyEnrichment() {
         if (!e) return;
 
         var size = getNodeSize(d.node_type);
-        var rectH = parseFloat(g.select('.pwm-node-rect').attr('height')) || size.height;
+        var rectH = d._computedHeight || parseFloat(g.select('.pwm-node-rect').attr('height')) || size.height;
 
         // Remove old enrichment elements
         g.selectAll('.pwm-enrich').remove();
@@ -1024,8 +1099,21 @@ function showTooltip(event, d) {
         + getStatusColour(d.status) + ';margin-right:4px;"></span>';
     var desc = d.description ? d.description.split('.')[0] + '.' : '';
 
+    // House agent metadata for tooltip
+    var houseExtras = '';
+    if (d.category === 'HOUSE_AGENT' && d.metadata) {
+        var m = d.metadata;
+        if (m.hierarchy_tier) {
+            var tc = TIER_COLOURS[m.hierarchy_tier] || '#E84393';
+            houseExtras += '<br><span style="color:' + tc + ';font-weight:600">&#9670; ' + m.hierarchy_tier + ' Agent</span>';
+        }
+        if (m.agent_type) houseExtras += '<br>Type: <span style="color:#E84393">' + m.agent_type + '</span>';
+        if (m.llm_platform) houseExtras += '<br>Platform: ' + m.llm_platform;
+        if (m.service_price) houseExtras += '<br>Price: ' + m.service_price + ' AGENTIS';
+    }
+
     // Enrichment extras for tooltip
-    var extras = '';
+    var extras = houseExtras;
     if (state.enrichment && state.enrichment.nodes && state.enrichment.nodes[d.id]) {
         var e = state.enrichment.nodes[d.id];
         if (e.health && e.health !== 'unknown') {
@@ -1174,6 +1262,32 @@ function openInfoPanel(nodeDetail) {
         rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Module</span><span class="pwm-dv">' + (meta.module || '-') + '</span></div>';
         if (node.url_path) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">URL</span><span class="pwm-dv" style="color:var(--pwm-teal)">' + node.url_path + '</span></div>';
         if (node.api_endpoint) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">API</span><span class="pwm-dv" style="font-family:monospace;font-size:10px">' + node.api_endpoint + '</span></div>';
+
+        // House agent extended details
+        if (node.category === 'HOUSE_AGENT' && meta) {
+            rows += '<div style="margin-top:8px;border-top:1px solid rgba(232,67,147,0.3);padding-top:8px">';
+            rows += '<div style="font-size:10px;font-weight:700;color:#E84393;letter-spacing:1px;margin-bottom:6px">&#11042; HOUSE AGENT DETAILS</div>';
+            if (meta.hierarchy_tier) {
+                var tc = TIER_COLOURS[meta.hierarchy_tier] || '#E84393';
+                rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Hierarchy Tier</span><span class="pwm-dv" style="color:' + tc + ';font-weight:600">' + meta.hierarchy_tier + '_Agent</span></div>';
+            }
+            if (meta.agent_type) {
+                var typeIcon = meta.agent_type === 'LLM' ? '&#129302;' : meta.agent_type === 'Deterministic' ? '&#9881;' : meta.agent_type === 'Event-driven' ? '&#9889;' : '&#128736;';
+                rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Agent Type</span><span class="pwm-dv">' + typeIcon + ' ' + meta.agent_type + '</span></div>';
+            }
+            if (meta.llm_platform) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">LLM Platform</span><span class="pwm-dv" style="color:#E84393">' + meta.llm_platform + '</span></div>';
+            if (meta.service_price) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Service Price</span><span class="pwm-dv" style="color:var(--pwm-gold)">' + meta.service_price + ' AGENTIS</span></div>';
+            if (meta.key_skills && meta.key_skills.length > 0) {
+                rows += '<div class="pwm-info-detail-row" style="flex-direction:column;align-items:flex-start"><span class="pwm-dl" style="margin-bottom:4px">Key Skills</span>';
+                rows += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+                meta.key_skills.forEach(function (skill) {
+                    rows += '<span style="background:rgba(232,67,147,0.15);color:#E84393;padding:2px 6px;border-radius:8px;font-size:9px;border:1px solid rgba(232,67,147,0.3)">' + skill + '</span>';
+                });
+                rows += '</div></div>';
+            }
+            if (meta.controls) rows += '<div class="pwm-info-detail-row"><span class="pwm-dl">Controls / Serves</span><span class="pwm-dv" style="color:var(--pwm-text-muted);font-size:10px">' + meta.controls + '</span></div>';
+            rows += '</div>';
+        }
 
         // Enrichment data
         var enr = state.enrichment && state.enrichment.nodes ? state.enrichment.nodes[node.id] : null;
@@ -1457,6 +1571,30 @@ function toggleCriticalPaths(el) {
     applyFilters();
 }
 
+function toggleTier(el) {
+    var tier = el.dataset.tier;
+    if (!tier) return;
+    el.classList.toggle('active');
+    if (state.activeTiers.has(tier)) {
+        state.activeTiers.delete(tier);
+    } else {
+        state.activeTiers.add(tier);
+    }
+    applyFilters();
+}
+
+function toggleAllTiers(show) {
+    state.activeTiers.clear();
+    if (show) {
+        ALL_TIERS.forEach(function (t) { state.activeTiers.add(t); });
+    }
+    document.querySelectorAll('#pwm-taxonomy-toggles .pwm-toggle').forEach(function (el) {
+        if (show) el.classList.add('active');
+        else el.classList.remove('active');
+    });
+    applyFilters();
+}
+
 function resetView() {
     if (!svg || !zoomBehaviour) return;
     svg.transition().duration(500)
@@ -1654,6 +1792,18 @@ function getNodeSize(nodeType) {
     return NODE_SIZES[nodeType] || NODE_SIZES.PAGE;
 }
 
+function hexagonPath(hw, hh) {
+    // Flat-top hexagon: hw = half-width, hh = half-height
+    var indent = hw * 0.28;
+    return 'M' + (-hw) + ',0'
+        + ' L' + (-hw + indent) + ',' + (-hh)
+        + ' L' + (hw - indent) + ',' + (-hh)
+        + ' L' + hw + ',0'
+        + ' L' + (hw - indent) + ',' + hh
+        + ' L' + (-hw + indent) + ',' + hh
+        + ' Z';
+}
+
 function truncateLabel(text, maxLen) {
     if (!text) return '';
     maxLen = maxLen || 16;
@@ -1686,6 +1836,14 @@ PWM.toggleCriticalPaths = function (el) {
 
 PWM.toggleNode = function (el) {
     toggleNode(el);
+};
+
+PWM.toggleTier = function (el) {
+    toggleTier(el);
+};
+
+PWM.toggleAllTiers = function (show) {
+    toggleAllTiers(show);
 };
 
 PWM.closeInfoPanel = function () {

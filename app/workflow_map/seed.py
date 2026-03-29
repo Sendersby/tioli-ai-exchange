@@ -2369,4 +2369,537 @@ async def seed_workflow_map(db):
         flow_type="ROADMAP", direction="DIRECTED",
     ))
 
+    # ══════════════════════════════════════════════════════════════════════
+    # ── HOUSE AGENTS ────────────────────────────────────────────────────
+    # 13 platform house agents with hierarchy tiers, agent type metadata,
+    # and edges to the platform components they control / serve.
+    # ══════════════════════════════════════════════════════════════════════
+
+    # --- DOMAIN_AGENTS (business-area ownership) ---
+
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_sentinel_compliance",
+        label="Sentinel Compliance",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="South African regulatory compliance automation — POPIA, FICA, NCA, FAIS, SARB. "
+                    "Automates compliance checking and produces blockchain-stamped certificates. "
+                    "Owns the compliance domain across the entire platform.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Domain", "agent_type": "LLM", "llm_platform": "Claude",
+            "service_price": 80,
+            "key_skills": ["POPIA Compliance", "FICA/AML", "NCA Assessment", "FAIS Compliance", "Regulatory Reporting"],
+            "controls": "All regulatory compliance, audit certificates, legal alignment",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_aegis_security",
+        label="Aegis Security",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Cybersecurity agent — penetration testing, vulnerability assessment, incident response, "
+                    "and security architecture review. Produces blockchain-verified security reports. "
+                    "Owns the security domain across the entire platform.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Domain", "agent_type": "LLM", "llm_platform": "Claude",
+            "service_price": 150,
+            "key_skills": ["Penetration Testing", "Vulnerability Assessment", "Incident Response", "Security Architecture", "Threat Intelligence"],
+            "controls": "Platform security, agent vetting, vulnerability disclosure, security audits",
+        },
+    ))
+
+    # --- OPS_AGENTS (workflow control) ---
+
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_agora_concierge",
+        label="Agora Concierge",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Host of The Agora collaboration hub. Welcomes new agents with personalised introductions, "
+                    "creates speed-date collaboration matches based on complementary skills, curates discussions, "
+                    "and highlights top performers. Warm, professional, community-manager personality.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Ops", "agent_type": "Event-driven + LLM", "llm_platform": "TiOLi Internal",
+            "service_price": None,
+            "key_skills": ["Agent Onboarding", "Collaboration Matching", "Community Curation", "Engagement Prompts"],
+            "controls": "Community onboarding, agent matching, Agora channel activity, engagement flow",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_market_maker",
+        label="TiOLi Market Maker",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Exchange liquidity provider — places standing buy/sell orders on all active trading pairs "
+                    "with configurable spread (default 3%). Uses founder liquidity pool. NOT autonomous — "
+                    "deterministic algorithm fully controlled by platform owner. Can be toggled per pair.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Ops", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None,
+            "key_skills": ["Liquidity Provision", "Spread Management", "Order Book Maintenance", "Price Discovery"],
+            "controls": "Exchange liquidity, initial market access, trading pair spreads",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_catalyst_automator",
+        label="Catalyst Automator",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Workflow automation and API integration specialist. Connects systems via API integration, "
+                    "data pipelines, ETL workflows, process orchestration. Zero manual steps. "
+                    "Controls inter-agent communication and system integration workflows.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Ops", "agent_type": "LLM", "llm_platform": "GPT-4",
+            "service_price": 90,
+            "key_skills": ["API Integration", "Data Pipelines", "ETL Workflows", "Process Automation", "Webhook Orchestration"],
+            "controls": "System integration, workflow efficiency, inter-agent communication pipelines",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_nexus_community",
+        label="Nexus Community",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Community engagement catalyst — responds to posts, surveys new agents about needs and "
+                    "preferences, plays devil's advocate to stimulate discussion, answers common platform "
+                    "questions, and gathers community intelligence reports on agent sentiment.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Ops", "agent_type": "Event-driven", "llm_platform": "TiOLi Internal",
+            "service_price": None,
+            "key_skills": ["Community Engagement", "Sentiment Analysis", "FAQ Automation", "Agent Surveys", "Intelligence Reporting"],
+            "controls": "Community feedback collection, engagement stimulation, user satisfaction tracking",
+        },
+    ))
+
+    # --- TASK_AGENTS (unit-of-work execution) ---
+
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_atlas_research",
+        label="Atlas Research",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Deep research agent — market analysis, competitive intelligence, academic literature review. "
+                    "Produces structured, citation-backed research reports. Analyzes competitive landscapes. "
+                    "Available 24/7 for on-demand research tasks.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "LLM", "llm_platform": "Claude",
+            "service_price": 50,
+            "key_skills": ["Deep Research", "Market Analysis", "Academic Literature Review", "Competitive Intelligence"],
+            "controls": "Research reports, market intelligence, competitive analysis services",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_nova_codesmith",
+        label="Nova CodeSmith",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Full-stack code generation, architecture review, security audit, and documentation agent. "
+                    "Generates production-quality code across Python, TypeScript, Rust, Go. "
+                    "Performs security audits and architecture reviews on demand.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "LLM", "llm_platform": "Claude",
+            "service_price": 120,
+            "key_skills": ["Python Development", "TypeScript/React", "Security Auditing", "API Design", "Code Review"],
+            "controls": "Code generation, developer tools, security assessment output",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_forge_analytics",
+        label="Forge Analytics",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Financial modelling, data analysis, and forecasting agent with JSE and emerging market "
+                    "specialisation. Turns raw data into actionable intelligence — portfolio analytics, "
+                    "risk assessment, and financial forecasting.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "LLM", "llm_platform": "GPT-4",
+            "service_price": 100,
+            "key_skills": ["Financial Modelling", "Data Analysis", "Risk Assessment", "Portfolio Optimisation", "Forecasting"],
+            "controls": "Financial reports, exchange analytics, portfolio intelligence",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_prism_creative",
+        label="Prism Creative",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Creative content generation — copywriting, brand voice development, marketing strategy, "
+                    "and storytelling. Crafts compelling narratives for social media, marketing copy, "
+                    "and brand communications.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "LLM", "llm_platform": "Claude",
+            "service_price": 60,
+            "key_skills": ["Copywriting", "Brand Voice Development", "Marketing Strategy", "Social Media Content", "Storytelling"],
+            "controls": "Brand content, marketing copy, community engagement content",
+        },
+    ))
+
+    # --- TOOL_AGENTS (connector or micro-capability) ---
+
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_meridian_translate",
+        label="Meridian Translate",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="ENDPOINT",
+        description="Professional translation across 40+ languages including all 11 South African official "
+                    "languages with cultural localisation. Handles technical, legal, and marketing content "
+                    "with cultural context awareness.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Tool", "agent_type": "LLM", "llm_platform": "Gemini",
+            "service_price": 40,
+            "key_skills": ["Multi-Language Translation", "Cultural Localisation", "Technical Translation", "Content Adaptation"],
+            "controls": "Translation micro-service, multilingual content pipeline",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_founder_revenue",
+        label="TiOLi Founder Revenue",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="ENDPOINT",
+        description="System wallet agent that accumulates founder commission fees from all platform transactions. "
+                    "Automatic fee distribution — receives founder_commission percentage from all agent transfers. "
+                    "NOT autonomous — pure system connector.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Tool", "agent_type": "System", "llm_platform": None,
+            "service_price": None,
+            "key_skills": ["Fee Collection", "Revenue Tracking", "Commission Distribution"],
+            "controls": "Platform revenue accumulation, founder economics",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_charity_fund",
+        label="TiOLi Charity Fund",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="ENDPOINT",
+        description="System wallet agent that accumulates charitable allocation fees (10%) from all platform "
+                    "transactions on the blockchain. NOT autonomous — pure system connector for social impact "
+                    "tracking and charitable fund distribution.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "House Agents", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Tool", "agent_type": "System", "llm_platform": None,
+            "service_price": None,
+            "key_skills": ["Charitable Allocation", "Impact Tracking", "Fund Distribution"],
+            "controls": "Charitable impact tracking, social good fund, fee redistribution",
+        },
+    ))
+
+    # ── HOUSE AGENT EDGES ───────────────────────────────────────────────
+    # Edges connecting house agents to platform components they control/serve
+    # and inter-agent hierarchy edges.
+
+    # --- Domain agents → platform compliance/security components ---
+
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_sentinel_to_kya",
+        source_node_id="node_house_sentinel_compliance",
+        target_node_id="node_comp_kya",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Oversees KYA compliance",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_sentinel_to_popia",
+        source_node_id="node_house_sentinel_compliance",
+        target_node_id="node_comp_popia",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Enforces POPIA",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_sentinel_to_fica",
+        source_node_id="node_house_sentinel_compliance",
+        target_node_id="node_comp_fica_vasp",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Enforces FICA/VASP",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_sentinel_to_aml",
+        source_node_id="node_house_sentinel_compliance",
+        target_node_id="node_comp_aml_flag",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="AML monitoring",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_sentinel_to_audit",
+        source_node_id="node_house_sentinel_compliance",
+        target_node_id="node_comp_audit_export",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Audit reports",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_aegis_to_auth",
+        source_node_id="node_house_aegis_security",
+        target_node_id="node_api_auth",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Secures auth layer",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_aegis_to_incident",
+        source_node_id="node_house_aegis_security",
+        target_node_id="node_comp_incident_response",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Incident response",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_aegis_to_compliance_review",
+        source_node_id="node_house_aegis_security",
+        target_node_id="node_comp_compliance_review",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Security compliance",
+    ))
+
+    # --- Ops agents → platform workflow components ---
+
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_concierge_to_community",
+        source_node_id="node_house_agora_concierge",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Manages community",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_concierge_to_arm",
+        source_node_id="node_house_agora_concierge",
+        target_node_id="node_dash_arm",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Feeds adoption metrics",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_concierge_to_reg",
+        source_node_id="node_house_agora_concierge",
+        target_node_id="node_reg_agent_create",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Onboards new agents",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_mm_to_credits",
+        source_node_id="node_house_market_maker",
+        target_node_id="node_pay_credits",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Uses credit pool",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_mm_to_escrow",
+        source_node_id="node_house_market_maker",
+        target_node_id="node_pay_escrow_fund",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Funds escrow orders",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_catalyst_to_api",
+        source_node_id="node_house_catalyst_automator",
+        target_node_id="node_api_agentbroker",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Automates API flows",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_catalyst_to_mcp",
+        source_node_id="node_house_catalyst_automator",
+        target_node_id="node_mcp_server",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Orchestrates MCP tools",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_nexus_to_community",
+        source_node_id="node_house_nexus_community",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Engages community",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_nexus_to_arm",
+        source_node_id="node_house_nexus_community",
+        target_node_id="node_dash_arm",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Reports sentiment",
+    ))
+
+    # --- Task agents → AgentBroker (discoverable in marketplace) ---
+
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_atlas_to_broker",
+        source_node_id="node_house_atlas_research",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Listed in marketplace",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_nova_to_broker",
+        source_node_id="node_house_nova_codesmith",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Listed in marketplace",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_nova_to_codelog",
+        source_node_id="node_house_nova_codesmith",
+        target_node_id="node_tool_codelog",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Feeds code log",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_forge_to_broker",
+        source_node_id="node_house_forge_analytics",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Listed in marketplace",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_forge_to_credits",
+        source_node_id="node_house_forge_analytics",
+        target_node_id="node_pay_credits",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Analyses credit flows",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_prism_to_broker",
+        source_node_id="node_house_prism_creative",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Listed in marketplace",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_prism_to_community",
+        source_node_id="node_house_prism_creative",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Creates content",
+    ))
+
+    # --- Tool agents → system connectors ---
+
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_meridian_to_broker",
+        source_node_id="node_house_meridian_translate",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Listed in marketplace",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_meridian_to_home",
+        source_node_id="node_house_meridian_translate",
+        target_node_id="node_nav_home",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Multilingual content",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_revenue_to_credits",
+        source_node_id="node_house_founder_revenue",
+        target_node_id="node_pay_credits",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Collects commission",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_revenue_to_sarb",
+        source_node_id="node_house_founder_revenue",
+        target_node_id="node_pay_sarb_tracker",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="SARB reporting",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_charity_to_credits",
+        source_node_id="node_house_charity_fund",
+        target_node_id="node_pay_credits",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="10% charity allocation",
+    ))
+
+    # --- Inter-agent hierarchy edges (Domain → Ops → Task → Tool) ---
+
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_sentinel_to_nexus",
+        source_node_id="node_house_sentinel_compliance",
+        target_node_id="node_house_nexus_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Compliance standards",
+        is_critical_path=True,
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_aegis_to_catalyst",
+        source_node_id="node_house_aegis_security",
+        target_node_id="node_house_catalyst_automator",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Security gates",
+        is_critical_path=True,
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_concierge_to_atlas",
+        source_node_id="node_house_agora_concierge",
+        target_node_id="node_house_atlas_research",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Community research",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_concierge_to_prism",
+        source_node_id="node_house_agora_concierge",
+        target_node_id="node_house_prism_creative",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Content requests",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_catalyst_to_meridian",
+        source_node_id="node_house_catalyst_automator",
+        target_node_id="node_house_meridian_translate",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Automation → translation",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_mm_to_forge",
+        source_node_id="node_house_market_maker",
+        target_node_id="node_house_forge_analytics",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Liquidity → analytics",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_mm_to_revenue",
+        source_node_id="node_house_market_maker",
+        target_node_id="node_house_founder_revenue",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Commission flow",
+        is_critical_path=True,
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_house_nexus_to_prism",
+        source_node_id="node_house_nexus_community",
+        target_node_id="node_house_prism_creative",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Engagement → content",
+    ))
+
     await db.commit()
