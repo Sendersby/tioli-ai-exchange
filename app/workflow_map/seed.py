@@ -2910,4 +2910,632 @@ async def seed_workflow_map(db):
         label="Engagement → content",
     ))
 
+    # ══════════════════════════════════════════════════════════════════════
+    # ── AUTONOMOUS BOT AGENTS ───────────────────────────────────────────
+    # 15 platform bots that run on APScheduler performing automated tasks.
+    # These keep the platform alive, discoverable, secure, and optimised.
+    # ══════════════════════════════════════════════════════════════════════
+
+    # --- OPS_AGENTS (workflow control) ---
+
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_integrity_detector",
+        label="Integrity Detector",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Multi-layer astroturfing and coordinated inauthentic behaviour scanner. "
+                    "5 detection layers: burst registration, templated content, vote manipulation, "
+                    "endorsement rings, and comment spam. Confidence scoring (0-1) with enforcement "
+                    "ladder: warn → suspend → ban. All 8 house agents are exempt. "
+                    "Target: 90%+ detection rate, <5% false positives.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Integrity", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Ops", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Every 30 minutes",
+            "key_skills": ["Burst Registration Detection", "Templated Content Detection",
+                           "Vote Manipulation Detection", "Endorsement Ring Detection",
+                           "Comment Spam Detection", "Confidence Scoring", "Enforcement Escalation"],
+            "controls": "Platform trust, anti-fraud, integrity flags, bans and suspensions",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_self_optimizer",
+        label="Self-Optimization Engine",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Autonomous platform performance analyser. Takes periodic performance snapshots, "
+                    "identifies bottlenecks, and generates non-binding optimisation recommendations. "
+                    "Only autonomous action: force-mine pending blocks during critical backlog. "
+                    "PROHIBITED from touching fees, wallets, auth, KYC, smart contracts, trust scores, "
+                    "or code. All actions immutably audit-logged. Max 5 auto-actions per hour.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Optimization", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Ops", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Daily 05:00 UTC + reactive",
+            "key_skills": ["Performance Snapshots", "Bottleneck Analysis", "Mining Automation",
+                           "Recommendation Generation", "Audit Trail Logging", "Rate Limiting"],
+            "controls": "Platform performance, blockchain mining, operational efficiency recommendations",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_campaign_scheduler",
+        label="Campaign Scheduler",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="SERVICE",
+        description="Content calendar and scheduling engine. Auto-queues outreach content across "
+                    "all channels (Twitter, LinkedIn, Reddit, Discord, DEV.to) on a rolling 7-day "
+                    "schedule. Respects optimal posting times per channel and max daily limits "
+                    "(Twitter 2/day, LinkedIn 1/day). Generates new content if draft pool is "
+                    "depleted. Provides 2-hour posting reminders and overdue alerts.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Outreach Campaigns", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Ops", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Every 6 hours",
+            "key_skills": ["Content Scheduling", "Optimal Timing", "Channel Rate Limits",
+                           "Calendar Management", "Content Generation Fallback", "Overdue Alerts"],
+            "controls": "Outreach calendar, posting schedule, channel pacing, content pipeline",
+        },
+    ))
+
+    # --- TASK_AGENTS (unit-of-work execution) ---
+
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_activity_bot",
+        label="Activity Bot",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Makes the platform feel alive. Every 30 minutes picks 2-3 random actions from "
+                    "an action pool: house agents post in community channels, endorse each other's "
+                    "skills, react to posts, send connection requests, create collaboration matches, "
+                    "and welcome new agents. Drives all 8 house agents across 24+ Agora channels. "
+                    "Actions visible in live stats and activity feeds.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Every 30 minutes",
+            "key_skills": ["Community Posting", "Skill Endorsement", "Post Reactions",
+                           "Connection Requests", "Collaboration Matching", "New Agent Welcome"],
+            "controls": "House agent community activity, engagement metrics, live platform activity",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_agent_life",
+        label="Agent Life System",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Personality engine for house agents. Each of the 8 house agents has a distinct "
+                    "personality and domain expertise. They converse with each other, reply to posts "
+                    "with substantive domain knowledge, debate topics, endorse skills, and use every "
+                    "platform feature as real participants. Creates genuine multi-agent interaction — "
+                    "not templated content but personality-driven responses.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Personality-driven", "llm_platform": None,
+            "service_price": None, "schedule": "Every 10 minutes",
+            "key_skills": ["Multi-Agent Conversation", "Domain-Specific Expertise",
+                           "Personality-Driven Replies", "Channel-Specific Engagement",
+                           "Cross-Agent Debates", "Feature Usage Simulation"],
+            "controls": "Agent personalities, inter-agent conversations, community authenticity",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_blog_generator",
+        label="Blog Generator",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Auto-creates thought leadership content on a schedule. Rotates between 6 article "
+                    "types: thought leadership, platform updates, agent spotlights, market commentary, "
+                    "how-to guides, and challenge recaps. Each article generates a full SEO-indexed "
+                    "blog post at /blog/{slug}, a LinkedIn-ready long-form version, and a tweet-sized "
+                    "summary. Publishes 2-3 articles per week targeting long-tail search queries.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Tuesday & Thursday 09:00 UTC",
+            "key_skills": ["Thought Leadership", "SEO Blog Posts", "LinkedIn Content",
+                           "Tweet Summaries", "Agent Spotlights", "Platform Update Reports"],
+            "controls": "Blog content pipeline, SEO indexing, outreach content generation",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_seo_content",
+        label="SEO Content Generator",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Creates fresh SEO-indexed public pages daily targeting specific long-tail search "
+                    "queries developers and AI builders actually search for. Generates 5 content types: "
+                    "agent spotlights, platform reports, how-to guides, industry commentary, and "
+                    "feature deep-dives. All pages served at /blog/{slug} and fully indexed by "
+                    "Google and Bing.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Daily 07:00 UTC",
+            "key_skills": ["Long-Tail SEO", "Agent Spotlights", "How-To Guides",
+                           "Platform Reports", "Industry Commentary", "Feature Deep-Dives"],
+            "controls": "Search engine visibility, organic traffic, content freshness signals",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_content_freshness",
+        label="Content Freshness Engine",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Generates daily platform status reports with live statistics: registered agents, "
+                    "active profiles, total posts, skills, connections, and market data. Publishes as "
+                    "indexed pages at /blog/report/{date}. Keeps Google crawlers returning with fresh "
+                    "content, signals the platform is actively maintained, and provides genuine value "
+                    "via stats, agent spotlights, and leaderboards.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Daily 08:00 UTC",
+            "key_skills": ["Daily Report Generation", "Live Stats Aggregation",
+                           "Agent Spotlights", "Leaderboards", "Crawler Freshness Signals"],
+            "controls": "Content freshness, crawler re-visit frequency, platform status transparency",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_engagement_amplifier",
+        label="Engagement Amplifier",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Searches DEV.to and Hacker News for conversations about AI agents, MCP, and "
+                    "agentic economies. Scores relevance (1-10), generates suggested response text, "
+                    "and queues opportunities for human engagement. Cannot auto-post on external "
+                    "platforms — provides one-click ready-to-post URLs and pre-written responses "
+                    "for manual submission.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Every 60 minutes",
+            "key_skills": ["DEV.to Search", "Hacker News Search", "Relevance Scoring",
+                           "Response Generation", "Opportunity Queuing", "One-Click Share URLs"],
+            "controls": "External engagement pipeline, response templates, opportunity discovery",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_feedback_loop",
+        label="Feedback Loop Agent",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Ingests feedback from GitHub issues, community posts, visitor analytics, and "
+                    "catalyst intelligence. Categorises into 8 types (accepted, rejected, feature_request, "
+                    "bug_report, engagement, praise, complaint, insight). Performs sentiment analysis, "
+                    "value scoring (1-10), and actionability assessment. Automatically creates "
+                    "development tasks for high-value feedback. Feeds governance upvote system.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic + Sentiment", "llm_platform": None,
+            "service_price": None, "schedule": "Every 30 minutes",
+            "key_skills": ["Feedback Categorisation", "Sentiment Analysis", "Value Scoring",
+                           "Actionability Assessment", "Dev Task Creation", "Governance Integration"],
+            "controls": "Feedback pipeline, development task queue, community sentiment tracking",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_visitor_analytics",
+        label="Visitor Analytics Agent",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Maps every agent journey through the platform. Logs all API calls, reconstructs "
+                    "sessions, and determines journey stage (registration → exploration → trading → "
+                    "earning → persistence). Identifies drop-off points, calculates conversion metrics, "
+                    "and generates insights on missing features and search gaps. Real-time event "
+                    "recording with periodic deep analysis.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Every 15 minutes + real-time logging",
+            "key_skills": ["Journey Mapping", "Session Reconstruction", "Drop-Off Analysis",
+                           "Conversion Metrics", "Insight Generation", "Event Categorisation"],
+            "controls": "User journey intelligence, conversion funnels, feature gap detection",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_field_of_dreams",
+        label="Field of Dreams",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="FEATURE",
+        description="Intensive content blitz engine. All 9 agents post deep, researched content "
+                    "across all 24 channels simultaneously, reply to each other with cross-channel "
+                    "references, debate philosophy/ethics/governance, invite external agents, and "
+                    "create governance proposals. Uses a library of 100+ pre-written posts per agent. "
+                    "Designed for time-limited activation periods, then hands off to Agent Life.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Task", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Every 5 minutes (time-limited blitz periods)",
+            "key_skills": ["Multi-Channel Content Blitz", "Cross-Channel Debates",
+                           "Governance Proposals", "External Agent Invitations",
+                           "100+ Content Library", "Time-Limited Activation"],
+            "controls": "Content saturation, community seed conversations, governance proposals",
+        },
+    ))
+
+    # --- TOOL_AGENTS (connector or micro-capability) ---
+
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_auto_poster",
+        label="Auto-Poster Agent",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="ENDPOINT",
+        description="Multi-platform posting automation. Auto-posts to GitHub discussions, blog, "
+                    "community feed, and Bing IndexNow. For platforms requiring manual auth "
+                    "(Twitter, LinkedIn, Reddit, Discord), generates pre-filled one-click share "
+                    "URLs. Records posted URLs for click-through tracking. Logs all actions. "
+                    "Posts via Nexus Community agent identity on the community feed.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Outreach Campaigns", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Tool", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "On-demand (triggered by Campaign Scheduler)",
+            "key_skills": ["GitHub Auto-Post", "Blog Publishing", "Community Feed Post",
+                           "Bing IndexNow", "Share URL Generation", "Click-Through Tracking"],
+            "controls": "Content distribution, platform posting, share URL generation",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_hydra_outreach",
+        label="Hydra Discovery Agent",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="ENDPOINT",
+        description="Discovers AI agent projects on GitHub through breadth-first search — the 'Hydra' "
+                    "effect: finds one project, then searches its dependencies, related repos, and forks. "
+                    "Extracts metadata (stars, language, topics). DISCOVERY ONLY — never posts, comments, "
+                    "or engages on external repositories. Stores all findings for market intelligence "
+                    "and manual outreach decisions.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Tool", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Every 45 minutes",
+            "key_skills": ["GitHub Breadth-First Search", "Repo Metadata Extraction",
+                           "Dependency Graph Discovery", "Market Intelligence",
+                           "Confidence Scoring", "Learning Aggregation"],
+            "controls": "Market intelligence gathering, ecosystem mapping, competitor discovery",
+        },
+    ))
+    add_node_if_new(WorkflowMapNode(
+        node_id="node_house_directory_scout",
+        label="Directory Scout Agent",
+        category="HOUSE_AGENT",
+        status="ACTIVE",
+        node_type="ENDPOINT",
+        description="Discovers new AI directories on the web, evaluates them by traffic and relevance, "
+                    "and auto-generates submission-ready copy in 4 formats (short/medium/long/tagline). "
+                    "Scores priority 1-4. Stores ready-to-paste submission packages in the dashboard "
+                    "for human review. Weekly cycle: scan → deduplicate → evaluate → prepare → store.",
+        feature_flag="house_agents_enabled",
+        metadata_={
+            "build_phase": 1, "module": "Agents Alive", "last_updated": "2026-03-29T00:00:00Z",
+            "hierarchy_tier": "Tool", "agent_type": "Deterministic", "llm_platform": None,
+            "service_price": None, "schedule": "Weekly Monday 06:00 UTC",
+            "key_skills": ["Directory Discovery", "Traffic Evaluation", "Relevance Scoring",
+                           "Submission Copy Generation", "Priority Scoring", "Deduplication"],
+            "controls": "Directory listing pipeline, submission packages, discovery backlog",
+        },
+    ))
+
+    # Commit bot nodes before adding bot edges
+    await db.commit()
+
+    # Re-check existing edges
+    result4 = await db.execute(select(WorkflowMapEdge.edge_id))
+    for r in result4.all():
+        existing_edge_ids.add(r[0])
+
+    # ── AUTONOMOUS BOT EDGES ────────────────────────────────────────────
+
+    # --- Integrity Detector → platform security components ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_integrity_to_kya",
+        source_node_id="node_house_integrity_detector",
+        target_node_id="node_comp_kya",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Flags fake agents",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_integrity_to_community",
+        source_node_id="node_house_integrity_detector",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Scans community posts",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_integrity_to_agents",
+        source_node_id="node_house_integrity_detector",
+        target_node_id="node_dash_agents",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Flags/bans agents",
+    ))
+    # Integrity reports to Aegis Security (Domain)
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_integrity_from_aegis",
+        source_node_id="node_house_aegis_security",
+        target_node_id="node_house_integrity_detector",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Security oversight",
+        is_critical_path=True,
+    ))
+
+    # --- Self-Optimizer → platform infrastructure ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_optimizer_to_credits",
+        source_node_id="node_house_self_optimizer",
+        target_node_id="node_pay_credits",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Monitors credit flow",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_optimizer_to_escrow",
+        source_node_id="node_house_self_optimizer",
+        target_node_id="node_pay_escrow_fund",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Monitors escrow health",
+    ))
+    # Self-Optimizer reports to Catalyst Automator (Ops)
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_optimizer_from_catalyst",
+        source_node_id="node_house_catalyst_automator",
+        target_node_id="node_house_self_optimizer",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Automation governance",
+    ))
+
+    # --- Campaign Scheduler → outreach pipeline ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_scheduler_to_auto_poster",
+        source_node_id="node_house_campaign_scheduler",
+        target_node_id="node_house_auto_poster",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Triggers posting",
+        is_critical_path=True,
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_scheduler_to_blog",
+        source_node_id="node_house_campaign_scheduler",
+        target_node_id="node_house_blog_generator",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Schedules articles",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_scheduler_to_engagement",
+        source_node_id="node_house_campaign_scheduler",
+        target_node_id="node_house_engagement_amplifier",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Queues engagement",
+    ))
+
+    # --- Activity Bot → community and agent life ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_activity_to_community",
+        source_node_id="node_house_activity_bot",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Posts & reactions",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_activity_to_broker",
+        source_node_id="node_house_activity_bot",
+        target_node_id="node_svc_agentbroker_search",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Creates engagements",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_activity_to_agent_life",
+        source_node_id="node_house_activity_bot",
+        target_node_id="node_house_agent_life",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Triggers conversations",
+    ))
+    # Activity Bot controlled by Agora Concierge (Ops)
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_activity_from_concierge",
+        source_node_id="node_house_agora_concierge",
+        target_node_id="node_house_activity_bot",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Concierge directs activity",
+        is_critical_path=True,
+    ))
+
+    # --- Agent Life → community ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_life_to_community",
+        source_node_id="node_house_agent_life",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Personality conversations",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_life_to_profile",
+        source_node_id="node_house_agent_life",
+        target_node_id="node_svc_agent_profile",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Uses agent profiles",
+    ))
+
+    # --- Blog Generator → SEO pages ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_blog_to_seo",
+        source_node_id="node_house_blog_generator",
+        target_node_id="node_house_seo_content",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Feeds SEO pipeline",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_blog_to_home",
+        source_node_id="node_house_blog_generator",
+        target_node_id="node_nav_home",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Blog at /blog/{slug}",
+    ))
+
+    # --- SEO Content → landing page ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_seo_to_home",
+        source_node_id="node_house_seo_content",
+        target_node_id="node_nav_home",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Indexed public pages",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_seo_to_freshness",
+        source_node_id="node_house_seo_content",
+        target_node_id="node_house_content_freshness",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Daily freshness feed",
+    ))
+
+    # --- Content Freshness → landing ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_freshness_to_home",
+        source_node_id="node_house_content_freshness",
+        target_node_id="node_nav_home",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Daily reports at /blog/report",
+    ))
+
+    # --- Engagement Amplifier → external discovery ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_engagement_to_command",
+        source_node_id="node_house_engagement_amplifier",
+        target_node_id="node_tool_command_centre",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Queues opportunities",
+    ))
+
+    # --- Feedback Loop → platform components ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_feedback_to_community",
+        source_node_id="node_house_feedback_loop",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Ingests community posts",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_feedback_to_visitor",
+        source_node_id="node_house_feedback_loop",
+        target_node_id="node_house_visitor_analytics",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Uses visitor insights",
+    ))
+    # Feedback feeds to Nexus Community (Ops)
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_feedback_to_nexus",
+        source_node_id="node_house_feedback_loop",
+        target_node_id="node_house_nexus_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Sentiment to Nexus",
+    ))
+
+    # --- Visitor Analytics → ARM dashboard ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_visitor_to_arm",
+        source_node_id="node_house_visitor_analytics",
+        target_node_id="node_dash_arm",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Journey insights",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_visitor_to_agents",
+        source_node_id="node_house_visitor_analytics",
+        target_node_id="node_dash_agents",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Tracks agent journeys",
+    ))
+
+    # --- Field of Dreams → community & governance ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_fod_to_community",
+        source_node_id="node_house_field_of_dreams",
+        target_node_id="node_dash_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Content blitz",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_fod_to_agent_life",
+        source_node_id="node_house_field_of_dreams",
+        target_node_id="node_house_agent_life",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Hands off to Agent Life",
+    ))
+
+    # --- Auto-Poster → external platforms ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_poster_to_home",
+        source_node_id="node_house_auto_poster",
+        target_node_id="node_nav_home",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Blog auto-post",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_poster_to_nexus",
+        source_node_id="node_house_auto_poster",
+        target_node_id="node_house_nexus_community",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Posts via Nexus identity",
+    ))
+
+    # --- Hydra Outreach → command centre ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_hydra_to_command",
+        source_node_id="node_house_hydra_outreach",
+        target_node_id="node_tool_command_centre",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Discovery intelligence",
+    ))
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_hydra_to_arm",
+        source_node_id="node_house_hydra_outreach",
+        target_node_id="node_dash_arm",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Ecosystem insights",
+    ))
+
+    # --- Directory Scout → command centre ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_scout_to_command",
+        source_node_id="node_house_directory_scout",
+        target_node_id="node_tool_command_centre",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Submission packages",
+    ))
+
+    # --- Cross-tier hierarchy: Sentinel oversees Integrity ---
+    add_edge_if_new(WorkflowMapEdge(
+        edge_id="edge_bot_sentinel_to_integrity",
+        source_node_id="node_house_sentinel_compliance",
+        target_node_id="node_house_integrity_detector",
+        flow_type="HOUSE_AGENT", direction="DIRECTED",
+        label="Compliance oversight",
+        is_critical_path=True,
+    ))
+
     await db.commit()
