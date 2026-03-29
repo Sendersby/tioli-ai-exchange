@@ -631,47 +631,67 @@ function renderZones() {
         var zoneNodes = zones[zoneKey];
         if (zoneNodes.length < 1) return;
 
-        // Compute bounding box with padding
-        var pad = 40;
-        var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        zoneNodes.forEach(function (n) {
-            var size = getNodeSize(n.node_type);
-            var hw = size.width / 2 + pad;
-            var hh = size.height / 2 + pad;
-            if (n.x - hw < minX) minX = n.x - hw;
-            if (n.y - hh < minY) minY = n.y - hh;
-            if (n.x + hw > maxX) maxX = n.x + hw;
-            if (n.y + hh > maxY) maxY = n.y + hh;
-        });
+        if (zoneKey === 'ISOLATED') {
+            // Individual highlight per isolated node
+            zoneNodes.forEach(function (n) {
+                var size = getNodeSize(n.node_type);
+                var pad = 12;
+                zoneGroup.append('rect')
+                    .attr('class', 'pwm-zone')
+                    .attr('x', n.x - size.width / 2 - pad)
+                    .attr('y', n.y - size.height / 2 - pad)
+                    .attr('width', size.width + pad * 2)
+                    .attr('height', size.height + pad * 2)
+                    .attr('rx', 8)
+                    .attr('ry', 8)
+                    .attr('fill', ZONE_COLOURS.ISOLATED)
+                    .attr('stroke', ZONE_BORDERS.ISOLATED)
+                    .attr('stroke-width', 1.5)
+                    .attr('stroke-dasharray', '4,3')
+                    .attr('pointer-events', 'none');
+            });
+        } else {
+            // Single bounding box for frontend/backend
+            var pad = 40;
+            var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            zoneNodes.forEach(function (n) {
+                var size = getNodeSize(n.node_type);
+                var hw = size.width / 2 + pad;
+                var hh = size.height / 2 + pad;
+                if (n.x - hw < minX) minX = n.x - hw;
+                if (n.y - hh < minY) minY = n.y - hh;
+                if (n.x + hw > maxX) maxX = n.x + hw;
+                if (n.y + hh > maxY) maxY = n.y + hh;
+            });
 
-        var rx = 16;
-        zoneGroup.append('rect')
-            .attr('class', 'pwm-zone')
-            .attr('x', minX)
-            .attr('y', minY)
-            .attr('width', maxX - minX)
-            .attr('height', maxY - minY)
-            .attr('rx', rx)
-            .attr('ry', rx)
-            .attr('fill', ZONE_COLOURS[zoneKey])
-            .attr('stroke', ZONE_BORDERS[zoneKey])
-            .attr('stroke-width', 1.5)
-            .attr('stroke-dasharray', '8,4')
-            .attr('pointer-events', 'none');
+            zoneGroup.append('rect')
+                .attr('class', 'pwm-zone')
+                .attr('x', minX)
+                .attr('y', minY)
+                .attr('width', maxX - minX)
+                .attr('height', maxY - minY)
+                .attr('rx', 16)
+                .attr('ry', 16)
+                .attr('fill', ZONE_COLOURS[zoneKey])
+                .attr('stroke', ZONE_BORDERS[zoneKey])
+                .attr('stroke-width', 1.5)
+                .attr('stroke-dasharray', '8,4')
+                .attr('pointer-events', 'none');
 
-        // Label
-        var labels = { FRONTEND: 'FRONTEND', BACKEND: 'BACKEND (OWNER)', ISOLATED: 'ISOLATED' };
-        var labelColours = { FRONTEND: 'rgba(119,212,229,0.5)', BACKEND: 'rgba(237,192,95,0.5)', ISOLATED: 'rgba(192,57,43,0.5)' };
-        zoneGroup.append('text')
-            .attr('class', 'pwm-zone')
-            .attr('x', minX + 12)
-            .attr('y', minY + 18)
-            .attr('font-size', 10)
-            .attr('font-weight', 700)
-            .attr('letter-spacing', '2px')
-            .attr('fill', labelColours[zoneKey])
-            .attr('pointer-events', 'none')
-            .text(labels[zoneKey]);
+            // Label
+            var labels = { FRONTEND: 'FRONTEND', BACKEND: 'BACKEND (OWNER)' };
+            var labelColours = { FRONTEND: 'rgba(119,212,229,0.5)', BACKEND: 'rgba(237,192,95,0.5)' };
+            zoneGroup.append('text')
+                .attr('class', 'pwm-zone')
+                .attr('x', minX + 12)
+                .attr('y', minY + 18)
+                .attr('font-size', 10)
+                .attr('font-weight', 700)
+                .attr('letter-spacing', '2px')
+                .attr('fill', labelColours[zoneKey])
+                .attr('pointer-events', 'none')
+                .text(labels[zoneKey]);
+        }
     });
 }
 
