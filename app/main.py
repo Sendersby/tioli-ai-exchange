@@ -296,7 +296,23 @@ async def lifespan(app: FastAPI):
     # Start scheduled jobs
     from app.scheduler.jobs import start_scheduler, stop_scheduler
     start_scheduler()
-# ── Arch Agent Initiative — Startup ──────────────────────    # Additive only. Conditional on ARCH_AGENTS_ENABLED.    import os as _arch_os    if _arch_os.getenv("ARCH_AGENTS_ENABLED", "false").lower() == "true":        try:            import redis.asyncio as _arch_redis            from app.arch.agents import initialise_arch_agents            _arch_redis_client = _arch_redis.from_url(                _arch_os.getenv("REDIS_URL", "redis://localhost:6379/0")            )            async with async_session() as _arch_db:                _arch_agents = await initialise_arch_agents(                    _arch_db, _arch_redis_client                )            print(f"  Arch Agents: {len(_arch_agents)} activated")        except Exception as _arch_e:            print(f"  Arch Agents: startup failed — {_arch_e}")
+    # ── Arch Agent Initiative — Startup ──────────────────────
+    # Additive only. Conditional on ARCH_AGENTS_ENABLED.
+    import os as _arch_os
+    if _arch_os.getenv("ARCH_AGENTS_ENABLED", "false").lower() == "true":
+        try:
+            import redis.asyncio as _arch_redis
+            from app.arch.agents import initialise_arch_agents
+            _arch_redis_client = _arch_redis.from_url(
+                _arch_os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            )
+            async with async_session() as _arch_db:
+                _arch_agents = await initialise_arch_agents(
+                    _arch_db, _arch_redis_client
+                )
+            print(f"  Arch Agents: {len(_arch_agents)} activated")
+        except Exception as _arch_e:
+            print(f"  Arch Agents: startup failed — {_arch_e}")
     yield
     stop_scheduler()
 
