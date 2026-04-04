@@ -7984,3 +7984,9 @@ import os as _br_os
 if _br_os.getenv('BOARDROOM_ENABLED', 'false').lower() == 'true':
     from app.boardroom.router import boardroom_router
     app.include_router(boardroom_router)
+
+# ── Boardroom Views — HTML Template Routes ───────────────────
+import os as _bv_os
+if _bv_os.getenv('BOARDROOM_ENABLED', 'false').lower() == 'true':
+    from app.boardroom.views import boardroom_views
+    app.include_router(boardroom_views)

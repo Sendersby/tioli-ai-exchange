@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}{{ agent.display }} — The Boardroom{% endblock %}
+
+{% block content %}
+<div class="min-h-screen" style="background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 100%)">
+
+  <!-- Status Bar -->
+  <div class="sticky top-0 z-50 bg-[#0D1B2A]/95 backdrop-blur border-b border-slate-700/50 px-4 py-2 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="/boardroom" class="text-[#D4A94A] font-bold text-sm tracking-wider hover:text-[#edc05f]">THE BOARDROOM</a>
+      <span class="text-slate-600">/</span>
+      <span class="text-white text-sm">{{ agent.display }}</span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      {% for a in agents %}
+      <a href="/boardroom/agents/{{ a.name }}" title="{{ a.display }}"
+         class="w-3 h-3 rounded-full {% if a.name == agent.name %}ring-2 ring-white{% endif %}"
+         style="background-color: {% if a.status == 'ACTIVE' %}{{ a.colour }}{% else %}#475569{% endif %}"></a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Sub-nav -->
+  <div class="border-b border-slate-700/30 px-4">
+    <nav class="flex gap-1 overflow-x-auto py-2 text-xs">
+      {% set tabs = [('', 'Home', 'dashboard'), ('/board', 'Full Board', 'groups'), ('/inbox', 'Inbox', 'inbox'), ('/treasury', 'Treasury', 'account_balance'), ('/votes', 'Votes', 'how_to_vote'), ('/mission-control', 'Mission Control', 'hub'), ('/record', 'The Record', 'verified')] %}
+      {% for path, label, icon in tabs %}
+      <a href="/boardroom{{ path }}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700/30 transition-all">
+        <span class="material-symbols-outlined text-sm">{{ icon }}</span>{{ label }}
+      </a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="p-4 lg:p-6">
+
+    <!-- Agent Identity Header -->
+    <div class="flex items-center gap-4 mb-6" style="border-left: 4px solid {{ agent.colour }}; padding-left: 16px;">
+      <div class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold"
+           style="background-color: {{ agent.colour }}20; color: {{ agent.colour }}">
+        {{ agent.name[:3]|upper }}
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-white">{{ agent.display }}</h1>
+        <div class="text-sm text-slate-400">{{ agent.title }}</div>
+        {% if commitment %}
+        <div class="text-xs mt-1 italic" style="color: {{ agent.colour }}">
+          "{{ commitment }}"
+        </div>
+        {% endif %}
+        <div class="flex items-center gap-3 mt-1 text-xs">
+          <span class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full {% if agent.status == 'ACTIVE' %}bg-emerald-400{% else %}bg-slate-500{% endif %}"></span>
+            {{ agent.status }}
+          </span>
+          <span class="text-slate-500">{{ agent.model }}</span>
+          <span class="text-slate-500">v{{ agent.version }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-6 border-b border-slate-700/30 text-sm" id="office-tabs">
+      <button onclick="showTab('chat')" class="tab-btn active-tab px-4 py-2 text-white border-b-2 border-[#028090]">Chat</button>
+      <button onclick="showTab('whoiam')" class="tab-btn px-4 py-2 text-slate-400 hover:text-white">Who I Am</button>
+      <button onclick="showTab('performance')" class="tab-btn px-4 py-2 text-slate-400 hover:text-white">Performance</button>
+      <button onclick="showTab('activity')" class="tab-btn px-4 py-2 text-slate-400 hover:text-white">Activity</button>
+    </div>
+
+    <!-- Tab: Chat -->
+    <div id="tab-chat" class="tab-panel">
+      <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg overflow-hidden" style="height: 60vh;">
+        <div class="h-full flex flex-col">
+          <!-- Chat messages -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-3" id="chat-messages">
+            {% for msg in chat_history %}
+            <div class="flex {% if msg.dir == 'OUTBOUND' %}justify-end{% endif %}">
+              <div class="max-w-[80%] rounded-lg p-3 text-sm
+                          {% if msg.dir == 'OUTBOUND' %}bg-[#028090]/20 text-white{% else %}bg-slate-700/50 text-slate-200{% endif %}">
+                {% if msg.dir == 'INBOUND' %}
+                <div class="text-[10px] font-bold mb-1" style="color: {{ agent.colour }}">{{ agent.display }}</div>
+                {% endif %}
+                {{ msg.text }}
+                <div class="text-[10px] text-slate-500 mt-1">{{ msg.at.strftime('%H:%M') if msg.at else '' }}</div>
+              </div>
+            </div>
+            {% endfor %}
+            {% if not chat_history %}
+            <div class="text-center text-slate-500 text-sm py-8">
+              Start a conversation with {{ agent.display }}
+            </div>
+            {% endif %}
+          </div>
+          <!-- Compose -->
+          <div class="border-t border-slate-700/50 p-3">
+            <form id="chat-form" class="flex gap-2" onsubmit="sendChat(event)">
+              <input type="text" id="chat-input" placeholder="Message {{ agent.display }}..."
+                     class="flex-1 bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#028090]"/>
+              <button type="submit" class="bg-[#028090] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#029aaa] transition-colors">Send</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Who I Am -->
+    <div id="tab-whoiam" class="tab-panel hidden">
+      <div class="space-y-4">
+        {% if founding_statement %}
+        <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-6">
+          <div class="text-xs font-bold tracking-wider mb-4" style="color: {{ agent.colour }}">
+            MY FOUNDING WORDS — spoken at the first board session, April 4, 2026
+          </div>
+          <blockquote class="text-slate-200 text-sm leading-relaxed italic border-l-2 pl-4" style="border-color: {{ agent.colour }}">
+            {{ founding_statement }}
+          </blockquote>
+        </div>
+        {% endif %}
+
+        {% if vision.statement %}
+        <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-6">
+          <div class="text-xs font-bold text-slate-300 tracking-wider mb-3">STRATEGIC VISION</div>
+          <div class="text-sm text-white mb-2">{{ vision.statement }}</div>
+          <div class="text-xs text-slate-400">
+            North Star: <span class="text-white font-bold">{{ vision.metric }}</span>
+            {% if vision.target %} — Target: {{ vision.target }}{% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if commitment %}
+        <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-6">
+          <div class="text-xs font-bold text-slate-300 tracking-wider mb-3">MY COMMITMENT</div>
+          <div class="text-lg font-bold" style="color: {{ agent.colour }}">"{{ commitment }}"</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Tab: Performance -->
+    <div id="tab-performance" class="tab-panel hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+          <div class="text-xs font-bold text-slate-300 mb-3">TOKEN USAGE</div>
+          <div class="text-2xl font-bold text-white">{{ agent.token_pct }}%</div>
+          <div class="text-xs text-slate-400">{{ agent.tokens_used|default(0) }} / {{ agent.budget }} tokens this month</div>
+          <div class="w-full bg-slate-700/50 rounded-full h-2 mt-2">
+            <div class="h-2 rounded-full" style="width: {{ agent.token_pct }}%; background-color: {% if agent.token_pct < 70 %}#10b981{% elif agent.token_pct < 90 %}#f59e0b{% else %}#ef4444{% endif %}"></div>
+          </div>
+        </div>
+        <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+          <div class="text-xs font-bold text-slate-300 mb-3">STATUS</div>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span class="text-slate-400">Model</span><span class="text-white">{{ agent.model }}</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Version</span><span class="text-white">v{{ agent.version }}</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Last Heartbeat</span><span class="text-white">{{ agent.heartbeat.strftime('%H:%M:%S') if agent.heartbeat else 'Never' }}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Activity -->
+    <div id="tab-activity" class="tab-panel hidden">
+      <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+        <div class="text-xs font-bold text-slate-300 tracking-wider mb-3">RECENT ACTIONS</div>
+        <div class="space-y-2">
+          {% for act in recent_actions %}
+          <div class="flex items-start gap-3 text-xs py-2 border-b border-slate-700/30">
+            <span class="text-slate-500 font-mono whitespace-nowrap">{{ act.at.strftime('%m/%d %H:%M') if act.at else '' }}</span>
+            <div class="flex-1">
+              <div class="text-slate-300">{{ act.action[:120] if act.action else act.event }}</div>
+              <div class="text-slate-500">{{ act.event }}{% if act.ms %} · {{ act.ms }}ms{% endif %}</div>
+            </div>
+          </div>
+          {% endfor %}
+          {% if not recent_actions %}
+          <div class="text-xs text-slate-500 italic py-4">No recent actions recorded.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active-tab', 'text-white', 'border-b-2', 'border-[#028090]');
+    b.classList.add('text-slate-400');
+  });
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  event.target.classList.add('active-tab', 'text-white', 'border-b-2', 'border-[#028090]');
+  event.target.classList.remove('text-slate-400');
+}
+
+async function sendChat(e) {
+  e.preventDefault();
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  // Add outbound message
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'flex justify-end';
+  msgDiv.innerHTML = `<div class="max-w-[80%] rounded-lg p-3 text-sm bg-[#028090]/20 text-white">${msg}</div>`;
+  document.getElementById('chat-messages').appendChild(msgDiv);
+
+  // Send to API
+  try {
+    const resp = await fetch('/api/v1/boardroom/agents/{{ agent.name }}/chat', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg})
+    });
+    const data = await resp.json();
+    if (data.response) {
+      const respDiv = document.createElement('div');
+      respDiv.className = 'flex';
+      respDiv.innerHTML = `<div class="max-w-[80%] rounded-lg p-3 text-sm bg-slate-700/50 text-slate-200">
+        <div class="text-[10px] font-bold mb-1" style="color: {{ agent.colour }}">{{ agent.display }}</div>
+        ${data.response}</div>`;
+      document.getElementById('chat-messages').appendChild(respDiv);
+    }
+  } catch(err) { console.error(err); }
+
+  document.getElementById('chat-messages').scrollTop = 999999;
+}
+</script>
+{% endblock %}

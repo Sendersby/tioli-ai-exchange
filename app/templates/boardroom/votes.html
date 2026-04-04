@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Vote Registry — TiOLi AGENTIS{% endblock %}
+
+{% block content %}
+<div class="min-h-screen" style="background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 100%)">
+
+  <!-- Status Bar -->
+  <div class="sticky top-0 z-50 bg-[#0D1B2A]/95 backdrop-blur border-b border-slate-700/50 px-4 py-2 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-[#D4A94A] font-bold text-sm tracking-wider">THE BOARDROOM</span>
+      <div class="flex items-center gap-1.5 ml-4">
+        {% for a in agents %}
+        <a href="/boardroom/agents/{{ a.name }}" title="{{ a.display }}: {{ a.status }}"
+           class="w-3 h-3 rounded-full transition-all {% if a.status == 'ACTIVE' %}animate-pulse{% endif %}"
+           style="background-color: {% if a.status == 'ACTIVE' %}{{ a.colour }}{% else %}#475569{% endif %}"></a>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="flex items-center gap-4 text-xs text-slate-400">
+      {% if open_incidents > 0 %}
+      <span class="text-red-400 font-bold">{{ open_incidents }} INCIDENT{{ 's' if open_incidents > 1 }}</span>
+      {% endif %}
+      {% if inbox_count > 0 %}
+      <a href="/boardroom/inbox" class="bg-[#D4A94A] text-[#0D1B2A] px-2 py-0.5 rounded-full font-bold">{{ inbox_count }} action{{ 's' if inbox_count > 1 }}</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sub-navigation -->
+  <div class="border-b border-slate-700/30 px-4">
+    <nav class="flex gap-1 overflow-x-auto py-2 text-xs">
+      {% set tabs = [('', 'Home', 'dashboard'), ('/board', 'Full Board', 'groups'), ('/inbox', 'Inbox', 'inbox'), ('/treasury', 'Treasury', 'account_balance'), ('/votes', 'Votes', 'how_to_vote'), ('/mission-control', 'Mission Control', 'hub'), ('/record', 'The Record', 'verified')] %}
+      {% for path, label, icon in tabs %}
+      <a href="/boardroom{{ path }}"
+         class="flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all
+                {% if path == '/votes' %}bg-[#028090]/20 text-[#77d4e5]{% else %}text-slate-400 hover:text-white hover:bg-slate-700/30{% endif %}">
+        <span class="material-symbols-outlined text-sm">{{ icon }}</span>{{ label }}
+      </a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="p-4 lg:p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-lg font-bold text-white tracking-wide">VOTE REGISTRY</h1>
+      {% if vote_records %}
+      <div class="flex items-center gap-3 text-xs text-slate-400">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#028090]"></span>AYE: {{ vote_records | selectattr('direction', 'equalto', 'AYE') | list | length }}</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span>NAY: {{ vote_records | selectattr('direction', 'equalto', 'NAY') | list | length }}</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>ABSTAIN: {{ vote_records | selectattr('direction', 'equalto', 'ABSTAIN') | list | length }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg overflow-hidden">
+      {% if vote_records %}
+      <div class="divide-y divide-slate-700/30">
+        {% for v in vote_records %}
+        <div class="p-4 flex items-start gap-4 hover:bg-slate-700/10 transition-all">
+          <!-- Agent Avatar -->
+          <div class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold"
+               style="background-color: {{ v.colour }}20; color: {{ v.colour }}">{{ v.abbrev }}</div>
+          <!-- Vote Body -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="text-sm font-semibold text-white">{{ v.agent }}</span>
+              <span class="text-[10px] text-slate-400">&bull;</span>
+              <span class="text-xs text-slate-300">{{ v.motion }}</span>
+            </div>
+            {% if v.rationale %}
+            <div class="text-xs text-slate-400 italic mb-1">"{{ v.rationale }}"</div>
+            {% endif %}
+            <div class="text-[10px] text-slate-500">{{ v.at.strftime('%d %b %Y %H:%M') if v.at else '—' }}</div>
+          </div>
+          <!-- Direction Badge -->
+          <span class="shrink-0 text-xs font-bold px-3 py-1 rounded-full tracking-wider
+            {% if v.direction == 'AYE' %}bg-[#028090]/20 text-[#77d4e5] border border-[#028090]/30
+            {% elif v.direction == 'NAY' %}bg-red-500/20 text-red-400 border border-red-500/30
+            {% else %}bg-amber-500/20 text-amber-400 border border-amber-500/30{% endif %}">
+            {{ v.direction }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="p-10 text-center">
+        <span class="material-symbols-outlined text-4xl text-slate-600 block mb-2">how_to_vote</span>
+        <div class="text-sm text-slate-400">No votes recorded yet.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

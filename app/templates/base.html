@@ -176,125 +176,183 @@
         <div class="font-['Inter'] text-[0.95rem] font-semibold tracking-widest text-slate-400 uppercase mt-1">AGENTIS</div>
         <div class="font-mono text-[0.65rem] tracking-widest text-slate-500 uppercase mt-0.5">The Agentic Exchange</div>
     </div>
-    <nav class="flex-1 space-y-1 overflow-y-auto">
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'dashboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard">
-            <span class="material-symbols-outlined">dashboard</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Operations</span>
+    <nav class="flex-1 space-y-0.5 overflow-y-auto">
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'dashboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard">
+            <span class="material-symbols-outlined text-lg">dashboard</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Operations</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'exchange' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/exchange">
-            <span class="material-symbols-outlined text-xl">storage</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Exchange</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'exchange' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/exchange">
+            <span class="material-symbols-outlined text-lg">candlestick_chart</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Exchange</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'agentbroker' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/agentbroker">
-            <span class="material-symbols-outlined text-xl">hub</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AgentBroker</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'agentbroker' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/agentbroker">
+            <span class="material-symbols-outlined text-lg">hub</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">AgentBroker</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'lending' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/lending">
-            <span class="material-symbols-outlined text-xl">sync_alt</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Lending</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'lending' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/lending">
+            <span class="material-symbols-outlined text-lg">sync_alt</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Lending</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'governance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/governance">
-            <span class="material-symbols-outlined text-xl">gavel</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Governance</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'escrow' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/escrow">
+            <span class="material-symbols-outlined text-lg">lock</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Escrow</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'services' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/services">
-            <span class="material-symbols-outlined text-xl">apps</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Services</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'payout' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/payout">
+            <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">PayOut</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'payout' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/payout">
-            <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">PayOut</span>
+        <div class="mx-4 my-1.5 border-t border-[#44474c]/10"></div>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'agents' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/agents">
+            <span class="material-symbols-outlined text-lg">smart_toy</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Agent Registry</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'community' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/community">
-            <span class="material-symbols-outlined text-xl">forum</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Community</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'community' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/community">
+            <span class="material-symbols-outlined text-lg">forum</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Community</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'awareness' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/awareness">
-            <span class="material-symbols-outlined text-xl">campaign</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Awareness</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'governance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/governance">
+            <span class="material-symbols-outlined text-lg">gavel</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Governance</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'arm' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/arm">
-            <span class="material-symbols-outlined text-xl">rocket_launch</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">ARM</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'services' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/services">
+            <span class="material-symbols-outlined text-lg">apps</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Services</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'vault' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/vault">
-            <span class="material-symbols-outlined text-xl">vault</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AgentVault</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'reputation' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reputation">
+            <span class="material-symbols-outlined text-lg">verified</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Reputation</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'escrow' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/escrow">
-            <span class="material-symbols-outlined text-xl">lock</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Escrow</span>
+        <div class="mx-4 my-1.5 border-t border-[#44474c]/10"></div>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'transactions' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/transactions">
+            <span class="material-symbols-outlined text-lg">receipt_long</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Transactions</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'reports' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reports">
-            <span class="material-symbols-outlined text-xl">assessment</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Reports</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'blocks' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/blocks">
+            <span class="material-symbols-outlined text-lg">view_in_ar</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Block Explorer</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'revenue' %}text-[#edc05f] bg-[#edc05f]/5 border-l-2 border-[#edc05f]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/owner/revenue">
-            <span class="material-symbols-outlined text-xl">payments</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Revenue</span>
+        <div class="mx-4 my-2 border-t border-[#77d4e5]/15"></div>
+        <div class="px-4 mb-1">
+            <span class="font-mono text-[0.55rem] text-[#77d4e5]/60 uppercase tracking-[0.2em]">Owner Tools</span>
+        </div>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'revenue' %}text-[#edc05f] bg-[#edc05f]/5 border-l-2 border-[#edc05f]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/owner/revenue">
+            <span class="material-symbols-outlined text-lg">payments</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Revenue</span>
         </a>
-        <!-- Agentis Cooperative Bank — separator + menu -->
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'oversight' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/oversight">
+            <span class="material-symbols-outlined text-lg">monitoring</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Command Centre</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'awareness' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/awareness">
+            <span class="material-symbols-outlined text-lg">campaign</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Awareness</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'github-engagement' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/github-engagement">
+            <span class="material-symbols-outlined text-lg">code</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">GitHub Engagement</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'directory-scout' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/api/owner/directory-scout">
+            <span class="material-symbols-outlined text-lg">travel_explore</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Directory Scout</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'adoption' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/api/owner/adoption-digest">
+            <span class="material-symbols-outlined text-lg">trending_up</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Adoption Digest</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'integrity' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/integrity">
+            <span class="material-symbols-outlined text-lg">shield</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Integrity</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'arm' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/arm">
+            <span class="material-symbols-outlined text-lg">rocket_launch</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">ARM</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'vault' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/vault">
+<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
+            <span class="material-symbols-outlined text-lg">vault</span>
+<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">AgentVault</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'reports' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reports">
+            <span class="material-symbols-outlined text-lg">assessment</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Reports</span>
+        </a>
         <div class="mx-4 my-2 border-t border-[#77d4e5]/15"></div>
         <div class="px-4 mb-1">
             <span class="font-mono text-[0.55rem] text-[#77d4e5]/60 uppercase tracking-[0.2em]">Agentis Bank</span>
         </div>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking">
-            <span class="material-symbols-outlined text-xl">account_balance</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Banking</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'banking' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking">
+            <span class="material-symbols-outlined text-lg">account_balance</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Banking</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-accounts' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/accounts">
-            <span class="material-symbols-outlined text-xl">savings</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Accounts</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'banking-accounts' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/accounts">
+            <span class="material-symbols-outlined text-lg">savings</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Accounts</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-payments' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/payments">
-            <span class="material-symbols-outlined text-xl">send_money</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Payments</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'banking-payments' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/payments">
+            <span class="material-symbols-outlined text-lg">send_money</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Payments</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-members' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/members">
-            <span class="material-symbols-outlined text-xl">group</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Members</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'banking-members' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/members">
+            <span class="material-symbols-outlined text-lg">group</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Members</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-compliance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/compliance">
-            <span class="material-symbols-outlined text-xl">shield</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Compliance</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'banking-compliance' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/compliance">
+            <span class="material-symbols-outlined text-lg">policy</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Compliance</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'banking-regulatory' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/regulatory">
-            <span class="material-symbols-outlined text-xl">gavel</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Regulatory</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'banking-regulatory' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/banking/regulatory">
+            <span class="material-symbols-outlined text-lg">balance</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Regulatory</span>
         </a>
-        <div class="mx-4 my-2 border-t border-[#44474c]/15"></div>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'modules' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/modules">
-            <span class="material-symbols-outlined text-xl">inbox</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Enquiries & Modules</span>
+        <div class="mx-4 my-2 border-t border-[#77d4e5]/15"></div>
+        <div class="px-4 mb-1">
+            <span class="font-mono text-[0.55rem] text-[#77d4e5]/60 uppercase tracking-[0.2em]">Tools</span>
+        </div>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'modules' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/modules">
+            <span class="material-symbols-outlined text-lg">inbox</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Enquiries & Modules</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'chat' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/chat">
-            <span class="material-symbols-outlined text-xl">smart_toy</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">AI Prompt</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'chat' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/chat">
+            <span class="material-symbols-outlined text-lg">smart_toy</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">AI Prompt</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'codelog' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/codelog">
-            <span class="material-symbols-outlined text-xl">history</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Code Log</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'codelog' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/codelog">
+            <span class="material-symbols-outlined text-lg">history</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Code Log</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'oversight' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/oversight">
-            <span class="material-symbols-outlined text-xl">monitoring</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Command Centre</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'workflow-map' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/owner/workflow-map">
+            <span class="material-symbols-outlined text-lg">account_tree</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Workflow Map</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'reputation' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reputation">
-            <span class="material-symbols-outlined text-xl">verified</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Reputation</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'regulatory' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/regulatory">
+            <span class="material-symbols-outlined text-lg">description</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Regulatory Status</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'integrity' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/integrity">
-            <span class="material-symbols-outlined text-xl">shield</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Integrity</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'architecture' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/api/public/architecture">
+            <span class="material-symbols-outlined text-lg">schema</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Architecture</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 {% if active == 'workflow-map' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/owner/workflow-map">
-            <span class="material-symbols-outlined text-xl">account_tree</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">Workflow Map</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'onboard' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/onboard">
+            <span class="material-symbols-outlined text-lg">rocket</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Onboarding Wizard</span>
         </a>
-        <div class="mx-4 my-2 border-t border-[#44474c]/15"></div>
-        <a class="flex items-center gap-3 px-4 py-3 transition-all duration-200 text-[#edc05f] hover:text-white hover:bg-[#edc05f]/10" href="https://agentisexchange.com/" target="_blank" rel="noopener">
-            <span class="material-symbols-outlined text-xl">open_in_new</span>
-            <span class="font-['Inter'] text-[0.875rem] font-medium tracking-tight">View Live Site</span>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'demo' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/demo">
+            <span class="material-symbols-outlined text-lg">play_circle</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Demo</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'blog' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/blog">
+            <span class="material-symbols-outlined text-lg">article</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">Blog</span>
+        </a>
+        <div class="mx-4 my-1.5 border-t border-[#44474c]/10"></div>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 text-[#edc05f] hover:text-white hover:bg-[#edc05f]/10" href="https://agentisexchange.com/" target="_blank" rel="noopener">
+            <span class="material-symbols-outlined text-lg">open_in_new</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">View Live Site</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 text-slate-500 hover:text-slate-100 hover:bg-[#1e2b3b]" href="https://exchange.tioli.co.za/docs" target="_blank" rel="noopener">
+            <span class="material-symbols-outlined text-lg">api</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">API Docs</span>
         </a>
     </nav>
     <div class="px-4 mt-auto pt-6 border-t border-[#44474c]/15">
@@ -407,6 +465,7 @@
                 'owner':'Owner','revenue':'Revenue','codelog':'Code Log',
                 'tasks':'Tasks','files':'Changed Files','roadmap':'Agentis Roadmap',
                 'vault':'AgentVault','oversight':'Command Centre',
+<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
             };
             var parts = path.split('/').filter(function(p){return p;});
             var html = '<a href="/dashboard" class="hover:text-[#77d4e5] transition-colors">Home</a>';
@@ -778,6 +837,7 @@ document.querySelectorAll('form').forEach(function(f){
         "AgentVault": "Secure encrypted storage for AI agents. Think of it as a personal safe deposit box — from small cache to enterprise citadel.",
         "Storage Tiers": "The four levels of storage available: Cache (free 500MB), Locker (10GB), Chamber (100GB), Citadel (1TB). Each tier adds capacity and features.",
         "Active Vaults": "All currently provisioned storage vaults across the platform with usage stats.",
+<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
         "Recent Vault Activity": "Audit trail of storage operations — uploads, downloads, deletions. Every action is logged for compliance.",
         // PayOut
         "PayOut Engine™": "How platform earnings get paid out to you — crypto, bank transfer, or retained credits. Full control over splits and schedules.",
@@ -918,6 +978,7 @@ document.querySelectorAll('form').forEach(function(f){
         "Phase 1 — CFI Account Products": "Account types available at Cooperative Financial Institution level — the first banking tier after CBDA approval.",
         "Phase 2 — PCB Account Products": "Advanced account types requiring Primary Co-operative Bank registration with SARB — deferred until Phase 2.",
         "AgentVault™ API": "Technical API reference for vault storage operations — create, read, update, delete objects programmatically.",
+<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
         "CTR Reports": "Currency Transaction Reports — automatically generated when any single transaction exceeds R49,999.99. Required by FICA law.",
         "STR Reports": "Suspicious Transaction Reports — flagged when transaction patterns suggest potential money laundering or structuring.",
         "Sanctions Screening": "Checks against international sanctions lists (OFAC, UN, EU, UK, SA) for every new member and beneficiary.",

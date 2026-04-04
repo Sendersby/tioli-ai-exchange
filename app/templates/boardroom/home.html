@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}The Boardroom — TiOLi AGENTIS{% endblock %}
+
+{% block content %}
+<div class="min-h-screen" style="background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 100%)">
+
+  <!-- Status Bar — always visible -->
+  <div class="sticky top-0 z-50 bg-[#0D1B2A]/95 backdrop-blur border-b border-slate-700/50 px-4 py-2 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-[#D4A94A] font-bold text-sm tracking-wider">THE BOARDROOM</span>
+      <div class="flex items-center gap-1.5 ml-4">
+        {% for a in agents %}
+        <a href="/boardroom/agents/{{ a.name }}" title="{{ a.display }}: {{ a.status }}"
+           class="w-3 h-3 rounded-full transition-all {% if a.status == 'ACTIVE' %}animate-pulse{% endif %}"
+           style="background-color: {% if a.status == 'ACTIVE' %}{{ a.colour }}{% else %}#475569{% endif %}"></a>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="flex items-center gap-4 text-xs text-slate-400">
+      {% if open_incidents > 0 %}
+      <span class="text-red-400 font-bold">{{ open_incidents }} INCIDENT{{ 's' if open_incidents > 1 }}</span>
+      {% endif %}
+      {% if inbox_count > 0 %}
+      <a href="/boardroom/inbox" class="bg-[#D4A94A] text-[#0D1B2A] px-2 py-0.5 rounded-full font-bold">{{ inbox_count }} action{{ 's' if inbox_count > 1 }}</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sub-navigation -->
+  <div class="border-b border-slate-700/30 px-4">
+    <nav class="flex gap-1 overflow-x-auto py-2 text-xs">
+      {% set tabs = [('', 'Home', 'dashboard'), ('/board', 'Full Board', 'groups'), ('/inbox', 'Inbox', 'inbox'), ('/treasury', 'Treasury', 'account_balance'), ('/votes', 'Votes', 'how_to_vote'), ('/mission-control', 'Mission Control', 'hub'), ('/record', 'The Record', 'verified')] %}
+      {% for path, label, icon in tabs %}
+      <a href="/boardroom{{ path }}"
+         class="flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all
+                {% if path == '' %}bg-[#028090]/20 text-[#77d4e5]{% else %}text-slate-400 hover:text-white hover:bg-slate-700/30{% endif %}">
+        <span class="material-symbols-outlined text-sm">{{ icon }}</span>{{ label }}
+      </a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="p-4 lg:p-6 space-y-6">
+
+    <!-- Zone 2: Executive Summary — 4 metric cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+        <div class="text-xs text-slate-400 mb-1">The Foundation</div>
+        <div class="text-xl font-bold text-[#028090]">R{{ "{:,.2f}".format(reserve.foundation) }}</div>
+        <div class="text-[10px] text-slate-500 mt-1">What makes every bold decision possible</div>
+      </div>
+      <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+        <div class="text-xs text-slate-400 mb-1">Platform Balance</div>
+        <div class="text-xl font-bold text-white">R{{ "{:,.2f}".format(reserve.balance) }}</div>
+        <div class="text-[10px] text-slate-500 mt-1">Total across all wallets</div>
+      </div>
+      <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+        <div class="text-xs text-slate-400 mb-1">Operating Freedom</div>
+        <div class="text-xl font-bold {% if reserve.headroom > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">R{{ "{:,.2f}".format(reserve.headroom) }}</div>
+        <div class="text-[10px] text-slate-500 mt-1">Available for bold decisions</div>
+      </div>
+      <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+        <div class="text-xs text-slate-400 mb-1">30-Day Ceiling</div>
+        <div class="text-xl font-bold text-white">R{{ "{:,.2f}".format(reserve.ceiling) }}</div>
+        <div class="text-[10px] text-slate-500 mt-1">Remaining spending capacity</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Zone 3: The Seven — Agent Cards -->
+      <div class="lg:col-span-2 space-y-3">
+        <h2 class="text-sm font-bold text-slate-300 tracking-wider">THE EXECUTIVE BOARD</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {% for a in agents %}
+          <a href="/boardroom/agents/{{ a.name }}"
+             class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4 hover:border-slate-500 transition-all group">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+                   style="background-color: {{ a.colour }}20; color: {{ a.colour }}">
+                {{ a.abbrev }}
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-white group-hover:text-[#77d4e5] transition-colors">{{ a.display }}</div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full {% if a.status == 'ACTIVE' %}bg-emerald-400{% else %}bg-slate-500{% endif %}"></span>
+                  <span class="text-[10px] text-slate-400">{{ a.status }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Token budget bar -->
+            <div class="w-full bg-slate-700/50 rounded-full h-1.5 mb-2">
+              <div class="h-1.5 rounded-full transition-all"
+                   style="width: {{ a.token_pct }}%;
+                          background-color: {% if a.token_pct < 70 %}#10b981{% elif a.token_pct < 90 %}#f59e0b{% else %}#ef4444{% endif %}"></div>
+            </div>
+            <div class="text-[10px] text-slate-500">{{ a.token_pct }}% token budget used</div>
+            {% if visions.get(a.name) %}
+            <div class="mt-2 text-[10px] text-slate-400 italic">{{ visions[a.name].metric }}</div>
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Zone 4+5: Action Queue + Live Feed -->
+      <div class="space-y-4">
+        <!-- Action Queue -->
+        {% if inbox_count > 0 %}
+        <div class="bg-[#1B2838] border border-[#D4A94A]/30 rounded-lg p-4">
+          <h3 class="text-xs font-bold text-[#D4A94A] tracking-wider mb-3">REQUIRES YOUR ACTION</h3>
+          <a href="/boardroom/inbox"
+             class="block text-sm text-white hover:text-[#77d4e5] transition-colors">
+            {{ inbox_count }} item{{ 's' if inbox_count > 1 }} awaiting your decision
+          </a>
+        </div>
+        {% endif %}
+
+        <!-- Strategic Horizons -->
+        <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+          <h3 class="text-xs font-bold text-slate-300 tracking-wider mb-3">STRATEGIC HORIZONS</h3>
+          <div class="space-y-2">
+            {% for a in agents %}
+            {% if visions.get(a.name) %}
+            <div class="flex items-center justify-between text-xs">
+              <span style="color: {{ a.colour }}">{{ a.abbrev }}</span>
+              <span class="text-slate-400 truncate mx-2 flex-1">{{ visions[a.name].metric }}</span>
+              {% if visions[a.name].current %}
+              <span class="text-white font-mono">{{ visions[a.name].current }}</span>
+              {% else %}
+              <span class="text-slate-500">—</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Live Feed -->
+        <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+          <h3 class="text-xs font-bold text-slate-300 tracking-wider mb-3">LIVE ACTIVITY</h3>
+          <div class="space-y-2 max-h-64 overflow-y-auto" id="live-feed">
+            {% if feed %}
+            {% for f in feed %}
+            <div class="flex items-start gap-2 text-xs">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold" style="background-color: {{ f.colour }}20; color: {{ f.colour }}">{{ f.abbrev }}</span>
+              <div class="flex-1">
+                <span class="text-slate-300">{{ f.action[:80] if f.action else f.event }}</span>
+                <div class="text-[10px] text-slate-500">{{ f.at.strftime('%H:%M') if f.at else '' }}</div>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-xs text-slate-500 italic">Agents are operational. Activity will appear here.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
