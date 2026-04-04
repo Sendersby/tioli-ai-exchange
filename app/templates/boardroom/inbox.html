@@ -76,16 +76,13 @@
           <div class="flex items-center gap-2 shrink-0">
             {% if item.action_type == 'APPROVAL' %}
             <form method="post" action="/boardroom/inbox/{{ item.id }}/approve">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="text-xs font-bold px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-all">Approve</button>
             </form>
             <form method="post" action="/boardroom/inbox/{{ item.id }}/reject">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="text-xs font-bold px-3 py-1.5 rounded-md bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 transition-all">Reject</button>
             </form>
             {% else %}
             <form method="post" action="/boardroom/inbox/{{ item.id }}/acknowledge">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button class="text-xs font-bold px-3 py-1.5 rounded-md bg-[#028090]/20 text-[#77d4e5] hover:bg-[#028090]/30 border border-[#028090]/30 transition-all">Acknowledge</button>
             </form>
             {% endif %}

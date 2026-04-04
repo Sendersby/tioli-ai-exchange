@@ -88,7 +88,6 @@
       <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
         <h2 class="text-xs font-bold text-slate-300 tracking-wider mb-3">FINANCIAL CALCULATOR</h2>
         <form method="post" action="/boardroom/treasury/calculate" class="space-y-3">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div>
             <label class="text-xs text-slate-400 block mb-1">Transaction Amount (R)</label>
             <input type="number" name="amount" step="0.01" min="0" placeholder="0.00"

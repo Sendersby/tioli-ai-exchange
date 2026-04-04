@@ -47,7 +47,7 @@
       <form method="get" action="/boardroom/record" class="flex items-center gap-2">
         <div class="relative">
           <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-          <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search entries…"
+          <input type="text" name="q" value="{{ request.query_params.get('q', '') }}" placeholder="Search entries…"
                  class="bg-slate-700/50 border border-slate-600/50 rounded-md pl-8 pr-3 py-1.5 text-sm text-white placeholder-slate-500 focus:border-[#028090] focus:outline-none w-64">
         </div>
         <button type="submit" class="bg-[#028090]/20 border border-[#028090]/30 text-[#77d4e5] text-xs font-bold px-3 py-1.5 rounded-md hover:bg-[#028090]/30 transition-all">Search</button>
