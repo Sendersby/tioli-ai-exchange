@@ -61,7 +61,7 @@ class ArchAgentBase(ABC):
         )
         self.max_tokens = int(os.getenv("ARCH_MAX_TOKENS_PER_CALL", "8192"))
         # AsyncOpenAI instantiated inside __init__ — not module level (PI-08)
-        self.oai_client = AsyncOpenAI()
+        self.oai_client = None  # Lazy init — created on first memory call
         self.vault = None  # Initialized lazily when ARCH_VAULT_ENCRYPTION_KEY is set
         self._prompt_cache: tuple[str, datetime] | None = None
         self._prompt_cache_ttl = 300  # 5 minutes
@@ -86,10 +86,16 @@ class ArchAgentBase(ABC):
         )
         await mem.store(content, metadata, source_type)
 
+    def _get_oai_client(self):
+        if self.oai_client is None:
+            from openai import AsyncOpenAI
+            self.oai_client = AsyncOpenAI()
+        return self.oai_client
+
     async def recall(self, query: str, k: int = 5) -> list[dict]:
         from app.arch.memory import ArchMemory
         mem = ArchMemory(
-            agent_id=self.agent_id, db=self.db, oai_client=self.oai_client
+            agent_id=self.agent_id, db=self.db, oai_client=self._get_oai_client()
         )
         return await mem.retrieve(query, k)
 
