@@ -43,7 +43,7 @@ class SentinelAgent(ArchAgentBase):
             text("""
                 INSERT INTO arch_incidents
                     (severity, title, description, popia_notifiable)
-                VALUES (:sev::arch_incident_sev, :title, :desc, :popia)
+                VALUES (cast(:sev as arch_incident_sev), :title, :desc, :popia)
                 RETURNING id::text
             """),
             {"sev": severity, "title": title, "desc": description, "popia": popia},

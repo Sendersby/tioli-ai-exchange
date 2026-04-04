@@ -67,7 +67,7 @@ class SovereignAgent(ArchAgentBase):
 
         if not quorum_met:
             await self.db.execute(
-                text("UPDATE arch_board_sessions SET status = 'QUORUM_FAIL', closed_at = now() WHERE id = :id::uuid"),
+                text("UPDATE arch_board_sessions SET status = 'QUORUM_FAIL', closed_at = now() WHERE id = cast(:id as uuid)"),
                 {"id": session_id},
             )
             await self.db.commit()
@@ -99,7 +99,7 @@ class SovereignAgent(ArchAgentBase):
             text("""
                 INSERT INTO arch_founder_inbox
                     (item_type, priority, description, prepared_by, status, due_at)
-                VALUES (:type, :priority::arch_msg_priority, :desc, :prepared_by,
+                VALUES (:type, cast(:priority as arch_msg_priority), :desc, :prepared_by,
                         'PENDING', now() + make_interval(hours => :hours))
                 RETURNING id::text
             """),
@@ -342,7 +342,7 @@ class SovereignAgent(ArchAgentBase):
                 text("""
                     INSERT INTO arch_board_votes
                         (session_id, proposal_id, agent_id, vote, rationale)
-                    VALUES (:sid, :pid::uuid, :aid::uuid, :vote::arch_vote_type, :rationale)
+                    VALUES (:sid, cast(:pid as uuid), cast(:aid as uuid), cast(:vote as arch_vote_type), :rationale)
                     ON CONFLICT (session_id, proposal_id, agent_id) DO NOTHING
                 """),
                 {"sid": session_id, "pid": proposal_id, "aid": agent_uuid,

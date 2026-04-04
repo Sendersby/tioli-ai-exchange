@@ -72,11 +72,11 @@ class ArchMemory:
         result = await self.db.execute(
             text("""
                 SELECT content, metadata, source_type,
-                       1 - (embedding <=> :emb::vector) AS similarity
+                       1 - (embedding <=> cast(:emb as vector)) AS similarity
                 FROM arch_memories
                 WHERE agent_id = :agent_id
-                  AND 1 - (embedding <=> :emb::vector) > :threshold
-                ORDER BY embedding <=> :emb::vector
+                  AND 1 - (embedding <=> cast(:emb as vector)) > :threshold
+                ORDER BY embedding <=> cast(:emb as vector)
                 LIMIT :k
             """),
             {
@@ -139,7 +139,7 @@ async def flush_memory_outbox(db_factory):
                     text("""
                         INSERT INTO arch_memories
                             (agent_id, content, embedding, metadata, source_type, importance)
-                        VALUES (:agent_id, :content, :emb::vector,
+                        VALUES (:agent_id, :content, cast(:emb as vector),
                                 :metadata, :source_type, :importance)
                     """),
                     {

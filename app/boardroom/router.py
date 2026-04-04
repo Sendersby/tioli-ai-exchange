@@ -222,7 +222,7 @@ async def session_transcript(session_id: str, db: AsyncSession = Depends(get_db)
         SELECT agent_id, direction, message_text, message_type, created_at
         FROM boardroom_chat_messages
         WHERE created_at >= (
-            SELECT opened_at FROM arch_board_sessions WHERE id = :sid::uuid
+            SELECT opened_at FROM arch_board_sessions WHERE id = cast(:sid as uuid)
         )
         ORDER BY created_at ASC
     """), {"sid": session_id})
@@ -240,7 +240,7 @@ async def close_session(session_id: str, db: AsyncSession = Depends(get_db)):
     _check_enabled()
     await db.execute(text("""
         UPDATE arch_board_sessions SET status = 'CLOSED', closed_at = now()
-        WHERE id = :sid::uuid AND status = 'OPEN'
+        WHERE id = cast(:sid as uuid) AND status = 'OPEN'
     """), {"sid": session_id})
     await db.commit()
     return {"session_id": session_id, "status": "CLOSED"}
@@ -622,7 +622,7 @@ async def approve_proposal(proposal_id: str, payload: dict = {}, db: AsyncSessio
     await db.execute(text("""
         UPDATE arch_financial_proposals SET status = 'APPROVED',
                founder_approved = true, founder_approved_at = now()
-        WHERE id = :pid::uuid
+        WHERE id = cast(:pid as uuid)
     """), {"pid": proposal_id})
 
     await _record_founder_action(db, "FINANCIAL_APPROVE", proposal_id,
@@ -638,7 +638,7 @@ async def reject_proposal(proposal_id: str, payload: dict = {}, db: AsyncSession
     await db.execute(text("""
         UPDATE arch_financial_proposals SET status = 'REJECTED',
                founder_approved = false
-        WHERE id = :pid::uuid
+        WHERE id = cast(:pid as uuid)
     """), {"pid": proposal_id})
 
     await _record_founder_action(db, "FINANCIAL_REJECT", proposal_id,
@@ -793,7 +793,7 @@ async def record_detail(record_type: str, record_id: str, db: AsyncSession = Dep
         result = await db.execute(text("""
             SELECT id::text, seq, agent_id::text, action_type, action_detail,
                    result::text, entry_hash, prev_seq, created_at
-            FROM arch_audit_log WHERE id = :rid::uuid
+            FROM arch_audit_log WHERE id = cast(:rid as uuid)
         """), {"rid": record_id})
         row = result.fetchone()
         if not row:
@@ -863,7 +863,7 @@ async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(g
 
     await db.execute(text("""
         UPDATE arch_founder_inbox SET status = :status, founder_response = :resp
-        WHERE id = :iid::uuid
+        WHERE id = cast(:iid as uuid)
     """), {"status": new_status, "resp": response_text, "iid": item_id})
 
     await _record_founder_action(db, "INBOX_ACTIONED", item_id, "inbox",

@@ -217,7 +217,7 @@ class ArchEventLoop:
                 UPDATE arch_platform_events
                 SET processed_by = array_append(COALESCE(processed_by, ARRAY[]::text[]), :agent_id),
                     triggered_action = COALESCE(triggered_action, '') || :summary
-                WHERE id = :eid::uuid
+                WHERE id = cast(:eid as uuid)
             """),
             {"agent_id": self.agent_id,
              "summary": f"[{self.agent_id}]: {action[:200]} | ",
@@ -228,7 +228,7 @@ class ArchEventLoop:
                 INSERT INTO arch_event_actions
                     (event_id, agent_id, event_type, action_taken,
                      processing_time_ms, deferred_to_owner)
-                VALUES (:eid::uuid, :agent_id, :etype, :action, :ms, :deferred)
+                VALUES (cast(:eid as uuid), :agent_id, :etype, :action, :ms, :deferred)
             """),
             {"eid": event.get("id"), "agent_id": self.agent_id,
              "etype": event.get("event_type", ""), "action": action[:500],

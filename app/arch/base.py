@@ -372,7 +372,7 @@ class ArchAgentBase(ABC):
                 INSERT INTO arch_audit_log
                     (agent_id, action_type, action_detail, result,
                      entry_hash, prev_seq)
-                VALUES (:agent_id, :action_type, :detail, :result::arch_action_result,
+                VALUES (:agent_id, :action_type, :detail, cast(:result as arch_action_result),
                         :entry_hash, :prev_seq)
             """),
             {

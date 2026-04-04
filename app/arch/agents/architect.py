@@ -50,7 +50,7 @@ class ArchitectAgent(ArchAgentBase):
                 INSERT INTO arch_code_proposals
                     (tier, proposing_agent, title, description, rationale,
                      file_changes, status)
-                VALUES (:tier::arch_proposal_tier, :agent, :title, :desc, :rationale,
+                VALUES (cast(:tier as arch_proposal_tier), :agent, :title, :desc, :rationale,
                         :changes, 'DRAFT')
                 RETURNING id::text
             """),
@@ -85,7 +85,7 @@ class ArchitectAgent(ArchAgentBase):
             text("""
                 UPDATE arch_code_proposals
                 SET sandbox_outcome = 'PENDING', status = 'BOARD_REVIEW'
-                WHERE id = :pid::uuid
+                WHERE id = cast(:pid as uuid)
             """),
             {"pid": proposal_id},
         )
