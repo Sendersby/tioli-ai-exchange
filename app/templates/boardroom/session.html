@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Board Session — The Boardroom{% endblock %}
+{% block content %}
+<div class="min-h-screen flex flex-col" style="background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 100%)">
+
+  <!-- Session Header -->
+  <div class="sticky top-0 z-50 bg-[#0D1B2A]/95 backdrop-blur border-b border-slate-700/50 px-4 py-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/boardroom" class="text-[#D4A94A] font-bold text-sm tracking-wider">THE BOARDROOM</a>
+        <span class="text-slate-600">/</span>
+        <span class="text-white text-sm">{{ session.type }} Session</span>
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold
+              {% if session.status == 'OPEN' %}bg-emerald-500/20 text-emerald-400
+              {% else %}bg-slate-500/20 text-slate-400{% endif %}">{{ session.status }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        {% if session.status == 'OPEN' %}
+        <button onclick="closeSession()" class="text-xs px-3 py-1 rounded border border-red-500/50 text-red-400 hover:bg-red-500/10">Close Session</button>
+        {% endif %}
+        <a href="/boardroom/board" class="text-xs text-slate-400 hover:text-white">Back to Board</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 flex flex-col lg:flex-row">
+
+    <!-- Left: Agent Panels -->
+    <div class="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-slate-700/30 p-3 overflow-x-auto lg:overflow-y-auto">
+      <h3 class="text-[10px] font-bold text-slate-400 tracking-wider mb-2">AGENTS PRESENT</h3>
+      <div class="flex lg:flex-col gap-2">
+        {% for a in agents %}
+        <div class="flex items-center gap-2 p-2 rounded-lg bg-[#1B2838]/50 min-w-[120px] lg:min-w-0" id="agent-panel-{{ a.name }}">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold"
+               style="background: {{ a.colour }}20; color: {{ a.colour }}">{{ a.abbrev }}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs text-white truncate">{{ a.display }}</div>
+            <div class="text-[10px] text-slate-500" id="agent-status-{{ a.name }}">Ready</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if session.agenda %}
+      <div class="mt-4">
+        <h3 class="text-[10px] font-bold text-slate-400 tracking-wider mb-2">AGENDA</h3>
+        <div class="space-y-1">
+          {% for item in session.agenda %}
+          <div class="text-xs text-slate-300 p-1.5 bg-slate-700/20 rounded">{{ item }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Centre: Transcript -->
+    <div class="flex-1 flex flex-col min-h-0">
+      <div class="flex-1 overflow-y-auto p-4 space-y-3" id="session-transcript">
+        <!-- System message: session opened -->
+        <div class="text-center text-xs text-slate-500 py-2">
+          Session opened {{ session.opened.strftime('%Y-%m-%d %H:%M UTC') if session.opened else '' }}
+          {% if session.agenda %} — Agenda: {{ session.agenda[0] if session.agenda is iterable else session.agenda }}{% endif %}
+        </div>
+
+        {% for msg in transcript %}
+        <div class="flex {% if msg.dir == 'OUTBOUND' %}justify-end{% endif %} animate-fadeIn">
+          <div class="max-w-[80%] rounded-lg p-3 text-sm
+                      {% if msg.dir == 'OUTBOUND' %}bg-[#D4A94A]/20 text-white border border-[#D4A94A]/30
+                      {% else %}bg-slate-700/50 text-slate-200{% endif %}">
+            {% if msg.dir == 'INBOUND' %}
+            <div class="text-[10px] font-bold mb-1" style="color: {{ agent_colours.get(msg.agent, '#999') }}">
+              {{ msg.agent | upper if msg.agent else 'AGENT' }}
+            </div>
+            {% else %}
+            <div class="text-[10px] font-bold mb-1 text-[#D4A94A]">FOUNDER</div>
+            {% endif %}
+            <div class="whitespace-pre-wrap">{{ msg.text }}</div>
+            <div class="text-[10px] text-slate-500 mt-1">{{ msg.at.strftime('%H:%M') if msg.at else '' }}</div>
+          </div>
+        </div>
+        {% endfor %}
+
+        {% if not transcript and session.status == 'OPEN' %}
+        <div class="text-center text-slate-500 text-sm py-8">
+          The session is open. Send your first message to the board.
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Compose bar — only for open sessions -->
+      {% if session.status == 'OPEN' %}
+      <div class="border-t border-slate-700/50 p-3 bg-[#0D1B2A]/50">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-[10px] text-slate-400">Send to:</span>
+          <select id="send-target" class="bg-slate-700/50 border border-slate-600 rounded px-2 py-1 text-[10px] text-white">
+            <option value="ALL_BOARD">All Board</option>
+            {% for a in agents %}
+            <option value="{{ a.name }}">{{ a.display }} only</option>
+            {% endfor %}
+          </select>
+        </div>
+        <form onsubmit="sendMessage(event)" class="flex gap-2">
+          <input type="text" id="session-input" placeholder="Address the board..."
+                 class="flex-1 bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#D4A94A]"
+                 autofocus/>
+          <button type="submit" class="bg-[#D4A94A] text-[#0D1B2A] px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-[#edc05f] transition-colors">Send</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right: Votes (if any) -->
+    {% if session_votes %}
+    <div class="w-full lg:w-56 border-t lg:border-t-0 lg:border-l border-slate-700/30 p-3">
+      <h3 class="text-[10px] font-bold text-slate-400 tracking-wider mb-2">VOTES CAST</h3>
+      <div class="space-y-2">
+        {% for v in session_votes %}
+        <div class="flex items-center gap-2 text-xs">
+          <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold
+                {% if v.vote == 'AYE' %}bg-[#028090]/20 text-[#028090]{% elif v.vote == 'NAY' %}bg-red-500/20 text-red-400{% else %}bg-amber-500/20 text-amber-400{% endif %}">
+            {{ v.vote[:1] }}
+          </span>
+          <span class="text-slate-300">{{ v.display }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(2,128,144,0.4); } 70% { box-shadow: 0 0 0 6px rgba(2,128,144,0); } }
+.agent-speaking { animation: pulse-ring 1.5s infinite; }
+</style>
+
+<script>
+const SESSION_ID = "{{ session.id }}";
+const AGENT_COLOURS = {{ agent_colours | tojson }};
+
+async function sendMessage(e) {
+  e.preventDefault();
+  const input = document.getElementById('session-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const target = document.getElementById('send-target').value;
+
+  // Add founder message to transcript immediately
+  addMessage('FOUNDER', msg, 'OUTBOUND');
+
+  // Send to API
+  await fetch('/api/v1/boardroom/board/session/' + SESSION_ID + '/message', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({message: msg, target: target})
+  });
+
+  // Now get responses from agents
+  if (target === 'ALL_BOARD') {
+    await getMultiAgentResponses(msg);
+  } else {
+    await getSingleAgentResponse(target, msg);
+  }
+}
+
+async function getMultiAgentResponses(msg) {
+  const agents = {{ agents | map(attribute='name') | list | tojson }};
+  // Query all agents in parallel
+  const promises = agents.map(async (agentName) => {
+    setAgentStatus(agentName, 'Thinking...');
+    document.getElementById('agent-panel-' + agentName)?.classList.add('agent-speaking');
+    try {
+      const resp = await fetch('/api/v1/boardroom/agents/' + agentName + '/chat', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg})
+      });
+      const data = await resp.json();
+      if (data.response) {
+        addMessage(agentName, data.response, 'INBOUND');
+      }
+    } catch(err) {
+      console.error(agentName, err);
+    }
+    setAgentStatus(agentName, 'Ready');
+    document.getElementById('agent-panel-' + agentName)?.classList.remove('agent-speaking');
+  });
+  await Promise.all(promises);
+}
+
+async function getSingleAgentResponse(agentName, msg) {
+  setAgentStatus(agentName, 'Thinking...');
+  document.getElementById('agent-panel-' + agentName)?.classList.add('agent-speaking');
+  try {
+    const resp = await fetch('/api/v1/boardroom/agents/' + agentName + '/chat', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: msg})
+    });
+    const data = await resp.json();
+    if (data.response) {
+      addMessage(agentName, data.response, 'INBOUND');
+    }
+  } catch(err) { console.error(err); }
+  setAgentStatus(agentName, 'Ready');
+  document.getElementById('agent-panel-' + agentName)?.classList.remove('agent-speaking');
+}
+
+function addMessage(sender, text, direction) {
+  const transcript = document.getElementById('session-transcript');
+  const div = document.createElement('div');
+  div.className = 'flex ' + (direction === 'OUTBOUND' ? 'justify-end' : '') + ' animate-fadeIn';
+
+  const colour = direction === 'OUTBOUND' ? '#D4A94A' : (AGENT_COLOURS[sender] || '#999');
+  const bgClass = direction === 'OUTBOUND'
+    ? 'bg-[#D4A94A]/20 text-white border border-[#D4A94A]/30'
+    : 'bg-slate-700/50 text-slate-200';
+  const label = direction === 'OUTBOUND' ? 'FOUNDER' : sender.toUpperCase();
+  const now = new Date().toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+
+  div.innerHTML = '<div class="max-w-[80%] rounded-lg p-3 text-sm ' + bgClass + '">' +
+    '<div class="text-[10px] font-bold mb-1" style="color: ' + colour + '">' + label + '</div>' +
+    '<div class="whitespace-pre-wrap">' + text + '</div>' +
+    '<div class="text-[10px] text-slate-500 mt-1">' + now + '</div></div>';
+
+  transcript.appendChild(div);
+  transcript.scrollTop = transcript.scrollHeight;
+}
+
+function setAgentStatus(name, status) {
+  const el = document.getElementById('agent-status-' + name);
+  if (el) el.textContent = status;
+}
+
+async function closeSession() {
+  if (!confirm('Close this board session?')) return;
+  await fetch('/api/v1/boardroom/board/session/' + SESSION_ID + '/close', {method: 'POST'});
+  location.reload();
+}
+
+// Auto-scroll transcript to bottom on load
+document.getElementById('session-transcript')?.scrollTo(0, 999999);
+</script>
+{% endblock %}

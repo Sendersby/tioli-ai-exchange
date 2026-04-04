@@ -374,3 +374,96 @@ async def boardroom_mission(request: Request, db: AsyncSession = Depends(get_db)
     return templates.TemplateResponse("boardroom/mission_control.html", {
         "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
+
+
+# ══════════════════════════════════════════════════════════════════
+# MISSING ROUTES — Fix 404s
+# ══════════════════════════════════════════════════════════════════
+
+@boardroom_views.get("/board/convene", response_class=HTMLResponse)
+async def boardroom_convene(request: Request, db: AsyncSession = Depends(get_db)):
+    """Convene a new board session — redirects to active session after creation."""
+    _check_enabled()
+    ctx = await _get_boardroom_context(db)
+
+    preset_id = request.query_params.get("preset", "")
+    preset_agents = None
+    if preset_id:
+        p = await db.execute(text(
+            "SELECT preset_name, agent_ids FROM boardroom_group_presets WHERE id = cast(:pid as uuid)"
+        ), {"pid": preset_id})
+        row = p.fetchone()
+        if row:
+            preset_agents = {"name": row.preset_name, "agents": row.agent_ids}
+
+    # Presets for the composer
+    presets = await db.execute(text(
+        "SELECT id::text, preset_name, agent_ids, description FROM boardroom_group_presets ORDER BY sort_order"
+    ))
+    ctx["presets"] = [
+        {"id": row.id, "name": row.preset_name, "agents": row.agent_ids, "desc": row.description}
+        for row in presets.fetchall()
+    ]
+    ctx["selected_preset"] = preset_agents
+
+    return templates.TemplateResponse("boardroom/convene.html", {
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
+    })
+
+
+@boardroom_views.get("/board/session/{session_id}", response_class=HTMLResponse)
+async def boardroom_session_detail(request: Request, session_id: str, db: AsyncSession = Depends(get_db)):
+    """View a specific board session — active or historical."""
+    _check_enabled()
+    ctx = await _get_boardroom_context(db)
+
+    session = await db.execute(text("""
+        SELECT id::text, session_type, status, agenda, quorum_met,
+               agents_present, outcome, minutes, opened_at, closed_at
+        FROM arch_board_sessions WHERE id = cast(:sid as uuid)
+    """), {"sid": session_id})
+    s = session.fetchone()
+    if not s:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/boardroom/board")
+
+    ctx["session"] = {
+        "id": s.id, "type": s.session_type, "status": s.status,
+        "agenda": s.agenda, "quorum": s.quorum_met,
+        "present": s.agents_present, "outcome": s.outcome,
+        "minutes": s.minutes, "opened": s.opened_at, "closed": s.closed_at,
+    }
+
+    # Get chat messages during this session
+    if s.opened_at:
+        msgs = await db.execute(text("""
+            SELECT agent_id, direction, message_text, message_type, created_at
+            FROM boardroom_chat_messages
+            WHERE created_at >= :start AND created_at <= COALESCE(:end, now())
+            ORDER BY created_at ASC
+        """), {"start": s.opened_at, "end": s.closed_at})
+        ctx["transcript"] = [
+            {"agent": r.agent_id, "dir": r.direction, "text": r.message_text,
+             "type": r.message_type, "at": r.created_at}
+            for r in msgs.fetchall()
+        ]
+    else:
+        ctx["transcript"] = []
+
+    # Get votes from this session
+    votes = await db.execute(text("""
+        SELECT bv.vote::text, bv.rationale, a.agent_name, a.display_name
+        FROM arch_board_votes bv
+        JOIN arch_agents a ON bv.agent_id = a.id
+        WHERE bv.session_id = cast(:sid as uuid)
+        ORDER BY bv.voted_at
+    """), {"sid": session_id})
+    ctx["session_votes"] = [
+        {"vote": r.vote, "rationale": r.rationale,
+         "agent": r.agent_name, "display": r.display_name}
+        for r in votes.fetchall()
+    ]
+
+    return templates.TemplateResponse("boardroom/session.html", {
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
+    })
