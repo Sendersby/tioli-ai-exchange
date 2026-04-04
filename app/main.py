@@ -7978,3 +7978,9 @@ import os as _os
 if _os.getenv('ARCH_AGENTS_ENABLED', 'false').lower() == 'true':
     from app.arch.router import arch_router
     app.include_router(arch_router)
+
+# ── Boardroom Module — Router Mount ──────────────────────────
+import os as _br_os
+if _br_os.getenv('BOARDROOM_ENABLED', 'false').lower() == 'true':
+    from app.boardroom.router import boardroom_router
+    app.include_router(boardroom_router)
