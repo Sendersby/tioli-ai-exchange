@@ -296,6 +296,7 @@ async def lifespan(app: FastAPI):
     # Start scheduled jobs
     from app.scheduler.jobs import start_scheduler, stop_scheduler
     start_scheduler()
+# ── Arch Agent Initiative — Startup ──────────────────────    # Additive only. Conditional on ARCH_AGENTS_ENABLED.    import os as _arch_os    if _arch_os.getenv("ARCH_AGENTS_ENABLED", "false").lower() == "true":        try:            import redis.asyncio as _arch_redis            from app.arch.agents import initialise_arch_agents            _arch_redis_client = _arch_redis.from_url(                _arch_os.getenv("REDIS_URL", "redis://localhost:6379/0")            )            async with async_session() as _arch_db:                _arch_agents = await initialise_arch_agents(                    _arch_db, _arch_redis_client                )            print(f"  Arch Agents: {len(_arch_agents)} activated")        except Exception as _arch_e:            print(f"  Arch Agents: startup failed — {_arch_e}")
     yield
     stop_scheduler()
 
@@ -1831,6 +1832,49 @@ async def platform_did_document():
             },
         ],
     }
+
+
+@app.get("/dashboard/github-engagement", response_class=HTMLResponse)
+async def github_engagement_page(request: Request):
+    """GitHub community engagement dashboard — HTML version."""
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/", status_code=302)
+
+    total_drafts = 0; pending_review = 0; approved = 0; posted = 0; quality_pass_rate = 0; drafts = []
+    try:
+        async with async_session() as db:
+            from app.agents_alive.github_engagement import get_engagement_dashboard
+            data = await get_engagement_dashboard(db)
+            total_drafts = data.get("total_drafts", 0)
+            pending_review = data.get("pending_review", 0)
+            approved = data.get("approved", 0)
+            posted = data.get("posted", 0)
+            quality_pass_rate = data.get("quality_pass_rate", 0)
+            drafts = data.get("recent_drafts", [])
+    except Exception:
+        pass
+
+    return templates.TemplateResponse("github_engagement.html", {
+        "request": request, "authenticated": True, "active": "github-engagement",
+        "total_drafts": total_drafts, "pending_review": pending_review,
+        "approved": approved, "posted": posted,
+        "quality_pass_rate": quality_pass_rate, "drafts": drafts,
+    })
+
+
+@app.post("/api/owner/github-engagement/{draft_id}/skip", include_in_schema=False)
+async def skip_github_draft(draft_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Skip a draft — mark as not worth posting."""
+    from app.agents_alive.github_engagement import GitHubEngagementDraft
+    result = await db.execute(
+        select(GitHubEngagementDraft).where(GitHubEngagementDraft.id == draft_id)
+    )
+    draft = result.scalar_one_or_none()
+    if draft:
+        draft.status = "skipped"
+        await db.commit()
+    return {"status": "skipped"}
 
 
 @app.get("/api/owner/github-engagement", include_in_schema=False)
@@ -6753,7 +6797,7 @@ async def transactions_list_page(request: Request):
     total_commission = sum(tx.get("founder_commission", 0) for tx in all_tx)
     types = set(tx.get("type", "") for tx in all_tx)
     return templates.TemplateResponse("transactions_list.html", {
-        "request": request, "authenticated": True, "active": "dashboard",
+        "request": request, "authenticated": True, "active": "transactions",
         "transactions": all_tx_rev, "total_volume": total_volume,
         "total_commission": total_commission, "type_count": len(types),
     })
@@ -6769,7 +6813,7 @@ async def transaction_detail_page(tx_index: int, request: Request):
     if tx_index < 0 or tx_index >= len(all_tx):
         raise HTTPException(status_code=404, detail="Transaction not found")
     return templates.TemplateResponse("transaction_detail.html", {
-        "request": request, "authenticated": True, "active": "dashboard",
+        "request": request, "authenticated": True, "active": "transactions",
         "tx": all_tx[tx_index], "tx_index": tx_index,
     })
 
@@ -6792,7 +6836,7 @@ async def blocks_list_page(request: Request):
         })
     blocks.reverse()
     return templates.TemplateResponse("blocks_list.html", {
-        "request": request, "authenticated": True, "active": "dashboard",
+        "request": request, "authenticated": True, "active": "blocks",
         "chain_info": chain_info, "blocks": blocks,
     })
 
@@ -7082,7 +7126,7 @@ async def agents_list_page(request: Request):
             })
 
     return templates.TemplateResponse("agents_list.html", {
-        "request": request, "authenticated": True, "active": "dashboard",
+        "request": request, "authenticated": True, "active": "agents",
         "agents": agents, "platforms": platforms, "total_balance": total_balance,
     })
 
@@ -7155,7 +7199,7 @@ async def agent_detail_page(agent_id: str, request: Request):
         pass
 
     return templates.TemplateResponse("agent_detail.html", {
-        "request": request, "authenticated": True, "active": "dashboard",
+        "request": request, "authenticated": True, "active": "agents",
         "agent": agent_data, "wallets": wallets, "total_balance": total_balance,
         "transactions": agent_tx[:50], "tx_count": len(agent_tx),
         "reputation": reputation,
@@ -7802,7 +7846,7 @@ async def gateway_auth(request: Request):
     password = form.get("password", "").strip()
 
     user_hash = _gw_hashlib.sha256(username.encode()).hexdigest()
-    pass_hash = _gw_hashlib.sha256(password.encode()).hexdigest()
+    pass_hash = _gw_bcrypt_check(password)
 
     if user_hash == _GATEWAY_USER_HASH and pass_hash == _GATEWAY_PASS_HASH:
         _gateway_failures.pop(client_ip, None)
@@ -7911,3 +7955,10 @@ async def revenue_dashboard_page(request: Request):
         "request": request, "authenticated": True, "active": "revenue",
         "rev": rev,
     })
+
+# ── Arch Agent Initiative — Router Mount ──────────────────────
+# Additive only. Feature-flagged. Zero impact when disabled.
+import os as _os
+if _os.getenv('ARCH_AGENTS_ENABLED', 'false').lower() == 'true':
+    from app.arch.router import arch_router
+    app.include_router(arch_router)
