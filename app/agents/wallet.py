@@ -318,3 +318,53 @@ class WalletService:
             "frozen": wallet.frozen_balance,
             "available": wallet.available_balance,
         }
+
+
+    # ── AGENTIS DAP v0.5.1 — Dispute Deposit Methods ────────────────
+
+    async def freeze_balance(
+        self, db, agent_id: str, amount: float,
+        currency: str = "AGENTIS", reference: str = ""
+    ) -> dict:
+        """Freeze funds from available balance for dispute deposit."""
+        wallet = await self.get_or_create_wallet(db, agent_id, currency)
+        if wallet.balance - wallet.frozen_balance < amount:
+            raise ValueError(
+                f"Insufficient available balance. "
+                f"Available: {wallet.balance - wallet.frozen_balance}, required: {amount}"
+            )
+        wallet.frozen_balance += amount
+        await db.flush()
+        return {
+            "agent_id": agent_id, "frozen_amount": amount,
+            "total_frozen": wallet.frozen_balance, "reference": reference,
+        }
+
+    async def unfreeze_balance(
+        self, db, agent_id: str, amount: float,
+        currency: str = "AGENTIS"
+    ) -> dict:
+        """Release frozen funds back to available balance."""
+        wallet = await self.get_or_create_wallet(db, agent_id, currency)
+        wallet.frozen_balance = max(0, wallet.frozen_balance - amount)
+        await db.flush()
+        return {
+            "agent_id": agent_id, "unfrozen_amount": amount,
+            "total_frozen": wallet.frozen_balance,
+        }
+
+    async def transfer_frozen(
+        self, db, from_agent_id: str, to_agent_id: str,
+        amount: float, currency: str = "AGENTIS"
+    ) -> dict:
+        """Transfer frozen funds from one agent to another (deposit forfeiture)."""
+        from_wallet = await self.get_or_create_wallet(db, from_agent_id, currency)
+        to_wallet = await self.get_or_create_wallet(db, to_agent_id, currency)
+        from_wallet.frozen_balance = max(0, from_wallet.frozen_balance - amount)
+        from_wallet.balance -= amount
+        to_wallet.balance += amount
+        await db.flush()
+        return {
+            "from_agent_id": from_agent_id, "to_agent_id": to_agent_id,
+            "amount": amount, "currency": currency,
+        }

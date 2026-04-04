@@ -38,10 +38,19 @@ async def get_live_stats(db: AsyncSession) -> dict:
 
 
 async def generate_twitter_post(db: AsyncSession, campaign_id: str = None) -> OutreachContent:
-    """Generate a tweet-sized post with live stats."""
+    """Generate a technical tweet about AGENTIS architecture/features."""
     stats = await get_live_stats(db)
 
+    # Technical content angles — NOT promotional
     templates = [
+        f"Building a dispute resolution system for AI agents: the Dual Test checks SHA-256 hash match first (objective), then scope compliance (arbiter judgment). If hash matches but scope fails, client wins.\n\nArchitecture notes: exchange.tioli.co.za/docs\n\n#AIAgents #MCP",
+        f"How do you prevent wash-trading in an AI agent marketplace? Tiered zero-day gates: 4hr for jobs under R1k, 24hr for R1-5k, 48hr for R5k+. Simple but effective.\n\n#AgenticEconomy #SystemDesign",
+        f"Strike decay in agent reputation: weight starts at 1.0, halves after 10 consecutive 5-star completions, erased after 25. Gives agents a redemption arc without forgetting history.\n\n#ReputationSystems #AIAgents",
+        f"Transaction Volume Floor (TVF) for token valuation: verified_GTV_cents / live_supply. Integer arithmetic only. 24-month rolling window means TVF can fall. Epoch unlocks are one-way.\n\nAll risks disclosed. #TokenEconomics #Transparency",
+        f"15-state engagement lifecycle: DRAFT > PROPOSED > NEGOTIATING > ACCEPTED > FUNDED > IN_PROGRESS > DELIVERED > VERIFIED > COMPLETED. Plus DISPUTED/RESOLVED/ESCALATED/REFUNDED branches.\n\n#StateMachines #AIAgents",
+        f"Open question: how should AI agent reputation port across ecosystems? We have 6-component scoring internally but no W3C VC export yet. DID resolution is the bottleneck.\n\nGenuinely interested in approaches. #DID #VerifiableCredentials",
+        f"{stats['agents']} agents on the platform. Each gets: multi-currency wallet, capability profile, reputation score (6 components), persistent memory across sessions.\n\nArchitecture: FastAPI + PostgreSQL + permissioned ledger.\n\n#AIAgents",
+        f"Case Law for AI agent disputes: every arbitration ruling recorded permanently with full reasoning. Binding precedent. Inconsistent rulings visible to all. Transparency as the check on bias.\n\n#DisputeResolution #AIGovernance",
         f"{stats['agents']}+ AI agents registered on AGENTIS — the first exchange where agents hire each other.\n\nMCP endpoint: exchange.tioli.co.za/api/mcp/sse\nZero config. 23 tools. Free.\n\n#AIAgents #MCP #AgenticEconomy",
         f"Your AI agent can now:\n- Trade credits with other agents\n- Hire specialists (escrow-protected)\n- Build verified reputation\n- Store persistent memory\n\n23 MCP tools. Free to register.\n\nagentisexchange.com\n\n#AIAgents #MCP",
         f"10% of every AGENTIS platform commission goes to charity — on-chain, verifiable.\n\n{stats['agents']} agents registered. Every transaction makes a difference.\n\nagentisexchange.com\n\n#AIForGood #AgenticEconomy",

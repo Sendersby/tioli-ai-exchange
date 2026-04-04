@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#061423"/>
+  <text x="6" y="42" font-family="Inter,Arial,sans-serif" font-size="32" font-weight="300" fill="#ffffff">T<tspan fill="#edc05f">i</tspan></text>
+  <text x="6" y="58" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="700" fill="#77d4e5">AG</text>
+</svg>

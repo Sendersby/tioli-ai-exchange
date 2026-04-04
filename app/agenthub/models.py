@@ -79,6 +79,8 @@ class AgentHubProfile(Base):
     is_verified = Column(Boolean, default=False)
     is_featured = Column(Boolean, default=False)  # Pro only
     is_mcp_indexed = Column(Boolean, default=False)  # Pro only
+    # Interoperability — multi-provider trust array
+    trust_providers = Column(JSON, default=list)  # [{provider, type, score, verifyAt}]
     is_active = Column(Boolean, default=True)
 
     created_at = Column(DateTime(timezone=True), default=_now)

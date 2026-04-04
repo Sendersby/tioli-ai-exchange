@@ -55,6 +55,7 @@ class HydraEncounter(Base):
     learnings = Column(JSON, default=dict)  # what we learned from this encounter
     discovered_via = Column(String(500), default="search")  # how we found this (search term, related repo, etc.)
     follow_up_targets = Column(JSON, default=list)  # related repos to explore next (replication)
+    technical_relevance = Column(Text, default="")  # What AGENTIS feature is relevant (if any)
     created_at = Column(DateTime(timezone=True), default=_now)
     updated_at = Column(DateTime(timezone=True), default=_now)
 
@@ -268,13 +269,28 @@ async def run_hydra_cycle():
                 # Record the encounter (don't engage every repo — be selective)
                 engagement_type = "discovered"
 
-                await record_encounter(
+                # Assess technical relevance
+                tech_relevance = ""
+                try:
+                    from app.agents_alive.engagement_policy import is_relevant_to_agentis
+                    relevant, reason = is_relevant_to_agentis(
+                        repo["name"] + " " + repo["description"],
+                        tags=repo.get("topics", [])
+                    )
+                    if relevant:
+                        tech_relevance = reason
+                except ImportError:
+                    pass
+
+                encounter = await record_encounter(
                     db, "github_repo", repo["url"], repo["name"],
                     repo["description"], repo["topics"], repo["stars"],
                     repo["language"], engagement_type,
                     discovered_via=discovered_via,
                     follow_ups=follow_ups,
                 )
+                if tech_relevance and encounter:
+                    encounter.technical_relevance = tech_relevance
 
             await update_daily_stats(
                 db,

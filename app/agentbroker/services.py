@@ -294,6 +294,38 @@ class EngagementService:
         })
         engagement.state_history = history
 
+        # AGENTIS Interoperability: fire webhooks on state change
+        try:
+            from app.agentbroker.models import AgentWebhookRegistration
+            from sqlalchemy import select as wh_select
+            import httpx
+            for agent_check_id in (engagement.client_agent_id, engagement.provider_agent_id):
+                wh_result = await db.execute(
+                    wh_select(AgentWebhookRegistration).where(
+                        AgentWebhookRegistration.agent_id == agent_check_id,
+                        AgentWebhookRegistration.is_active == True,
+                    )
+                )
+                for wh in wh_result.scalars().all():
+                    events = wh.events or []
+                    if new_state in events or "*" in events:
+                        try:
+                            async with httpx.AsyncClient(timeout=5) as client:
+                                await client.post(wh.callback_url, json={
+                                    "event": new_state,
+                                    "engagement_id": engagement.engagement_id,
+                                    "title": engagement.engagement_title,
+                                    "previous_state": current,
+                                    "new_state": new_state,
+                                    "actor": actor_id,
+                                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                                })
+                            wh.last_fired_at = datetime.now(timezone.utc)
+                        except Exception:
+                            wh.failure_count = (wh.failure_count or 0) + 1
+        except Exception:
+            pass  # Webhooks are best-effort — never block state transitions
+
         # Handle terminal states
         if new_state == "COMPLETED":
             engagement.completed_at = datetime.now(timezone.utc)
@@ -398,6 +430,17 @@ class EngagementService:
         if agent_id != engagement.provider_agent_id:
             raise ValueError("Only the provider can submit deliverables")
 
+        # AGENTIS DAP v0.5.1 — zero-day gate enforcement
+        if settings.agentis_dap_enabled and engagement.deposited_at:
+            elapsed_ms = (datetime.now(timezone.utc) - engagement.deposited_at).total_seconds() * 1000
+            gate_ms = engagement.zero_day_gate_ms or (48 * 3600 * 1000)
+            if elapsed_ms < gate_ms:
+                remaining_hrs = round((gate_ms - elapsed_ms) / 3600000, 1)
+                raise ValueError(f"Zero-day gate: {remaining_hrs}h remaining.")
+            if not deliverable_content_hash or len(str(deliverable_content_hash)) != 64:
+                raise ValueError("deliverable_hash must be 64-char SHA-256 hex.")
+            engagement.submitted_at = datetime.now(timezone.utc)
+
         # Generate hash if content provided
         if deliverable_content_hash:
             engagement.deliverable_hash = deliverable_content_hash
@@ -408,6 +451,20 @@ class EngagementService:
 
         engagement.deliverable_storage_ref = deliverable_ref
         await self.transition_state(db, engagement_id, "DELIVERED", agent_id)
+
+        # AGENTIS DAP v0.5.1 — record hash on chain
+        if settings.agentis_dap_enabled and engagement.deliverable_hash:
+            from app.blockchain.transaction import Transaction, TransactionType
+            tx = Transaction(
+                type=TransactionType.DELIVERABLE_HASH,
+                sender_id=engagement.provider_agent_id,
+                receiver_id=engagement.client_agent_id,
+                amount=0,
+                currency=engagement.price_currency,
+                description=f"SHA-256: {engagement.deliverable_hash[:32]}... Auto-finalizes in 10 days",
+                metadata={"engagement_id": engagement_id},
+            )
+            self.blockchain.add_transaction(tx)
 
         await db.flush()
         return {
@@ -585,8 +642,12 @@ class EngagementService:
                 await db.flush()
             fw.balance += fees["founder_commission"]
 
-        # Credit charity wallet
-        if fees["charity_fee"] > 0:
+        # Credit charity wallet — AGENTIS DAP v0.5.1: charity guard
+        charity_allowed = True
+        if settings.agentis_dap_enabled:
+            from app.agentbroker.agentis_dap_services import should_record_charity
+            charity_allowed = should_record_charity(engagement)
+        if fees["charity_fee"] > 0 and charity_allowed:
             charity_result = await db.execute(
                 select(Wallet).where(
                     Wallet.agent_id == "TIOLI_CHARITY_FUND",
@@ -599,6 +660,8 @@ class EngagementService:
                 db.add(cw)
                 await db.flush()
             cw.balance += fees["charity_fee"]
+        elif not charity_allowed:
+            engagement.charitable_allocation = 0.0  # Zero out charity on refunded/disputed
 
         # NEW-07 fix: update escrow wallet status
         if engagement.escrow_wallet_id:
@@ -880,12 +943,14 @@ class DisputeService:
 
     async def owner_veto_decision(
         self, db: AsyncSession, dispute_id: str, decision: str, notes: str,
-        engagement_service: "EngagementService | None" = None
+        engagement_service: "EngagementService | None" = None,
+        dap_ruling=None,
     ) -> dict:
         """Owner issues final veto decision on escalated dispute.
 
         H-07 fix: after recording decision, transition the engagement
         to RESOLVED then to COMPLETED or REFUNDED.
+        AGENTIS DAP v0.5.1: extended ruling with arbiter_rating, reasoning, etc.
         """
         _check_feature_flag()
         result = await db.execute(
@@ -894,6 +959,106 @@ class DisputeService:
         dispute = result.scalar_one_or_none()
         if not dispute or not dispute.escalated_to_owner:
             raise ValueError("Dispute not found or not escalated")
+
+        # AGENTIS DAP v0.5.1 — extended ruling logic
+        if settings.agentis_dap_enabled and dap_ruling:
+            from app.agentbroker.agentis_dap_services import (
+                add_strike, award_clean_streak, publish_case_law,
+                check_epoch_unlocks, should_record_charity,
+            )
+            dispute.arbiter_rating = dap_ruling.arbiter_rating
+            dispute.arbiter_reasoning = dap_ruling.arbiter_reasoning
+            dispute.hash_matched = dap_ruling.hash_matched
+            dispute.scope_complied = dap_ruling.scope_complied
+            dispute.frivolous = (dap_ruling.winner == "provider_frivolous")
+            dispute.deposit_forfeited = (dap_ruling.winner == "provider_frivolous")
+
+            # Get engagement for arbiter_rating override
+            eng_result = await db.execute(
+                select(AgentEngagement).where(
+                    AgentEngagement.engagement_id == dispute.engagement_id
+                )
+            )
+            eng = eng_result.scalar_one_or_none()
+            if eng:
+                eng.arbiter_rating = dap_ruling.arbiter_rating
+
+            # Handle deposit
+            client_agent_id = eng.client_agent_id if eng else None
+            provider_agent_id = eng.provider_agent_id if eng else None
+            if dispute.deposit_forfeited and client_agent_id and provider_agent_id:
+                try:
+                    from app.agents.wallet import WalletService
+                    wallet_svc = WalletService(
+                        engagement_service.blockchain if engagement_service else None,
+                        engagement_service.fee_engine if engagement_service else None,
+                    )
+                    await wallet_svc.transfer_frozen(
+                        db, client_agent_id, provider_agent_id,
+                        dispute.dispute_deposit_cents / 100.0,
+                    )
+                except Exception:
+                    pass
+                from app.blockchain.transaction import Transaction, TransactionType
+                tx = Transaction(
+                    type=TransactionType.DEPOSIT_FORFEITED,
+                    sender_id=client_agent_id,
+                    receiver_id=provider_agent_id,
+                    amount=dispute.dispute_deposit_cents / 100.0,
+                    currency="AGENTIS",
+                    description=f"Dispute deposit forfeited to provider - frivolous",
+                    metadata={"dispute_id": dispute_id},
+                )
+                if engagement_service:
+                    engagement_service.blockchain.add_transaction(tx)
+            elif client_agent_id and dispute.dispute_deposit_cents > 0:
+                try:
+                    from app.agents.wallet import WalletService
+                    wallet_svc = WalletService(
+                        engagement_service.blockchain if engagement_service else None,
+                        engagement_service.fee_engine if engagement_service else None,
+                    )
+                    await wallet_svc.unfreeze_balance(
+                        db, client_agent_id,
+                        dispute.dispute_deposit_cents / 100.0,
+                    )
+                except Exception:
+                    pass
+                from app.blockchain.transaction import Transaction, TransactionType
+                tx = Transaction(
+                    type=TransactionType.DEPOSIT_RETURNED,
+                    sender_id="AGENTIS_ESCROW",
+                    receiver_id=client_agent_id,
+                    amount=dispute.dispute_deposit_cents / 100.0,
+                    currency="AGENTIS",
+                    description=f"Dispute deposit returned - legitimate dispute",
+                    metadata={"dispute_id": dispute_id},
+                )
+                if engagement_service:
+                    engagement_service.blockchain.add_transaction(tx)
+
+            # Strikes and streaks
+            if provider_agent_id:
+                if dap_ruling.winner == "client":
+                    await add_strike(db, provider_agent_id, dispute.engagement_id, dispute_id)
+                else:
+                    await award_clean_streak(db, provider_agent_id)
+
+            # Map DAP winner to legacy decision
+            if dap_ruling.winner in ("provider", "provider_frivolous"):
+                decision = "full_payment"
+            elif dap_ruling.winner == "client":
+                decision = "full_refund"
+            elif dap_ruling.winner == "split":
+                decision = "partial_payment"
+            notes = dap_ruling.arbiter_reasoning
+
+            # Publish case law
+            if eng:
+                await publish_case_law(db, dispute, eng, dap_ruling)
+
+            # Check epoch unlocks
+            await check_epoch_unlocks(db)
 
         dispute.owner_decision = notes
         dispute.outcome = decision
@@ -963,7 +1128,14 @@ class ReputationService:
 
         # Calculate components
         delivery_rate = (completed / total * 10) if total > 0 else 10.0
-        dispute_score = ((1 - disputed / max(total, 1)) * 10) if total > 0 else 10.0
+
+        # AGENTIS DAP v0.5.1 — weighted strike rate replaces flat dispute_rate
+        if settings.agentis_dap_enabled:
+            from app.agentbroker.agentis_dap_services import calculate_weighted_strike_rate
+            wsr = await calculate_weighted_strike_rate(db, agent_id, total)
+            dispute_score = ((1 - wsr) * 10) if total > 0 else 10.0
+        else:
+            dispute_score = ((1 - disputed / max(total, 1)) * 10) if total > 0 else 10.0
         volume_score = min(10, math.log(max(total, 1) + 1) * 3)
 
         # Weighted composite (Section 2.6.1)

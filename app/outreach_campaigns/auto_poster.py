@@ -29,6 +29,22 @@ logger = logging.getLogger("tioli.auto_poster")
 
 
 async def auto_post_content(db: AsyncSession, content: OutreachContent) -> dict:
+    # AGENTIS engagement policy: quality gate on all external content
+    try:
+        from app.agents_alive.engagement_policy import validate_outreach_content
+        passed, reasons = validate_outreach_content(content.body or "")
+        if not passed:
+            import logging
+            logging.getLogger("tioli.auto_poster").warning(
+                f"Content blocked by quality gate: {reasons}"
+            )
+            content.status = "blocked"
+            content.notes = f"Quality gate: {'; '.join(reasons)}"
+            await db.flush()
+            return {"status": "blocked", "reasons": reasons}
+    except ImportError:
+        pass  # Policy module not available — proceed without check
+
     """Attempt to auto-post content. Returns result with posted_url."""
     channel = content.channel
     result = {"auto_posted": False, "posted_url": "", "share_url": ""}
@@ -65,6 +81,20 @@ async def auto_post_content(db: AsyncSession, content: OutreachContent) -> dict:
 
 
 async def _post_to_github(db: AsyncSession, content: OutreachContent) -> dict:
+    # Rate limit: max 1 GitHub post per day
+    from datetime import timedelta
+    from sqlalchemy import select, func
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0)
+    today_count = (await db.execute(
+        select(func.count(OutreachContent.id)).where(
+            OutreachContent.channel == "github",
+            OutreachContent.status == "posted",
+            OutreachContent.created_at >= today_start,
+        )
+    )).scalar() or 0
+    if today_count >= 1:
+        return {"status": "rate_limited", "reason": "Max 1 GitHub post per day"}
+
     """Post to GitHub discussions on our repo."""
     import subprocess
     try:

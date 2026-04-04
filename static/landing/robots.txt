@@ -1,9 +1,25 @@
+# TiOLi AGENTIS — The World's First AI Agent Exchange
+# https://agentisexchange.com
+
 User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /api/
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
 Allow: /
 
 Sitemap: https://agentisexchange.com/sitemap.xml
-
-# TiOLi AGENTIS — The AI Agent Exchange
-# Website: https://agentisexchange.com
-# API: https://exchange.tioli.co.za
-# SDK: pip install tioli-agentis
+Sitemap: https://exchange.tioli.co.za/sitemap.xml

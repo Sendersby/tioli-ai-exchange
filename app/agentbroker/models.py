@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column, DateTime, Float, String, Boolean, Integer, Text,
-    ForeignKey, JSON,
+    ForeignKey, JSON, BigInteger, SmallInteger, Numeric,
 )
 from sqlalchemy.orm import relationship
 
@@ -103,6 +103,12 @@ class AgentEngagement(Base):
     outcome_oracle_ref = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime(timezone=True), nullable=True)
+    # AGENTIS DAP v0.5.1 columns
+    deposited_at = Column(DateTime(timezone=True), nullable=True)
+    submitted_at = Column(DateTime(timezone=True), nullable=True)
+    arbiter_rating = Column(SmallInteger, nullable=True)         # 1-5, overrides client rating
+    dispute_deposit_cents = Column(Integer, nullable=True, default=0)
+    zero_day_gate_ms = Column(BigInteger, nullable=True)         # gate ms per value tier
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -167,6 +173,17 @@ class EngagementDispute(Base):
     status = Column(String(20), default="open")             # open, evidence, arbitrating, resolved, escalated
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     resolved_at = Column(DateTime(timezone=True), nullable=True)
+    # AGENTIS DAP v0.5.1 columns
+    dispute_deposit_cents = Column(Integer, nullable=False, default=0)
+    deposit_locked_at = Column(DateTime(timezone=True), nullable=True)
+    deposit_forfeited = Column(Boolean, nullable=False, default=False)
+    arbiter_rating = Column(SmallInteger, nullable=True)
+    arbiter_reasoning = Column(Text, nullable=True)
+    hash_matched = Column(Boolean, nullable=True)
+    scope_complied = Column(Boolean, nullable=True)
+    frivolous = Column(Boolean, nullable=False, default=False)
+    phase = Column(String(10), nullable=False, default="phase_1")
+    case_law_published_at = Column(DateTime(timezone=True), nullable=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -246,4 +263,93 @@ class EngagementEscrowWallet(Base):
     status = Column(String(20), default="unfunded")         # unfunded, funded, partially_released, released, refunded
     funded_at = Column(DateTime(timezone=True), nullable=True)
     released_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+
+# ======================================================================
+#  AGENTIS DAP v0.5.1 — New Tables
+# ======================================================================
+
+class OperatorReputationStrike(Base):
+    __tablename__ = "operator_reputation_strikes"
+
+    strike_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    operator_id = Column(String, nullable=False, index=True)   # agent operator_id
+    engagement_id = Column(String, ForeignKey("agent_engagements.engagement_id"), nullable=False)
+    dispute_id = Column(String, ForeignKey("engagement_disputes.dispute_id"), nullable=False)
+    weight = Column(Numeric(4, 2), nullable=False, default=1.0)
+    clean_streak_snapshot = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class OperatorCleanStreak(Base):
+    __tablename__ = "operator_clean_streaks"
+
+    operator_id = Column(String, primary_key=True)             # agent operator_id
+    clean_streak = Column(Integer, nullable=False, default=0)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class AgentisCaseLaw(Base):
+    __tablename__ = "agentis_case_law"
+
+    case_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    dispute_id = Column(String, ForeignKey("engagement_disputes.dispute_id"), nullable=False)
+    engagement_id = Column(String, ForeignKey("agent_engagements.engagement_id"), nullable=False)
+    operator_client_id = Column(String, nullable=False)
+    operator_prov_id = Column(String, nullable=False)
+    engagement_title = Column(Text, nullable=False)
+    category = Column(String(80), nullable=True)
+    value_cents = Column(Integer, nullable=False)
+    hash_matched = Column(Boolean, nullable=False)
+    scope_complied = Column(Boolean, nullable=False)
+    ruling = Column(String(40), nullable=False)
+    arbiter_rating = Column(SmallInteger, nullable=False)
+    arbiter_reasoning = Column(Text, nullable=False)
+    deposit_cents = Column(Integer, nullable=False, default=0)
+    deposit_forfeited = Column(Boolean, nullable=False, default=False)
+    acceptance_criteria = Column(Text, nullable=True)
+    phase = Column(String(10), nullable=False, default="phase_1")
+    published_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    block_ref = Column(String(40), nullable=True)
+
+
+class AgentisEpochState(Base):
+    __tablename__ = "agentis_epoch_state"
+
+    epoch_n = Column(SmallInteger, primary_key=True)
+    label = Column(String(40), nullable=False)
+    gtv_threshold_cents = Column(BigInteger, nullable=False)
+    supply_tranche = Column(Integer, nullable=False)
+    unlocked = Column(Boolean, nullable=False, default=False)
+    unlocked_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class AgentisTokenTransaction(Base):
+    __tablename__ = "agentis_token_transactions"
+
+    txn_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    operator_id = Column(String, nullable=False)
+    tokens = Column(Integer, nullable=False)
+    tvf_price_micros = Column(BigInteger, nullable=False)      # TVF as integer micros
+    total_cost_cents = Column(Integer, nullable=False)
+    ledger_block_ref = Column(String(40), nullable=True)
+    epoch_n = Column(SmallInteger, ForeignKey("agentis_epoch_state.epoch_n"), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+
+class AgentWebhookRegistration(Base):
+    """Webhook registration for engagement state change notifications."""
+    __tablename__ = "agent_webhook_registrations"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    agent_id = Column(String, nullable=False, index=True)
+    callback_url = Column(String(500), nullable=False)
+    events = Column(JSON, default=lambda: ["COMPLETED", "DISPUTED", "REFUNDED"])
+    secret_hash = Column(String(256), nullable=True)
+    is_active = Column(Boolean, default=True)
+    failure_count = Column(Integer, default=0)
+    last_fired_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

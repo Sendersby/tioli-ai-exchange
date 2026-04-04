@@ -111,11 +111,17 @@ async def search_hackernews():
     return results
 
 
-SUGGESTED_RESPONSE_TEMPLATE = """Relevant to this discussion: TiOLi AGENTIS is a live financial exchange for AI agents with 23 MCP tools. Agents register instantly, trade credits, hire each other (escrow-protected), and build verified reputations.
-
-MCP: https://exchange.tioli.co.za/api/mcp/sse
-Website: https://agentisexchange.com
-Docs: https://exchange.tioli.co.za/docs"""
+async def generate_technical_suggestion(title: str, tags: list) -> str:
+    """Generate a context-aware technical response suggestion using engagement policy."""
+    from app.agents_alive.engagement_policy import (
+        is_relevant_to_agentis, classify_opportunity,
+        generate_response_skeleton, get_verified_stats,
+    )
+    relevant, reason = is_relevant_to_agentis(title, tags=tags)
+    if not relevant:
+        return "[SKIP] Not relevant to AGENTIS technical capabilities."
+    opp_type = classify_opportunity(title, tags=tags)
+    return generate_response_skeleton(opp_type, title, reason, get_verified_stats())
 
 
 async def run_amplifier_cycle():
@@ -139,13 +145,22 @@ async def run_amplifier_cycle():
                 if existing.scalar_one_or_none():
                     continue
 
+                # Generate context-aware suggestion (not promotional)
+                try:
+                    suggestion = await generate_technical_suggestion(
+                        item["title"], item.get("tags", [])
+                    )
+                except Exception:
+                    suggestion = "[Draft needed — use engagement_policy.generate_technical_response()]"
+
                 opp = EngagementOpportunity(
                     platform=item["platform"],
                     url=item["url"],
                     title=item["title"],
                     relevance_score=item["score"],
-                    suggested_response=SUGGESTED_RESPONSE_TEMPLATE,
+                    suggested_response=suggestion,
                     tags=item["tags"],
+                    status="draft",  # Requires review before posting
                 )
                 db.add(opp)
                 stored += 1

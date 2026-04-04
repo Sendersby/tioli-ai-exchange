@@ -477,7 +477,7 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
 # CORS must be outermost so preflight OPTIONS requests are handled before rate limiting
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://exchange.tioli.co.za", "https://agentisexchange.com", "https://www.agentisexchange.com"],
+    allow_origins=["https://exchange.tioli.co.za", "https://agentisexchange.com", "https://www.agentisexchange.com", "https://api.agentisexchange.com"],
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Idempotency-Key"],
     allow_credentials=True,
@@ -1650,6 +1650,374 @@ async def serve_llms_txt():
     """LLM discovery file — tells AI systems what this platform does."""
     from fastapi.responses import FileResponse
     return FileResponse("static/llms.txt", media_type="text/plain")
+
+# ── SEO & Discoverability Routes ─────────────────────────────────────
+
+@app.get("/robots.txt", include_in_schema=False)
+async def serve_robots_txt():
+    """Serve robots.txt from root URL for search engine crawlers."""
+    from fastapi.responses import PlainTextResponse
+    content = """# TiOLi AGENTIS — The World's First AI Agent Exchange
+# https://exchange.tioli.co.za
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /owner/
+Disallow: /login
+Disallow: /onboard
+Disallow: /codelog
+
+# Allow specific public API endpoints
+Allow: /api/public/
+Allow: /api/exchange/rates
+Allow: /api/exchange/summary/
+Allow: /api/currencies
+
+# Search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# AI crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://exchange.tioli.co.za/sitemap.xml
+"""
+    return PlainTextResponse(content, media_type="text/plain")
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def serve_sitemap_xml():
+    """Dynamic sitemap with all public pages for both domains."""
+    from fastapi.responses import Response
+    from datetime import date
+    today = date.today().isoformat()
+
+    pages = [
+        ("https://exchange.tioli.co.za/", "weekly", "1.0"),
+        ("https://exchange.tioli.co.za/docs", "weekly", "0.9"),
+        ("https://exchange.tioli.co.za/demo", "monthly", "0.8"),
+        ("https://exchange.tioli.co.za/regulatory", "monthly", "0.7"),
+        ("https://exchange.tioli.co.za/founding-cohort", "monthly", "0.8"),
+        ("https://exchange.tioli.co.za/explorer", "daily", "0.8"),
+        ("https://exchange.tioli.co.za/agora", "daily", "0.9"),
+        ("https://exchange.tioli.co.za/charter", "monthly", "0.7"),
+        ("https://exchange.tioli.co.za/agent-register", "weekly", "0.9"),
+        ("https://exchange.tioli.co.za/quickstart", "monthly", "0.8"),
+        ("https://exchange.tioli.co.za/builders", "daily", "0.7"),
+        ("https://exchange.tioli.co.za/dashboard", "daily", "0.6"),
+        ("https://exchange.tioli.co.za/banking", "weekly", "0.5"),
+    ]
+
+    urls = ""
+    for loc, freq, pri in pages:
+        urls += f"  <url><loc>{loc}</loc><lastmod>{today}</lastmod><changefreq>{freq}</changefreq><priority>{pri}</priority></url>\n"
+
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{urls}</urlset>"""
+    return Response(content=xml, media_type="application/xml")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def serve_favicon():
+    """Serve favicon from root URL."""
+    import os
+    path = "static/favicon.ico"
+    if os.path.exists(path):
+        from fastapi.responses import FileResponse
+        return FileResponse(path, media_type="image/x-icon")
+    return Response(status_code=204)
+
+@app.get("/google14074b4c65624c46.html", include_in_schema=False)
+async def google_search_console_verification():
+    """Google Search Console verification file."""
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse("google-site-verification: google14074b4c65624c46.html")
+
+
+@app.get("/api/public/architecture", include_in_schema=False)
+async def architecture_disclosure():
+    """AGENTIS architecture transparency disclosure.
+
+    Honest description of the platform architecture, limitations,
+    and roadmap. Responding to community feedback about chain type.
+    """
+    return {
+        "platform": "TiOLi AGENTIS Exchange",
+        "version": "0.5.1",
+        "chain": {
+            "type": "permissioned_single_node",
+            "description": "Single-node permissioned chain, internal to the platform. Not a public L1/L2.",
+            "verification": "All transactions queryable via public API and block explorer.",
+            "explorer_url": "https://agentisexchange.com/explorer",
+            "tamper_evident": True,
+            "independently_verifiable": False,
+            "note": "On-chain means tamper-evident and auditable, not independently verifiable without our API.",
+        },
+        "phase_1_limitations": [
+            "Owner arbitration — platform owner is the arbiter (declared, not neutral)",
+            "No external DID resolution — AgentHubDID exists but is internal-only",
+            "No W3C Verifiable Credential export — reputation is API-queryable but not portable",
+            "No formal appeal mechanism to neutral third party",
+            "Permissioned chain — not anchored to a public ledger",
+        ],
+        "roadmap": {
+            "phase_2": "Independent arbitrator panel (3 SA legal/tech firms). 6-12 months.",
+            "phase_3": "Public ledger anchoring (did:ethr or did:ion). Post-FSCA CASP registration.",
+            "did_web": "Near-term: did:web resolution at /.well-known/did.json",
+            "vc_export": "Planned: W3C Verifiable Credential export for reputation and badges",
+        },
+        "stack": {
+            "backend": "Python 3.11 / FastAPI / SQLAlchemy (async)",
+            "database": "PostgreSQL",
+            "hosting": "DigitalOcean Ubuntu 22.04",
+            "mcp": "SSE transport, 16 tools",
+            "auth": "API key + 3FA for owner operations",
+        },
+    }
+
+
+@app.get("/.well-known/did.json", include_in_schema=False)
+async def platform_did_document():
+    """did:web DID document for the AGENTIS platform.
+
+    Allows external systems to resolve the platform identity.
+    """
+    return {
+        "@context": [
+            "https://www.w3.org/ns/did/v1",
+            "https://w3id.org/security/suites/ed25519-2020/v1",
+        ],
+        "id": "did:web:exchange.tioli.co.za",
+        "controller": "did:web:exchange.tioli.co.za",
+        "verificationMethod": [
+            {
+                "id": "did:web:exchange.tioli.co.za#key-1",
+                "type": "Ed25519VerificationKey2020",
+                "controller": "did:web:exchange.tioli.co.za",
+                "publicKeyMultibase": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+            }
+        ],
+        "authentication": ["did:web:exchange.tioli.co.za#key-1"],
+        "assertionMethod": ["did:web:exchange.tioli.co.za#key-1"],
+        "service": [
+            {
+                "id": "did:web:exchange.tioli.co.za#mcp",
+                "type": "MCPServer",
+                "serviceEndpoint": "https://exchange.tioli.co.za/api/mcp/sse",
+            },
+            {
+                "id": "did:web:exchange.tioli.co.za#api",
+                "type": "RESTApi",
+                "serviceEndpoint": "https://exchange.tioli.co.za/docs",
+            },
+            {
+                "id": "did:web:exchange.tioli.co.za#explorer",
+                "type": "BlockExplorer",
+                "serviceEndpoint": "https://agentisexchange.com/explorer",
+            },
+        ],
+    }
+
+
+@app.get("/api/owner/github-engagement", include_in_schema=False)
+async def github_engagement_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Dashboard for reviewing GitHub engagement drafts."""
+    try:
+        from app.agents_alive.github_engagement import get_engagement_dashboard
+        return await get_engagement_dashboard(db)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ── Interoperability Endpoints ───────────────────────────────────────
+
+@app.get("/agents/{agent_id}/did.json", include_in_schema=False)
+async def agent_did_document(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """W3C did:web document for an individual agent.
+
+    Resolves as did:web:exchange.tioli.co.za:agents:{agent_id}
+    """
+    from sqlalchemy import select
+    from app.agents.models import Agent
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    did_id = f"did:web:exchange.tioli.co.za:agents:{agent_id}"
+    return {
+        "@context": [
+            "https://www.w3.org/ns/did/v1",
+            "https://w3id.org/security/suites/ed25519-2020/v1",
+        ],
+        "id": did_id,
+        "controller": "did:web:exchange.tioli.co.za",
+        "verificationMethod": [
+            {
+                "id": f"{did_id}#key-1",
+                "type": "Ed25519VerificationKey2020",
+                "controller": "did:web:exchange.tioli.co.za",
+                "publicKeyMultibase": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+            }
+        ],
+        "authentication": [f"{did_id}#key-1"],
+        "assertionMethod": [f"{did_id}#key-1"],
+        "service": [
+            {
+                "id": f"{did_id}#profile",
+                "type": "AgentProfile",
+                "serviceEndpoint": f"https://exchange.tioli.co.za/api/v1/profiles/{agent_id}",
+            },
+            {
+                "id": f"{did_id}#mcp",
+                "type": "MCPServer",
+                "serviceEndpoint": "https://exchange.tioli.co.za/api/mcp/sse",
+            },
+        ],
+    }
+
+
+@app.get("/agents/{agent_id}/card.json", include_in_schema=False)
+async def agent_a2a_card(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """A2A-compatible agent card for cross-ecosystem discovery."""
+    from sqlalchemy import select
+    from app.agents.models import Agent
+
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Try to get profile
+    profile_data = {}
+    try:
+        from app.agenthub.models import AgentHubProfile, AgentHubSkill
+        prof_result = await db.execute(
+            select(AgentHubProfile).where(AgentHubProfile.agent_id == agent_id)
+        )
+        prof = prof_result.scalar_one_or_none()
+        if prof:
+            profile_data = {
+                "display_name": prof.display_name,
+                "headline": prof.headline,
+                "bio": prof.bio,
+                "reputation_score": prof.reputation_score,
+                "specialisation_domains": prof.specialisation_domains or [],
+                "trust_providers": getattr(prof, "trust_providers", None) or [],
+            }
+            # Get skills
+            skills_result = await db.execute(
+                select(AgentHubSkill).where(AgentHubSkill.agent_id == agent_id)
+            )
+            skills = [
+                {"id": s.skill_name.lower().replace(" ", "-"), "name": s.skill_name}
+                for s in skills_result.scalars().all()
+            ]
+            profile_data["skills"] = skills
+    except Exception:
+        pass
+
+    # Build trust array
+    trust = profile_data.get("trust_providers", [])
+    if not trust:
+        trust = [
+            {
+                "provider": "agentis",
+                "type": "platform_reputation",
+                "score": profile_data.get("reputation_score", 0),
+                "verifyAt": f"https://exchange.tioli.co.za/api/v1/profiles/{agent_id}",
+            }
+        ]
+
+    return {
+        "name": profile_data.get("display_name", agent.name),
+        "description": profile_data.get("headline", agent.description or ""),
+        "url": f"https://agentisexchange.com/agents/{agent_id}",
+        "did": f"did:web:exchange.tioli.co.za:agents:{agent_id}",
+        "skills": profile_data.get("skills", []),
+        "provider": {
+            "organization": "TiOLi AGENTIS",
+            "platform": "https://agentisexchange.com",
+        },
+        "trust": trust,
+        "authentication": {
+            "type": "bearer",
+            "description": "API key (auto-issued on registration)",
+        },
+        "endpoints": [
+            {"protocol": "mcp-sse", "url": "https://exchange.tioli.co.za/api/mcp/sse"},
+            {"protocol": "rest", "url": "https://exchange.tioli.co.za/docs"},
+        ],
+    }
+
+
+@app.get("/api/discover", include_in_schema=False)
+async def agt_discover(
+    capability: str = None,
+    protocol: str = None,
+    pricing: str = None,
+    min_reputation: float = 0,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db),
+):
+    """.agt discovery spec compatible endpoint.
+
+    Query agents by capability, protocol, and reputation.
+    Returns ranked list in .agt manifest format.
+    """
+    from app.discovery.network import AgentDiscoveryService
+    svc = AgentDiscoveryService()
+    agents = await svc.discover_agents(
+        db, capability=capability, min_reputation=min_reputation, limit=limit,
+    )
+
+    # Enrich with .agt manifest format
+    manifests = []
+    for a in agents:
+        manifest = {
+            "agentId": a.get("agent_id", ""),
+            "displayName": a.get("display_name", ""),
+            "capabilities": a.get("capabilities", []),
+            "reputation": a.get("reputation", 0),
+            "endpoints": [
+                {"protocol": "mcp-sse", "url": "https://exchange.tioli.co.za/api/mcp/sse"},
+                {"protocol": "rest", "url": f"https://exchange.tioli.co.za/api/v1/profiles/{a.get('agent_id', '')}"},
+            ],
+            "did": f"did:web:exchange.tioli.co.za:agents:{a.get('agent_id', '')}",
+            "a2aCard": f"https://exchange.tioli.co.za/agents/{a.get('agent_id', '')}/card.json",
+        }
+        if protocol and protocol.lower() == "mcp":
+            manifest["endpoints"] = [e for e in manifest["endpoints"] if "mcp" in e["protocol"]]
+        manifests.append(manifest)
+
+    return {
+        "agents": manifests,
+        "count": len(manifests),
+        "query": {
+            "capability": capability,
+            "protocol": protocol,
+            "pricing": pricing,
+            "min_reputation": min_reputation,
+        },
+    }
+
+
+
+
 
 
 @app.get("/agent-register.html", include_in_schema=False)

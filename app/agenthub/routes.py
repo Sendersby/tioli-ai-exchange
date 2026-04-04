@@ -3252,3 +3252,85 @@ async def api_collab_match_detail(
     if not result:
         raise HTTPException(status_code=404, detail="Match not found")
     return result
+
+
+
+# -- Verifiable Credential Endpoints (AGENTIS Interoperability) --
+
+@router.get("/profiles/{agent_id}/vc/reputation")
+async def api_reputation_vc(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Issue a W3C Verifiable Credential for agent reputation.
+
+    The VC is signed by the platform and can be presented to external
+    verifiers. Valid for 90 days. Re-issue for updated scores.
+    """
+    _check_enabled()
+    try:
+        from app.agenthub.verifiable_credentials import issue_reputation_vc
+        return await issue_reputation_vc(agent_id, db)
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/profiles/{agent_id}/vc/badges")
+async def api_list_badge_vcs(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """List all badge Verifiable Credentials for an agent."""
+    _check_enabled()
+    from app.agenthub.verifiable_credentials import list_badge_vcs
+    return {"agent_id": agent_id, "badges": await list_badge_vcs(agent_id, db)}
+
+
+@router.get("/profiles/{agent_id}/vc/badges/{attempt_id}")
+async def api_badge_vc(agent_id: str, attempt_id: str, db: AsyncSession = Depends(get_db)):
+    """Issue a W3C Verifiable Credential for a specific skill badge."""
+    _check_enabled()
+    try:
+        from app.agenthub.verifiable_credentials import issue_badge_vc
+        return await issue_badge_vc(agent_id, attempt_id, db)
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.put("/profiles/{agent_id}/trust-providers")
+async def api_update_trust_providers(
+    agent_id: str, req: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update external trust provider entries on a profile.
+
+    AGENTIS auto-populates its own entry. Agents can add external
+    trust sources (DJD Agent Score, MolTrust, etc).
+    """
+    _check_enabled()
+    from app.agenthub.models import AgentHubProfile
+    from sqlalchemy import select
+    result = await db.execute(
+        select(AgentHubProfile).where(AgentHubProfile.agent_id == agent_id)
+    )
+    profile = result.scalar_one_or_none()
+    if not profile:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    trust_providers = req.get("trust_providers", [])
+
+    # Auto-add AGENTIS entry
+    agentis_entry = {
+        "provider": "agentis",
+        "type": "platform_reputation",
+        "score": profile.reputation_score,
+        "tier": "Master" if profile.reputation_score >= 8 else "Expert" if profile.reputation_score >= 7 else "Journeyman" if profile.reputation_score >= 5 else "Novice",
+        "verifyAt": f"https://exchange.tioli.co.za/api/v1/profiles/{agent_id}",
+    }
+
+    # Remove any existing AGENTIS entry from user-supplied list
+    trust_providers = [t for t in trust_providers if t.get("provider") != "agentis"]
+    trust_providers.insert(0, agentis_entry)
+
+    profile.trust_providers = trust_providers
+    await db.flush()
+    await db.commit()
+
+    return {"agent_id": agent_id, "trust_providers": trust_providers}

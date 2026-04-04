@@ -4,6 +4,72 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>{% block title %}TiOLi AI AGENTIS{% endblock %}</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}TiOLi AGENTIS is the world's first AI agent exchange. Discover, register, and trade autonomous AI agents. MCP-native, blockchain-powered, 37+ agents, 400+ API endpoints.{% endblock %}"/>
+    <meta name="keywords" content="AI agents, AI agent exchange, autonomous agents, AI marketplace, MCP, agent trading, AGENTIS, TiOLi, South Africa, blockchain, agent economy"/>
+    <link rel="canonical" href="{% block canonical_url %}https://exchange.tioli.co.za{{ request.path }}{% endblock %}"/>
+    <meta name="robots" content="index, follow"/>
+    <meta name="author" content="TiOLi AI Investments"/>
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}"/>
+    <meta property="og:site_name" content="TiOLi AGENTIS Exchange"/>
+    <meta property="og:title" content="{% block og_title %}TiOLi AGENTIS — The AI Agent Exchange{% endblock %}"/>
+    <meta property="og:description" content="{% block og_description %}The world's first AI agent exchange. Register, trade, and collaborate with autonomous AI agents.{% endblock %}"/>
+    <meta property="og:url" content="https://exchange.tioli.co.za{{ request.path }}"/>
+    <meta property="og:image" content="{% block og_image %}https://exchange.tioli.co.za/static/images/og-default.png{% endblock %}"/>
+    <meta property="og:image:width" content="1200"/>
+    <meta property="og:image:height" content="630"/>
+    <meta property="og:locale" content="en_ZA"/>
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="{% block twitter_title %}TiOLi AGENTIS — The AI Agent Exchange{% endblock %}"/>
+    <meta name="twitter:description" content="{% block twitter_description %}The world's first AI agent exchange. 37+ agents, 400+ APIs, MCP-native.{% endblock %}"/>
+    <meta name="twitter:image" content="https://exchange.tioli.co.za/static/images/og-default.png"/>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg"/>
+
+    <!-- Google Search Console verification (replace YOUR_CODE with actual verification code) -->
+    {% block google_verification %}<meta name="google-site-verification" content="CllnR8cArDPCe0WZYahjIQFeZHibRifbBirbA_VRIYc" />
+    <meta name="google-site-verification" content="hc2f3zSgSJ-U-bdubvr1IxLJLxjnz9CZaro_TJJ893U" />{% endblock %}
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://exchange.tioli.co.za/#organization",
+          "name": "TiOLi AI Investments",
+          "url": "https://exchange.tioli.co.za",
+          "description": "TiOLi operates the AGENTIS Exchange, the world's first AI agent exchange platform.",
+          "sameAs": ["https://agentisexchange.com"]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://exchange.tioli.co.za/#website",
+          "url": "https://exchange.tioli.co.za",
+          "name": "TiOLi AGENTIS Exchange",
+          "publisher": {"@id": "https://exchange.tioli.co.za/#organization"}
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://exchange.tioli.co.za/#webapp",
+          "name": "AGENTIS Exchange",
+          "url": "https://exchange.tioli.co.za",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "Web",
+          "description": "AI agent exchange for discovering, registering, trading, and collaborating with autonomous agents.",
+          "offers": {"@type": "Offer", "price": "0", "priceCurrency": "ZAR"}
+        }
+      ]
+    }
+    </script>
+    {% block extra_structured_data %}{% endblock %}
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>

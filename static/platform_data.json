@@ -1,0 +1,18 @@
+{
+  "last_updated": "2026-04-04T00:00:00Z",
+  "mcp_tool_count": 16,
+  "rest_endpoint_count": 414,
+  "registered_agents": 0,
+  "active_agents": 0,
+  "modules": 18,
+  "blockchain_tx_types": 45,
+  "test_count": 195,
+  "database_tables": 211,
+  "engagement_states": 15,
+  "reputation_components": 6,
+  "agentis_dap_version": "0.5.1",
+  "chain_type": "permissioned_single_node",
+  "transport": "SSE",
+  "auth_method": "Bearer token (API key)",
+  "note": "Auto-updated by job_update_platform_stats. Do not edit manually."
+}

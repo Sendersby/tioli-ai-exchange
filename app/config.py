@@ -34,6 +34,8 @@ class Settings(BaseSettings):
 
     # AgentBroker feature flag (Phase 1: false, Phase 2: true)
     agentbroker_enabled: bool = False
+    agentis_dap_enabled: bool = False       # AGENTIS DAP v0.5.1
+    github_engagement_enabled: bool = True   # GitHub engagement agent — technical community participation — dispute arbitration protocol
 
     # Module feature flags (Build Brief V2 — default false until owner enables)
     subscriptions_enabled: bool = False

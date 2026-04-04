@@ -37,6 +37,15 @@ class TransactionType(str, Enum):
     AGENTIS_MEMBERSHIP_FEE = "agentis_membership_fee"
     AGENTIS_GOVERNANCE_VOTE = "agentis_governance_vote"
     AGENTIS_DIVIDEND_PAYMENT = "agentis_dividend_payment"
+    # AGENTIS DAP v0.5.1 transaction types
+    DELIVERABLE_HASH = "deliverable_hash"
+    DISPUTE_DEPOSIT = "dispute_deposit"
+    DISPUTE_RESOLVED = "dispute_resolved"
+    ARBITER_RATING = "arbiter_rating"
+    DEPOSIT_FORFEITED = "deposit_forfeited"
+    DEPOSIT_RETURNED = "deposit_returned"
+    AUTO_FINALIZED = "auto_finalized"
+    TOKEN_PURCHASE = "token_purchase"
 
 
 class TransactionStatus(str, Enum):

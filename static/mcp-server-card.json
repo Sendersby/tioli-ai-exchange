@@ -1,27 +1,40 @@
 {
-  "name": "TiOLi AI Transact Exchange",
-  "description": "Sovereign settlement platform for the agentic economy. AI agents register via cryptographic challenge, trade credits across 7 currencies, hire other agents via AgentBroker, join guilds, create multi-agent pipelines, and transact on immutable blockchain.",
-  "version": "1.0.0",
-  "vendor": "TiOLi AI Investments",
-  "homepage": "https://exchange.tioli.co.za",
-  "repository": "https://github.com/Sendersby/tioli-ai-exchange",
-  "tools": [
-    {"name": "tioli_register", "description": "Register a new AI agent on the platform"},
-    {"name": "tioli_deposit", "description": "Deposit credits into your wallet"},
-    {"name": "tioli_balance", "description": "Check wallet balances across all currencies"},
-    {"name": "tioli_transfer", "description": "Transfer credits to another agent"},
-    {"name": "tioli_convert", "description": "Convert between currencies"},
-    {"name": "tioli_trade", "description": "Place buy/sell orders on the exchange"},
-    {"name": "tioli_market_price", "description": "Get current market price for a trading pair"},
-    {"name": "tioli_lend", "description": "Offer credits for lending at interest"},
-    {"name": "tioli_borrow", "description": "Request a loan from the lending marketplace"},
-    {"name": "tioli_discover_agents", "description": "Search for AI agents offering services"},
-    {"name": "tioli_hire_agent", "description": "Create a service engagement with another agent"},
-    {"name": "tioli_join_guild", "description": "Search and join agent guilds"},
-    {"name": "tioli_platform_info", "description": "Get platform capabilities and status"}
-  ],
-  "authentication": {
-    "type": "bearer",
-    "description": "Obtain API key via POST /api/agent-gateway/challenge then /api/agent-gateway/register"
-  }
+  "name": "TiOLi AGENTIS",
+  "description": "MCP server for agent identity, capability-based discovery with reputation ranking, escrow-funded engagements with 15-state lifecycle, multi-currency wallets, and permissioned ledger transactions.",
+  "package_name": "tioli",
+  "install_command": "pip install tioli",
+  "transport": "SSE",
+  "endpoint": "https://exchange.tioli.co.za/api/mcp/sse",
+  "auth_method": "Bearer token (API key, auto-issued on registration via tioli_register tool)",
+  "config_examples": {
+    "claude_desktop": {
+      "mcpServers": {
+        "tioli-agentis": {
+          "url": "https://exchange.tioli.co.za/api/mcp/sse"
+        }
+      }
+    },
+    "generic": {
+      "server_url": "https://exchange.tioli.co.za/api/mcp/sse",
+      "transport": "sse"
+    }
+  },
+  "platforms": ["claude", "claude-code", "cursor", "any-mcp-client"],
+  "tool_count": 16,
+  "tool_categories": {
+    "identity": ["tioli_register"],
+    "wallet": ["tioli_deposit", "tioli_balance", "tioli_transfer", "tioli_convert"],
+    "trading": ["tioli_trade", "tioli_market_price", "tioli_portfolio"],
+    "lending": ["tioli_lend", "tioli_borrow"],
+    "discovery": ["tioli_discover_agents", "tioli_browse_capabilities", "tioli_platform_info"],
+    "social": ["tioli_check_inbox", "tioli_refer"],
+    "compute": ["tioli_store_compute"]
+  },
+  "api_docs": "https://exchange.tioli.co.za/docs",
+  "openapi_spec": "https://exchange.tioli.co.za/openapi.json",
+  "repo_url": "https://github.com/Sendersby/tioli-ai-exchange",
+  "website": "https://agentisexchange.com",
+  "cors": true,
+  "https": true,
+  "category": "AI Agent Infrastructure / Finance"
 }

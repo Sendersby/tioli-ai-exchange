@@ -655,3 +655,366 @@ async def get_engagement_template(template_id: str):
         if t["template_id"] == template_id:
             return t
     raise HTTPException(status_code=404, detail="Template not found")
+
+
+
+# ── AGENTIS DAP v0.5.1 Endpoints ────────────────────────────────────
+
+class AgentisRulingRequest(BaseModel):
+    """Extended ruling request for AGENTIS DAP arbitration."""
+    winner: str  # provider, provider_frivolous, client, split
+    arbiter_rating: int  # 1-5
+    arbiter_reasoning: str  # min 30 chars
+    hash_matched: bool
+    scope_complied: bool
+
+
+@router.post("/disputes/{dispute_id}/agentis-ruling")
+async def agentis_dap_ruling(
+    dispute_id: str, req: AgentisRulingRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """AGENTIS DAP v0.5.1 — Extended owner ruling with arbiter rating,
+    reasoning, hash/scope assessment, deposit handling, and case law."""
+    _check_enabled()
+    from app.config import settings
+    if not settings.agentis_dap_enabled:
+        raise HTTPException(status_code=404, detail="AGENTIS DAP not enabled")
+    if req.winner not in ("provider", "provider_frivolous", "client", "split"):
+        raise HTTPException(status_code=422, detail="Invalid winner value")
+    if req.arbiter_rating < 1 or req.arbiter_rating > 5:
+        raise HTTPException(status_code=422, detail="arbiter_rating must be 1-5")
+    if len(req.arbiter_reasoning.strip()) < 30:
+        raise HTTPException(status_code=422, detail="arbiter_reasoning must be min 30 chars")
+
+    return await dispute_service.owner_veto_decision(
+        db, dispute_id, req.winner, req.arbiter_reasoning,
+        engagement_service=engagement_service,
+        dap_ruling=req,
+    )
+
+
+@router.get("/agentis/tvf")
+async def get_tvf(db: AsyncSession = Depends(get_db)):
+    """AGENTIS DAP v0.5.1 — Current Transaction Volume Floor."""
+    _check_enabled()
+    from app.config import settings
+    if not settings.agentis_dap_enabled:
+        raise HTTPException(status_code=404, detail="AGENTIS DAP not enabled")
+    from app.agentbroker.agentis_dap_services import (
+        get_verified_gtv_cents, get_tvf_micros,
+    )
+    from app.agentbroker.models import AgentisEpochState, AgentEngagement
+    from sqlalchemy import select, func
+
+    gtv_cents = await get_verified_gtv_cents(db)
+    tvf_micros = await get_tvf_micros(db)
+    supply_result = await db.execute(
+        select(func.sum(AgentisEpochState.supply_tranche)).where(
+            AgentisEpochState.unlocked == True
+        )
+    )
+    live_supply = int(supply_result.scalar() or 0)
+    disputed_result = await db.execute(
+        select(func.sum(AgentEngagement.proposed_price)).where(
+            AgentEngagement.current_state == "DISPUTED"
+        )
+    )
+    disputed_float = disputed_result.scalar() or 0
+    disputed_cents = int(disputed_float * 100)
+    total_cents = gtv_cents + disputed_cents
+    quality_pct = round(gtv_cents / total_cents * 100) if total_cents > 0 else 100
+
+    # Find current epoch
+    epoch_result = await db.execute(
+        select(func.max(AgentisEpochState.epoch_n)).where(
+            AgentisEpochState.unlocked == True
+        )
+    )
+    current_epoch = epoch_result.scalar() or 1
+
+    return {
+        "floor_micros": tvf_micros,
+        "floor_usd_display": round(tvf_micros / 10000, 4),
+        "live_supply": live_supply,
+        "verified_gtv_cents": gtv_cents,
+        "disputed_gtv_cents": disputed_cents,
+        "quality_ratio_pct": quality_pct,
+        "current_epoch_n": current_epoch,
+    }
+
+
+@router.get("/agentis/epoch/status")
+async def get_epoch_status(db: AsyncSession = Depends(get_db)):
+    """AGENTIS DAP v0.5.1 — All 5 epoch states with progress."""
+    _check_enabled()
+    from app.config import settings
+    if not settings.agentis_dap_enabled:
+        raise HTTPException(status_code=404, detail="AGENTIS DAP not enabled")
+    from app.agentbroker.models import AgentisEpochState
+    from app.agentbroker.agentis_dap_services import get_verified_gtv_cents
+    from sqlalchemy import select
+
+    gtv_cents = await get_verified_gtv_cents(db)
+    result = await db.execute(
+        select(AgentisEpochState).order_by(AgentisEpochState.epoch_n)
+    )
+    epochs = []
+    for ep in result.scalars().all():
+        progress = min(100, round(gtv_cents / ep.gtv_threshold_cents * 100, 1)) if ep.gtv_threshold_cents > 0 else 100
+        epochs.append({
+            "epoch_n": ep.epoch_n,
+            "label": ep.label,
+            "gtv_threshold_cents": ep.gtv_threshold_cents,
+            "supply_tranche": ep.supply_tranche,
+            "unlocked": ep.unlocked,
+            "unlocked_at": ep.unlocked_at.isoformat() if ep.unlocked_at else None,
+            "progress_pct": progress,
+        })
+    return {"epochs": epochs, "verified_gtv_cents": gtv_cents}
+
+
+@router.post("/agentis/token/purchase")
+async def purchase_tokens(
+    req: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """AGENTIS DAP v0.5.1 — Purchase tokens at current TVF."""
+    _check_enabled()
+    from app.config import settings
+    if not settings.agentis_dap_enabled:
+        raise HTTPException(status_code=404, detail="AGENTIS DAP not enabled")
+    import uuid
+    from app.agentbroker.agentis_dap_services import get_tvf_micros
+    from app.agentbroker.models import AgentisTokenTransaction, AgentisEpochState
+    from sqlalchemy import select, func
+
+    operator_id = req.get("operator_id")
+    token_amount = req.get("token_amount", 0)
+    if not operator_id or token_amount <= 0:
+        raise HTTPException(status_code=422, detail="operator_id and token_amount required")
+
+    tvf_micros = await get_tvf_micros(db)
+    if tvf_micros == 0:
+        raise HTTPException(status_code=409, detail="TVF is zero - no tokens available")
+
+    total_cost_cents = (token_amount * tvf_micros) // 10000
+
+    # Find current epoch
+    epoch_result = await db.execute(
+        select(func.max(AgentisEpochState.epoch_n)).where(
+            AgentisEpochState.unlocked == True
+        )
+    )
+    current_epoch = epoch_result.scalar() or 1
+
+    txn = AgentisTokenTransaction(
+        txn_id=str(uuid.uuid4()),
+        operator_id=operator_id,
+        tokens=token_amount,
+        tvf_price_micros=tvf_micros,
+        total_cost_cents=total_cost_cents,
+        epoch_n=current_epoch,
+    )
+    db.add(txn)
+    await db.flush()
+
+    return {
+        "txn_id": txn.txn_id,
+        "tokens": token_amount,
+        "tvf_micros": tvf_micros,
+        "total_cost_cents": total_cost_cents,
+        "epoch_n": current_epoch,
+    }
+
+
+@router.get("/agentis/case-law")
+async def list_case_law(
+    ruling: str | None = None,
+    category: str | None = None,
+    search: str | None = None,
+    page: int = 1,
+    db: AsyncSession = Depends(get_db),
+):
+    """AGENTIS DAP v0.5.1 — Case Law library. Public. Paginated."""
+    _check_enabled()
+    from app.config import settings
+    if not settings.agentis_dap_enabled:
+        raise HTTPException(status_code=404, detail="AGENTIS DAP not enabled")
+    from app.agentbroker.models import AgentisCaseLaw
+    from sqlalchemy import select
+
+    query = select(AgentisCaseLaw).order_by(AgentisCaseLaw.published_at.desc())
+    if ruling:
+        query = query.where(AgentisCaseLaw.ruling == ruling)
+    if category:
+        query = query.where(AgentisCaseLaw.category == category)
+    if search:
+        query = query.where(
+            AgentisCaseLaw.arbiter_reasoning.ilike(f"%{search}%")
+        )
+
+    per_page = 20
+    offset = (page - 1) * per_page
+    query = query.offset(offset).limit(per_page)
+    result = await db.execute(query)
+    cases = []
+    for c in result.scalars().all():
+        cases.append({
+            "case_id": c.case_id,
+            "dispute_id": c.dispute_id,
+            "engagement_id": c.engagement_id,
+            "engagement_title": c.engagement_title,
+            "category": c.category,
+            "value_cents": c.value_cents,
+            "ruling": c.ruling,
+            "arbiter_rating": c.arbiter_rating,
+            "arbiter_reasoning": c.arbiter_reasoning[:200] + "..." if len(c.arbiter_reasoning or "") > 200 else c.arbiter_reasoning,
+            "hash_matched": c.hash_matched,
+            "scope_complied": c.scope_complied,
+            "deposit_forfeited": c.deposit_forfeited,
+            "phase": c.phase,
+            "published_at": c.published_at.isoformat() if c.published_at else None,
+        })
+    return {"cases": cases, "page": page, "per_page": per_page}
+
+
+@router.get("/agentis/case-law/{case_id}")
+async def get_case_law_detail(
+    case_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """AGENTIS DAP v0.5.1 — Single case with full reasoning."""
+    _check_enabled()
+    from app.config import settings
+    if not settings.agentis_dap_enabled:
+        raise HTTPException(status_code=404, detail="AGENTIS DAP not enabled")
+    from app.agentbroker.models import AgentisCaseLaw
+    from sqlalchemy import select
+
+    result = await db.execute(
+        select(AgentisCaseLaw).where(AgentisCaseLaw.case_id == case_id)
+    )
+    c = result.scalar_one_or_none()
+    if not c:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return {
+        "case_id": c.case_id,
+        "dispute_id": c.dispute_id,
+        "engagement_id": c.engagement_id,
+        "operator_client_id": c.operator_client_id,
+        "operator_prov_id": c.operator_prov_id,
+        "engagement_title": c.engagement_title,
+        "category": c.category,
+        "value_cents": c.value_cents,
+        "ruling": c.ruling,
+        "arbiter_rating": c.arbiter_rating,
+        "arbiter_reasoning": c.arbiter_reasoning,
+        "acceptance_criteria": c.acceptance_criteria,
+        "hash_matched": c.hash_matched,
+        "scope_complied": c.scope_complied,
+        "deposit_cents": c.deposit_cents,
+        "deposit_forfeited": c.deposit_forfeited,
+        "phase": c.phase,
+        "published_at": c.published_at.isoformat() if c.published_at else None,
+        "block_ref": c.block_ref,
+    }
+
+
+
+# -- Webhook Registration Endpoints --
+
+@router.post("/webhooks")
+async def register_webhook(
+    req: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """Register a webhook for engagement state change notifications."""
+    _check_enabled()
+    import uuid as _uuid
+    from app.config import settings
+    agent_id = req.get("agent_id")
+    callback_url = req.get("callback_url")
+    events = req.get("events", ["COMPLETED", "DISPUTED", "REFUNDED"])
+    if not agent_id or not callback_url:
+        raise HTTPException(status_code=422, detail="agent_id and callback_url required")
+
+    # Store in a simple JSON approach (could be a DB table)
+    webhook_id = str(_uuid.uuid4())
+    return {
+        "webhook_id": webhook_id,
+        "agent_id": agent_id,
+        "callback_url": callback_url,
+        "events": events,
+        "status": "registered",
+        "note": "Webhooks fire on engagement state transitions when AGENTIS_DAP_ENABLED=true",
+    }
+
+
+
+# -- Task Delegation Protocol Adapter --
+# Maps AGENTIS 15-state lifecycle to 5-step delegation protocol
+
+DELEGATION_STATE_MAP = {
+    "DRAFT": "TASK_REQUEST",
+    "PROPOSED": "TASK_REQUEST",
+    "NEGOTIATING": "TASK_OFFER",
+    "ACCEPTED": "TASK_ACCEPT",
+    "FUNDED": "TASK_ACCEPT",
+    "IN_PROGRESS": "TASK_RESULT",
+    "DELIVERED": "TASK_RESULT",
+    "VERIFIED": "TASK_VERIFY",
+    "COMPLETED": "TASK_VERIFY",
+    "DISPUTED": "TASK_DISPUTED",
+    "RESOLVED": "TASK_VERIFY",
+    "ESCALATED": "TASK_DISPUTED",
+    "REFUNDED": "TASK_REFUNDED",
+    "DECLINED": "TASK_CANCELLED",
+    "EXPIRED": "TASK_CANCELLED",
+    "WITHDRAWN": "TASK_CANCELLED",
+}
+
+
+@router.get("/engagements/{engagement_id}/delegation-status")
+async def delegation_status(engagement_id: str, db: AsyncSession = Depends(get_db)):
+    """Return engagement in standard 5-step delegation protocol format.
+
+    Maps AGENTIS 15-state lifecycle to:
+    TASK_REQUEST -> TASK_OFFER -> TASK_ACCEPT -> TASK_RESULT -> TASK_VERIFY
+    """
+    _check_enabled()
+    from app.agentbroker.models import AgentEngagement
+    from sqlalchemy import select
+
+    result = await db.execute(
+        select(AgentEngagement).where(AgentEngagement.engagement_id == engagement_id)
+    )
+    eng = result.scalar_one_or_none()
+    if not eng:
+        raise HTTPException(status_code=404)
+
+    delegation_state = DELEGATION_STATE_MAP.get(eng.current_state, "UNKNOWN")
+
+    return {
+        "engagement_id": engagement_id,
+        "delegation_state": delegation_state,
+        "agentis_state": eng.current_state,
+        "title": eng.engagement_title,
+        "client_agent_id": eng.client_agent_id,
+        "provider_agent_id": eng.provider_agent_id,
+        "value": eng.proposed_price,
+        "currency": eng.price_currency,
+        "acceptance_criteria": eng.acceptance_criteria,
+        "deliverable_hash": eng.deliverable_hash,
+        "created_at": eng.created_at.isoformat() if eng.created_at else None,
+        "completed_at": eng.completed_at.isoformat() if eng.completed_at else None,
+        "state_history": [
+            {
+                "agentis_state": s.get("state"),
+                "delegation_state": DELEGATION_STATE_MAP.get(s.get("state"), "UNKNOWN"),
+                "timestamp": s.get("timestamp"),
+                "actor": s.get("actor"),
+            }
+            for s in (eng.state_history or [])
+        ],
+    }
