@@ -172,7 +172,7 @@ class MarketMakerService:
             select(ExchangeRate).where(
                 ExchangeRate.base_currency == config.base,
                 ExchangeRate.quote_currency == config.quote,
-            )
+            ).order_by(ExchangeRate.timestamp.desc()).limit(1)
         )
         rate = rate_result.scalar_one_or_none()
         if not rate or rate.rate <= 0:

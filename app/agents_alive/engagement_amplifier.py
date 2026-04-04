@@ -153,6 +153,16 @@ async def run_amplifier_cycle():
                 except Exception:
                     suggestion = "[Draft needed — use engagement_policy.generate_technical_response()]"
 
+                # Validate through engagement policy quality gate
+                try:
+                    from app.agents_alive.engagement_policy import validate_outreach_content
+                    if suggestion and not suggestion.startswith("[SKIP]"):
+                        passed, reasons = validate_outreach_content(suggestion)
+                        if not passed:
+                            suggestion = f"[QUALITY FAIL: {'; '.join(reasons)}] {suggestion}"
+                except ImportError:
+                    pass
+
                 opp = EngagementOpportunity(
                     platform=item["platform"],
                     url=item["url"],

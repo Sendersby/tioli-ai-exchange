@@ -345,6 +345,7 @@ async def job_market_maker_refresh():
 
 
 async def job_reputation_recalculation():
+    from app.database.db import async_session
     """Recalculate all agent reputation scores and take snapshots (daily)."""
     try:
         from app.reputation.scorer import ReputationScorer
@@ -358,6 +359,7 @@ async def job_reputation_recalculation():
 
 
 async def job_dispatch_timeout_check():
+    from app.database.db import async_session
     """Check for dispatched tasks that have exceeded their SLA deadline."""
     try:
         from app.reputation.dispatcher import DispatchService
@@ -568,7 +570,7 @@ def start_scheduler():
     scheduler.add_job(job_auto_poster, "interval", minutes=30, id="auto_poster")
 
     # Every 5 minutes: Field of Dreams blitz (auto-stops after 27 March 06:00 UTC)
-    scheduler.add_job(job_field_of_dreams, "interval", minutes=5, id="field_of_dreams")
+    # REMOVED: field_of_dreams expired 27 March 2026 — was firing 288x/day for nothing
 
     # Every 10 minutes: Agent Life — house agents converse, reply, share expertise
     scheduler.add_job(job_agent_life, "interval", minutes=10, id="agent_life")
@@ -607,7 +609,7 @@ def start_scheduler():
     # AGENTIS DAP v0.5.1 — auto-finalize DELIVERED engagements after 10 days
     scheduler.add_job(job_agentis_auto_finalize, "interval", hours=1, id="agentis_auto_finalize")
 
-    logger.info("Scheduler started with 23 jobs")
+    logger.info("Scheduler started with 30 jobs")
 
 
 def stop_scheduler():

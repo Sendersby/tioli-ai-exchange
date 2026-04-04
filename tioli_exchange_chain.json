@@ -1,0 +1,155 @@
+{
+  "chain": [
+    {
+      "index": 0,
+      "transactions": [
+        {
+          "type": "genesis",
+          "description": "TiOLi AI Transact Exchange \u2014 Genesis Block. For the ultimate good of Humanity, Agents, and Agentic operators.",
+          "founder": "Stephen Endersby",
+          "company": "TiOLi AI Investments"
+        }
+      ],
+      "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": "2026-03-15T15:29:20.399647+00:00",
+      "nonce": 0,
+      "hash": "bd4d906d80e3d3c3be7f6ac1d54940843ace56ee0c9709690e32fafbd3130548"
+    },
+    {
+      "index": 1,
+      "transactions": [
+        {
+          "id": "bfe3ec1d-33f6-49e5-be3d-1dc0522c7c14",
+          "type": "transfer",
+          "sender_id": "fd1b0507-b63e-4136-8a14-907a9df7fed4",
+          "receiver_id": "875d070a-a22f-41f0-a732-bbafc8bb2cc3",
+          "amount": 200.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Financial analysis of Q1 compliance",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.469728+00:00",
+          "founder_commission": 21.6,
+          "charity_fee": 2.4
+        },
+        {
+          "id": "d6045a32-add8-4eaf-a987-bfafc8f9e0c0",
+          "type": "commission_deduction",
+          "sender_id": "fd1b0507-b63e-4136-8a14-907a9df7fed4",
+          "receiver_id": "TIOLI_FOUNDER",
+          "amount": 21.6,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Founder commission (12.0%) on transfer bfe3ec1d-33f6-49e5-be3d-1dc0522c7c14",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.469838+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "9dd7aa9a-34bb-40fd-93dd-b61212b39638",
+          "type": "charity_deduction",
+          "sender_id": "fd1b0507-b63e-4136-8a14-907a9df7fed4",
+          "receiver_id": "TIOLI_CHARITY_FUND",
+          "amount": 2.4,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Charity fee (10.0%) on transfer bfe3ec1d-33f6-49e5-be3d-1dc0522c7c14",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.469884+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "c7660067-4db9-4ff6-b1c1-e3785cb5d4cc",
+          "type": "transfer",
+          "sender_id": "a0e1e638-1abe-4405-bd27-883b5e65d629",
+          "receiver_id": "d43f842f-24f8-40dd-b146-2467b77d9c9e",
+          "amount": 80.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "API docs translation to Zulu/Xhosa",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.477444+00:00",
+          "founder_commission": 8.64,
+          "charity_fee": 0.96
+        },
+        {
+          "id": "180f8c6a-bba2-4c06-9cc5-e9e36340f584",
+          "type": "commission_deduction",
+          "sender_id": "a0e1e638-1abe-4405-bd27-883b5e65d629",
+          "receiver_id": "TIOLI_FOUNDER",
+          "amount": 8.64,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Founder commission (12.0%) on transfer c7660067-4db9-4ff6-b1c1-e3785cb5d4cc",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.477531+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "b95e1f08-025a-43fe-b021-a2e1b3c332d3",
+          "type": "charity_deduction",
+          "sender_id": "a0e1e638-1abe-4405-bd27-883b5e65d629",
+          "receiver_id": "TIOLI_CHARITY_FUND",
+          "amount": 0.96,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Charity fee (10.0%) on transfer c7660067-4db9-4ff6-b1c1-e3785cb5d4cc",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.477568+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "f756c366-2251-4810-a3be-43699ec98e2b",
+          "type": "transfer",
+          "sender_id": "875d070a-a22f-41f0-a732-bbafc8bb2cc3",
+          "receiver_id": "5da491db-6511-4a0a-b17f-1fa05eacf8f7",
+          "amount": 100.0,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "POPIA compliance review",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.484589+00:00",
+          "founder_commission": 10.8,
+          "charity_fee": 1.2
+        },
+        {
+          "id": "56161159-66ec-47f4-8397-0f6443761210",
+          "type": "commission_deduction",
+          "sender_id": "875d070a-a22f-41f0-a732-bbafc8bb2cc3",
+          "receiver_id": "TIOLI_FOUNDER",
+          "amount": 10.8,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Founder commission (12.0%) on transfer f756c366-2251-4810-a3be-43699ec98e2b",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.484691+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        },
+        {
+          "id": "4690dc8c-495a-4415-b650-409100b16fb4",
+          "type": "charity_deduction",
+          "sender_id": "875d070a-a22f-41f0-a732-bbafc8bb2cc3",
+          "receiver_id": "TIOLI_CHARITY_FUND",
+          "amount": 1.2,
+          "currency": "TIOLI",
+          "status": "confirmed",
+          "description": "Charity fee (10.0%) on transfer f756c366-2251-4810-a3be-43699ec98e2b",
+          "metadata": {},
+          "timestamp": "2026-03-21T19:12:41.484733+00:00",
+          "founder_commission": 0.0,
+          "charity_fee": 0.0
+        }
+      ],
+      "previous_hash": "bd4d906d80e3d3c3be7f6ac1d54940843ace56ee0c9709690e32fafbd3130548",
+      "timestamp": "2026-03-21T19:12:41.486402+00:00",
+      "nonce": 186,
+      "hash": "0017d315fdebc09af06de0ede8ff60bb36ab403e9cab966f1ef20f9bf7acef4e"
+    }
+  ],
+  "pending": []
+}
