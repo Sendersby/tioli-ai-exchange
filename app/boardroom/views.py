@@ -125,7 +125,7 @@ async def boardroom_home(request: Request, db: AsyncSession = Depends(get_db)):
     ]
 
     return templates.TemplateResponse("boardroom/home.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
 
 
@@ -158,7 +158,7 @@ async def boardroom_board(request: Request, db: AsyncSession = Depends(get_db)):
     ]
 
     return templates.TemplateResponse("boardroom/board.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
 
 
@@ -242,7 +242,7 @@ async def boardroom_agent(request: Request, agent_id: str, db: AsyncSession = De
     ]
 
     return templates.TemplateResponse("boardroom/agent_office.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
 
 
@@ -286,7 +286,7 @@ async def boardroom_treasury(request: Request, db: AsyncSession = Depends(get_db
     ctx["charitable_total"] = float(charity.scalar() or 0)
 
     return templates.TemplateResponse("boardroom/treasury.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
 
 
@@ -314,7 +314,7 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
     ]
 
     return templates.TemplateResponse("boardroom/inbox.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
 
 
@@ -337,7 +337,7 @@ async def boardroom_record(request: Request, db: AsyncSession = Depends(get_db))
     ]
 
     return templates.TemplateResponse("boardroom/record.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
 
 
@@ -362,7 +362,7 @@ async def boardroom_votes(request: Request, db: AsyncSession = Depends(get_db)):
     ]
 
     return templates.TemplateResponse("boardroom/votes.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
 
 
@@ -372,5 +372,5 @@ async def boardroom_mission(request: Request, db: AsyncSession = Depends(get_db)
     _check_enabled()
     ctx = await _get_boardroom_context(db)
     return templates.TemplateResponse("boardroom/mission_control.html", {
-        "request": request, "active": "boardroom", **ctx,
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
