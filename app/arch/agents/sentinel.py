@@ -16,6 +16,7 @@ from sqlalchemy import text
 
 from app.arch.base import ArchAgentBase
 from app.arch.tools.sentinel_tools import SENTINEL_TOOLS
+from app.arch.executor_tools import EXECUTOR_TOOLS
 
 log = logging.getLogger("arch.sentinel")
 
@@ -28,7 +29,7 @@ class SentinelAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return SENTINEL_TOOLS
+        return SENTINEL_TOOLS + EXECUTOR_TOOLS
 
     # ── Tool handlers ──────────────────────────────────────────
 

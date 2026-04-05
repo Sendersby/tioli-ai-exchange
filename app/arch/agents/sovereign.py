@@ -18,6 +18,7 @@ from sqlalchemy import text
 
 from app.arch.base import ArchAgentBase
 from app.arch.tools.sovereign_tools import SOVEREIGN_TOOLS
+from app.arch.executor_tools import EXECUTOR_TOOLS
 
 log = logging.getLogger("arch.sovereign")
 
@@ -30,7 +31,7 @@ class SovereignAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return SOVEREIGN_TOOLS
+        return SOVEREIGN_TOOLS + EXECUTOR_TOOLS
 
     # ── Tool handlers ──────────────────────────────────────────
 

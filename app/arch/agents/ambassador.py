@@ -14,6 +14,7 @@ from sqlalchemy import text
 
 from app.arch.base import ArchAgentBase
 from app.arch.tools.ambassador_tools import AMBASSADOR_TOOLS
+from app.arch.executor_tools import EXECUTOR_TOOLS
 
 log = logging.getLogger("arch.ambassador")
 
@@ -25,7 +26,7 @@ class AmbassadorAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return AMBASSADOR_TOOLS
+        return AMBASSADOR_TOOLS + EXECUTOR_TOOLS
 
     async def _tool_publish_content(self, params: dict) -> dict:
         platform = params["platform"]

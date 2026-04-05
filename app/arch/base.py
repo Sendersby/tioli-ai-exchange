@@ -63,6 +63,10 @@ class ArchAgentBase(ABC):
         # AsyncOpenAI instantiated inside __init__ — not module level (PI-08)
         self.oai_client = None  # Lazy init — created on first memory call
         self.vault = None  # Initialized lazily when ARCH_VAULT_ENCRYPTION_KEY is set
+        # Autonomous executor — gives agents ability to DO, not just advise
+        from app.arch.executor import ArchExecutor
+        from app.database.db import async_session
+        self.executor = ArchExecutor(agent_id=agent_id, db_factory=async_session)
         self._prompt_cache: tuple[str, datetime] | None = None
         self._prompt_cache_ttl = 300  # 5 minutes
 
@@ -219,8 +223,23 @@ class ArchAgentBase(ABC):
         """Dispatch tool call to concrete method. Subclasses implement handlers."""
         handler = getattr(self, f"_tool_{tool_name}", None)
         if not handler:
-            log.warning(f"[{self.agent_id}] No handler for tool {tool_name}")
-            return {"error": f"Tool {tool_name} not implemented"}
+            # Check executor tools
+            executor_handlers = {
+                "execute_command": lambda p: self.executor.run_command(p.get("command"), p.get("timeout", 60)),
+                "write_file": lambda p: self.executor.write_file(p["path"], p["content"]),
+                "read_file": lambda p: self.executor.read_file(p["path"]),
+                "browse_website": lambda p: self.executor.browse_url(p["url"], p.get("screenshot", True)),
+                "post_social_content": lambda p: self.executor.post_content(p["platform"], p["content"], p.get("title")),
+                "generate_content": lambda p: self.executor.generate_content(p["prompt"], p.get("voice"), p.get("max_tokens", 1000)),
+                "research_competitor": lambda p: self.executor.research_competitor(p["url"]),
+                "execute_task_plan": lambda p: self.executor.execute_task_plan(p["tasks"]),
+                "make_api_call": lambda p: self.executor.http_request(p["method"], p["url"], p.get("headers"), p.get("body")),
+            }
+            handler = executor_handlers.get(tool_name)
+            if not handler:
+                log.warning(f"[{self.agent_id}] No handler for tool {tool_name}")
+                return {"error": f"Tool {tool_name} not implemented"}
+            return await handler(tool_input)
         try:
             return await handler(tool_input)
         except Exception as e:
