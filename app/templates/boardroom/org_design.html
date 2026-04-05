@@ -36,10 +36,10 @@
     </div>
     <div class="flex flex-wrap justify-center gap-2 mb-4">
       <span class="text-xs text-slate-500 self-center mr-1">Layers:</span>
-      <button onclick="toggleLevel(0)" id="l-0" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#D4A94A]/10 text-[#D4A94A] border-[#D4A94A]/30">L0 Founder</button>
-      <button onclick="toggleLevel(1)" id="l-1" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#028090]/10 text-[#028090] border-[#028090]/30">L1 Arch</button>
-      <button onclick="toggleLevel(2)" id="l-2" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#77d4e5]/10 text-[#77d4e5] border-[#77d4e5]/30">L2 Domain</button>
-      <button onclick="toggleLevel(3)" id="l-3" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-500/10 text-slate-400 border-slate-500/30">L3 Ops</button>
+      <button onclick="toggleLevel(0)" id="l-0" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#D4A94A]/10 text-[#D4A94A] border-[#D4A94A]/30">L0 Founder<span id="light-l-0" class="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-1.5 align-middle"></span></button>
+      <button onclick="toggleLevel(1)" id="l-1" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#028090]/10 text-[#028090] border-[#028090]/30">L1 Arch<span id="light-l-1" class="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-1.5 align-middle"></span></button>
+      <button onclick="toggleLevel(2)" id="l-2" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#77d4e5]/10 text-[#77d4e5] border-[#77d4e5]/30">L2 Domain<span id="light-l-2" class="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-1.5 align-middle"></span></button>
+      <button onclick="toggleLevel(3)" id="l-3" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-500/10 text-slate-400 border-slate-500/30">L3 Ops<span id="light-l-3" class="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-1.5 align-middle"></span></button>
       <span class="text-slate-600 mx-1">|</span>
       <button onclick="toggleAllLevels(true)" class="text-[10px] text-slate-500 hover:text-white px-1">All</button>
       <button onclick="toggleAllLevels(false)" class="text-[10px] text-slate-500 hover:text-white px-1">None</button>
@@ -200,8 +200,16 @@ const activeLevels = {0: true, 1: true, 2: true, 3: true};
 function toggleLevel(level) {
   activeLevels[level] = !activeLevels[level];
   const btn = document.getElementById('l-' + level);
-  if (activeLevels[level]) { btn.classList.add('active-level'); btn.style.opacity = '1'; }
-  else { btn.classList.remove('active-level'); btn.style.opacity = '0.3'; }
+  const light = document.getElementById('light-l-' + level);
+  if (activeLevels[level]) {
+    btn.classList.add('active-level');
+    btn.style.opacity = '1';
+    if (light) { light.classList.remove('bg-red-500'); light.classList.add('bg-emerald-400'); }
+  } else {
+    btn.classList.remove('active-level');
+    btn.style.opacity = '0.3';
+    if (light) { light.classList.remove('bg-emerald-400'); light.classList.add('bg-red-500'); }
+  }
   applyAllFilters();
 }
 
@@ -209,7 +217,15 @@ function toggleAllLevels(show) {
   for (let i = 0; i <= 3; i++) {
     activeLevels[i] = show;
     const btn = document.getElementById('l-' + i);
-    if (btn) { btn.style.opacity = show ? '1' : '0.3'; if (show) btn.classList.add('active-level'); else btn.classList.remove('active-level'); }
+    const light = document.getElementById('light-l-' + i);
+    if (btn) {
+      btn.style.opacity = show ? '1' : '0.3';
+      if (show) btn.classList.add('active-level'); else btn.classList.remove('active-level');
+    }
+    if (light) {
+      if (show) { light.classList.remove('bg-red-500'); light.classList.add('bg-emerald-400'); }
+      else { light.classList.remove('bg-emerald-400'); light.classList.add('bg-red-500'); }
+    }
   }
   applyAllFilters();
 }
