@@ -1574,7 +1574,7 @@
                     card.style.transition = 'opacity 0.15s';
                     card.style.opacity = '0.3';
                     setTimeout(function(){
-                        val.textContent = amount >= 1 ? symbols[curr] + Math.round(amount).toLocaleString() : symbols[curr] + amount.toFixed(2);
+                        val.textContent = symbols[curr] + (Number.isInteger(amount) ? Math.round(amount).toLocaleString() : amount.toFixed(2));
                         card.style.opacity = '1';
                     }, 120);
                 }, delay);
@@ -1664,7 +1664,7 @@
                 total += selectedItems[k].zar;
                 var sym = symbols[currentCurrency];
                 var price = currentCurrency === 'ZAR' ? selectedItems[k].zar : selectedItems[k].zar * liveRates[currentCurrency];
-                var priceStr = selectedItems[k].zar === 0 ? 'Free' : sym + (price >= 1 ? Math.round(price) : price.toFixed(2));
+                var priceStr = selectedItems[k].zar === 0 ? 'Free' : sym + (Number.isInteger(price) ? Math.round(price).toLocaleString() : price.toFixed(2));
                 itemsHtml += '<div class="flex justify-between"><span class="text-white">' + selectedItems[k].name + '</span><span class="font-mono text-[#77d4e5]">' + priceStr + '</span></div>';
             }
 
@@ -1680,7 +1680,7 @@
                 itemsEl.innerHTML = itemsHtml;
                 var sym = symbols[currentCurrency];
                 var converted = currentCurrency === 'ZAR' ? total : total * liveRates[currentCurrency];
-                totalEl.textContent = sym + (converted >= 1 ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
+                totalEl.textContent = sym + (Number.isInteger(converted) ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
                 var arrow = document.getElementById('lastStepArrow');
                 if(count >= 2) { signupBtn.classList.remove('hidden'); if(arrow) arrow.classList.remove('hidden'); }
                 else { signupBtn.classList.add('hidden'); if(arrow) arrow.classList.add('hidden'); }
