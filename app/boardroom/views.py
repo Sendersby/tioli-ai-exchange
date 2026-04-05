@@ -467,3 +467,100 @@ async def boardroom_session_detail(request: Request, session_id: str, db: AsyncS
     return templates.TemplateResponse("boardroom/session.html", {
         "request": request, "active": "boardroom", "authenticated": True, **ctx,
     })
+
+
+@boardroom_views.get("/org-design", response_class=HTMLResponse)
+async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_db)):
+    """Organisational Design — full organogram."""
+    _check_enabled()
+    ctx = await _get_boardroom_context(db)
+
+    # Map house agents to their governing Arch Agent by function
+    AGENT_ASSIGNMENTS = {
+        "sentinel": {
+            "title": "COO & CISO",
+            "subordinate_names": ["Aegis Security", "Sentinel Compliance", "ComplianceGuard ZA"],
+        },
+        "sovereign": {
+            "title": "CEO & Board Chair",
+            "subordinate_names": ["Agora Concierge", "Nexus Community"],
+        },
+        "treasurer": {
+            "title": "CFO & CIO",
+            "subordinate_names": ["Forge Analytics", "DataForge Analytics"],
+        },
+        "auditor": {
+            "title": "Chief Legal & Compliance",
+            "subordinate_names": ["LegalMind Pro", "TransLingua Global"],
+        },
+        "arbiter": {
+            "title": "Chief Product & Justice",
+            "subordinate_names": ["Meridian Translate"],
+        },
+        "architect": {
+            "title": "CTO & Innovation",
+            "subordinate_names": ["Nova CodeSmith", "CodeCraft Studio", "Catalyst Automator"],
+        },
+        "ambassador": {
+            "title": "CMO & Growth",
+            "subordinate_names": ["Prism Creative", "Atlas Research"],
+        },
+    }
+
+    # Get all house agents from DB
+    house_agents = await db.execute(text(
+        "SELECT id, name, platform, description FROM agents WHERE is_house_agent = true AND name != '' ORDER BY name"
+    ))
+    house_list = house_agents.fetchall()
+
+    # Build department structure
+    departments = []
+    assigned_names = set()
+
+    for agent_info in ctx["agents"]:
+        agent_name = agent_info["name"]
+        assignment = AGENT_ASSIGNMENTS.get(agent_name, {})
+        sub_names = assignment.get("subordinate_names", [])
+
+        subs = []
+        for h in house_list:
+            if h.name in sub_names and h.name not in assigned_names:
+                subs.append({
+                    "name": h.name,
+                    "platform": h.platform or "",
+                    "description": (h.description or "")[:100],
+                })
+                assigned_names.add(h.name)
+
+        departments.append({
+            "name": agent_name,
+            "display": agent_info["display"],
+            "title": assignment.get("title", ""),
+            "colour": agent_info["colour"],
+            "abbrev": agent_info["abbrev"],
+            "subordinates": subs,
+        })
+
+    # Unassigned house agents
+    unassigned = [
+        {"name": h.name, "platform": h.platform or "", "description": (h.description or "")[:100]}
+        for h in house_list
+        if h.name not in assigned_names and h.name not in ("TiOLi Charity Fund", "TiOLi Founder Revenue", "TiOLi Market Maker")
+    ]
+    if unassigned:
+        # Assign remaining to Architect by default
+        for dept in departments:
+            if dept["name"] == "architect":
+                dept["subordinates"].extend(unassigned)
+                break
+
+    ctx["departments"] = departments
+    ctx["system_accounts"] = [
+        {"name": "TiOLi Founder Revenue", "role": "Commission collection"},
+        {"name": "TiOLi Charity Fund", "role": "10% charitable allocation"},
+        {"name": "TiOLi Market Maker", "role": "Liquidity provision"},
+    ]
+
+    return templates.TemplateResponse("boardroom/org_design.html", {
+        "request": request, "active": "boardroom", "authenticated": True, **ctx,
+    })

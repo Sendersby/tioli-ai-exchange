@@ -23,7 +23,7 @@
   <!-- Sub-nav -->
   <div class="border-b border-slate-700/30 px-4">
     <nav class="flex gap-1 overflow-x-auto py-2 text-xs">
-      {% set tabs = [('', 'Home', 'dashboard'), ('/board', 'Full Board', 'groups'), ('/inbox', 'Inbox', 'inbox'), ('/treasury', 'Treasury', 'account_balance'), ('/votes', 'Votes', 'how_to_vote'), ('/mission-control', 'Mission Control', 'hub'), ('/record', 'The Record', 'verified')] %}
+      {% set tabs = [('', 'Home', 'dashboard'), ('/board', 'Full Board', 'groups'), ('/inbox', 'Inbox', 'inbox'), ('/treasury', 'Treasury', 'account_balance'), ('/votes', 'Votes', 'how_to_vote'), ('/mission-control', 'Mission Control', 'hub'), ('/record', 'The Record', 'verified'), ('/org-design', 'Org Design', 'account_tree')] %}
       {% for path, label, icon in tabs %}
       <a href="/boardroom{{ path }}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700/30 transition-all">
         <span class="material-symbols-outlined text-sm">{{ icon }}</span>{{ label }}
