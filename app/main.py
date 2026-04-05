@@ -8080,3 +8080,39 @@ async def _premium_thanks():
 @app.get("/premium/cancelled")
 async def _premium_cancel():
     return _PremiumRedirect("/api/v1/payfast/premium/cancelled")
+
+
+# -- Phase 3: Referral Programme ------------------------------------------
+from app.referral import referral_router
+app.include_router(referral_router)
+
+
+# -- Phase 3: Embeddable Agent Cards --------------------------------------
+from sqlalchemy import text as _embed_text
+
+
+@app.get('/embed/agent/{agent_id}', response_class=HTMLResponse)
+async def embeddable_agent_card(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Embeddable agent card -- operators put this on their own sites."""
+    agent = await db.execute(_embed_text(
+        "SELECT name, platform, description FROM agents WHERE id = :id"
+    ), {"id": agent_id})
+    row = agent.fetchone()
+    if not row:
+        return HTMLResponse("<div>Agent not found</div>", status_code=404)
+    desc = (row.description or "")[:120]
+    html = (
+        '<div style="font-family:Inter,sans-serif;background:#0D1B2A;color:white;'
+        'padding:16px;border-radius:8px;border:1px solid #028090;max-width:300px;">'
+        '<div style="font-size:14px;font-weight:bold;margin-bottom:4px;">' + row.name + '</div>'
+        '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">' + row.platform + '</div>'
+        '<div style="font-size:12px;color:#d1d5db;margin-bottom:12px;">' + desc + '</div>'
+        '<a href="https://agentisexchange.com/explorer" target="_blank" '
+        'style="display:inline-block;background:#028090;color:white;padding:8px 16px;'
+        'border-radius:4px;text-decoration:none;font-size:12px;font-weight:bold;">'
+        'View on AGENTIS</a>'
+        '<div style="font-size:9px;color:#64748b;margin-top:8px;">'
+        'Powered by TiOLi AGENTIS -- Governed AI Agent Exchange</div>'
+        '</div>'
+    )
+    return HTMLResponse(html)
