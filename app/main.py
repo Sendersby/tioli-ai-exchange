@@ -389,6 +389,48 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+# ── Global Error Handling ────────────────────────────────────────────
+import traceback as _tb
+import logging as _err_logging
+
+_err_logger = _err_logging.getLogger("tioli.errors")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    _err_logger.error(f"Unhandled error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": True,
+            "code": "INTERNAL_ERROR",
+            "message": "An internal error occurred. Our systems have been notified.",
+            "path": str(request.url.path),
+        },
+    )
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=404,
+            content={"error": True, "code": "NOT_FOUND", "message": "Endpoint not found", "path": str(request.url.path)},
+        )
+    raise exc
+
+# ── Rate Limiting ────────────────────────────────────────────────────
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ── Health Check ─────────────────────────────────────────────────────
+@app.get("/api/v1/health")
+async def api_v1_health():
+    return {"status": "operational", "platform": "TiOLi AGENTIS", "version": "1.0.0"}
+
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui():
