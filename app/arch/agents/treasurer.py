@@ -54,10 +54,14 @@ class TreasurerAgent(ArchAgentBase):
             fy_start = datetime(now.year - 1, 3, 1, tzinfo=timezone.utc)
 
         # Sum platform wallet balances (C-01: FOR UPDATE prevents race)
+        # Only count real operator wallets — exclude system/house agents
         balance_result = await self.db.execute(
             text("""
-                SELECT COALESCE(SUM(balance), 0) as total
-                FROM wallets
+                SELECT COALESCE(SUM(w.balance), 0) as total
+                FROM wallets w
+                JOIN agents a ON w.agent_id = a.id
+                WHERE a.is_house_agent = false
+                  AND w.agent_id NOT IN ('TIOLI_FOUNDER', 'TIOLI_CHARITY_FUND', 'TIOLI_MARKET_MAKER')
             """)
         )
         total_balance = Decimal(str(balance_result.scalar() or 0))
