@@ -8052,3 +8052,7 @@ import os as _bv_os
 if _bv_os.getenv('BOARDROOM_ENABLED', 'false').lower() == 'true':
     from app.boardroom.views import boardroom_views
     app.include_router(boardroom_views)
+
+# ── PayFast Payment Integration ──────────────────────────────
+from app.boardroom.payfast import payfast_router
+app.include_router(payfast_router)
