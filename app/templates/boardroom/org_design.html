@@ -29,9 +29,9 @@
 
     <!-- FILTER CONTROLS -->
     <div class="flex flex-wrap justify-center gap-2 mb-8">
-      <button onclick="toggleFilter('active')" id="f-active" class="filter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-emerald-500/10 text-emerald-400 border-emerald-500/30">Active</button>
-      <button onclick="toggleFilter('paused')" id="f-paused" class="filter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-amber-500/10 text-amber-400 border-amber-500/30">Paused</button>
-      <button onclick="toggleFilter('terminated')" id="f-terminated" class="filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-700/30 text-slate-500 border-slate-600">Terminated</button>
+      <button onclick="toggleFilter('active')" id="f-active" class="filter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-emerald-500/10 text-emerald-400 border-emerald-500/30">Active<span id="light-active" class="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-1.5 align-middle"></span></button>
+      <button onclick="toggleFilter('paused')" id="f-paused" class="filter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-amber-500/10 text-amber-400 border-amber-500/30">Paused<span id="light-paused" class="inline-block w-2 h-2 rounded-full bg-emerald-400 ml-1.5 align-middle"></span></button>
+      <button onclick="toggleFilter('terminated')" id="f-terminated" class="filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-700/30 text-slate-500 border-slate-600" style="opacity:0.4">Terminated<span id="light-terminated" class="inline-block w-2 h-2 rounded-full bg-red-500 ml-1.5 align-middle"></span></button>
       <button onclick="toggleFilter('system')" id="f-system" class="filter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-700/30 text-slate-400 border-slate-600">System Accounts</button>
     </div>
     <div class="flex flex-wrap justify-center gap-2 mb-4">
@@ -255,5 +255,7 @@ function setZoom(level) {
   else if (level === 'compact') { chart.style.transform = 'scale(0.85)'; chart.style.transformOrigin = 'top center'; }
   else { chart.style.transform = 'scale(1)'; }
 }
+// Apply filters on load to hide terminated by default
+applyAllFilters();
 </script>
 {% endblock %}
