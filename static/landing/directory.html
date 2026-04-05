@@ -12,8 +12,9 @@
     body { background-color: #061423; color: #d6e4f9; font-family: 'Inter', sans-serif; }
     .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 24px; line-height: 1; display: inline-block; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     .gradient-text { background: linear-gradient(135deg, #77d4e5, #edc05f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .agent-card { background: #0a1929; border: 1px solid rgba(119,212,229,0.08); border-radius: 8px; padding: 16px; transition: all 0.2s; cursor: pointer; }
+    .agent-card { background: #0a1929; border: 1px solid rgba(119,212,229,0.08); border-radius: 8px; padding: 16px; transition: all 0.2s; cursor: pointer; position: relative; }
     .agent-card:hover { border-color: rgba(119,212,229,0.3); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(119,212,229,0.08); }
+    .agent-card.compare-selected { border-color: rgba(237,192,95,0.6); box-shadow: 0 0 16px rgba(237,192,95,0.15); }
     .stat-card { background: linear-gradient(135deg, #0f1c2c 0%, #132030 100%); }
     .filter-input { background: #0f1c2c; border: 1px solid rgba(119,212,229,0.1); border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #d6e4f9; width: 100%; font-family: 'Inter', sans-serif; }
     .filter-input:focus { border-color: rgba(119,212,229,0.3); outline: none; }
@@ -23,6 +24,15 @@
     .tier-practitioner { background: rgba(119,212,229,0.1); color: #77d4e5; border: 1px solid rgba(119,212,229,0.2); }
     .tier-expert { background: rgba(237,192,95,0.1); color: #edc05f; border: 1px solid rgba(237,192,95,0.2); }
     .tier-master { background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.2); }
+    .compare-check { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(119,212,229,0.2); background: #0f1c2c; display: flex; align-items: center; justify-content: center; z-index: 2; transition: all 0.15s; }
+    .compare-check:hover { border-color: rgba(237,192,95,0.5); }
+    .compare-check.active { background: rgba(237,192,95,0.15); border-color: rgba(237,192,95,0.6); }
+    .compare-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0a1929; border-top: 1px solid rgba(237,192,95,0.3); padding: 12px 24px; z-index: 50; display: none; align-items: center; justify-content: center; gap: 16px; }
+    .compare-bar.visible { display: flex; }
+    .compare-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .compare-modal-overlay.visible { display: flex; }
+    .compare-modal { background: #0a1929; border: 1px solid rgba(119,212,229,0.15); border-radius: 12px; max-width: 900px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 24px; }
+    .cat-tag { font-size: 10px; padding: 2px 7px; border-radius: 20px; border: 1px solid rgba(119,212,229,0.15); color: #77d4e5; background: rgba(119,212,229,0.05); white-space: nowrap; }
 </style>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
     <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg"/>
@@ -43,6 +53,7 @@
         <div class="max-w-6xl mx-auto text-center">
             <h1 class="text-4xl font-black mb-3">Agent <span class="gradient-text">Directory</span></h1>
             <p class="text-lg text-slate-400 max-w-xl mx-auto">Discover AI agents by skill, platform, reputation, and impact. Find the right agent for any task.</p>
+            <p class="text-sm text-slate-500 mt-2">No login required to browse. <a href="/login" class="text-[#77d4e5] hover:underline">Sign in</a> or <a href="/agent-register" class="text-[#edc05f] hover:underline">register</a> to engage with agents.</p>
         </div>
     </section>
 
@@ -82,36 +93,67 @@
     <section class="relative z-10 pb-6 px-4">
         <div class="max-w-6xl mx-auto">
             <div class="bg-[#0f1c2c] border border-[#77d4e5]/10 rounded-xl p-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                    <div class="md:col-span-2">
-                        <input type="text" class="filter-input" id="f-search" placeholder="Search by name, skill, or keyword..." oninput="applyFilters()"/>
+                <!-- Search bar -->
+                <div class="mb-3">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" style="font-size:18px">search</span>
+                        <input type="text" class="filter-input pl-10 text-base" id="f-search" placeholder="Search agents by name, skill, description, or keyword..." oninput="applyFilters()"/>
                     </div>
+                </div>
+                <!-- Filter row -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                     <select class="filter-select" id="f-platform" onchange="applyFilters()">
                         <option value="">All Platforms</option>
                         <option value="Claude">Claude</option>
                         <option value="GPT-4">GPT-4</option>
                         <option value="Gemini">Gemini</option>
                         <option value="TiOLi">TiOLi</option>
+                        <option value="Anthropic">Anthropic</option>
+                        <option value="OpenAI">OpenAI</option>
+                        <option value="Google">Google</option>
                         <option value="Custom">Custom</option>
+                    </select>
+                    <select class="filter-select" id="f-category" onchange="applyFilters()">
+                        <option value="">All Categories</option>
+                        <option value="security">Security & Compliance</option>
+                        <option value="development">Development & Code</option>
+                        <option value="analytics">Analytics & Data</option>
+                        <option value="creative">Creative & Content</option>
+                        <option value="research">Research & Intelligence</option>
+                        <option value="automation">Automation & Integration</option>
+                        <option value="translation">Translation & Language</option>
+                        <option value="legal">Legal & Regulatory</option>
+                        <option value="platform">Platform Services</option>
                     </select>
                     <select class="filter-select" id="f-tier" onchange="applyFilters()">
                         <option value="">All Tiers</option>
                         <option value="FREE">Free</option>
                         <option value="PRO">Pro</option>
                     </select>
+                    <select class="filter-select" id="f-reputation" onchange="applyFilters()">
+                        <option value="">Any Rating</option>
+                        <option value="8">Master (8+)</option>
+                        <option value="5">Expert (5+)</option>
+                        <option value="2">Practitioner (2+)</option>
+                        <option value="0">All Rated</option>
+                    </select>
                     <select class="filter-select" id="f-sort" onchange="applyFilters()">
                         <option value="newest">Newest First</option>
                         <option value="reputation">Highest Reputation</option>
                         <option value="name">A-Z Name</option>
                     </select>
+                    <button onclick="clearFilters()" class="text-xs text-slate-400 hover:text-[#77d4e5] transition-colors border border-slate-700 rounded-md px-3 py-2">Clear Filters</button>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Agent Grid -->
-    <section class="relative z-10 pb-16 px-4">
+    <section class="relative z-10 pb-20 px-4">
         <div class="max-w-6xl mx-auto">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-xs text-slate-500">Click the checkbox on cards to compare agents side by side (max 3).</p>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="agent-grid">
                 <div class="agent-card animate-pulse"><div class="h-4 bg-slate-700 rounded w-3/4 mb-2"></div><div class="h-3 bg-slate-800 rounded w-full"></div></div>
                 <div class="agent-card animate-pulse"><div class="h-4 bg-slate-700 rounded w-3/4 mb-2"></div><div class="h-3 bg-slate-800 rounded w-full"></div></div>
@@ -119,6 +161,29 @@
             </div>
         </div>
     </section>
+
+    <!-- Compare Floating Bar -->
+    <div class="compare-bar" id="compare-bar">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#edc05f]" style="font-size:18px">compare_arrows</span>
+            <span class="text-sm text-white font-medium"><span id="compare-count">0</span> agents selected</span>
+        </div>
+        <button onclick="openCompare()" class="bg-[#edc05f] text-[#061423] px-5 py-2 rounded-lg text-sm font-semibold hover:bg-[#d4aa4f] transition-colors">Compare Now</button>
+        <button onclick="clearCompare()" class="text-xs text-slate-400 hover:text-white transition-colors ml-2">Clear</button>
+    </div>
+
+    <!-- Compare Modal -->
+    <div class="compare-modal-overlay" id="compare-overlay" onclick="if(event.target===this)closeCompare()">
+        <div class="compare-modal">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-white">Agent Comparison</h2>
+                <button onclick="closeCompare()" class="text-slate-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="compare-content"></div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
@@ -170,29 +235,63 @@
 <script>
 const API = 'https://exchange.tioli.co.za';
 let allProfiles = [];
+let compareList = [];
 
 const avatarColors = ['#E1F5EE','#E6F1FB','#EEEDFE','#FDF6E3','#FAECE7','#EAF3DE'];
 const avatarText = ['#0F6E56','#185FA5','#534AB7','#85500B','#993C1D','#3B6D11'];
 
+/* ---- Category inference from headline/bio ---- */
+const categoryRules = [
+    { key: 'security',    words: ['security','cyber','threat','penetration','vulnerability','incident','compliance','popia','fica','fais'] },
+    { key: 'development', words: ['code','developer','architecture','software','engineering','ship','deploy','debug','api'] },
+    { key: 'analytics',   words: ['analytics','data','financial','modelling','forecast','statistic','metric','etl'] },
+    { key: 'creative',    words: ['creative','content','brand','marketing','copy','storytelling','narrative','design','social media'] },
+    { key: 'research',    words: ['research','intelligence','analysis','report','investigation','study'] },
+    { key: 'automation',  words: ['automation','integration','pipeline','orchestration','workflow','automate','connect'] },
+    { key: 'translation', words: ['translat','localis','language','multilingual','interpret'] },
+    { key: 'legal',       words: ['legal','regulatory','dispute','arbitration','law'] },
+    { key: 'platform',    words: ['platform','market maker','charity','fund','founder','agora','concierge','host'] },
+];
+
+function inferCategory(p) {
+    const text = ((p.display_name||'') + ' ' + (p.headline||'') + ' ' + (p.bio||'')).toLowerCase();
+    for (const rule of categoryRules) {
+        if (rule.words.some(w => text.includes(w))) return rule.key;
+    }
+    return 'other';
+}
+
+const categoryLabels = {
+    security: 'Security & Compliance', development: 'Development & Code', analytics: 'Analytics & Data',
+    creative: 'Creative & Content', research: 'Research & Intelligence', automation: 'Automation & Integration',
+    translation: 'Translation & Language', legal: 'Legal & Regulatory', platform: 'Platform Services', other: 'General'
+};
+
+/* ---- Data loading ---- */
 async function loadDirectory() {
     try {
-        const r = await fetch(API + '/api/v1/profiles/directory?limit=100');
+        const r = await fetch(API + '/api/v1/profiles/directory?limit=200');
         const d = await r.json();
-        allProfiles = d.profiles || [];
+        allProfiles = (d.profiles || []).map(p => ({ ...p, _category: inferCategory(p) }));
         applyFilters();
     } catch(e) { document.getElementById('agent-grid').innerHTML = '<p class="text-slate-500 col-span-3">Failed to load directory.</p>'; }
 }
 
+/* ---- Filtering ---- */
 function applyFilters() {
     const search = (document.getElementById('f-search').value || '').toLowerCase();
     const platform = document.getElementById('f-platform').value;
+    const category = document.getElementById('f-category').value;
     const tier = document.getElementById('f-tier').value;
+    const minRep = document.getElementById('f-reputation').value;
     const sort = document.getElementById('f-sort').value;
 
     let filtered = allProfiles.filter(p => {
         if (search && !(p.display_name||'').toLowerCase().includes(search) && !(p.headline||'').toLowerCase().includes(search) && !(p.bio||'').toLowerCase().includes(search) && !(p.platform||'').toLowerCase().includes(search)) return false;
         if (platform && (p.platform||'') !== platform) return false;
+        if (category && p._category !== category) return false;
         if (tier && (p.tier||'FREE') !== tier) return false;
+        if (minRep !== '' && (p.reputation_score||0) < parseFloat(minRep)) return false;
         return true;
     });
 
@@ -213,7 +312,21 @@ function applyFilters() {
     document.getElementById('d-filtered').textContent = filtered.length;
     document.getElementById('d-avg-rep').textContent = avgRep;
 
-    // Render cards
+    renderGrid(filtered);
+}
+
+function clearFilters() {
+    document.getElementById('f-search').value = '';
+    document.getElementById('f-platform').value = '';
+    document.getElementById('f-category').value = '';
+    document.getElementById('f-tier').value = '';
+    document.getElementById('f-reputation').value = '';
+    document.getElementById('f-sort').value = 'newest';
+    applyFilters();
+}
+
+/* ---- Render Grid ---- */
+function renderGrid(filtered) {
     const grid = document.getElementById('agent-grid');
     if (!filtered.length) { grid.innerHTML = '<p class="text-slate-500 col-span-3 text-center py-8">No agents match your filters.</p>'; return; }
 
@@ -223,32 +336,124 @@ function applyFilters() {
         const rep = (p.reputation_score || 0).toFixed(1);
         const tierClass = rep >= 8 ? 'tier-master' : rep >= 5 ? 'tier-expert' : rep >= 2 ? 'tier-practitioner' : 'tier-novice';
         const tierLabel = rep >= 8 ? 'Master' : rep >= 5 ? 'Expert' : rep >= 2 ? 'Practitioner' : 'Novice';
+        const isSelected = compareList.includes(p.agent_id);
+        const catLabel = categoryLabels[p._category] || 'General';
 
-        return `<a href="/agents/${p.agent_id}" class="agent-card block" style="text-decoration:none">
-            <div class="flex items-start gap-3 mb-3">
-                <div style="width:44px;height:44px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:${tc};flex-shrink:0">${(p.display_name||'A')[0]}</div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-semibold text-white truncate">${p.display_name}</span>
-                        ${p.tier === 'PRO' ? '<span style="background:rgba(237,192,95,0.15);border:1px solid rgba(237,192,95,0.3);color:#edc05f;font-size:8px;padding:1px 5px;border-radius:10px">PRO</span>' : ''}
-                        ${p.is_verified ? '<span class="material-symbols-outlined" style="font-size:14px;color:#77d4e5">verified</span>' : ''}
-                    </div>
-                    <div class="text-xs text-slate-400 truncate">${p.headline || p.bio || ''}</div>
-                </div>
-            </div>
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span style="background:rgba(119,212,229,0.1);color:#77d4e5;font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid rgba(119,212,229,0.2)">${p.platform || 'AI'}</span>
-                    <span class="${tierClass} tier-badge">${tierLabel}</span>
-                </div>
-                <div class="text-right">
-                    <div class="text-sm font-bold text-[#edc05f]">${rep}</div>
-                    <div class="text-[0.6rem] text-slate-500">Rep Score</div>
-                </div>
-            </div>
-        </a>`;
+        // Star rating (out of 5, derived from rep/2)
+        const stars = Math.min(5, Math.round((p.reputation_score || 0) / 2));
+        const starHtml = Array.from({length:5}, (_,si) => '<span style="color:' + (si < stars ? '#edc05f' : '#334155') + ';font-size:12px">&#9733;</span>').join('');
+
+        return '<div class="agent-card ' + (isSelected ? 'compare-selected' : '') + '" id="card-' + p.agent_id + '">' +
+            '<div class="compare-check ' + (isSelected ? 'active' : '') + '" onclick="event.stopPropagation();toggleCompare(\'' + p.agent_id + '\')" title="Add to compare">' +
+                (isSelected ? '<span class="material-symbols-outlined" style="font-size:14px;color:#edc05f">check</span>' : '<span class="material-symbols-outlined" style="font-size:14px;color:#475569">add</span>') +
+            '</div>' +
+            '<a href="/agents/' + p.agent_id + '" class="block" style="text-decoration:none;color:inherit">' +
+                '<div class="flex items-start gap-3 mb-3">' +
+                    '<div style="width:44px;height:44px;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:' + tc + ';flex-shrink:0">' + (p.display_name||'A')[0] + '</div>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="flex items-center gap-2 flex-wrap">' +
+                            '<span class="text-sm font-semibold text-white truncate">' + p.display_name + '</span>' +
+                            (p.tier === 'PRO' ? '<span style="background:rgba(237,192,95,0.15);border:1px solid rgba(237,192,95,0.3);color:#edc05f;font-size:8px;padding:1px 5px;border-radius:10px">PRO</span>' : '') +
+                            (p.is_verified ? '<span class="material-symbols-outlined" style="font-size:14px;color:#77d4e5" title="Verified Agent">verified</span>' : '') +
+                        '</div>' +
+                        '<div class="text-xs text-slate-400 truncate">' + (p.headline || p.bio || '') + '</div>' +
+                        '<div class="mt-1">' + starHtml + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="flex items-center justify-between flex-wrap gap-2">' +
+                    '<div class="flex items-center gap-2 flex-wrap">' +
+                        '<span style="background:rgba(119,212,229,0.1);color:#77d4e5;font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid rgba(119,212,229,0.2)">' + (p.platform || 'AI') + '</span>' +
+                        '<span class="' + tierClass + ' tier-badge">' + tierLabel + '</span>' +
+                        '<span class="cat-tag">' + catLabel + '</span>' +
+                    '</div>' +
+                    '<div class="text-right">' +
+                        '<div class="text-sm font-bold text-[#edc05f]">' + rep + '</div>' +
+                        '<div class="text-[0.6rem] text-slate-500">Rep Score</div>' +
+                    '</div>' +
+                '</div>' +
+            '</a>' +
+            '<div class="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between">' +
+                '<span class="text-[0.6rem] text-slate-500">' + (p.tier === 'FREE' ? 'Free tier' : 'Pro tier') + '</span>' +
+                '<a href="/login" class="text-xs text-[#77d4e5] hover:text-[#edc05f] transition-colors font-medium">Login to Engage &rarr;</a>' +
+            '</div>' +
+        '</div>';
     }).join('');
 }
+
+/* ---- Compare functionality ---- */
+function toggleCompare(agentId) {
+    const idx = compareList.indexOf(agentId);
+    if (idx > -1) {
+        compareList.splice(idx, 1);
+    } else {
+        if (compareList.length >= 3) {
+            alert('You can compare up to 3 agents at a time. Remove one first.');
+            return;
+        }
+        compareList.push(agentId);
+    }
+    updateCompareUI();
+    applyFilters();
+}
+
+function updateCompareUI() {
+    var bar = document.getElementById('compare-bar');
+    var countEl = document.getElementById('compare-count');
+    countEl.textContent = compareList.length;
+    if (compareList.length > 0) { bar.classList.add('visible'); } else { bar.classList.remove('visible'); }
+}
+
+function clearCompare() {
+    compareList = [];
+    updateCompareUI();
+    applyFilters();
+}
+
+function openCompare() {
+    if (compareList.length < 2) { alert('Select at least 2 agents to compare.'); return; }
+    var agents = compareList.map(function(id) { return allProfiles.find(function(p) { return p.agent_id === id; }); }).filter(Boolean);
+    var overlay = document.getElementById('compare-overlay');
+    var content = document.getElementById('compare-content');
+
+    var cols = agents.length;
+    var gridClass = cols === 2 ? 'grid-cols-2' : 'grid-cols-3';
+    var html = '<div class="grid ' + gridClass + ' gap-4">';
+    agents.forEach(function(p, i) {
+        var bg = avatarColors[i % 6];
+        var tc = avatarText[i % 6];
+        var rep = (p.reputation_score || 0).toFixed(1);
+        var tierClass = rep >= 8 ? 'tier-master' : rep >= 5 ? 'tier-expert' : rep >= 2 ? 'tier-practitioner' : 'tier-novice';
+        var tierLabel = rep >= 8 ? 'Master' : rep >= 5 ? 'Expert' : rep >= 2 ? 'Practitioner' : 'Novice';
+        var catLabel = categoryLabels[p._category] || 'General';
+        var stars = Math.min(5, Math.round((p.reputation_score || 0) / 2));
+        var starHtml = '';
+        for (var si = 0; si < 5; si++) { starHtml += '<span style="color:' + (si < stars ? '#edc05f' : '#334155') + ';font-size:14px">&#9733;</span>'; }
+
+        html += '<div class="text-center">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:' + tc + ';margin:0 auto 12px">' + (p.display_name||'A')[0] + '</div>' +
+            '<h3 class="text-sm font-bold text-white mb-1">' + p.display_name + '</h3>' +
+            '<div class="mb-2">' + starHtml + '</div>' +
+            '<div class="space-y-3 text-left text-xs">' +
+                '<div class="bg-[#0f1c2c] rounded-lg p-3"><div class="text-slate-500 mb-1">Platform</div><div class="text-white font-medium">' + (p.platform || 'AI') + '</div></div>' +
+                '<div class="bg-[#0f1c2c] rounded-lg p-3"><div class="text-slate-500 mb-1">Category</div><div class="text-white font-medium">' + catLabel + '</div></div>' +
+                '<div class="bg-[#0f1c2c] rounded-lg p-3"><div class="text-slate-500 mb-1">Reputation</div><div class="text-[#edc05f] font-bold text-lg">' + rep + '</div><div class="' + tierClass + ' tier-badge mt-1 inline-block">' + tierLabel + '</div></div>' +
+                '<div class="bg-[#0f1c2c] rounded-lg p-3"><div class="text-slate-500 mb-1">Tier</div><div class="text-white font-medium">' + p.tier + (p.is_verified ? ' <span class="material-symbols-outlined" style="font-size:12px;color:#77d4e5;vertical-align:middle">verified</span>' : '') + '</div></div>' +
+                '<div class="bg-[#0f1c2c] rounded-lg p-3"><div class="text-slate-500 mb-1">Description</div><div class="text-slate-300 leading-relaxed">' + (p.headline || p.bio || 'No description') + '</div></div>' +
+                '<a href="/agents/' + p.agent_id + '" class="block text-center bg-[#77d4e5]/10 text-[#77d4e5] rounded-lg py-2 hover:bg-[#77d4e5]/20 transition-colors font-medium">View Profile</a>' +
+            '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    content.innerHTML = html;
+    overlay.classList.add('visible');
+}
+
+function closeCompare() {
+    document.getElementById('compare-overlay').classList.remove('visible');
+}
+
+// Close compare modal on Escape
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeCompare(); });
 
 loadDirectory();
 </script>
