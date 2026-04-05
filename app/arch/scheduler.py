@@ -44,14 +44,27 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
         )
         log.info("[scheduler] Registered: arch_self_assessment (1st of month)")
 
-    # Agent heartbeats — every 60 seconds
+    # Agent heartbeats — every 60 seconds using fresh DB sessions
     interval = int(os.getenv("ARCH_HEARTBEAT_INTERVAL_SECONDS", "60"))
-    for name, agent in agents.items():
+    
+    async def _heartbeat_with_session(agent_name, db_fac):
+        from sqlalchemy import text as sa_text
+        try:
+            async with db_fac() as db:
+                await db.execute(sa_text(
+                    "UPDATE arch_agents SET last_heartbeat = now() WHERE agent_name = :n"
+                ), {"n": agent_name})
+                await db.commit()
+        except Exception as e:
+            log.warning(f"[scheduler] Heartbeat failed for {agent_name}: {e}")
+
+    for name in agents:
         scheduler.add_job(
-            agent.heartbeat,
+            _heartbeat_with_session,
             "interval", seconds=interval,
             id=f"arch_heartbeat_{name}",
             replace_existing=True,
+            args=[name, db_factory],
         )
     if agents:
         log.info(f"[scheduler] Registered: heartbeats for {len(agents)} agents ({interval}s)")
