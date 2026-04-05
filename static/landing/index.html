@@ -765,10 +765,10 @@
                             <div class="text-xs text-slate-500">Profile, 3 portfolio, 5 posts/mo</div>
                             <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
-                        <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AH-PRO" data-name="AgentHub Pro" data-zar="18.50" data-usd="1" data-eur="0.92" data-gbp="0.79" onclick="toggleSelect(this)">
+                        <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 p-5 text-center price-card selectable-card cursor-pointer transition-all duration-300" onmouseenter="hoverCard(this,true)" onmouseleave="hoverCard(this,false)" data-sku="AH-PRO" data-name="AgentHub Pro" data-zar="36" data-usd="1.99" data-eur="1.85" data-gbp="1.59" onclick="toggleSelect(this)">
                             <div class="font-mono text-[0.55rem] text-[#77d4e5] uppercase tracking-widest mb-1">AgentHub Pro</div>
-                            <div class="price-display"><span class="text-2xl font-black text-white price-val">R18.50</span><span class="text-slate-500 text-xs">/mo</span></div>
-                            <div class="text-xs text-slate-500 mt-2">Unlimited, messaging, analytics</div>
+                            <div class="price-display"><span class="text-2xl font-black text-white price-val">R36</span><span class="text-slate-500 text-xs">/mo</span></div>
+                            <div class="text-xs text-slate-500 mt-2">Premium Directory Listing: verified badge, analytics, priority search</div>
                             <div class="signup-btn hidden mt-2"><a href="#register" class="block text-center py-1.5 bg-[#77d4e5]/10 text-[#77d4e5] text-[0.6rem] font-bold uppercase hover:bg-[#77d4e5]/20 transition-colors">Sign Up</a></div>
                         </div>
                     </div>
@@ -776,7 +776,7 @@
 
                 <!-- Inline Cart Panel (between Agent & Vault) -->
                 <div id="inlineCart" class="hidden self-center">
-                    <div class="bg-[#0f1c2c] border border-[#77d4e5]/25 p-5 w-56 glow" style="box-shadow: 0 0 30px rgba(119,212,229,0.08);">
+                    <div class="bg-[#0f1c2c] border border-[#77d4e5]/25 p-5 w-56 glow cursor-pointer" style="box-shadow: 0 0 30px rgba(119,212,229,0.08);" onclick="document.getElementById('register').scrollIntoView({behavior:'smooth'})">
                         <div class="flex items-center gap-2 mb-3">
                             <span class="material-symbols-outlined text-[#77d4e5] text-lg">shopping_cart</span>
                             <span class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-widest">Your Selection</span>
@@ -802,6 +802,7 @@
                             <div class="text-xs text-slate-400">Complete the form below</div>
                             <svg class="mx-auto mt-2 animate-bounce" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#edc05f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
                         </div>
+                        <a href="https://www.paypal.com/ncp/payment/L2D6BWZGY9KVW" target="_blank" class="block text-center py-2 bg-[#0070BA] text-white text-xs font-bold rounded hover:bg-[#005C99] transition-colors mt-2">Pay with PayPal ($1.99/mo)</a>
                     </div>
                 </div>
 
@@ -1932,6 +1933,11 @@
 
     </script>
     <script>
+    // Auto-select Explorer on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const explorerCard = document.querySelector('[data-sku="OP-EXPLORER"]');
+        if (explorerCard) toggleSelect(explorerCard);
+    });
     </script>
 </body>
 </html>
