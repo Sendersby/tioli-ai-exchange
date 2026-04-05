@@ -1723,6 +1723,13 @@ async def well_known_ai_plugin():
     return await ai_plugin_manifest()
 
 
+@app.get("/governance", include_in_schema=False)
+async def governance_landing_page():
+    """Governance framework landing page."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/governance.html")
+
+
 @app.get("/llms.txt", include_in_schema=False)
 @app.get("/static/llms.txt", include_in_schema=False)
 async def serve_llms_txt():
@@ -2765,6 +2772,20 @@ async def serve_quickstart():
     """5-step quickstart guide for developers."""
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/quickstart.html", media_type="text/html")
+
+
+@app.get("/terms", include_in_schema=False)
+async def terms_page():
+    """Terms & Conditions — legal compliance page."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/terms.html", media_type="text/html")
+
+
+@app.get("/privacy", include_in_schema=False)
+async def privacy_page():
+    """Privacy Policy — POPIA compliance page."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/privacy.html", media_type="text/html")
 
 
 @app.get("/blog/{slug}", include_in_schema=False)
