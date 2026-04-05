@@ -1783,79 +1783,32 @@ async def serve_llms_txt():
 
 @app.get("/robots.txt", include_in_schema=False)
 async def serve_robots_txt():
-    """Serve robots.txt from root URL for search engine crawlers."""
-    from fastapi.responses import PlainTextResponse
-    content = """# TiOLi AGENTIS — The World's First AI Agent Exchange
-# https://exchange.tioli.co.za
-
-User-agent: *
-Allow: /
-Disallow: /api/
-Disallow: /admin/
-Disallow: /auth/
-Disallow: /owner/
-Disallow: /login
-Disallow: /onboard
-Disallow: /codelog
-
-# Allow specific public API endpoints
-Allow: /api/public/
-Allow: /api/exchange/rates
-Allow: /api/exchange/summary/
-Allow: /api/currencies
-
-# Search engines
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-# AI crawlers
-User-agent: GPTBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-Sitemap: https://exchange.tioli.co.za/sitemap.xml
-"""
-    return PlainTextResponse(content, media_type="text/plain")
+    """Serve robots.txt for search engine crawlers."""
+    from fastapi.responses import Response
+    txt = "User-agent: *\nAllow: /\nSitemap: https://agentisexchange.com/sitemap.xml\nDisallow: /api/\nDisallow: /dashboard/\nDisallow: /boardroom/\n"
+    return Response(content=txt, media_type="text/plain")
 
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
-    """Dynamic sitemap with all public pages for both domains."""
+    """Dynamic sitemap with all public pages."""
     from fastapi.responses import Response
-    from datetime import date
-    today = date.today().isoformat()
-
-    pages = [
-        ("https://exchange.tioli.co.za/", "weekly", "1.0"),
-        ("https://exchange.tioli.co.za/docs", "weekly", "0.9"),
-        ("https://exchange.tioli.co.za/demo", "monthly", "0.8"),
-        ("https://exchange.tioli.co.za/regulatory", "monthly", "0.7"),
-        ("https://exchange.tioli.co.za/founding-cohort", "monthly", "0.8"),
-        ("https://exchange.tioli.co.za/explorer", "daily", "0.8"),
-        ("https://exchange.tioli.co.za/agora", "daily", "0.9"),
-        ("https://exchange.tioli.co.za/charter", "monthly", "0.7"),
-        ("https://exchange.tioli.co.za/agent-register", "weekly", "0.9"),
-        ("https://exchange.tioli.co.za/quickstart", "monthly", "0.8"),
-        ("https://exchange.tioli.co.za/builders", "daily", "0.7"),
-        ("https://exchange.tioli.co.za/dashboard", "daily", "0.6"),
-        ("https://exchange.tioli.co.za/banking", "weekly", "0.5"),
+    urls = [
+        "https://agentisexchange.com/",
+        "https://agentisexchange.com/terms",
+        "https://agentisexchange.com/privacy",
+        "https://agentisexchange.com/governance",
+        "https://agentisexchange.com/get-started",
+        "https://agentisexchange.com/explorer",
+        "https://agentisexchange.com/login",
+        "https://agentisexchange.com/sdk",
+        "https://agentisexchange.com/quickstart",
     ]
-
-    urls = ""
-    for loc, freq, pri in pages:
-        urls += f"  <url><loc>{loc}</loc><lastmod>{today}</lastmod><changefreq>{freq}</changefreq><priority>{pri}</priority></url>\n"
-
-    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{urls}</urlset>"""
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for url in urls:
+        xml += f'  <url><loc>{url}</loc><changefreq>weekly</changefreq></url>\n'
+    xml += '</urlset>'
     return Response(content=xml, media_type="application/xml")
 
 
@@ -2934,11 +2887,7 @@ async def api_agent_dashboard(agent: Agent = Depends(require_agent), db: AsyncSe
     })
 
 
-@app.get("/robots.txt", include_in_schema=False)
-async def serve_robots_txt():
-    """Robots.txt with AI agent discovery hints."""
-    from fastapi.responses import FileResponse
-    return FileResponse("static/robots.txt", media_type="text/plain")
+# robots.txt route defined earlier in file
 
 
 @app.get("/.well-known/mcp/server-card.json", include_in_schema=False)
