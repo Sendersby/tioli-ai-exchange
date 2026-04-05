@@ -395,6 +395,19 @@ class ArchExecutor:
                         "detail": json.dumps(detail, default=str),
                         "hash": entry_hash,
                     })
+                    # Also log to event_actions for the activity feed
+                    action_desc = f"{action_type}: {json.dumps(detail, default=str)[:200]}"
+                    await db.execute(text(
+                        "INSERT INTO arch_event_actions "
+                        "(agent_id, event_type, action_taken, tool_called, tool_input, processing_time_ms) "
+                        "VALUES (:agent_name, :etype, :action, :tool, :input, 0)"
+                    ), {
+                        "agent_name": self.agent_id,
+                        "etype": f"executor.{action_type.lower()}",
+                        "action": action_desc,
+                        "tool": action_type,
+                        "input": json.dumps(detail, default=str),
+                    })
                     await db.commit()
         except Exception as e:
             log.warning(f"[{self.agent_id}] Audit log write failed: {e}")
