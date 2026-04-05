@@ -20,6 +20,7 @@ from app.arch.tools.treasurer_tools import TREASURER_TOOLS
 from app.arch.executor_tools import EXECUTOR_TOOLS
 from app.arch.task_queue import TASK_QUEUE_TOOLS
 from app.arch.creative_tools import CREATIVE_TOOLS
+from app.arch.subordinate_manager import SUBORDINATE_MANAGEMENT_TOOLS
 
 log = logging.getLogger("arch.treasurer")
 
@@ -32,7 +33,7 @@ class TreasurerAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return TREASURER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS
+        return TREASURER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
 
     # ── Tool handlers ──────────────────────────────────────────
 

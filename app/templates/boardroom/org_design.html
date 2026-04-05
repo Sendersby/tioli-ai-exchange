@@ -4,7 +4,7 @@
 <div class="min-h-screen" style="background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 100%)">
   <div class="sticky top-0 z-50 bg-[#0D1B2A]/95 backdrop-blur border-b border-slate-700/50 px-4 py-2 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <a href="/boardroom" class="text-[#D4A94A] font-bold text-sm tracking-wider">THE BOARDROOM</a>
+      <button onclick="history.back()" class="back-btn text-slate-500 hover:text-white text-xs flex items-center gap-1 transition-colors"><span class="material-symbols-outlined text-sm">arrow_back</span>Back</button><a href="/boardroom" class="text-[#D4A94A] font-bold text-sm tracking-wider">THE BOARDROOM</a>
       <span class="text-slate-600">/</span><span class="text-white text-sm">Organisational Design</span>
     </div>
     <div class="flex items-center gap-1.5">
@@ -33,7 +33,19 @@
       <button onclick="toggleFilter('paused')" id="f-paused" class="filter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-amber-500/10 text-amber-400 border-amber-500/30">Paused</button>
       <button onclick="toggleFilter('terminated')" id="f-terminated" class="filter-btn px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-700/30 text-slate-500 border-slate-600">Terminated</button>
       <button onclick="toggleFilter('system')" id="f-system" class="filter-btn active-filter px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-700/30 text-slate-400 border-slate-600">System Accounts</button>
-      <span class="text-slate-600 mx-2">|</span>
+    </div>
+    <div class="flex flex-wrap justify-center gap-2 mb-4">
+      <span class="text-xs text-slate-500 self-center mr-1">Layers:</span>
+      <button onclick="toggleLevel(0)" id="l-0" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#D4A94A]/10 text-[#D4A94A] border-[#D4A94A]/30">L0 Founder</button>
+      <button onclick="toggleLevel(1)" id="l-1" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#028090]/10 text-[#028090] border-[#028090]/30">L1 Arch</button>
+      <button onclick="toggleLevel(2)" id="l-2" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-[#77d4e5]/10 text-[#77d4e5] border-[#77d4e5]/30">L2 Domain</button>
+      <button onclick="toggleLevel(3)" id="l-3" class="level-btn active-level px-3 py-1.5 rounded-full text-xs font-bold border transition-all bg-slate-500/10 text-slate-400 border-slate-500/30">L3 Ops</button>
+      <span class="text-slate-600 mx-1">|</span>
+      <button onclick="toggleAllLevels(true)" class="text-[10px] text-slate-500 hover:text-white px-1">All</button>
+      <button onclick="toggleAllLevels(false)" class="text-[10px] text-slate-500 hover:text-white px-1">None</button>
+    </div>
+    <div class="flex flex-wrap justify-center gap-2 mb-8">
+      <span class="text-xs text-slate-500 self-center mr-1">Zoom:</span>
       <button onclick="setZoom('normal')" class="text-xs text-slate-400 hover:text-white px-2">Normal</button>
       <button onclick="setZoom('large')" class="text-xs text-slate-400 hover:text-white px-2">Large</button>
       <button onclick="setZoom('compact')" class="text-xs text-slate-400 hover:text-white px-2">Compact</button>
@@ -45,7 +57,7 @@
 
         <!-- FOUNDER -->
         <div class="flex flex-col items-center">
-          <div class="bg-gradient-to-r from-[#D4A94A] to-[#edc05f] text-[#0D1B2A] px-10 py-5 rounded-xl text-center shadow-lg shadow-[#D4A94A]/20" style="min-width: 280px">
+          <div class="bg-gradient-to-r from-[#D4A94A] to-[#edc05f] text-[#0D1B2A] px-10 py-5" data-level="0 rounded-xl text-center shadow-lg shadow-[#D4A94A]/20" style="min-width: 280px">
             <div class="text-sm font-bold tracking-wider uppercase">Founder & Supreme Authority</div>
             <div class="text-2xl font-black mt-1">Stephen Endersby</div>
             <div class="text-xs mt-2 opacity-80">Constitutional veto | All financial approvals | Tier 4 authority</div>
@@ -58,7 +70,7 @@
 
         <!-- SOVEREIGN (elevated) -->
         <div class="flex flex-col items-center mb-4">
-          <a href="/boardroom/agents/sovereign" class="block border-2 border-[#D4A94A]/50 bg-[#1B2838] px-8 py-4 rounded-xl text-center hover:border-[#D4A94A] transition-all" style="min-width: 260px; box-shadow: 0 0 25px rgba(212,169,74,0.1)">
+          <a href="/boardroom/agents/sovereign" class="block border-2 border-[#D4A94A]/50 bg-[#1B2838] px-8 py-4" data-level="1 rounded-xl text-center hover:border-[#D4A94A] transition-all" style="min-width: 260px; box-shadow: 0 0 25px rgba(212,169,74,0.1)">
             <div class="text-xs text-[#D4A94A] font-bold tracking-wider uppercase">Layer 1 — Board Chair & CEO</div>
             <div class="text-lg font-bold text-white mt-1">The Sovereign</div>
             <div class="text-xs text-slate-400 mt-1">Founder's proxy | Constitutional rulings | Board coordination</div>
@@ -77,7 +89,7 @@
           {% for dept in departments %}
           {% if dept.name != 'sovereign' %}
           <div class="flex flex-col items-center" style="width: 160px" data-status="{{ dept.status|default('ACTIVE') }}">
-            <a href="/boardroom/agents/{{ dept.name }}" class="block border rounded-xl p-4 text-center w-full transition-all hover:shadow-lg" style="border-color: {{ dept.colour }}40; background: {{ dept.colour }}08;">
+            <a href="/boardroom/agents/{{ dept.name }}" class="block border rounded-xl p-4 text-center w-full transition-all hover:shadow-lg" data-level="1" style="border-color: {{ dept.colour }}40; background: {{ dept.colour }}08;">
               <div class="text-xs font-bold tracking-wider uppercase mb-1" style="color: {{ dept.colour }}80">Layer 1</div>
               <div class="w-12 h-12 rounded-full mx-auto flex items-center justify-center text-sm font-bold mb-2" style="background: {{ dept.colour }}20; color: {{ dept.colour }}">{{ dept.abbrev }}</div>
               <div class="text-sm font-bold text-white">{{ dept.display }}</div>
@@ -89,7 +101,7 @@
             <div class="w-0.5 h-4" style="background: {{ dept.colour }}40"></div>
             <div class="space-y-2 w-full">
               {% for sub in dept.subordinates %}
-              <div class="border rounded-lg px-3 py-2.5 text-center transition-all hover:border-slate-400 {% if sub.shared %}border-dashed{% endif %} agent-card" style="border-color: {% if sub.shared %}{{ dept.colour }}40{% else %}rgba(51,65,85,0.3){% endif %}; background: rgba(13,27,42,0.5);" title="{{ sub.description }}" data-status="active">
+              <div class="border rounded-lg px-3 py-2.5 text-center transition-all hover:border-slate-400 {% if sub.shared %}border-dashed{% endif %} agent-card" data-level="{{ sub.layer|default(2) }}" style="border-color: {% if sub.shared %}{{ dept.colour }}40{% else %}rgba(51,65,85,0.3){% endif %}; background: rgba(13,27,42,0.5);" title="{{ sub.description }}" data-status="active">
                 <div class="text-xs font-bold text-slate-200">{{ sub.name }}</div>
                 <div class="text-[10px] text-slate-500 mt-0.5">{{ sub.platform }}{% if sub.layer %} | Layer {{ sub.layer }}{% endif %}{% if sub.shared %} | Shared{% endif %}</div>
                 <div class="text-[10px] text-slate-600 mt-1 italic">{{ sub.description[:60] }}</div>
@@ -183,6 +195,41 @@
 
 <script>
 const activeFilters = {active: true, paused: true, terminated: false, system: true};
+const activeLevels = {0: true, 1: true, 2: true, 3: true};
+
+function toggleLevel(level) {
+  activeLevels[level] = !activeLevels[level];
+  const btn = document.getElementById('l-' + level);
+  if (activeLevels[level]) { btn.classList.add('active-level'); btn.style.opacity = '1'; }
+  else { btn.classList.remove('active-level'); btn.style.opacity = '0.3'; }
+  applyAllFilters();
+}
+
+function toggleAllLevels(show) {
+  for (let i = 0; i <= 3; i++) {
+    activeLevels[i] = show;
+    const btn = document.getElementById('l-' + i);
+    if (btn) { btn.style.opacity = show ? '1' : '0.3'; if (show) btn.classList.add('active-level'); else btn.classList.remove('active-level'); }
+  }
+  applyAllFilters();
+}
+
+function applyAllFilters() {
+  // Apply level filters
+  document.querySelectorAll('[data-level]').forEach(el => {
+    const level = parseInt(el.dataset.level);
+    if (!isNaN(level)) el.style.display = activeLevels[level] ? '' : 'none';
+  });
+  // Apply status filters
+  document.querySelectorAll('.agent-card').forEach(card => {
+    const status = (card.dataset.status || 'active').toLowerCase();
+    if (status === 'active' && !activeFilters.active) card.style.display = 'none';
+    else if (status === 'paused' && !activeFilters.paused) card.style.display = 'none';
+    else if (status === 'terminated' && !activeFilters.terminated) card.style.display = 'none';
+  });
+  const sys = document.querySelector('.system-section');
+  if (sys) sys.style.display = activeFilters.system ? '' : 'none';
+}
 
 function toggleFilter(type) {
   activeFilters[type] = !activeFilters[type];
@@ -194,20 +241,10 @@ function toggleFilter(type) {
     btn.classList.remove('active-filter');
     btn.style.opacity = '0.4';
   }
-  applyFilters();
+  applyAllFilters();
 }
 
-function applyFilters() {
-  document.querySelectorAll('.agent-card').forEach(card => {
-    const status = (card.dataset.status || 'active').toLowerCase();
-    if (status === 'active' && !activeFilters.active) card.style.display = 'none';
-    else if (status === 'paused' && !activeFilters.paused) card.style.display = 'none';
-    else if (status === 'terminated' && !activeFilters.terminated) card.style.display = 'none';
-    else card.style.display = '';
-  });
-  const sys = document.querySelector('.system-section');
-  if (sys) sys.style.display = activeFilters.system ? '' : 'none';
-}
+// applyFilters replaced by applyAllFilters above
 
 function setZoom(level) {
   const chart = document.getElementById('org-chart');

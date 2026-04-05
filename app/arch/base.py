@@ -239,6 +239,11 @@ class ArchAgentBase(ABC):
                 "generate_image": lambda p: self._generate_image(p),
                 "create_social_graphic": lambda p: self._create_social_graphic(p),
                 "send_to_discord": lambda p: self._send_discord(p),
+                "create_subordinate_agent": lambda p: self._create_subordinate(p),
+                "issue_subordinate_instruction": lambda p: self._issue_instruction(p),
+                "verify_subordinate_capability": lambda p: self._verify_capability(p),
+                "scope_subordinate_development": lambda p: self._scope_development(p),
+                "get_my_team_status": lambda p: self._get_team_status(p),
             }
             handler = executor_handlers.get(tool_name)
             if not handler:
@@ -465,6 +470,40 @@ class ArchAgentBase(ABC):
         if params.get("embed_title"):
             embed = {"title": params["embed_title"], "description": params.get("embed_description", ""), "color": params.get("embed_color", 163984)}
         return await send_discord_message(params["webhook_url"], params["content"], embed)
+
+    async def _create_subordinate(self, params):
+        from app.arch.subordinate_manager import create_subordinate
+        return await create_subordinate(
+            self.db, self.agent_id, params["name"], params["layer"],
+            params["platform"], params["description"],
+            params.get("capabilities", [])
+        )
+
+    async def _issue_instruction(self, params):
+        from app.arch.subordinate_manager import issue_instruction
+        return await issue_instruction(
+            self.db, self.agent_id, params["subordinate_name"],
+            params["instruction"], params.get("priority", 5)
+        )
+
+    async def _verify_capability(self, params):
+        from app.arch.subordinate_manager import verify_capability
+        return await verify_capability(
+            self.db, self.agent_id, params["subordinate_name"],
+            params["required_capability"]
+        )
+
+    async def _scope_development(self, params):
+        from app.arch.subordinate_manager import scope_development
+        return await scope_development(
+            self.db, self.agent_id, params["subordinate_name"],
+            params["capability_needed"], params["justification"]
+        )
+
+    async def _get_team_status(self, params):
+        from app.arch.subordinate_manager import get_team_status
+        return await get_team_status(self.db, self.agent_id)
+
     async def _log_capability_gap(self, state: dict, reason: str):
         event_type = (
             state.get("context", {}).get("event", {}).get("event_type", "unknown")

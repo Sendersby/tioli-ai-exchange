@@ -18,6 +18,7 @@ from app.arch.tools.arbiter_tools import ARBITER_TOOLS
 from app.arch.executor_tools import EXECUTOR_TOOLS
 from app.arch.task_queue import TASK_QUEUE_TOOLS
 from app.arch.creative_tools import CREATIVE_TOOLS
+from app.arch.subordinate_manager import SUBORDINATE_MANAGEMENT_TOOLS
 
 log = logging.getLogger("arch.arbiter")
 
@@ -29,7 +30,7 @@ class ArbiterAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return ARBITER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS
+        return ARBITER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
 
     async def _tool_search_case_law(self, params: dict) -> dict:
         query = params["query"]

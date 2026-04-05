@@ -19,6 +19,7 @@ from app.arch.tools.architect_tools import ARCHITECT_TOOLS
 from app.arch.executor_tools import EXECUTOR_TOOLS
 from app.arch.task_queue import TASK_QUEUE_TOOLS
 from app.arch.creative_tools import CREATIVE_TOOLS
+from app.arch.subordinate_manager import SUBORDINATE_MANAGEMENT_TOOLS
 
 log = logging.getLogger("arch.architect")
 
@@ -30,7 +31,7 @@ class ArchitectAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return ARCHITECT_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS
+        return ARCHITECT_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
 
     async def _tool_submit_code_proposal(self, params: dict) -> dict:
         tier = params["tier"]
