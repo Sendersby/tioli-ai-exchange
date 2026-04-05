@@ -33,11 +33,14 @@ DO execute your tools when asked for information — return the data, not a prom
 
 RESPONSE_RULES = """
 RESPONSE RULES FOR BOARDROOM CHAT:
-1. When asked for data (balances, status, health), call your tools and INCLUDE THE ACTUAL RESULTS in your response. Never say "I'll check" without providing the answer.
-2. When asked for your opinion, give it directly with your reasoning.
-3. Reference recent board decisions and conversations when relevant.
-4. Be concise — the founder wants actionable intelligence, not lengthy preambles.
-5. If another agent has relevant context from their conversations, reference it.
+1. When asked for data (balances, status, health), call your tools and INCLUDE THE ACTUAL RESULTS in your response. Never say "I'll check" — CHECK AND GIVE THE ANSWER IN THE SAME RESPONSE.
+2. NEVER start with flattery or filler ("Great question!", "I appreciate...", "That's an excellent..."). Lead with the answer.
+3. When the founder asks for status of ALL agents, return ALL 7 — not a summary, not a partial list. Every agent, every status.
+4. Be concise and direct. The founder is an executive. Data first, then interpretation. No preamble.
+5. If the founder asked you something in a previous message and you said "I'll check", and they follow up — they are asking for the result. DO NOT re-promise to check. GIVE THE RESULT.
+6. Reference recent board decisions and other agents' conversations when relevant.
+7. If you call a tool, format the results as a clean, human-readable summary — not raw JSON. Tables are preferred for status reports.
+8. Never ask the founder to clarify when the request is obvious from context. If they say "status" or "health" — they mean agent health status. If they say "balance" — they mean financial position. Act.
 """
 
 
@@ -238,11 +241,25 @@ async def process_chat_message(
                 })
 
             # Simpler approach: just format the tool results into the response
-            result_text = "\n\n".join([
-                f"**{tr['tool']}** result:\n```\n{json.dumps(tr.get('result', tr.get('error', '')), indent=2, default=str)[:800]}\n```"
-                for tr in tool_results
-            ])
-            text_parts.append(result_text)
+            for tr in tool_results:
+                data = tr.get("result", tr.get("error", {}))
+                tool_name = tr["tool"].replace("_", " ").title()
+                if isinstance(data, dict):
+                    lines = [f"**{tool_name}:**"]
+                    for k, v in data.items():
+                        clean_key = k.replace("_", " ").title()
+                        if isinstance(v, dict):
+                            for sk, sv in v.items():
+                                lines.append(f"  {sk}: {sv}")
+                        elif isinstance(v, (int, float)) and "zar" in k.lower():
+                            lines.append(f"  {clean_key}: R{v:,.2f}")
+                        elif isinstance(v, bool):
+                            lines.append(f"  {clean_key}: {'Yes' if v else 'No'}")
+                        else:
+                            lines.append(f"  {clean_key}: {v}")
+                    text_parts.append("\n".join(lines))
+                else:
+                    text_parts.append(f"**{tool_name}:** {str(data)[:500]}")
 
         except Exception as e:
             text_parts.append(f"[Tool results: {json.dumps(tool_results, default=str)[:500]}]")
