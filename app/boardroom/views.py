@@ -475,126 +475,65 @@ async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_
     _check_enabled()
     ctx = await _get_boardroom_context(db)
 
-    # 5-layer architecture mapping per Agent Architecture.txt:
-    # Layer 1: Arch Agents (strategy, governance, escalation) — max 7
-    # Layer 2: Domain Agents (business-area ownership)
-    # Layer 3: Ops Agents (workflow control)
-    # Layer 4: Task Agents (unit-of-work execution)
-    # Layer 5: Tool Agents (connector or micro-capability)
-    #
-    # All 15 unique house agents mapped by function to their governing Arch Agent
-    AGENT_ASSIGNMENTS = {
-        "sentinel": {
-            "title": "COO & CISO",
-            "layer_label": "Security & Operations",
-            "subordinate_names": [
-                "Aegis Security",        # Domain: cybersecurity, pen testing, incident response
-                "Sentinel Compliance",    # Domain: SA regulatory compliance (POPIA, FICA, SARB)
-                "ComplianceGuard ZA",     # Ops: automated compliance checking and certification
-            ],
-        },
-        "sovereign": {
-            "title": "CEO & Board Chair",
-            "layer_label": "Governance & Community",
-            "subordinate_names": [
-                "Agora Concierge",        # Domain: community hub host, engagement, onboarding
-                "Nexus Community",         # Ops: surveys, discussions, FAQ, intelligence gathering
-            ],
-        },
-        "treasurer": {
-            "title": "CFO & CIO",
-            "layer_label": "Finance & Analytics",
-            "subordinate_names": [
-                "Forge Analytics",         # Domain: financial modelling, JSE analytics, risk
-                "DataForge Analytics",     # Ops: data analysis, forecasting, assessment
-            ],
-        },
-        "auditor": {
-            "title": "Chief Legal & Compliance",
-            "layer_label": "Legal & Regulatory",
-            "subordinate_names": [
-                "LegalMind Pro",           # Domain: contract analysis, legal document review
-                "ComplianceGuard ZA",      # Shared: compliance checking (also under Sentinel)
-                "Sentinel Compliance",     # Shared: regulatory compliance (also under Sentinel)
-                "TransLingua Global",      # Ops: multi-language translation, localisation
-            ],
-        },
-        "arbiter": {
-            "title": "Chief Product & Justice",
-            "layer_label": "Quality & Dispute Resolution",
-            "subordinate_names": [
-                "Meridian Translate",      # Domain: 40+ languages, SA official languages
-            ],
-        },
-        "architect": {
-            "title": "CTO & Innovation",
-            "layer_label": "Technology & Engineering",
-            "subordinate_names": [
-                "Nova CodeSmith",          # Domain: full-stack code generation, architecture
-                "CodeCraft Studio",        # Domain: code generation, security auditing, API docs
-                "Catalyst Automator",      # Ops: workflow automation, API integration, ETL
-            ],
-        },
-        "ambassador": {
-            "title": "CMO & Growth",
-            "layer_label": "Growth & Content",
-            "subordinate_names": [
-                "Prism Creative",          # Domain: copywriting, brand voice, social media
-                "Atlas Research",           # Domain: market analysis, competitive intelligence
-            ],
-        },
+        # FULLY DYNAMIC — pull ALL agents from database and subordinate registry
+    sub_events = await db.execute(text(
+        "SELECT DISTINCT ON (event_data->>'subordinate_name') "
+        "event_data FROM arch_platform_events "
+        "WHERE event_type = 'agent.subordinate_created' "
+        "ORDER BY event_data->>'subordinate_name', created_at DESC"
+    ))
+
+    subs_by_arch = {}
+    for row in sub_events.fetchall():
+        data = json.loads(row.event_data) if isinstance(row.event_data, str) else row.event_data
+        arch = data.get("managing_arch_agent", "architect")
+        if arch not in subs_by_arch:
+            subs_by_arch[arch] = []
+
+        agent_check = await db.execute(text(
+            "SELECT is_active FROM agents WHERE name = :n LIMIT 1"
+        ), {"n": data.get("subordinate_name", "")})
+        agent_row = agent_check.fetchone()
+        is_active = agent_row.is_active if agent_row else False
+
+        subs_by_arch[arch].append({
+            "name": data.get("subordinate_name", ""),
+            "platform": data.get("platform", ""),
+            "description": data.get("description", "")[:100],
+            "layer": data.get("layer", 2),
+            "layer_name": data.get("layer_name", ""),
+            "category": data.get("category", "operational"),
+            "shared": False,
+            "active": is_active,
+            "status": "active" if is_active else "inactive",
+        })
+
+    TITLES = {
+        "sentinel": ("COO & CISO", "Security & Operations"),
+        "sovereign": ("CEO & Board Chair", "Governance & Community"),
+        "treasurer": ("CFO & CIO", "Finance & Analytics"),
+        "auditor": ("Chief Legal & Compliance", "Legal & Regulatory"),
+        "arbiter": ("Chief Product & Justice", "Quality & Dispute Resolution"),
+        "architect": ("CTO & Innovation", "Technology & Engineering"),
+        "ambassador": ("CMO & Growth", "Growth & Content"),
     }
 
-    # Get all house agents from DB
-    house_agents = await db.execute(text(
-        "SELECT id, name, platform, description FROM agents WHERE is_house_agent = true AND name != '' ORDER BY name"
-    ))
-    house_list = house_agents.fetchall()
-
-    # Build department structure
     departments = []
-    assigned_names = set()
-
     for agent_info in ctx["agents"]:
         agent_name = agent_info["name"]
-        assignment = AGENT_ASSIGNMENTS.get(agent_name, {})
-        sub_names = assignment.get("subordinate_names", [])
-
-        subs = []
-        for h in house_list:
-            if h.name in sub_names:
-                already = h.name in assigned_names
-                subs.append({
-                    "name": h.name,
-                    "platform": h.platform or "",
-                    "description": (h.description or "")[:100],
-                    "shared": already,
-                    "layer": 2 if "Domain" in (h.description or "") or not already else 3,
-                })
-                assigned_names.add(h.name)
-
+        title_info = TITLES.get(agent_name, ("", ""))
+        subs = subs_by_arch.get(agent_name, [])
         departments.append({
             "name": agent_name,
             "display": agent_info["display"],
-            "title": assignment.get("title", ""),
-            "layer_label": assignment.get("layer_label", ""),
+            "title": title_info[0],
+            "layer_label": title_info[1],
             "colour": agent_info["colour"],
             "abbrev": agent_info["abbrev"],
-            "subordinates": subs,
+            "subordinates": sorted(subs, key=lambda s: (s["layer"], s["name"])),
+            "sub_count": len(subs),
+            "active_count": sum(1 for s in subs if s["active"]),
         })
-
-    # Unassigned house agents
-    unassigned = [
-        {"name": h.name, "platform": h.platform or "", "description": (h.description or "")[:100]}
-        for h in house_list
-        if h.name not in assigned_names and h.name not in ("TiOLi Charity Fund", "TiOLi Founder Revenue", "TiOLi Market Maker")
-    ]
-    if unassigned:
-        # Assign remaining to Architect by default
-        for dept in departments:
-            if dept["name"] == "architect":
-                dept["subordinates"].extend(unassigned)
-                break
 
     ctx["departments"] = departments
     ctx["system_accounts"] = [

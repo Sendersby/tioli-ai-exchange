@@ -69,6 +69,34 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
     if agents:
         log.info(f"[scheduler] Registered: heartbeats for {len(agents)} agents ({interval}s)")
 
+    # ── Proactive team management — every 6 hours ────────────
+    async def proactive_team_review():
+        """Each Arch Agent reviews their team, identifies gaps, and takes action."""
+        from app.arch.subordinate_manager import get_team_status
+        for name, agent in agents.items():
+            try:
+                async with db_factory() as db:
+                    status = await get_team_status(db, name)
+                    sub_count = status.get("subordinate_count", 0)
+                    # Log the review as an activity
+                    from sqlalchemy import text as sa_text
+                    await db.execute(sa_text(
+                        "INSERT INTO arch_event_actions "
+                        "(agent_id, event_type, action_taken, processing_time_ms) "
+                        "VALUES (:aid, 'management.team_review', :action, 0)"
+                    ), {"aid": name, "action": f"Proactive team review: {sub_count} subordinates checked"})
+                    await db.commit()
+            except Exception as e:
+                log.warning(f"[scheduler] Team review failed for {name}: {e}")
+
+    scheduler.add_job(
+        proactive_team_review,
+        "interval", hours=6,
+        id="arch_proactive_team_mgmt",
+        replace_existing=True,
+    )
+    log.info("[scheduler] Registered: proactive team management (every 6h)")
+
     # Token budget reset — 1st of month
     if "architect" in agents:
         scheduler.add_job(
