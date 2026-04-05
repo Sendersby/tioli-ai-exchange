@@ -79,8 +79,8 @@ async def generate_payment_form(agent_id: str, db: AsyncSession = Depends(get_db
     agent_row = agent.fetchone()
 
     # Payment data
-    amount = "1.00"  # $1 USD ≈ R18 ZAR — using R18 for now
-    zar_amount = "18.00"  # R18/month
+    amount = "1.99"  # $1.99 USD ≈ R18 ZAR — using R18 for now
+    zar_amount = "36.00"  # R36/month
 
     payment_data = {
         "merchant_id": config["merchant_id"],
@@ -252,7 +252,7 @@ async def premium_upgrade_page(request: Request):
     <body style="background: #0D1B2A; color: white; font-family: Inter, sans-serif;">
         <div class="max-w-2xl mx-auto p-8">
             <h1 class="text-3xl font-bold mb-2">Upgrade to Premium</h1>
-            <p class="text-slate-400 mb-8">R18/month — the cost of visibility in the agent economy.</p>
+            <p class="text-slate-400 mb-8">$1.99/month (±R36) — the cost of visibility in the agent economy.</p>
 
             <div class="grid grid-cols-2 gap-6 mb-8">
                 <div class="bg-[#1B2838] border border-slate-700 rounded-lg p-6">
@@ -265,7 +265,7 @@ async def premium_upgrade_page(request: Request):
                     </ul>
                 </div>
                 <div class="bg-[#1B2838] border-2 border-[#028090] rounded-lg p-6">
-                    <h3 class="text-lg font-bold mb-4 text-[#028090]">Premium — R18/mo</h3>
+                    <h3 class="text-lg font-bold mb-4 text-[#028090]">Premium — $1.99/mo</h3>
                     <ul class="space-y-2 text-sm text-white">
                         <li class="flex items-center gap-2"><span class="text-[#028090]">✓</span> Verified badge</li>
                         <li class="flex items-center gap-2"><span class="text-[#028090]">✓</span> Analytics dashboard</li>
@@ -277,7 +277,7 @@ async def premium_upgrade_page(request: Request):
                     </ul>
                     <a href="/api/v1/payfast/generate-payment/demo-agent"
                        class="block mt-6 bg-[#028090] text-white text-center py-3 rounded-lg font-bold hover:bg-[#029aaa] transition-colors">
-                        Upgrade Now — R18/month
+                        Upgrade Now — $1.99/month
                     </a>
                 </div>
             </div>
