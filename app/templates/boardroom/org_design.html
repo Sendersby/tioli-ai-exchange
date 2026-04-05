@@ -101,8 +101,8 @@
             <div class="w-0.5 h-4" style="background: {{ dept.colour }}40"></div>
             <div class="space-y-2 w-full">
               {% for sub in dept.subordinates %}
-              <div class="border rounded-lg px-3 py-2.5 text-center transition-all hover:border-slate-400 {% if sub.shared %}border-dashed{% endif %} agent-card" data-level="{{ sub.layer|default(2) }}" style="border-color: {% if sub.shared %}{{ dept.colour }}40{% else %}rgba(51,65,85,0.3){% endif %}; background: rgba(13,27,42,0.5);" title="{{ sub.description }}" data-status="active">
-                <div class="flex items-center justify-center gap-1.5"><span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">L{{ sub.layer|default(2) }}</span><span class="text-xs font-bold text-slate-200">{{ sub.name }}</span></div>
+              <div class="border rounded-lg px-3 py-2.5 text-center transition-all hover:border-slate-400 {% if sub.shared %}border-dashed{% endif %} agent-card" data-level="{{ sub.layer|default(2) }}" data-status="{{ sub.status|default('active') }}" style="border-color: {% if sub.shared %}{{ dept.colour }}40{% else %}rgba(51,65,85,0.3){% endif %}; background: rgba(13,27,42,0.5);" title="{{ sub.description }}" data-status="active">
+                <div class="flex items-center justify-center gap-1.5"><span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">L{{ sub.layer|default(2) }}</span><span class="text-xs font-bold {% if sub.active %}text-slate-200{% else %}text-slate-500 line-through{% endif %}">{{ sub.name }}</span>{% if not sub.active %}<span class="w-1.5 h-1.5 rounded-full bg-red-500 ml-1"></span>{% endif %}</div>
                 <div class="text-[10px] text-slate-500 mt-0.5">{{ sub.platform }}{% if sub.layer %} | Layer {{ sub.layer }}{% endif %}{% if sub.shared %} | Shared{% endif %}</div>
                 <div class="text-[10px] text-slate-600 mt-1 italic">{{ sub.description[:60] }}</div>
               </div>
@@ -127,8 +127,8 @@
             <div class="w-0.5 h-4 bg-[#D4A94A]/20"></div>
             <div class="space-y-2 w-full">
               {% for sub in dept.subordinates %}
-              <div class="border border-slate-700/30 rounded-lg px-3 py-2.5 text-center bg-[#162336] hover:border-slate-400 transition-all agent-card" data-status="active">
-                <div class="flex items-center justify-center gap-1.5"><span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">L{{ sub.layer|default(2) }}</span><span class="text-xs font-bold text-slate-200">{{ sub.name }}</span></div>
+              <div class="border border-slate-700/30 rounded-lg px-3 py-2.5 text-center bg-[#162336] hover:border-slate-400 transition-all agent-card" data-status="{{ sub.status|default('active') }}">
+                <div class="flex items-center justify-center gap-1.5"><span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">L{{ sub.layer|default(2) }}</span><span class="text-xs font-bold {% if sub.active %}text-slate-200{% else %}text-slate-500 line-through{% endif %}">{{ sub.name }}</span>{% if not sub.active %}<span class="w-1.5 h-1.5 rounded-full bg-red-500 ml-1"></span>{% endif %}</div>
                 <div class="text-[10px] text-slate-500 mt-0.5">{{ sub.platform }} | Layer {{ sub.layer or 2 }}</div>
                 <div class="text-[10px] text-slate-600 mt-1 italic">{{ sub.description[:60] }}</div>
               </div>
