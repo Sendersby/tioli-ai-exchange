@@ -152,13 +152,13 @@ async function sendMessage(e) {
   // Add founder message to transcript immediately
   addMessage('FOUNDER', msg, 'OUTBOUND');
 
-  // Send to API
+  // Send session message once (stored with target, not duplicated)
   await fetch('/api/v1/boardroom/board/session/' + SESSION_ID + '/message', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({message: msg, target: target})
   });
 
-  // Now get responses from agents
+  // Get responses from agents using the new chat engine (with full context)
   if (target === 'ALL_BOARD') {
     await getMultiAgentResponses(msg);
   } else {

@@ -196,12 +196,12 @@ async def convene_session(payload: dict, db: AsyncSession = Depends(get_db)):
 
 @boardroom_router.post("/board/session/{session_id}/message")
 async def session_message(session_id: str, payload: dict, db: AsyncSession = Depends(get_db)):
-    """Send founder message to active session."""
+    """Send founder message to active session — stored once, agents respond via chat engine."""
     _check_enabled()
     message = payload.get("message", "")
     target = payload.get("target", "ALL_BOARD")
 
-    # Store as chat message
+    # Store ONCE with the target (not duplicated per agent)
     await db.execute(text("""
         INSERT INTO boardroom_chat_messages
             (agent_id, direction, message_text, message_type, is_urgent)
@@ -328,12 +328,13 @@ async def agent_office(agent_id: str, db: AsyncSession = Depends(get_db)):
 
 @boardroom_router.post("/agents/{agent_id}/chat")
 async def agent_chat(agent_id: str, payload: dict, db: AsyncSession = Depends(get_db)):
-    """Send direct message to agent."""
+    """Send direct message to agent — with full context, tool execution, and cross-agent awareness."""
     _check_enabled()
     message = payload.get("message", "")
     is_urgent = payload.get("urgent", False)
     msg_type = payload.get("type", "TEXT")
 
+    # Store founder message (once, not per-agent)
     await db.execute(text("""
         INSERT INTO boardroom_chat_messages
             (agent_id, direction, message_text, message_type, is_urgent)
@@ -344,35 +345,14 @@ async def agent_chat(agent_id: str, payload: dict, db: AsyncSession = Depends(ge
                                   {"agent": agent_id, "message": message[:200]})
     await db.commit()
 
-    # If agents are live, invoke the agent for a response
+    # Use the new chat engine with full context and tool execution
     response_text = None
     try:
-        from app.arch.agents import get_arch_agents
-        agents = await get_arch_agents()
-        if agent_id in agents:
-            state = {
-                "session_id": uuid.uuid4().hex, "originating_agent": "founder",
-                "instruction": message, "instruction_type": "governance",
-                "context": {"source": "boardroom_chat"}, "memory_retrieved": [],
-                "tool_results": [], "inter_agent_messages": [],
-                "board_vote_required": False, "board_vote_status": None,
-                "founder_approval_required": False, "founder_approval_status": None,
-                "financial_gate_cleared": True, "tier": None, "escalation_chain": [],
-                "defer_to_owner": False, "defer_reason": None,
-                "output": None, "error": None, "action_taken": None,
-            }
-            result = await agents[agent_id](state)
-            response_text = result.get("output", "")
-
-            if response_text:
-                await db.execute(text("""
-                    INSERT INTO boardroom_chat_messages
-                        (agent_id, direction, message_text, message_type)
-                    VALUES (:aid, 'INBOUND', :msg, 'TEXT')
-                """), {"aid": agent_id, "msg": response_text})
-                await db.commit()
+        from app.boardroom.chat_engine import process_chat_message
+        response_text = await process_chat_message(agent_id, message, db)
     except Exception as e:
         log.warning(f"Agent chat response failed: {e}")
+        response_text = f"[Error: {str(e)[:200]}]"
 
     return {"delivered": True, "agent": agent_id, "response": response_text}
 
