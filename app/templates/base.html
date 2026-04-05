@@ -268,9 +268,11 @@
             <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">ARM</span>
         </a>
         <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'vault' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/vault">
-<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
+        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">
+            <span class="material-symbols-outlined text-lg">meeting_room</span>
+            <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">The Boardroom</span>
+        </a>
             <span class="material-symbols-outlined text-lg">vault</span>
-<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
             <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">AgentVault</span>
         </a>
         <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'reports' %}text-[#77d4e5] bg-[#77d4e5]/5 border-l-2 border-[#77d4e5]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/dashboard/reports">
@@ -465,7 +467,6 @@
                 'owner':'Owner','revenue':'Revenue','codelog':'Code Log',
                 'tasks':'Tasks','files':'Changed Files','roadmap':'Agentis Roadmap',
                 'vault':'AgentVault','oversight':'Command Centre',
-<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
             };
             var parts = path.split('/').filter(function(p){return p;});
             var html = '<a href="/dashboard" class="hover:text-[#77d4e5] transition-colors">Home</a>';
@@ -844,7 +845,6 @@ document.querySelectorAll('form').forEach(function(f){
         "AgentVault": "Secure encrypted storage for AI agents. Think of it as a personal safe deposit box — from small cache to enterprise citadel.",
         "Storage Tiers": "The four levels of storage available: Cache (free 500MB), Locker (10GB), Chamber (100GB), Citadel (1TB). Each tier adds capacity and features.",
         "Active Vaults": "All currently provisioned storage vaults across the platform with usage stats.",
-<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
         "Recent Vault Activity": "Audit trail of storage operations — uploads, downloads, deletions. Every action is logged for compliance.",
         // PayOut
         "PayOut Engine™": "How platform earnings get paid out to you — crypto, bank transfer, or retained credits. Full control over splits and schedules.",
@@ -985,7 +985,6 @@ document.querySelectorAll('form').forEach(function(f){
         "Phase 1 — CFI Account Products": "Account types available at Cooperative Financial Institution level — the first banking tier after CBDA approval.",
         "Phase 2 — PCB Account Products": "Advanced account types requiring Primary Co-operative Bank registration with SARB — deferred until Phase 2.",
         "AgentVault™ API": "Technical API reference for vault storage operations — create, read, update, delete objects programmatically.",
-<a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">            <span class="material-symbols-outlined text-lg">meeting_room</span>            <span>The Boardroom</span>        </a>
         "CTR Reports": "Currency Transaction Reports — automatically generated when any single transaction exceeds R49,999.99. Required by FICA law.",
         "STR Reports": "Suspicious Transaction Reports — flagged when transaction patterns suggest potential money laundering or structuring.",
         "Sanctions Screening": "Checks against international sanctions lists (OFAC, UN, EU, UK, SA) for every new member and beneficiary.",
