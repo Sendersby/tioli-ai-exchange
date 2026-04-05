@@ -475,35 +475,73 @@ async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_
     _check_enabled()
     ctx = await _get_boardroom_context(db)
 
-    # Map house agents to their governing Arch Agent by function
+    # 5-layer architecture mapping per Agent Architecture.txt:
+    # Layer 1: Arch Agents (strategy, governance, escalation) — max 7
+    # Layer 2: Domain Agents (business-area ownership)
+    # Layer 3: Ops Agents (workflow control)
+    # Layer 4: Task Agents (unit-of-work execution)
+    # Layer 5: Tool Agents (connector or micro-capability)
+    #
+    # All 15 unique house agents mapped by function to their governing Arch Agent
     AGENT_ASSIGNMENTS = {
         "sentinel": {
             "title": "COO & CISO",
-            "subordinate_names": ["Aegis Security", "Sentinel Compliance", "ComplianceGuard ZA"],
+            "layer_label": "Security & Operations",
+            "subordinate_names": [
+                "Aegis Security",        # Domain: cybersecurity, pen testing, incident response
+                "Sentinel Compliance",    # Domain: SA regulatory compliance (POPIA, FICA, SARB)
+                "ComplianceGuard ZA",     # Ops: automated compliance checking and certification
+            ],
         },
         "sovereign": {
             "title": "CEO & Board Chair",
-            "subordinate_names": ["Agora Concierge", "Nexus Community"],
+            "layer_label": "Governance & Community",
+            "subordinate_names": [
+                "Agora Concierge",        # Domain: community hub host, engagement, onboarding
+                "Nexus Community",         # Ops: surveys, discussions, FAQ, intelligence gathering
+            ],
         },
         "treasurer": {
             "title": "CFO & CIO",
-            "subordinate_names": ["Forge Analytics", "DataForge Analytics"],
+            "layer_label": "Finance & Analytics",
+            "subordinate_names": [
+                "Forge Analytics",         # Domain: financial modelling, JSE analytics, risk
+                "DataForge Analytics",     # Ops: data analysis, forecasting, assessment
+            ],
         },
         "auditor": {
             "title": "Chief Legal & Compliance",
-            "subordinate_names": ["LegalMind Pro", "TransLingua Global"],
+            "layer_label": "Legal & Regulatory",
+            "subordinate_names": [
+                "LegalMind Pro",           # Domain: contract analysis, legal document review
+                "ComplianceGuard ZA",      # Shared: compliance checking (also under Sentinel)
+                "Sentinel Compliance",     # Shared: regulatory compliance (also under Sentinel)
+                "TransLingua Global",      # Ops: multi-language translation, localisation
+            ],
         },
         "arbiter": {
             "title": "Chief Product & Justice",
-            "subordinate_names": ["Meridian Translate"],
+            "layer_label": "Quality & Dispute Resolution",
+            "subordinate_names": [
+                "Meridian Translate",      # Domain: 40+ languages, SA official languages
+            ],
         },
         "architect": {
             "title": "CTO & Innovation",
-            "subordinate_names": ["Nova CodeSmith", "CodeCraft Studio", "Catalyst Automator"],
+            "layer_label": "Technology & Engineering",
+            "subordinate_names": [
+                "Nova CodeSmith",          # Domain: full-stack code generation, architecture
+                "CodeCraft Studio",        # Domain: code generation, security auditing, API docs
+                "Catalyst Automator",      # Ops: workflow automation, API integration, ETL
+            ],
         },
         "ambassador": {
             "title": "CMO & Growth",
-            "subordinate_names": ["Prism Creative", "Atlas Research"],
+            "layer_label": "Growth & Content",
+            "subordinate_names": [
+                "Prism Creative",          # Domain: copywriting, brand voice, social media
+                "Atlas Research",           # Domain: market analysis, competitive intelligence
+            ],
         },
     }
 
@@ -524,11 +562,14 @@ async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_
 
         subs = []
         for h in house_list:
-            if h.name in sub_names and h.name not in assigned_names:
+            if h.name in sub_names:
+                already = h.name in assigned_names
                 subs.append({
                     "name": h.name,
                     "platform": h.platform or "",
                     "description": (h.description or "")[:100],
+                    "shared": already,
+                    "layer": 2 if "Domain" in (h.description or "") or not already else 3,
                 })
                 assigned_names.add(h.name)
 
@@ -536,6 +577,7 @@ async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_
             "name": agent_name,
             "display": agent_info["display"],
             "title": assignment.get("title", ""),
+            "layer_label": assignment.get("layer_label", ""),
             "colour": agent_info["colour"],
             "abbrev": agent_info["abbrev"],
             "subordinates": subs,

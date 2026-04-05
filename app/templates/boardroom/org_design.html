@@ -73,14 +73,14 @@
             <!-- Vertical line to subordinates -->
             {% if dept.subordinates %}
             <div class="w-px h-3" style="background: {{ dept.colour }}40"></div>
-            <div class="text-[7px] tracking-wider" style="color: {{ dept.colour }}80">MANAGES</div>
+            <div class="text-[7px] tracking-wider px-1 py-0.5 rounded" style="color: {{ dept.colour }}; background: {{ dept.colour }}10">{{ dept.layer_label or 'MANAGES' }}</div>
             <div class="w-px h-3" style="background: {{ dept.colour }}40"></div>
-            <!-- Subordinate agents -->
+            <!-- Subordinate agents (Layer 2-3) -->
             <div class="space-y-1.5 w-full">
               {% for sub in dept.subordinates %}
-              <div class="border border-slate-700/30 rounded px-2 py-1.5 text-center bg-[#0D1B2A]/50 hover:border-slate-500 transition-all cursor-default" title="{{ sub.description }}">
+              <div class="border rounded px-2 py-1.5 text-center bg-[#0D1B2A]/50 hover:border-slate-500 transition-all cursor-default {% if sub.shared %}border-dashed{% endif %}" style="border-color: {% if sub.shared %}{{ dept.colour }}40{% else %}rgba(51,65,85,0.3){% endif %}" title="{{ sub.description }}">
                 <div class="text-[9px] font-bold text-slate-300">{{ sub.name }}</div>
-                <div class="text-[7px] text-slate-500">{{ sub.platform }}</div>
+                <div class="text-[7px] text-slate-500">{{ sub.platform }}{% if sub.layer %} · L{{ sub.layer }}{% endif %}</div>
               </div>
               {% endfor %}
             </div>
