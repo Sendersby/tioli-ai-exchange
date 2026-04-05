@@ -223,9 +223,11 @@ function applyAllFilters() {
   // Apply status filters
   document.querySelectorAll('.agent-card').forEach(card => {
     const status = (card.dataset.status || 'active').toLowerCase();
-    if (status === 'active' && !activeFilters.active) card.style.display = 'none';
-    else if (status === 'paused' && !activeFilters.paused) card.style.display = 'none';
-    else if (status === 'terminated' && !activeFilters.terminated) card.style.display = 'none';
+    let visible = true;
+    if (status === 'active' && !activeFilters.active) visible = false;
+    if (status === 'paused' && !activeFilters.paused) visible = false;
+    if ((status === 'terminated' || status === 'inactive') && !activeFilters.terminated) visible = false;
+    card.style.display = visible ? '' : 'none';
   });
   const sys = document.querySelector('.system-section');
   if (sys) sys.style.display = activeFilters.system ? '' : 'none';
@@ -243,6 +245,7 @@ function toggleFilter(type) {
   }
   applyAllFilters();
 }
+
 
 // applyFilters replaced by applyAllFilters above
 

@@ -114,7 +114,7 @@ async def boardroom_home(request: Request, db: AsyncSession = Depends(get_db)):
     # Recent feed
     feed = await db.execute(text("""
         SELECT id::text, agent_id, event_type, action_taken, created_at
-        FROM arch_event_actions ORDER BY created_at DESC LIMIT 20
+        FROM arch_event_actions ORDER BY created_at DESC LIMIT 50
     """))
     ctx["feed"] = [
         {"id": row.id, "agent": row.agent_id, "event": row.event_type,

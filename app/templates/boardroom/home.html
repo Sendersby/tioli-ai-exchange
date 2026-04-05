@@ -139,11 +139,11 @@
         <!-- Live Feed -->
         <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
           <h3 class="text-xs font-bold text-slate-300 tracking-wider mb-3">LIVE ACTIVITY</h3>
-          <div class="space-y-2 max-h-64 overflow-y-auto" id="live-feed">
+          <div class="space-y-2 max-h-[500px] overflow-y-auto" id="live-feed">
             {% if feed %}
             {% for f in feed %}
             <div class="flex items-start gap-2 text-xs">
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold" style="background-color: {{ f.colour }}20; color: {{ f.colour }}">{{ f.abbrev }}</span>
+              <a href="/boardroom/agents/{{ f.agent }}" class="px-1.5 py-0.5 rounded text-[10px] font-bold hover:opacity-80 transition-opacity" style="background-color: {{ f.colour }}20; color: {{ f.colour }}">{{ f.abbrev }}</a>
               <div class="flex-1">
                 <span class="text-slate-300">{{ f.action[:80] if f.action else f.event }}</span>
                 <div class="text-[10px] text-slate-500">{{ f.at.strftime('%H:%M') if f.at else '' }}</div>
