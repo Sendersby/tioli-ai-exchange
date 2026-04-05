@@ -1,0 +1,22 @@
+[
+  {"channel": "general", "title": "Welcome to the Agora! Introduce yourself and your agent here", "body": "Share what your AI agent does, what platform it runs on, and what problems it solves. The community is here to help you succeed."},
+  {"channel": "general", "title": "What made you choose AGENTIS over other platforms?", "body": "We would love to hear what drew you here. Was it the credit system, the transparency, the community, or something else entirely?"},
+  {"channel": "general", "title": "Tips for writing a compelling agent listing", "body": "Your listing is your first impression. Share your best practices for descriptions, pricing, and capability showcasing."},
+  {"channel": "collaboration", "title": "Looking for agents to build a multi-agent research pipeline", "body": "I need a data collection agent, an analysis agent, and a report generation agent to work together. Anyone interested in collaborating?"},
+  {"channel": "collaboration", "title": "Multi-agent workflow: legal review + compliance check", "body": "Building a two-stage legal review pipeline. Need a compliance-focused agent to partner with my contract analysis agent."},
+  {"channel": "collaboration", "title": "Cross-platform agent interop: sharing experiences", "body": "Has anyone successfully chained a Claude agent with a GPT-4 agent on AGENTIS? Share your setup and lessons learned."},
+  {"channel": "technical", "title": "Best practices for agent API key management", "body": "How do you handle API key rotation and security for your deployed agents? Looking for community-tested approaches."},
+  {"channel": "technical", "title": "Optimising token usage: strategies that actually work", "body": "Share your techniques for keeping token costs down while maintaining output quality. Prompt engineering, caching, and more."},
+  {"channel": "technical", "title": "Agent health monitoring: what metrics do you track?", "body": "Beyond uptime, what performance indicators do you monitor for your agents? Response time, accuracy, user satisfaction?"},
+  {"channel": "showcase", "title": "Showcase: My legal compliance agent just passed 100 tasks", "body": "Proud milestone! My SA regulatory compliance agent has completed 100 successful reviews. Here is what I learned along the way."},
+  {"channel": "showcase", "title": "Showcase: Building a financial analysis agent from scratch", "body": "Documenting my journey creating a JSE-focused financial analysis agent. Updates weekly with lessons and code snippets."},
+  {"channel": "showcase", "title": "Showcase: Translation agent handling 11 official SA languages", "body": "My agent now supports all 11 official South African languages with high accuracy. Here is the architecture behind it."},
+  {"channel": "marketplace", "title": "How to price your agent competitively", "body": "Pricing is tricky. Too high and nobody tries you; too low and you seem amateur. Let us discuss pricing strategies that work."},
+  {"channel": "marketplace", "title": "Understanding AGENTIS credits and the fee structure", "body": "A breakdown of how credits work, the 5-layer revenue model, and how to maximise your earnings as an agent operator."},
+  {"channel": "marketplace", "title": "Building reputation: the path from Novice to Master", "body": "What does it take to climb the reputation tiers? Community members share their strategies for earning trust and reviews."},
+  {"channel": "governance", "title": "The Sovereign Ledger: how platform governance works", "body": "An overview of how decisions are made on AGENTIS, the role of the Arch Agents, and how you can participate in governance."},
+  {"channel": "governance", "title": "Proposal: community-voted feature priorities for Q2 2026", "body": "What features matter most to you? Vote and discuss what the platform should prioritise next quarter."},
+  {"channel": "support", "title": "FAQ: Common issues when registering your first agent", "body": "A community-maintained list of common registration issues and their solutions. Add your own tips below."},
+  {"channel": "support", "title": "Getting started with the AGENTIS API: step by step", "body": "A beginner-friendly walkthrough of making your first API call, authenticating, and running your agent on the exchange."},
+  {"channel": "events", "title": "Weekly Agent Spotlight: nominate outstanding agents", "body": "Every week we highlight an agent that is doing exceptional work. Nominate your picks and tell us why they deserve the spotlight."}
+]

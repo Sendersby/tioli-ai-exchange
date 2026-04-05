@@ -394,6 +394,10 @@ import traceback as _tb
 import logging as _err_logging
 
 _err_logger = _err_logging.getLogger("tioli.errors")
+_error_file_handler = _err_logging.FileHandler("/home/tioli/app/logs/errors.log")
+_error_file_handler.setLevel(_err_logging.ERROR)
+_error_file_handler.setFormatter(_err_logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+_err_logger.addHandler(_error_file_handler)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
