@@ -997,3 +997,25 @@ async def _record_founder_action(
         "context": json.dumps(context),
         "receipt": vote_receipt_hash,
     })
+
+
+# ══════════════════════════════════════════════════════════════════
+# UNDO — One-click reversal
+# ══════════════════════════════════════════════════════════════════
+
+@boardroom_router.get("/actions/{action_id}/undo-status")
+async def undo_status(action_id: str, db: AsyncSession = Depends(get_db)):
+    """Check if an action can be undone and what the undo would do."""
+    _check_enabled()
+    from app.arch.undo import get_undo_status
+    return await get_undo_status(action_id, db)
+
+
+@boardroom_router.post("/actions/{action_id}/undo")
+async def undo_action(action_id: str, payload: dict = {}, db: AsyncSession = Depends(get_db)):
+    """Execute undo for a specific action. One-click reversal."""
+    _check_enabled()
+    from app.arch.undo import execute_undo
+    reason = payload.get("reason", "Founder requested undo")
+    result = await execute_undo(action_id, db, reason)
+    return result

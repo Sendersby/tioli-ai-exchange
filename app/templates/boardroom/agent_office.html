@@ -165,12 +165,21 @@
         <div class="text-xs font-bold text-slate-300 tracking-wider mb-3">RECENT ACTIONS</div>
         <div class="space-y-2">
           {% for act in recent_actions %}
-          <div class="flex items-start gap-3 text-xs py-2 border-b border-slate-700/30">
+          <div class="flex items-start gap-3 text-xs py-2 border-b border-slate-700/30" id="action-{{ loop.index }}">
             <span class="text-slate-500 font-mono whitespace-nowrap">{{ act.at.strftime('%m/%d %H:%M') if act.at else '' }}</span>
             <div class="flex-1">
-              <div class="text-slate-300">{{ act.action[:120] if act.action else act.event }}</div>
+              <div class="text-slate-300 {% if act.action and '[RETRACTED]' in act.action %}line-through text-slate-500{% endif %}">
+                {{ act.action[:200] if act.action else act.event }}
+              </div>
               <div class="text-slate-500">{{ act.event }}{% if act.ms %} · {{ act.ms }}ms{% endif %}</div>
             </div>
+            {% if act.id and act.event != 'system.undo' and act.event != 'governance.constitutional_ruling' %}
+            <button onclick="undoAction('{{ act.id }}', this)"
+                    class="text-[10px] px-2 py-0.5 rounded border border-slate-600 text-slate-500 hover:text-red-400 hover:border-red-500/50 transition-all"
+                    title="Undo this action">
+              undo
+            </button>
+            {% endif %}
           </div>
           {% endfor %}
           {% if not recent_actions %}

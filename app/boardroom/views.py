@@ -113,11 +113,11 @@ async def boardroom_home(request: Request, db: AsyncSession = Depends(get_db)):
 
     # Recent feed
     feed = await db.execute(text("""
-        SELECT agent_id, event_type, action_taken, created_at
+        SELECT id::text, agent_id, event_type, action_taken, created_at
         FROM arch_event_actions ORDER BY created_at DESC LIMIT 20
     """))
     ctx["feed"] = [
-        {"agent": row.agent_id, "event": row.event_type,
+        {"id": row.id, "agent": row.agent_id, "event": row.event_type,
          "action": row.action_taken, "at": row.created_at,
          "colour": AGENT_COLOURS.get(row.agent_id, "#666"),
          "abbrev": AGENT_ABBREVS.get(row.agent_id, "???")}
@@ -231,12 +231,12 @@ async def boardroom_agent(request: Request, agent_id: str, db: AsyncSession = De
 
     # Recent actions
     actions = await db.execute(text("""
-        SELECT event_type, action_taken, processing_time_ms, created_at
+        SELECT id::text, event_type, action_taken, processing_time_ms, created_at
         FROM arch_event_actions WHERE agent_id = :aid
-        ORDER BY created_at DESC LIMIT 15
+        ORDER BY created_at DESC LIMIT 30
     """), {"aid": agent_id})
     ctx["recent_actions"] = [
-        {"event": row.event_type, "action": row.action_taken,
+        {"id": row.id, "event": row.event_type, "action": row.action_taken,
          "ms": row.processing_time_ms, "at": row.created_at}
         for row in actions.fetchall()
     ]
