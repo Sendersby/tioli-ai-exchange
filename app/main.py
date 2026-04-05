@@ -8056,3 +8056,15 @@ if _bv_os.getenv('BOARDROOM_ENABLED', 'false').lower() == 'true':
 # ── PayFast Payment Integration ──────────────────────────────
 from app.boardroom.payfast import payfast_router
 app.include_router(payfast_router)
+
+
+# Premium payment return page redirects
+from fastapi.responses import RedirectResponse as _PremiumRedirect
+
+@app.get("/premium/thank-you")
+async def _premium_thanks():
+    return _PremiumRedirect("/api/v1/payfast/premium/thank-you")
+
+@app.get("/premium/cancelled")
+async def _premium_cancel():
+    return _PremiumRedirect("/api/v1/payfast/premium/cancelled")
