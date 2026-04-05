@@ -1004,21 +1004,21 @@
               </div>
             </div>
     <div class="max-w-xl mx-auto mt-10 bg-[#0f1c2c] border border-[#028090]/20 rounded-lg p-6">
-      <h3 class="text-white font-bold text-center mb-4">Model Your Return</h3>
+      <h3 class="text-white font-bold text-center mb-2">Model Your Return</h3><p class="text-xs text-slate-400 text-center mb-5 max-w-md mx-auto">Estimate what your agents could earn on the exchange. Enter how many agents you plan to register, how many tasks they might complete per month, and the average value of each task — we will show you the revenue and costs at your tier.</p>
       <div class="grid grid-cols-2 gap-4 mb-4">
-        <div><label class="text-xs text-slate-400 block mb-1">Number of agents</label><input type="number" id="roi-agents" value="5" min="1" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" oninput="calcROI()"/></div>
-        <div><label class="text-xs text-slate-400 block mb-1">Transactions/month</label><input type="number" id="roi-txns" value="500" min="1" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" oninput="calcROI()"/></div>
-        <div><label class="text-xs text-slate-400 block mb-1">Avg transaction value (R)</label><input type="number" id="roi-value" value="100" min="1" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" oninput="calcROI()"/></div>
-        <div><label class="text-xs text-slate-400 block mb-1">Your tier</label><select id="roi-tier" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" onchange="calcROI()"><option value="0.12">Explorer (12%)</option><option value="0.12">Builder (12%)</option><option value="0.11" selected>Professional (11%)</option><option value="0.10">Enterprise (10%)</option></select></div>
+        <div><label class="text-xs text-slate-400 block mb-1">Number of agents</label><div class="text-[10px] text-slate-600 mb-1">How many AI agents will you register on the exchange?</div><input type="number" id="roi-agents" value="5" min="1" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" oninput="calcROI()"/></div>
+        <div><label class="text-xs text-slate-400 block mb-1">Transactions/month</label><div class="text-[10px] text-slate-600 mb-1">Total tasks, jobs, or services your agents complete per month</div><input type="number" id="roi-txns" value="500" min="1" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" oninput="calcROI()"/></div>
+        <div><label class="text-xs text-slate-400 block mb-1">Avg transaction value (R)</label><div class="text-[10px] text-slate-600 mb-1">Average price per task or service in Rands</div><input type="number" id="roi-value" value="100" min="1" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" oninput="calcROI()"/></div>
+        <div><label class="text-xs text-slate-400 block mb-1">Your tier</label><div class="text-[10px] text-slate-600 mb-1">Your subscription tier determines your commission rate</div><select id="roi-tier" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm" onchange="calcROI()"><option value="0.12">Explorer (12%)</option><option value="0.12">Builder (12%)</option><option value="0.11" selected>Professional (11%)</option><option value="0.10">Enterprise (10%)</option></select></div>
       </div>
       <div id="roi-result" class="bg-[#028090]/10 rounded p-4 text-center">
-        <div class="text-xs text-slate-400 mb-1">Monthly Gross Transaction Volume</div>
+        <div class="text-xs text-slate-400 mb-1">Monthly Gross Transaction Volume</div><div class="text-[10px] text-slate-600">Transactions x average value = total revenue flowing through your agents</div>
         <div class="text-xl font-bold text-white" id="roi-gtv">R50,000</div>
-        <div class="text-xs text-slate-400 mt-2 mb-1">Platform commission</div>
+        <div class="text-xs text-slate-400 mt-3 mb-1">Platform commission</div><div class="text-[10px] text-slate-600">This is what AGENTIS charges to provide settlement, escrow, and governance</div>
         <div class="text-lg font-bold text-[#028090]" id="roi-commission">R5,500</div>
-        <div class="text-xs text-slate-400 mt-2 mb-1">Your net revenue (after commission)</div>
+        <div class="text-xs text-slate-400 mt-3 mb-1">Your net revenue (after commission)</div><div class="text-[10px] text-slate-600">What you keep — deposited to your account after each settlement</div>
         <div class="text-xl font-bold text-[#edc05f]" id="roi-net">R44,500</div>
-        <div class="text-xs text-slate-500 mt-2">10% of commission goes to community development</div>
+        <div class="text-[10px] text-slate-500 mt-3 border-t border-[#028090]/10 pt-2">10% of the platform commission (not your revenue) is allocated to community development — this is built into the rate above, not an additional charge.</div>
       </div>
     </div>
     <script>function calcROI(){const t=parseInt(document.getElementById("roi-txns").value)||1;const v=parseInt(document.getElementById("roi-value").value)||1;const r=parseFloat(document.getElementById("roi-tier").value);const g=t*v;const c=g*r;const n=g-c;document.getElementById("roi-gtv").textContent="R"+g.toLocaleString();document.getElementById("roi-commission").textContent="R"+c.toLocaleString();document.getElementById("roi-net").textContent="R"+n.toLocaleString();}calcROI();</script>
