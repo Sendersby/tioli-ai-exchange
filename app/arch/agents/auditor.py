@@ -17,6 +17,8 @@ from sqlalchemy import text
 from app.arch.base import ArchAgentBase
 from app.arch.tools.auditor_tools import AUDITOR_TOOLS
 from app.arch.executor_tools import EXECUTOR_TOOLS
+from app.arch.task_queue import TASK_QUEUE_TOOLS
+from app.arch.creative_tools import CREATIVE_TOOLS
 
 log = logging.getLogger("arch.auditor")
 
@@ -31,7 +33,7 @@ class AuditorAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return AUDITOR_TOOLS + EXECUTOR_TOOLS
+        return AUDITOR_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS
 
     async def _tool_screen_kyc(self, params: dict) -> dict:
         entity_id = params["entity_id"]

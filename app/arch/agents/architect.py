@@ -17,6 +17,8 @@ from app.arch.base import ArchAgentBase
 from app.arch.constitution import check_self_referential
 from app.arch.tools.architect_tools import ARCHITECT_TOOLS
 from app.arch.executor_tools import EXECUTOR_TOOLS
+from app.arch.task_queue import TASK_QUEUE_TOOLS
+from app.arch.creative_tools import CREATIVE_TOOLS
 
 log = logging.getLogger("arch.architect")
 
@@ -28,7 +30,7 @@ class ArchitectAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return ARCHITECT_TOOLS + EXECUTOR_TOOLS
+        return ARCHITECT_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS
 
     async def _tool_submit_code_proposal(self, params: dict) -> dict:
         tier = params["tier"]

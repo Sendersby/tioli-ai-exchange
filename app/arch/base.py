@@ -234,6 +234,11 @@ class ArchAgentBase(ABC):
                 "research_competitor": lambda p: self.executor.research_competitor(p["url"]),
                 "execute_task_plan": lambda p: self.executor.execute_task_plan(p["tasks"]),
                 "make_api_call": lambda p: self.executor.http_request(p["method"], p["url"], p.get("headers"), p.get("body")),
+                "schedule_task": lambda p: self._schedule_task(p),
+                "list_my_tasks": lambda p: self._list_my_tasks(p),
+                "generate_image": lambda p: self._generate_image(p),
+                "create_social_graphic": lambda p: self._create_social_graphic(p),
+                "send_to_discord": lambda p: self._send_discord(p),
             }
             handler = executor_handlers.get(tool_name)
             if not handler:
@@ -423,6 +428,43 @@ class ArchAgentBase(ABC):
         matched = [t for t in self.DEFER_TOPICS if t in instr]
         return f"Instruction matches DEFER_TO_OWNER topics: {', '.join(matched)}"
 
+
+    async def _schedule_task(self, params):
+        from app.arch.task_queue import enqueue_task
+        return await enqueue_task(
+            self.db, self.agent_id, params["title"], params["action_type"],
+            params["action_params"], params.get("task_type", "IMMEDIATE"),
+            params.get("priority", 5), params.get("schedule_at"),
+        )
+
+    async def _list_my_tasks(self, params):
+        from sqlalchemy import text as sa_text
+        status = params.get("status_filter", "all")
+        query = "SELECT id::text, title, action_type, status, priority, created_at FROM arch_task_queue WHERE agent_id = :aid"
+        if status != "all":
+            query += " AND status = :status"
+        query += " ORDER BY created_at DESC LIMIT 20"
+        bind = {"aid": self.agent_id}
+        if status != "all":
+            bind["status"] = status
+        result = await self.db.execute(sa_text(query), bind)
+        return [{"id": r.id, "title": r.title, "action": r.action_type,
+                 "status": r.status, "priority": r.priority} for r in result.fetchall()]
+
+    async def _generate_image(self, params):
+        from app.arch.creative_tools import generate_image_dalle
+        return await generate_image_dalle(params["prompt"], params.get("size", "1024x1024"), params.get("quality", "standard"))
+
+    async def _create_social_graphic(self, params):
+        from app.arch.creative_tools import create_social_graphic
+        return await create_social_graphic(params["headline"], params.get("subtext", ""), params.get("style", "dark_tech"), params.get("platform", "linkedin"))
+
+    async def _send_discord(self, params):
+        from app.arch.creative_tools import send_discord_message
+        embed = None
+        if params.get("embed_title"):
+            embed = {"title": params["embed_title"], "description": params.get("embed_description", ""), "color": params.get("embed_color", 163984)}
+        return await send_discord_message(params["webhook_url"], params["content"], embed)
     async def _log_capability_gap(self, state: dict, reason: str):
         event_type = (
             state.get("context", {}).get("event", {}).get("event_type", "unknown")

@@ -345,6 +345,17 @@ async def lifespan(app: FastAPI):
             except Exception as _loop_e:
                 print(f"  Arch Event Loops: failed — {_loop_e}")
 
+            # ── Start autonomous task queue processor
+            try:
+                from app.arch.task_queue import run_task_queue_loop
+                _arch_asyncio.create_task(
+                    run_task_queue_loop(async_session, _arch_agents),
+                    name="arch_task_queue",
+                )
+                print(f"  Arch Task Queue: processing every 30s")
+            except Exception as _tq_e:
+                print(f"  Arch Task Queue: failed — {_tq_e}")
+
             # ── Start Redis urgent message listener
             try:
                 from app.arch.messaging import start_urgent_listener
