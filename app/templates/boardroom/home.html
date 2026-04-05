@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <!-- Zone 3: The Seven — Agent Cards -->
       <div class="lg:col-span-2 space-y-3">
         <h2 class="text-sm font-bold text-slate-300 tracking-wider">THE EXECUTIVE BOARD</h2>
-        <div id="skeleton-agents" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div id="skeleton-agents" style="display:none" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
   {% for i in range(7) %}
   <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
     <div class="flex items-center gap-3 mb-3"><div class="skeleton w-10 h-10 rounded-full"></div><div><div class="skeleton h-4 w-24 mb-1"></div><div class="skeleton h-3 w-16"></div></div></div>
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
   {% endfor %}
 </div>
-        <div id="real-agents" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 skeleton-hide">
+        <div id="real-agents" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {% for a in agents %}
           <a href="/boardroom/agents/{{ a.name }}"
              class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4 hover:border-slate-500 transition-all group">
