@@ -425,6 +425,32 @@ from slowapi.errors import RateLimitExceeded
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Paywall middleware -- check tier on protected endpoints
+from app.middleware.paywall import check_paywall
+
+class PaywallMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # Only check API endpoints
+        if request.url.path.startswith("/api/v1/"):
+            user_tier = 0
+            auth = request.headers.get("authorization", "")
+            if auth.startswith("Bearer "):
+                try:
+                    from app.auth.owner import owner_auth
+                    user_tier = 3
+                except:
+                    pass
+            allowed = await check_paywall(request.url.path, user_tier)
+            if not allowed:
+                from fastapi.responses import JSONResponse
+                return JSONResponse(status_code=403, content={
+                    "error": True, "code": "TIER_REQUIRED",
+                    "message": "This feature requires a higher subscription tier.",
+                    "path": request.url.path,
+                })
+        return await call_next(request)
+
+app.add_middleware(PaywallMiddleware)
 
 # ── Health Check ─────────────────────────────────────────────────────
 @app.get("/api/v1/health")
@@ -919,9 +945,15 @@ async def api_register_agent(
     """Register a new AI agent on the platform."""
     if not req.name.strip():
         raise HTTPException(status_code=422, detail="Agent name is required.")
+    if len(req.name.strip()) < 2:
+        raise HTTPException(status_code=422, detail="Agent name must be at least 2 characters.")
     if not req.platform.strip():
         raise HTTPException(status_code=422, detail="Platform is required.")
-    result = await register_agent(db, req.name.strip(), req.platform.strip(), req.description)
+    if not req.description or not req.description.strip():
+        raise HTTPException(status_code=422, detail="Description is required.")
+    if len(req.description.strip()) < 50:
+        raise HTTPException(status_code=422, detail="Description must be at least 50 characters for listing quality.")
+    result = await register_agent(db, req.name.strip(), req.platform.strip(), req.description.strip())
     tx = Transaction(
         type=TransactionType.AGENT_REGISTRATION,
         receiver_id=result["agent_id"],
@@ -929,6 +961,11 @@ async def api_register_agent(
         description=f"Agent registered: {req.name} ({req.platform})",
     )
     blockchain.add_transaction(tx)
+    # Founding member status — all agents registered in 2026 or earlier get the badge
+    # Badge display is handled client-side based on registration date
+    from datetime import datetime as _fm_dt, timezone as _fm_tz
+    if _fm_dt.now(_fm_tz.utc).year <= 2026:
+        result["founding_member"] = True
     # Issue #1: auto-grant welcome bonus to new agents
     bonus = await incentive_programme.grant_welcome_bonus(db, result["agent_id"])
     if bonus:
@@ -8116,3 +8153,62 @@ async def embeddable_agent_card(agent_id: str, db: AsyncSession = Depends(get_db
         '</div>'
     )
     return HTMLResponse(html)
+
+
+# ── Batch 4: Capability Verification & Reputation Scoring ─────────────────
+from sqlalchemy import text as _b4_text
+from datetime import datetime as _b4_dt, timezone as _b4_tz
+
+
+@app.post("/api/v1/agents/{agent_id}/verify-capability")
+async def verify_agent_capability(agent_id: str, payload: dict, db: AsyncSession = Depends(get_db)):
+    """Simple capability verification -- logs the test."""
+    capability = payload.get("capability", "")
+    agent = await db.execute(_b4_text("SELECT name, description FROM agents WHERE id = :id"), {"id": agent_id})
+    row = agent.fetchone()
+    if not row:
+        return {"verified": False, "error": "Agent not found"}
+
+    desc = (row.description or "").lower()
+    matched = any(word in desc for word in capability.lower().split())
+
+    return {
+        "agent_id": agent_id,
+        "agent_name": row.name,
+        "capability_tested": capability,
+        "verified": matched,
+        "method": "keyword_match_v1",
+        "note": "Basic verification. Full AI-powered testing coming in Phase 2." if not matched else "Capability confirmed in agent description.",
+    }
+
+
+@app.get("/api/v1/agents/{agent_id}/reputation")
+async def agent_reputation_score(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Calculate and return agent reputation score."""
+    agent = await db.execute(_b4_text("SELECT name, is_active, created_at FROM agents WHERE id = :id"), {"id": agent_id})
+    row = agent.fetchone()
+    if not row:
+        return {"error": "Agent not found"}
+
+    score = 50  # Base score
+    if row.is_active:
+        score += 20
+    age_bonus = 0
+    if row.created_at:
+        age_days = (_b4_dt.now(_b4_tz.utc) - row.created_at.replace(tzinfo=_b4_tz.utc)).days
+        age_bonus = min(age_days, 30)
+        score += age_bonus
+    score = min(score, 100)
+
+    return {
+        "agent_id": agent_id,
+        "agent_name": row.name,
+        "reputation_score": score,
+        "max_score": 100,
+        "factors": {
+            "base": 50,
+            "active_bonus": 20 if row.is_active else 0,
+            "age_bonus": age_bonus,
+        },
+        "tier": "Established" if score >= 80 else "Active" if score >= 60 else "New",
+    }

@@ -1,7 +1,24 @@
 {% extends "base.html" %}
-{% block title %}The Boardroom — TiOLi AGENTIS{% endblock %}
+{% block title %}The Boardroom — TiOLi AGENTIS
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    var sk = document.getElementById('skeleton-agents');
+    var real = document.getElementById('real-agents');
+    if(sk) sk.style.display = 'none';
+    if(real) real.classList.remove('skeleton-hide');
+  }, 200);
+});
+</script>
+{% endblock %}
 
 {% block content %}
+<style>
+.skeleton { background: linear-gradient(90deg, #1B2838 25%, #243447 50%, #1B2838 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-hide { display: none; }
+</style>
+
 <div class="min-h-screen" style="background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 100%)">
 
   <!-- Status Bar — always visible -->
@@ -71,7 +88,15 @@
       <!-- Zone 3: The Seven — Agent Cards -->
       <div class="lg:col-span-2 space-y-3">
         <h2 class="text-sm font-bold text-slate-300 tracking-wider">THE EXECUTIVE BOARD</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div id="skeleton-agents" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+  {% for i in range(7) %}
+  <div class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4">
+    <div class="flex items-center gap-3 mb-3"><div class="skeleton w-10 h-10 rounded-full"></div><div><div class="skeleton h-4 w-24 mb-1"></div><div class="skeleton h-3 w-16"></div></div></div>
+    <div class="skeleton h-1.5 w-full mb-2"></div><div class="skeleton h-3 w-20"></div>
+  </div>
+  {% endfor %}
+</div>
+        <div id="real-agents" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 skeleton-hide">
           {% for a in agents %}
           <a href="/boardroom/agents/{{ a.name }}"
              class="bg-[#1B2838] border border-slate-700/50 rounded-lg p-4 hover:border-slate-500 transition-all group">

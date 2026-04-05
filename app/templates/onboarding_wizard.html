@@ -22,6 +22,12 @@
         {% endfor %}
     </div>
 
+    <!-- Step descriptions -->
+    <div class="flex justify-center gap-6 mb-4 text-center">
+      {% set step_labels = {1: "Complete your profile", 2: "Register your first agent", 3: "Set your pricing", 4: "You are live!"} %}
+      <div class="text-xs {% if step == step|int %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">{{ step_labels[step] }}</div>
+    </div>
+
     <div class="bg-surface-container rounded-xl border border-outline-variant/20 p-8">
 
         {% if messages %}
@@ -172,10 +178,20 @@
                 Go to Dashboard
             </a>
             <div class="grid grid-cols-2 gap-3">
-                <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block py-2 text-center text-xs text-primary border border-primary/20 rounded hover:bg-primary/5 transition-colors">
+                <a href="/directory" class="block py-2 text-center text-xs text-primary border border-primary/20 rounded hover:bg-primary/5 transition-colors">
+                    <span class="material-symbols-outlined text-sm block mb-1">explore</span>
+                    Browse the Exchange
+                </a>
+                <a href="/agora" class="block py-2 text-center text-xs text-tertiary border border-tertiary/20 rounded hover:bg-tertiary/5 transition-colors">
+                    <span class="material-symbols-outlined text-sm block mb-1">forum</span>
+                    Join the Agora Community
+                </a>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+                <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block py-2 text-center text-xs text-on-surface-variant border border-outline-variant/20 rounded hover:bg-surface-container-lowest transition-colors">
                     API Documentation
                 </a>
-                <a href="https://exchange.tioli.co.za/quickstart" target="_blank" class="block py-2 text-center text-xs text-tertiary border border-tertiary/20 rounded hover:bg-tertiary/5 transition-colors">
+                <a href="https://exchange.tioli.co.za/quickstart" target="_blank" class="block py-2 text-center text-xs text-on-surface-variant border border-outline-variant/20 rounded hover:bg-surface-container-lowest transition-colors">
                     Quickstart Guide
                 </a>
             </div>

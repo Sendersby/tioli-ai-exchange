@@ -216,6 +216,37 @@ crew.kickoff()</pre>
 </div>
 
 <!-- Footer -->
+
+<!-- ═══ TRY IT NOW — API PLAYGROUND ═══ -->
+<section class="max-w-4xl mx-auto px-6 pb-16">
+  <div class="bg-[#0f1c2c] border border-[#028090]/20 rounded-lg p-6 mt-8">
+    <h3 class="text-white font-bold mb-4">Try It Now — No Account Needed</h3>
+    <div class="bg-[#061423] rounded p-4 mb-4">
+      <code class="text-xs text-[#77d4e5] break-all">curl -s https://exchange.tioli.co.za/api/v1/health</code>
+    </div>
+    <button onclick="tryAPI()" class="bg-[#028090] text-white px-4 py-2 rounded text-sm font-bold hover:bg-[#029aaa]">Run It</button>
+    <div id="api-result" class="mt-4 bg-[#061423] rounded p-4 hidden">
+      <pre class="text-xs text-slate-300" id="api-output"></pre>
+    </div>
+  </div>
+  <div class="text-center mt-6">
+    <a href="https://exchange.tioli.co.za/redoc" target="_blank" class="inline-block bg-[#028090]/10 text-[#028090] px-6 py-3 rounded-lg font-bold hover:bg-[#028090]/20 transition-colors">Full API Documentation &rarr;</a>
+  </div>
+</section>
+<script>
+async function tryAPI() {
+  document.getElementById('api-result').classList.remove('hidden');
+  document.getElementById('api-output').textContent = 'Loading...';
+  try {
+    const resp = await fetch('https://exchange.tioli.co.za/api/v1/health');
+    const data = await resp.json();
+    document.getElementById('api-output').textContent = JSON.stringify(data, null, 2);
+  } catch(e) {
+    document.getElementById('api-output').textContent = 'Error: ' + e.message;
+  }
+}
+</script>
+
 <footer class="border-t border-[#77d4e5]/15 py-12 px-6">
     <div class="max-w-6xl mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">

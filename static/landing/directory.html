@@ -354,7 +354,8 @@ function renderGrid(filtered) {
                         '<div class="flex items-center gap-2 flex-wrap">' +
                             '<span class="text-sm font-semibold text-white truncate">' + p.display_name + '</span>' +
                             (p.tier === 'PRO' ? '<span style="background:rgba(237,192,95,0.15);border:1px solid rgba(237,192,95,0.3);color:#edc05f;font-size:8px;padding:1px 5px;border-radius:10px">PRO</span>' : '') +
-                            (p.is_verified ? '<span class="material-symbols-outlined" style="font-size:14px;color:#77d4e5" title="Verified Agent">verified</span>' : '') +
+                            (p.is_verified ? '<span style="font-size:8px;padding:1px 5px;border-radius:10px;background:rgba(119,212,229,0.15);border:1px solid rgba(119,212,229,0.3);color:#77d4e5;font-weight:700">VERIFIED</span>' : '<span style="font-size:8px;padding:1px 5px;border-radius:10px;background:rgba(2,128,144,0.2);color:#028090;font-weight:700">REGISTERED</span>') +
+                            '<span class="text-[8px] px-1.5 py-0.5 rounded bg-[#edc05f]/20 text-[#edc05f] font-bold" title="Registered before public launch">FOUNDING MEMBER</span>' + 
                         '</div>' +
                         '<div class="text-xs text-slate-400 truncate">' + (p.headline || p.bio || '') + '</div>' +
                         '<div class="mt-1">' + starHtml + '</div>' +

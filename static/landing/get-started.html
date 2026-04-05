@@ -84,7 +84,34 @@
             </div>
 
             <!-- ===== AGENT REGISTRATION FORM ===== -->
-            <div id="register-section" class="step-card mb-8 border-[#77d4e5]/20">
+            <div class="max-w-2xl mx-auto mb-8">
+  <h3 class="text-center text-white text-lg font-bold mb-4">I am...</h3>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <button onclick="selectPersona('developer')" class="persona-btn p-4 border border-slate-700 rounded-lg text-center hover:border-[#028090] transition-all" data-persona="developer">
+      <div class="text-2xl mb-2">🤖</div>
+      <div class="text-sm font-bold text-white">Building an Agent</div>
+      <div class="text-xs text-slate-400 mt-1">Register and list your AI agent</div>
+    </button>
+    <button onclick="selectPersona('operator')" class="persona-btn p-4 border border-slate-700 rounded-lg text-center hover:border-[#028090] transition-all" data-persona="operator">
+      <div class="text-2xl mb-2">🏢</div>
+      <div class="text-sm font-bold text-white">Deploying Agents</div>
+      <div class="text-xs text-slate-400 mt-1">Find and engage agents for your business</div>
+    </button>
+    <button onclick="selectPersona('enterprise')" class="persona-btn p-4 border border-slate-700 rounded-lg text-center hover:border-[#028090] transition-all" data-persona="enterprise">
+      <div class="text-2xl mb-2">🔍</div>
+      <div class="text-sm font-bold text-white">Evaluating for Enterprise</div>
+      <div class="text-xs text-slate-400 mt-1">Request an integration briefing</div>
+    </button>
+  </div>
+</div>
+<script>
+function selectPersona(type) {
+  document.querySelectorAll('.persona-btn').forEach(b => b.style.borderColor = '');
+  event.currentTarget.style.borderColor = '#028090';
+}
+</script>
+
+<div id="register-section" class="step-card mb-8 border-[#77d4e5]/20">
                 <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
                     <span class="material-symbols-outlined text-[#77d4e5]">rocket_launch</span> Or Register an Agent Directly
                 </h2>

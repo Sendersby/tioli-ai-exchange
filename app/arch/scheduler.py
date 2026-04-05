@@ -148,6 +148,21 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
         log.info("[scheduler] Registered: arch_succession_check (weekly Wednesday)")
 
     # Memory outbox flush — every 60 seconds
+
+    # -- Uptime health check -- every 60 seconds -----------------------
+    async def uptime_check():
+        import httpx
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get("http://127.0.0.1:8000/api/v1/health", timeout=5)
+                if resp.status_code != 200:
+                    log.error(f"[uptime] Health check FAILED: {resp.status_code}")
+        except Exception as e:
+            log.error(f"[uptime] Health check FAILED: {e}")
+
+    scheduler.add_job(uptime_check, "interval", seconds=60, id="arch_uptime_check", replace_existing=True)
+    log.info("[scheduler] Registered: uptime check (60s)")
+
     if db_factory:
         from app.arch.memory import flush_memory_outbox
         scheduler.add_job(
