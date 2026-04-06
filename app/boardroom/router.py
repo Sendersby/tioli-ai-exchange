@@ -854,7 +854,7 @@ async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(g
     await _record_founder_action(db, "INBOX_ACTIONED", item_id, "inbox",
                                   {"action": action, "response": response_text[:200]})
 
-    # If APPROVED, create a follow-up execution task
+    # If APPROVED, execute the task via the responsible agent
     if action == "APPROVE":
         # Get the original item details
         item_result = await db.execute(text(
@@ -870,10 +870,10 @@ async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(g
             original_subject = desc_data.get("subject", "Unknown task")
             original_agent = desc_data.get("prepared_by", "sovereign")
 
-            # Create execution status item — the agent system picks this up
+            # Create EXECUTING status item
             exec_desc = json.dumps({
                 "subject": f"EXECUTING: {original_subject}",
-                "detail": f"Founder approved this action. Execution in progress. Original item: {item_id}. You will receive a confirmation with proof once complete.",
+                "detail": f"Founder approved. {original_agent.title()} is executing now. Proof will be delivered when complete.",
                 "prepared_by": original_agent,
                 "parent_item": item_id,
                 "type": "EXECUTION_STATUS"
@@ -882,6 +882,11 @@ async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(g
                 INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at)
                 VALUES ('EXECUTION_STATUS', 'ROUTINE', :desc, 'EXECUTING', now())
             """), {"desc": exec_desc})
+
+            # Trigger actual execution in background
+            import asyncio
+            from app.boardroom.inbox_executor import execute_approved_item
+            asyncio.create_task(execute_approved_item(db, item_id, item_row.description))
 
     await db.commit()
     return {"item_id": item_id, "action": action, "new_status": new_status}
