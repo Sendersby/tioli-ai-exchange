@@ -831,14 +831,19 @@ async def founder_inbox(db: AsyncSession = Depends(get_db)):
 
 @boardroom_router.post("/inbox/{item_id}/action")
 async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(get_db)):
-    """Take action on inbox item."""
+    """Take action on inbox item — supports full approval workflow."""
     _check_enabled()
-    action = payload.get("action", "")  # APPROVE / REJECT / DEFER / ACKNOWLEDGE
+    action = payload.get("action", "")  # APPROVE / HOLD / REJECT / DISMISS / ACKNOWLEDGE / REPLY
     response_text = payload.get("response", "")
 
     new_status = {
-        "APPROVE": "APPROVED", "REJECT": "REJECTED",
-        "DEFER": "DEFERRED", "ACKNOWLEDGE": "VIEWED",
+        "APPROVE": "APPROVED",
+        "HOLD": "HELD",
+        "REJECT": "REJECTED",
+        "DEFER": "DEFERRED",
+        "DISMISS": "DISMISSED",
+        "ACKNOWLEDGE": "VIEWED",
+        "REPLY": "VIEWED",
     }.get(action, "VIEWED")
 
     await db.execute(text("""
@@ -848,6 +853,36 @@ async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(g
 
     await _record_founder_action(db, "INBOX_ACTIONED", item_id, "inbox",
                                   {"action": action, "response": response_text[:200]})
+
+    # If APPROVED, create a follow-up execution task
+    if action == "APPROVE":
+        # Get the original item details
+        item_result = await db.execute(text(
+            "SELECT description FROM arch_founder_inbox WHERE id = cast(:iid as uuid)"
+        ), {"iid": item_id})
+        item_row = item_result.fetchone()
+        if item_row and item_row.description:
+            try:
+                desc_data = json.loads(item_row.description) if item_row.description.startswith("{") else {}
+            except Exception:
+                desc_data = {}
+
+            original_subject = desc_data.get("subject", "Unknown task")
+            original_agent = desc_data.get("prepared_by", "sovereign")
+
+            # Create execution status item — the agent system picks this up
+            exec_desc = json.dumps({
+                "subject": f"EXECUTING: {original_subject}",
+                "detail": f"Founder approved this action. Execution in progress. Original item: {item_id}. You will receive a confirmation with proof once complete.",
+                "prepared_by": original_agent,
+                "parent_item": item_id,
+                "type": "EXECUTION_STATUS"
+            })
+            await db.execute(text("""
+                INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at)
+                VALUES ('EXECUTION_STATUS', 'ROUTINE', :desc, 'EXECUTING', now())
+            """), {"desc": exec_desc})
+
     await db.commit()
     return {"item_id": item_id, "action": action, "new_status": new_status}
 

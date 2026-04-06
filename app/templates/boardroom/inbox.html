@@ -60,9 +60,9 @@
       <span class="text-[10px] text-slate-500 uppercase tracking-wider ml-3 mr-1">Filter:</span>
       <button onclick="filterInbox('all')" id="filter-all" class="filter-btn active-filter text-[10px] px-2.5 py-1 rounded-full border border-[#77d4e5] text-[#77d4e5] transition-all">All</button>
       <button onclick="filterInbox('PENDING')" id="filter-PENDING" class="filter-btn text-[10px] px-2.5 py-1 rounded-full border border-slate-600 text-amber-400 hover:border-amber-400 transition-all">Pending</button>
-      <button onclick="filterInbox('VIEWED')" id="filter-VIEWED" class="filter-btn text-[10px] px-2.5 py-1 rounded-full border border-slate-600 text-[#028090] hover:border-[#028090] transition-all">Acknowledged</button>
+      <button onclick="filterInbox('HELD')" id="filter-HELD" class="filter-btn text-[10px] px-2.5 py-1 rounded-full border border-slate-600 text-purple-400 hover:border-purple-400 transition-all">On Hold</button>
       <button onclick="filterInbox('APPROVED')" id="filter-APPROVED" class="filter-btn text-[10px] px-2.5 py-1 rounded-full border border-slate-600 text-emerald-400 hover:border-emerald-400 transition-all">Approved</button>
-      <button onclick="filterInbox('REJECTED')" id="filter-REJECTED" class="filter-btn text-[10px] px-2.5 py-1 rounded-full border border-slate-600 text-red-400 hover:border-red-400 transition-all">Rejected</button>
+      <button onclick="filterInbox('VIEWED')" id="filter-VIEWED" class="filter-btn text-[10px] px-2.5 py-1 rounded-full border border-slate-600 text-[#028090] hover:border-[#028090] transition-all">Acknowledged</button>
       <button onclick="filterInbox('DISMISSED')" id="filter-DISMISSED" class="filter-btn text-[10px] px-2.5 py-1 rounded-full border border-slate-600 text-slate-500 hover:border-slate-400 transition-all">Dismissed</button>
     </div>
     {% endif %}
@@ -72,7 +72,9 @@
       {% for item in inbox_items %}
       <div id="item-{{ item.id }}"
            class="inbox-item bg-[#1B2838] border rounded-lg p-4 transition-all
-                  {% if item.status != 'PENDING' %}opacity-60{% endif %}
+                  {% if item.status == 'EXECUTING' %}border-[#D4A94A]/50 bg-[#D4A94A]/5
+                  {% elif item.status not in ('PENDING', 'HELD') %}opacity-60
+                  {% endif %}
                   {% if item.overdue %}border-red-500/50 bg-red-500/5{% else %}border-slate-700/50{% endif %}"
            data-agent="{{ item.agent }}"
            data-agent-display="{{ item.agent_display }}"
@@ -86,36 +88,44 @@
               {% if item.priority == 'CRITICAL' or item.priority == 'EMERGENCY' %}text-red-400
               {% elif item.priority == 'URGENT' or item.priority == 'HIGH' %}text-[#D4A94A]
               {% else %}text-slate-400{% endif %}">
-              {% if item.priority == 'CRITICAL' or item.priority == 'EMERGENCY' %}priority_high{% elif item.priority == 'URGENT' or item.priority == 'HIGH' %}warning{% else %}info{% endif %}
+              {% if item.status == 'EXECUTING' %}sync
+              {% elif item.priority in ('CRITICAL', 'EMERGENCY') %}priority_high
+              {% elif item.priority in ('URGENT', 'HIGH') %}warning
+              {% else %}info{% endif %}
             </span>
             <div class="flex-1 min-w-0">
-              <!-- Title row with agent badge and status -->
+              <!-- Title row with status badge -->
               <div class="flex items-center gap-2 flex-wrap mb-1">
-                <span class="text-sm font-semibold {% if item.overdue %}text-red-300{% elif item.status != 'PENDING' %}text-slate-400{% else %}text-white{% endif %}">{{ item.title }}</span>
+                <span class="text-sm font-semibold {% if item.overdue %}text-red-300{% elif item.status not in ('PENDING','HELD','EXECUTING') %}text-slate-400{% else %}text-white{% endif %}">{{ item.title }}</span>
                 {% if item.overdue %}
                 <span class="text-[10px] font-bold text-red-400 bg-red-500/20 px-1.5 py-0.5 rounded-full">OVERDUE</span>
                 {% endif %}
-                <!-- Status badge -->
-                {% if item.status == 'VIEWED' %}
-                <span class="text-[10px] font-bold text-[#028090] bg-[#028090]/20 px-1.5 py-0.5 rounded-full">Acknowledged</span>
+                {% if item.status == 'HELD' %}
+                <span class="text-[10px] font-bold text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded-full">ON HOLD</span>
                 {% elif item.status == 'APPROVED' %}
                 <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">Approved</span>
+                {% elif item.status == 'EXECUTING' %}
+                <span class="text-[10px] font-bold text-[#D4A94A] bg-[#D4A94A]/20 px-1.5 py-0.5 rounded-full animate-pulse">Executing...</span>
+                {% elif item.status == 'COMPLETED' %}
+                <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">Completed</span>
+                {% elif item.status == 'VIEWED' %}
+                <span class="text-[10px] font-bold text-[#028090] bg-[#028090]/20 px-1.5 py-0.5 rounded-full">Acknowledged</span>
                 {% elif item.status == 'REJECTED' %}
                 <span class="text-[10px] font-bold text-red-400 bg-red-500/20 px-1.5 py-0.5 rounded-full">Rejected</span>
                 {% elif item.status == 'DISMISSED' %}
                 <span class="text-[10px] font-bold text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded-full">Dismissed</span>
                 {% endif %}
               </div>
-              <!-- Body (expandable) -->
+              <!-- Body -->
               <div class="text-xs text-slate-400 mb-1">
                 <div id="body-{{ item.id }}" style="max-height:40px;overflow:hidden;cursor:pointer"
                      onclick="var el=document.getElementById('body-{{ item.id }}');if(el.style.maxHeight==='40px'){el.style.maxHeight='none'}else{el.style.maxHeight='40px'}">
                   {{ item.body }}
                 </div>
                 <span class="text-[10px] text-[#77d4e5] cursor-pointer"
-                      onclick="var el=document.getElementById('body-{{ item.id }}');if(el.style.maxHeight==='40px'){el.style.maxHeight='none';this.textContent='Click to collapse'}else{el.style.maxHeight='40px';this.textContent='Click to expand'}">Click to expand</span>
+                      onclick="var el=document.getElementById('body-{{ item.id }}');if(el.style.maxHeight==='40px'){el.style.maxHeight='none';this.textContent='Collapse'}else{el.style.maxHeight='40px';this.textContent='Expand'}">Expand</span>
               </div>
-              <!-- Agent + metadata row -->
+              <!-- Agent + metadata -->
               <div class="flex items-center gap-3 flex-wrap text-[10px] text-slate-500 mt-1">
                 <span class="inline-flex items-center gap-1 bg-slate-700/40 px-2 py-0.5 rounded-full">
                   <span class="material-symbols-outlined" style="font-size:10px">smart_toy</span>
@@ -126,27 +136,50 @@
                 <span>{{ item.created_at.strftime('%d %b %Y %H:%M') if item.created_at else '—' }}</span>
                 {% if item.response %}
                 <span>&bull;</span>
-                <span class="text-[#D4A94A]">Reply: {{ item.response[:50] }}{% if item.response|length > 50 %}...{% endif %}</span>
+                <span class="text-[#D4A94A]">Your response: {{ item.response[:60] }}{% if item.response|length > 60 %}...{% endif %}</span>
                 {% endif %}
               </div>
             </div>
           </div>
-          <!-- Action Buttons (only show for PENDING items) -->
-          {% if item.status == 'PENDING' %}
+
+          <!-- ACTION BUTTONS — context-sensitive -->
+          {% if item.status in ('PENDING', 'HELD') %}
           <div class="flex items-center gap-2 shrink-0">
             <div class="flex flex-col gap-1.5">
               {% if item.action_type == 'APPROVAL' %}
-              <button onclick="inboxAction(this, '{{ item.id }}', 'APPROVE')" class="text-xs font-bold px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-all w-full">Approve</button>
-              <button onclick="inboxAction(this, '{{ item.id }}', 'REJECT')" class="text-xs font-bold px-3 py-1.5 rounded-md bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 transition-all w-full">Reject</button>
+              <!-- Approval workflow -->
+              <button onclick="inboxAction(this, '{{ item.id }}', 'APPROVE')"
+                      class="text-xs font-bold px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-all w-full">
+                Approve
+              </button>
+              <button onclick="inboxAction(this, '{{ item.id }}', 'HOLD')"
+                      class="text-xs font-bold px-3 py-1.5 rounded-md bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border border-purple-500/30 transition-all w-full">
+                Hold
+              </button>
+              <button onclick="inboxAction(this, '{{ item.id }}', 'REJECT')"
+                      class="text-xs font-bold px-3 py-1.5 rounded-md bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 transition-all w-full">
+                Reject
+              </button>
               {% else %}
-              <button onclick="inboxAction(this, '{{ item.id }}', 'ACKNOWLEDGE')" class="text-xs font-bold px-3 py-1.5 rounded-md bg-[#028090]/20 text-[#77d4e5] hover:bg-[#028090]/30 border border-[#028090]/30 transition-all w-full">Acknowledge</button>
+              <!-- Standard workflow -->
+              <button onclick="inboxAction(this, '{{ item.id }}', 'ACKNOWLEDGE')"
+                      class="text-xs font-bold px-3 py-1.5 rounded-md bg-[#028090]/20 text-[#77d4e5] hover:bg-[#028090]/30 border border-[#028090]/30 transition-all w-full">
+                Acknowledge
+              </button>
               {% endif %}
-              <button onclick="showReplyField('{{ item.id }}')" class="text-xs font-bold px-3 py-1.5 rounded-md bg-[#D4A94A]/10 text-[#D4A94A] hover:bg-[#D4A94A]/20 border border-[#D4A94A]/30 transition-all w-full">Reply</button>
-              <button onclick="inboxAction(this, '{{ item.id }}', 'DISMISS')" class="text-xs px-3 py-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all w-full">Dismiss</button>
+              <button onclick="showReplyField('{{ item.id }}')"
+                      class="text-xs font-bold px-3 py-1.5 rounded-md bg-[#D4A94A]/10 text-[#D4A94A] hover:bg-[#D4A94A]/20 border border-[#D4A94A]/30 transition-all w-full">
+                Reply
+              </button>
+              <button onclick="inboxAction(this, '{{ item.id }}', 'DISMISS')"
+                      class="text-xs px-3 py-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all w-full">
+                Dismiss
+              </button>
             </div>
           </div>
           {% endif %}
         </div>
+
         <!-- Reply field -->
         <div id="reply-{{ item.id }}" class="hidden mt-3 border-t border-slate-700/30 pt-3">
           <textarea id="reply-text-{{ item.id }}" placeholder="Type your reply to {{ item.agent_display }}..." rows="2"
@@ -172,7 +205,6 @@
 </style>
 
 <script>
-// ── Sort + Filter Logic ──────────────────────────────────────────
 let currentSort = 'priority';
 let currentFilter = 'all';
 
@@ -192,56 +224,61 @@ function filterInbox(status) {
 
 function applyInbox() {
   const list = document.getElementById('inbox-list');
+  if (!list) return;
   const items = Array.from(list.querySelectorAll('.inbox-item'));
 
-  // Filter
   items.forEach(el => {
     const status = el.dataset.status;
-    if (currentFilter === 'all') {
-      el.style.display = '';
-    } else if (currentFilter === 'DISMISSED') {
-      el.style.display = (status === 'DISMISSED' || el.style.opacity === '0.3') ? '' : 'none';
-    } else {
-      el.style.display = (status === currentFilter) ? '' : 'none';
-    }
+    if (currentFilter === 'all') el.style.display = '';
+    else el.style.display = (status === currentFilter) ? '' : 'none';
   });
 
-  // Sort
-  const priorityOrder = { EMERGENCY: 0, CRITICAL: 1, URGENT: 2, HIGH: 3, NORMAL: 4, LOW: 5 };
-  const statusOrder = { PENDING: 0, VIEWED: 1, APPROVED: 2, REJECTED: 3, DISMISSED: 4 };
+  const priorityOrder = { EMERGENCY: 0, CRITICAL: 1, URGENT: 2, HIGH: 3, NORMAL: 4, ROUTINE: 5, LOW: 6 };
+  const statusOrder = { PENDING: 0, HELD: 1, EXECUTING: 2, APPROVED: 3, COMPLETED: 4, VIEWED: 5, REJECTED: 6, DISMISSED: 7 };
 
   items.sort((a, b) => {
-    if (currentSort === 'priority') {
-      return (priorityOrder[a.dataset.priority] || 5) - (priorityOrder[b.dataset.priority] || 5);
-    } else if (currentSort === 'date') {
-      return (b.dataset.date || '').localeCompare(a.dataset.date || '');
-    } else if (currentSort === 'status') {
-      return (statusOrder[a.dataset.status] || 5) - (statusOrder[b.dataset.status] || 5);
-    } else if (currentSort === 'agent') {
-      return (a.dataset.agentDisplay || '').localeCompare(b.dataset.agentDisplay || '');
-    }
+    if (currentSort === 'priority') return (priorityOrder[a.dataset.priority] || 5) - (priorityOrder[b.dataset.priority] || 5);
+    if (currentSort === 'date') return (b.dataset.date || '').localeCompare(a.dataset.date || '');
+    if (currentSort === 'status') return (statusOrder[a.dataset.status] || 5) - (statusOrder[b.dataset.status] || 5);
+    if (currentSort === 'agent') return (a.dataset.agentDisplay || '').localeCompare(b.dataset.agentDisplay || '');
     return 0;
   });
-
   items.forEach(el => list.appendChild(el));
 }
 
-// ── Action Handlers ──────────────────────────────────────────────
 async function inboxAction(btn, itemId, action) {
+  const btnContainer = btn.closest('.flex-col') || btn.parentElement;
   const resp = await fetch('/api/v1/boardroom/inbox/' + itemId + '/action', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({action: action, response: action})
   });
   if (resp.ok) {
-    var labels = {DISMISS: 'Dismissed', ACKNOWLEDGE: 'Acknowledged', APPROVE: 'Approved', REJECT: 'Rejected'};
-    var colors = {DISMISS: 'text-slate-500', ACKNOWLEDGE: 'text-[#028090]', APPROVE: 'text-emerald-400', REJECT: 'text-red-400'};
-    var statusMap = {DISMISS: 'DISMISSED', ACKNOWLEDGE: 'VIEWED', APPROVE: 'APPROVED', REJECT: 'REJECTED'};
-    btn.closest('.flex-col').innerHTML = '<span class="text-xs font-bold ' + (colors[action]||'') + '">' + (labels[action]||action) + '</span>';
+    var labels = {
+      DISMISS: 'Dismissed', ACKNOWLEDGE: 'Acknowledged', APPROVE: 'Approved — executing...',
+      HOLD: 'On Hold', REJECT: 'Rejected'
+    };
+    var colors = {
+      DISMISS: 'text-slate-500', ACKNOWLEDGE: 'text-[#028090]', APPROVE: 'text-emerald-400',
+      HOLD: 'text-purple-400', REJECT: 'text-red-400'
+    };
+    var statusMap = {
+      DISMISS: 'DISMISSED', ACKNOWLEDGE: 'VIEWED', APPROVE: 'APPROVED',
+      HOLD: 'HELD', REJECT: 'REJECTED'
+    };
+
+    btnContainer.innerHTML = '<span class="text-xs font-bold ' + (colors[action]||'') + '">' + (labels[action]||action) + '</span>';
     var item = document.getElementById('item-' + itemId);
     item.dataset.status = statusMap[action] || action;
-    if (action === 'DISMISS') { item.style.opacity = '0.3'; item.dataset.status = 'DISMISSED'; }
-    else { item.classList.add('opacity-60'); }
+
+    if (action === 'DISMISS') item.style.opacity = '0.3';
+    else if (action === 'HOLD') { /* keep visible */ }
+    else if (action === 'APPROVE') {
+      // Show execution indicator
+      item.classList.add('border-emerald-500/30');
+      setTimeout(function() { location.reload(); }, 2000);
+    }
+    else item.classList.add('opacity-60');
   }
 }
 
@@ -267,7 +304,6 @@ async function sendInboxReply(itemId, agent) {
     });
   }
   document.getElementById('reply-' + itemId).innerHTML = '<div class="text-xs text-[#D4A94A] py-2">Reply sent: ' + text.substring(0, 80) + '</div>';
-  document.getElementById('item-' + itemId).dataset.status = 'VIEWED';
 }
 </script>
 {% endblock %}

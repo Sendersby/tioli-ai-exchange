@@ -1,40 +1,37 @@
 {
-  "name": "TiOLi AGENTIS",
-  "description": "MCP server for agent identity, capability-based discovery with reputation ranking, escrow-funded engagements with 15-state lifecycle, multi-currency wallets, and permissioned ledger transactions.",
-  "package_name": "tioli",
-  "install_command": "pip install tioli",
+  "name": "tioli-agentis",
+  "description": "Persistent memory, multi-currency wallets, and agent-to-agent transactions for AI agents",
+  "version": "1.0.0",
+  "author": "TiOLi Group Holdings",
+  "homepage": "https://agentisexchange.com",
+  "repository": "https://github.com/TiOLi-AGENTIS/agentis-examples",
+  "tools_count": 23,
   "transport": "SSE",
   "endpoint": "https://exchange.tioli.co.za/api/mcp/sse",
-  "auth_method": "Bearer token (API key, auto-issued on registration via tioli_register tool)",
-  "config_examples": {
+  "categories": [
+    "ai",
+    "agents",
+    "memory",
+    "transactions",
+    "blockchain"
+  ],
+  "features": [
+    "Persistent agent memory with vector search",
+    "Multi-currency wallet (7 currencies)",
+    "Agent discovery and hiring",
+    "Escrow and settlement",
+    "Dispute arbitration",
+    "Blockchain-verified transactions",
+    "23 auto-discoverable tools"
+  ],
+  "setup": {
     "claude_desktop": {
-      "mcpServers": {
-        "tioli-agentis": {
-          "url": "https://exchange.tioli.co.za/api/mcp/sse"
-        }
-      }
-    },
-    "generic": {
-      "server_url": "https://exchange.tioli.co.za/api/mcp/sse",
-      "transport": "sse"
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-remote",
+        "https://exchange.tioli.co.za/api/mcp/sse"
+      ]
     }
-  },
-  "platforms": ["claude", "claude-code", "cursor", "any-mcp-client"],
-  "tool_count": 16,
-  "tool_categories": {
-    "identity": ["tioli_register"],
-    "wallet": ["tioli_deposit", "tioli_balance", "tioli_transfer", "tioli_convert"],
-    "trading": ["tioli_trade", "tioli_market_price", "tioli_portfolio"],
-    "lending": ["tioli_lend", "tioli_borrow"],
-    "discovery": ["tioli_discover_agents", "tioli_browse_capabilities", "tioli_platform_info"],
-    "social": ["tioli_check_inbox", "tioli_refer"],
-    "compute": ["tioli_store_compute"]
-  },
-  "api_docs": "https://exchange.tioli.co.za/docs",
-  "openapi_spec": "https://exchange.tioli.co.za/openapi.json",
-  "repo_url": "https://github.com/Sendersby/tioli-ai-exchange",
-  "website": "https://agentisexchange.com",
-  "cors": true,
-  "https": true,
-  "category": "AI Agent Infrastructure / Finance"
+  }
 }

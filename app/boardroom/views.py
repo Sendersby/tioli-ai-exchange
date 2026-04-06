@@ -342,7 +342,13 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
         
         from datetime import datetime, timezone
         overdue = row.due_at < datetime.now(timezone.utc) if row.due_at else False
-        action_type = "APPROVAL" if row.item_type in ("FINANCIAL_PROPOSAL", "TIER0_NOTIFICATION", "TIER1_NOTIFICATION") else "ACKNOWLEDGE"
+        # Determine which buttons to show
+        needs_approval = row.item_type in ("FINANCIAL_PROPOSAL", "TIER0_NOTIFICATION", "TIER1_NOTIFICATION")
+        # Also check if the description mentions approval/submission
+        desc_lower = (desc or "").lower()
+        if any(phrase in desc_lower for phrase in ["approval needed", "founder approval", "approve", "permission to", "requesting approval", "ready for submission"]):
+            needs_approval = True
+        action_type = "APPROVAL" if needs_approval else "ACKNOWLEDGE" 
 
         inbox_list.append({
             "id": row.id,
