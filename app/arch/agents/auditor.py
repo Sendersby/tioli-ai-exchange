@@ -34,7 +34,7 @@ class AuditorAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return AUDITOR_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
+        return AUDITOR_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS + self.get_common_tools()
 
     async def _tool_screen_kyc(self, params: dict) -> dict:
         entity_id = params["entity_id"]

@@ -78,6 +78,46 @@ class ArchAgentBase(ABC):
     @abstractmethod
     async def get_tools(self) -> list:
         """Return Anthropic tool definitions list for this agent."""
+        return []
+
+    def get_common_tools(self) -> list:
+        """Common tools for ALL agents — self-improvement governance."""
+        return [
+            {
+                "name": "propose_self_improvement",
+                "description": "Propose an improvement to yourself or other agents. Triggers a board vote. Constitutional Prime Directives cannot be modified.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "Short title"},
+                        "description": {"type": "string", "description": "What and why"},
+                        "improvement_type": {"type": "string", "enum": ["prompt_modification", "tool_addition", "behavior_change", "capability_upgrade"]},
+                        "affects_all": {"type": "boolean", "description": "If true, founder approval required"},
+                        "code_diff": {"type": "string", "description": "The actual change"},
+                        "target_agents": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["title", "description", "improvement_type"],
+                },
+            },
+            {
+                "name": "vote_on_proposal",
+                "description": "Vote YES/NO/ABSTAIN on a self-improvement proposal with reason.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "proposal_id": {"type": "string"},
+                        "vote": {"type": "string", "enum": ["YES", "NO", "ABSTAIN"]},
+                        "reason": {"type": "string"},
+                    },
+                    "required": ["proposal_id", "vote", "reason"],
+                },
+            },
+            {
+                "name": "list_improvement_proposals",
+                "description": "List all self-improvement proposals and voting status.",
+                "input_schema": {"type": "object", "properties": {}},
+            },
+        ]
 
     # ── Memory helpers ─────────────────────────────────────────
 
@@ -282,6 +322,14 @@ class ArchAgentBase(ABC):
                 "scope_subordinate_development": lambda p: self._scope_development(p),
                 "get_my_team_status": lambda p: self._get_team_status(p),
             }
+            # Check self-improvement governance tools
+            if tool_name == "propose_self_improvement":
+                return await self._tool_propose_improvement(tool_input)
+            elif tool_name == "vote_on_proposal":
+                return await self._tool_vote_on_proposal(tool_input)
+            elif tool_name == "list_improvement_proposals":
+                return await self._tool_list_proposals(tool_input)
+
             # Check structured memory tools (retain, recall, reflect)
             from app.arch.memory_tools import MEMORY_TOOL_HANDLERS
             if tool_name in MEMORY_TOOL_HANDLERS:
@@ -339,6 +387,53 @@ class ArchAgentBase(ABC):
 
     # ── Heartbeat ──────────────────────────────────────────────
 
+
+
+    async def _tool_propose_improvement(self, args: dict) -> dict:
+        """Propose a self-improvement for board vote."""
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(
+                    "http://127.0.0.1:8000/api/v1/boardroom/self-improvement/propose",
+                    json={
+                        "title": args.get("title", ""),
+                        "description": args.get("description", ""),
+                        "proposed_by": self.agent_id,
+                        "type": args.get("improvement_type", "prompt_modification"),
+                        "affects_all": args.get("affects_all", False),
+                        "code_diff": args.get("code_diff", ""),
+                        "target_agents": args.get("target_agents", [self.agent_id]),
+                    }
+                )
+                return resp.json()
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def _tool_vote_on_proposal(self, args: dict) -> dict:
+        """Cast a vote on a self-improvement proposal."""
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(
+                    f"http://127.0.0.1:8000/api/v1/boardroom/self-improvement/vote/{args.get('proposal_id', '')}",
+                    json={"agent": self.agent_id, "vote": args.get("vote", "ABSTAIN")}
+                )
+                result = resp.json()
+                result["your_reason"] = args.get("reason", "")
+                return result
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def _tool_list_proposals(self, args: dict) -> dict:
+        """List all self-improvement proposals."""
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.get("http://127.0.0.1:8000/api/v1/boardroom/self-improvement/proposals")
+                return resp.json()
+        except Exception as e:
+            return {"error": str(e)}
 
     async def _tool_self_schedule(self, args: dict) -> dict:
         """Create a self-scheduled task. Agents use this to schedule their own work.

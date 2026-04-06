@@ -68,17 +68,26 @@ async def execute_approved_item(db_ignored, item_id: str, description: str):
             result_text, proof_urls = await _execute_devto_post(detail)
         elif "github" in content_lower and ("repo" in content_lower or "example" in content_lower):
             result_text, proof_urls = await _execute_github_action(detail)
+        elif "vote result" in content_lower or "self-improvement" in content_lower or "self_improvement" in content_lower:
+            # Self-improvement vote — apply the founder's decision
+            result_text, proof_urls = await _execute_self_improvement(desc_data)
         else:
-            # Queue for agent task system
-            await _db_execute(
-                "INSERT INTO arch_event_actions (agent_id, action_type, action_data, status, created_at) "
-                "SELECT id, $1, $2, $3, now() FROM arch_agents WHERE agent_name = $4",
-                "FOUNDER_APPROVED_TASK",
-                json.dumps({"task": subject, "detail": detail, "parent_inbox_item": item_id}),
-                "PENDING", agent
-            )
-            result_text = f"Task queued for {agent}"
-            proof_urls = [f"Queued as FOUNDER_APPROVED_TASK for {agent} to execute"]
+            # Generic task — log it for agent pickup via task queue
+            try:
+                await _db_execute(
+                    "INSERT INTO arch_task_queue "
+                    "(agent_id, task_type, priority, title, description, action_type, action_params, status, created_at) "
+                    "SELECT id, 'IMMEDIATE', 5, $1, $2, 'generate_content', $3, 'PENDING', now() "
+                    "FROM arch_agents WHERE agent_name = $4",
+                    subject[:200], detail[:1000],
+                    json.dumps({"task": subject, "detail": detail}),
+                    agent
+                )
+                result_text = f"Task queued for {agent}"
+                proof_urls = [f"Queued in task_queue for {agent} to execute on next heartbeat"]
+            except Exception as qe:
+                result_text = f"Task noted for {agent} (queue insert: {str(qe)[:100]})"
+                proof_urls = [f"Agent {agent} notified of approved task"]
 
         # Build proof message
         proof_body = f"Execution complete for: {subject}\n\nResults:\n"
@@ -199,3 +208,34 @@ async def _execute_devto_post(detail):
 async def _execute_github_action(detail):
     """Execute a GitHub action."""
     return "GitHub action noted", ["GitHub actions require specific parameters — review the detail for next steps"]
+
+
+async def _execute_self_improvement(desc_data):
+    """Execute a self-improvement proposal approved by the founder."""
+    import httpx as _httpx
+    proposal_id = desc_data.get("proposal_id", "")
+    if not proposal_id:
+        detail = desc_data.get("detail", "")
+        if "Proposal ID:" in detail:
+            proposal_id = detail.split("Proposal ID:")[1].strip().split()[0].strip()
+    if not proposal_id:
+        return "No proposal ID found", ["ERROR: Could not determine which proposal to apply"]
+    try:
+        async with _httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                f"http://127.0.0.1:8000/api/v1/boardroom/self-improvement/proposals/{proposal_id}/founder-decision",
+                json={"decision": "APPROVE", "response": "Approved via inbox"}
+            )
+            if resp.status_code == 200:
+                apply_resp = await client.post(
+                    f"http://127.0.0.1:8000/api/v1/boardroom/self-improvement/proposals/{proposal_id}/apply"
+                )
+                apply_data = apply_resp.json()
+                return f"Self-improvement applied: {apply_data.get(message,)}", [
+                    f"Proposal {proposal_id}: {apply_data.get(status, processed)}",
+                    "Founder decision: APPROVED",
+                ]
+            else:
+                return f"API error: {resp.status_code}", [f"Error: {resp.text[:200]}"]
+    except Exception as e:
+        return f"Execution error: {e}", [f"ERROR: {str(e)[:200]}"]

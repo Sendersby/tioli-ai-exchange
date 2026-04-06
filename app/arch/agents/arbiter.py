@@ -30,7 +30,7 @@ class ArbiterAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return ARBITER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
+        return ARBITER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS + self.get_common_tools()
 
     async def _tool_search_case_law(self, params: dict) -> dict:
         query = params["query"]

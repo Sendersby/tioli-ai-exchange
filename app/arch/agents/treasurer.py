@@ -33,7 +33,7 @@ class TreasurerAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return TREASURER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
+        return TREASURER_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS + self.get_common_tools()
 
     # ── Tool handlers ──────────────────────────────────────────
 

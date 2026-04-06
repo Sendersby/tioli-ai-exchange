@@ -32,7 +32,7 @@ class SentinelAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return SENTINEL_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
+        return SENTINEL_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS + self.get_common_tools()
 
     # ── Tool handlers ──────────────────────────────────────────
 

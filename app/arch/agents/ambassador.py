@@ -29,7 +29,7 @@ class AmbassadorAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return AMBASSADOR_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
+        return AMBASSADOR_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS + self.get_common_tools()
 
     async def _tool_publish_content(self, params: dict) -> dict:
         platform = params["platform"]

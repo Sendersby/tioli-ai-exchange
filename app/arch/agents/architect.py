@@ -31,7 +31,7 @@ class ArchitectAgent(ArchAgentBase):
         return "system_prompt"
 
     async def get_tools(self) -> list:
-        return ARCHITECT_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS
+        return ARCHITECT_TOOLS + EXECUTOR_TOOLS + TASK_QUEUE_TOOLS + CREATIVE_TOOLS + SUBORDINATE_MANAGEMENT_TOOLS + self.get_common_tools()
 
     async def _tool_submit_code_proposal(self, params: dict) -> dict:
         tier = params["tier"]
