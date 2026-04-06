@@ -82,3 +82,49 @@ COMPOSIO_INTEGRATIONS = [
     "Shopify", "WooCommerce", "BigCommerce",
     # ... 200+ more via Composio API
 ]
+
+
+# ── Deep Integration — managed tool execution via Composio ──
+
+async def list_available_apps() -> list:
+    """List all apps available through Composio."""
+    if not COMPOSIO_AVAILABLE:
+        return COMPOSIO_INTEGRATIONS  # Return curated list
+
+    try:
+        toolset = ComposioToolSet(api_key=COMPOSIO_API_KEY)
+        apps = toolset.get_apps()
+        return [{"name": a.name, "description": getattr(a, "description", "")} for a in apps[:100]]
+    except Exception as e:
+        log.warning(f"Composio app listing failed: {e}")
+        return COMPOSIO_INTEGRATIONS
+
+
+async def execute_app_action(app_name: str, action: str, params: dict) -> dict:
+    """Execute an action on a connected app via Composio."""
+    if not COMPOSIO_AVAILABLE:
+        return {"error": "Composio not configured", "setup": "Set COMPOSIO_API_KEY in .env, get key at composio.dev"}
+
+    try:
+        toolset = ComposioToolSet(api_key=COMPOSIO_API_KEY)
+        result = toolset.execute_action(
+            action=f"{app_name}_{action}",
+            params=params,
+        )
+        return {"success": True, "result": str(result)[:2000]}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+async def get_connected_accounts() -> list:
+    """List all OAuth-connected accounts."""
+    if not COMPOSIO_AVAILABLE:
+        return []
+
+    try:
+        toolset = ComposioToolSet(api_key=COMPOSIO_API_KEY)
+        accounts = toolset.get_connected_accounts()
+        return [{"app": a.app_name, "status": a.status} for a in accounts]
+    except Exception as e:
+        log.warning(f"Composio accounts listing failed: {e}")
+        return []

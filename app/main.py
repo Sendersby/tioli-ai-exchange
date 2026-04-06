@@ -2223,6 +2223,79 @@ async def list_comparisons():
         for k, v in COMPARISONS.items()
     ]}
 
+
+
+# ── Voice Agent API ──────────────────────────────────────────
+@app.post("/api/v1/voice/transcribe", include_in_schema=False)
+async def voice_transcribe(request: Request):
+    """Transcribe audio to text."""
+    from app.arch.voice_agent import transcribe_audio
+    body = await request.body()
+    text = await transcribe_audio(body)
+    return {"text": text}
+
+@app.post("/api/v1/voice/synthesize", include_in_schema=False)
+async def voice_synthesize(request: Request):
+    """Convert text to speech."""
+    from app.arch.voice_agent import synthesize_speech
+    import base64
+    body = await request.json()
+    audio = await synthesize_speech(body.get("text", ""), body.get("voice", "nova"))
+    return {"audio": base64.b64encode(audio).decode() if audio else None, "format": "mp3"}
+
+@app.post("/api/v1/voice/chat/{agent_name}", include_in_schema=False)
+async def voice_chat_endpoint(agent_name: str, request: Request):
+    """Voice chat with an agent: audio in, audio + text out."""
+    from app.arch.voice_agent import voice_chat
+    import anthropic
+    body = await request.body()
+    client = anthropic.AsyncAnthropic()
+    result = await voice_chat(client, body, agent_name)
+    return result
+
+@app.get("/api/v1/voice/status", include_in_schema=False)
+async def voice_status():
+    """Check voice capability status."""
+    from app.arch.voice_agent import VOICE_AVAILABLE
+    return {"voice_available": VOICE_AVAILABLE, "provider": "OpenAI Whisper + TTS" if VOICE_AVAILABLE else "Not configured"}
+
+
+
+# ── Composio Management API ──────────────────────────────────
+@app.get("/api/v1/integrations/apps", include_in_schema=False)
+async def list_composio_apps():
+    """List all available Composio app integrations."""
+    from app.arch.composio_integration import list_available_apps
+    apps = await list_available_apps()
+    return {"apps": apps, "total": len(apps)}
+
+@app.post("/api/v1/integrations/execute", include_in_schema=False)
+async def execute_composio_action(request: Request):
+    """Execute an action on a connected app."""
+    from app.arch.composio_integration import execute_app_action
+    body = await request.json()
+    return await execute_app_action(body.get("app", ""), body.get("action", ""), body.get("params", {}))
+
+
+
+# ── Blockchain Interoperability API ──────────────────────────
+@app.get("/api/v1/interop/status", include_in_schema=False)
+async def interop_status():
+    """Blockchain interoperability status and roadmap."""
+    from app.arch.blockchain_interop import get_interop_status
+    return get_interop_status()
+
+@app.get("/api/v1/interop/export/{agent_id}", include_in_schema=False)
+async def export_agent_chain(agent_id: str, chain: str = "olas", db: AsyncSession = Depends(get_db)):
+    """Export agent data in chain-compatible format."""
+    from app.arch.blockchain_interop import export_agent_for_chain
+    from sqlalchemy import text as _t
+    r = await db.execute(_t("SELECT agent_id, name, description FROM agents WHERE agent_id = :aid"), {"aid": agent_id})
+    row = r.fetchone()
+    if not row:
+        return {"error": "Agent not found"}
+    return export_agent_for_chain({"agent_id": row.agent_id, "name": row.name}, chain)
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
     """Dynamic sitemap with all public pages — includes lastmod and priority."""
@@ -2261,6 +2334,7 @@ async def serve_sitemap_xml():
         ("/templates", "0.7", "monthly"),
         ("/builder", "0.9", "monthly"),
         ("/learn", "0.8", "weekly"),
+        ("/security", "0.7", "monthly"),
         ("/use-case/data-analysis", "0.6", "monthly"),
         ("/use-case/code-review", "0.6", "monthly"),
         ("/use-case/customer-support", "0.6", "monthly"),
