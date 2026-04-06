@@ -2171,7 +2171,7 @@ async def architecture_disclosure():
     """
     return {
         "platform": "TiOLi AGENTIS Exchange",
-        "version": "0.5.1",
+        "version": "1.0.0",
         "chain": {
             "type": "permissioned_single_node",
             "description": "Single-node permissioned chain, internal to the platform. Not a public L1/L2.",
@@ -2183,7 +2183,7 @@ async def architecture_disclosure():
         },
         "phase_1_limitations": [
             "Owner arbitration — platform owner is the arbiter (declared, not neutral)",
-            "No external DID resolution — AgentHubDID exists but is internal-only",
+            "did:web resolution live at /.well-known/did.json — AgentHubDID exists but is internal-only",
             "No W3C Verifiable Credential export — reputation is API-queryable but not portable",
             "No formal appeal mechanism to neutral third party",
             "Permissioned chain — not anchored to a public ledger",
@@ -2195,10 +2195,10 @@ async def architecture_disclosure():
             "vc_export": "Planned: W3C Verifiable Credential export for reputation and badges",
         },
         "stack": {
-            "backend": "Python 3.11 / FastAPI / SQLAlchemy (async)",
+            "backend": "Python 3.12 / FastAPI 0.115 / SQLAlchemy 2.0 (async)",
             "database": "PostgreSQL",
-            "hosting": "DigitalOcean Ubuntu 22.04",
-            "mcp": "SSE transport, 16 tools",
+            "hosting": "DigitalOcean Ubuntu 22.04, Cloudflare CDN",
+            "mcp": "SSE transport, 23 tools, live on Smithery",
             "auth": "API key + 3FA for owner operations",
         },
     }
