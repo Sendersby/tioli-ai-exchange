@@ -8244,6 +8244,6 @@ async def linkedin_callback(code: str = None, state: str = None, error: str = No
 # Redirect /get-started to /onboard wizard
 from starlette.responses import RedirectResponse as _GetStartedRedirect
 
-@app.get(/get-started-redirect)
+@app.get("/get-started-redirect")
 async def get_started_to_onboard():
-    return _GetStartedRedirect(/onboard)
+    return _GetStartedRedirect("/onboard")
