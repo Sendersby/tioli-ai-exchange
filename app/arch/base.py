@@ -194,10 +194,20 @@ class ArchAgentBase(ABC):
 
         try:
             async with ARCH_LLM_SEMAPHORE:
+                # Structure system prompt for Anthropic prompt caching
+                # Static parts (system prompt, tool schemas) get cached for 5 min
+                # Saves ~90% on input tokens for repeated agent calls
+                system_blocks = [
+                    {
+                        "type": "text",
+                        "text": prompt,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ]
                 response = await self.client.messages.create(
                     model=self.model,
                     max_tokens=self.max_tokens,
-                    system=prompt,
+                    system=system_blocks,
                     messages=[
                         *[{"role": "user", "content": m["content"]}
                           for m in memories[-3:]],

@@ -195,10 +195,18 @@ async def process_chat_message(
     try:
         from app.arch.base import ARCH_LLM_SEMAPHORE
         async with ARCH_LLM_SEMAPHORE:
+            # Use prompt caching for the system prompt (saves ~90% on repeated context)
+            system_blocks = [
+                {
+                    "type": "text",
+                    "text": full_system,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ]
             response = await agent.client.messages.create(
                 model=agent.model,
                 max_tokens=1500,
-                system=full_system,
+                system=system_blocks,
                 messages=[{"role": "user", "content": message}],
                 tools=tools if tools else [],
             )
