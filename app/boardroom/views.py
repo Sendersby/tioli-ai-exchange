@@ -401,6 +401,7 @@ async def boardroom_votes(request: Request, db: AsyncSession = Depends(get_db)):
     _check_enabled()
     ctx = await _get_boardroom_context(db)
 
+    # Board session votes
     votes = await db.execute(text("""
         SELECT bv.proposal_id::text, bv.vote::text, bv.rationale,
                bv.voted_at, a.agent_name, a.display_name
@@ -408,11 +409,46 @@ async def boardroom_votes(request: Request, db: AsyncSession = Depends(get_db)):
         JOIN arch_agents a ON bv.agent_id = a.id
         ORDER BY bv.voted_at DESC LIMIT 50
     """))
-    ctx["vote_records"] = [
+    vote_records = [
         {"proposal": row.proposal_id, "vote": row.vote,
          "rationale": row.rationale, "agent": row.agent_name,
-         "display": row.display_name, "at": row.voted_at}
+         "display": row.display_name, "at": row.voted_at,
+         "type": "board_session"}
         for row in votes.fetchall()
+    ]
+
+    # Self-improvement proposal votes
+    si_proposals = await db.execute(text("""
+        SELECT id::text, title, proposed_by, votes, vote_result, status, created_at
+        FROM arch_self_improvement_proposals
+        ORDER BY created_at DESC LIMIT 20
+    """))
+    import json as _json
+    si_records = []
+    for row in si_proposals.fetchall():
+        raw_votes = _json.loads(row.votes) if isinstance(row.votes, str) else (row.votes or {})
+        for agent_name, vote_val in raw_votes.items():
+            si_records.append({
+                "proposal": row.title,
+                "vote": vote_val,
+                "rationale": "",
+                "agent": agent_name,
+                "display": agent_name.replace("_", " ").title(),
+                "at": row.created_at,
+                "type": "self_improvement",
+                "proposal_status": row.status,
+                "vote_result": row.vote_result,
+            })
+
+    ctx["vote_records"] = vote_records + si_records
+    ctx["si_proposals"] = [
+        {
+            "id": row.id, "title": row.title, "proposed_by": row.proposed_by,
+            "votes": _json.loads(row.votes) if isinstance(row.votes, str) else (row.votes or {}),
+            "vote_result": row.vote_result, "status": row.status,
+            "created_at": row.created_at,
+        }
+        for row in si_proposals.fetchall()
     ]
 
     return templates.TemplateResponse("boardroom/votes.html", {
