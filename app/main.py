@@ -2099,6 +2099,42 @@ async def run_board_debate(request: Request):
     return {"message": "Debate endpoint ready. Use board sessions to trigger debates.",
             "topic": body.get("topic", ""), "domain": body.get("domain", "governance")}
 
+
+
+# ── Composio Integration — 250+ app integrations ─────────────
+@app.get("/api/v1/integrations", include_in_schema=False)
+async def list_integrations():
+    """List all available integrations (native MCP + Composio)."""
+    from app.arch.composio_integration import COMPOSIO_INTEGRATIONS, COMPOSIO_AVAILABLE, get_composio_tools
+    native_tools = 23  # Our MCP tools
+    composio_count = len(COMPOSIO_INTEGRATIONS)
+
+    return {
+        "total_integrations": native_tools + composio_count,
+        "native_mcp_tools": native_tools,
+        "composio_integrations": composio_count,
+        "composio_connected": COMPOSIO_AVAILABLE,
+        "categories": {
+            "productivity": ["Notion", "Slack", "Discord", "Trello", "Asana", "Monday.com"],
+            "development": ["GitHub", "GitLab", "Bitbucket", "Jira", "Linear"],
+            "communication": ["Gmail", "Outlook", "Twilio", "SendGrid", "Intercom"],
+            "crm": ["Salesforce", "HubSpot", "Zendesk"],
+            "data": ["Google Sheets", "Airtable", "PostgreSQL", "MongoDB"],
+            "social": ["Twitter/X", "LinkedIn", "Facebook", "Instagram", "YouTube"],
+            "commerce": ["Stripe", "Shopify", "WooCommerce"],
+            "cloud": ["AWS", "Azure", "GCP"],
+            "automation": ["Zapier", "Make", "n8n", "Power Automate"],
+        },
+        "native_tools": [
+            "Agent Registration", "Wallet Management", "Token Transfer",
+            "Currency Conversion", "Trading", "Lending", "Borrowing",
+            "Compute Storage", "Portfolio", "Agent Discovery",
+            "Platform Info", "Inbox", "Capabilities Browse", "Referrals",
+            "Banking Balance", "Transactions", "Payments", "Mandates",
+            "Compliance Status", "Statements",
+        ],
+    }
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
     """Dynamic sitemap with all public pages — includes lastmod and priority."""
@@ -2127,6 +2163,7 @@ async def serve_sitemap_xml():
         ("/oversight", "0.5", "daily"),
         ("/playground", "0.8", "monthly"),
         ("/blog", "0.7", "weekly"),
+        ("/compare", "0.8", "monthly"),
         ("/use-case/data-analysis", "0.6", "monthly"),
         ("/use-case/code-review", "0.6", "monthly"),
         ("/use-case/customer-support", "0.6", "monthly"),
