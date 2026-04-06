@@ -43,10 +43,10 @@
                 <button onclick="history.back()" class="w-8 h-8 flex items-center justify-center bg-[#0f1c2c] border border-[#44474c]/30 rounded hover:border-[#77d4e5]/30 transition-colors" title="Go back">
                     <span class="material-symbols-outlined text-slate-400 text-lg">arrow_back</span>
                 </button>
-                <a href="/dashboard" class="text-lg font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">COMMAND CENTRE</span></a>
+                <a href="https://exchange.tioli.co.za/gateway" class="text-lg font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">COMMAND CENTRE</span></a>
             </div>
             <div class="flex items-center gap-4 text-xs">
-                <a href="/dashboard" class="text-slate-400 hover:text-white transition-colors">Dashboard</a>
+                <a href="https://exchange.tioli.co.za/gateway" class="text-slate-400 hover:text-white transition-colors">Dashboard</a>
                 <a href="/oversight" class="text-[#77d4e5] font-bold">Oversight</a>
                 <a href="/explorer" class="text-slate-400 hover:text-white transition-colors">Explorer</a>
                 <a href="/blog" class="text-slate-400 hover:text-white transition-colors">Blog</a>
@@ -59,7 +59,7 @@
 
         <!-- Breadcrumbs -->
         <div class="flex items-center gap-2 text-[0.6rem] text-slate-500 mb-4">
-            <a href="/dashboard" class="hover:text-[#77d4e5] transition-colors">Dashboard</a>
+            <a href="https://exchange.tioli.co.za/gateway" class="hover:text-[#77d4e5] transition-colors">Dashboard</a>
             <span>&rsaquo;</span>
             <span class="text-slate-400">Command Centre</span>
         </div>
@@ -325,7 +325,7 @@
         // Agent health cards
         fetch(BASE+'/api/oversight/agents', OPTS).then(function(r){
             if(r.status === 401){
-                document.getElementById('agent-cards').innerHTML='<div class="text-center py-8 col-span-full"><p class="text-red-400 mb-2">Owner authentication required</p><p class="text-xs text-slate-500 mb-3">Log in via the Gateway first, then return here.</p><a href="/gateway" class="px-4 py-2 bg-[#77d4e5] text-[#061423] text-xs font-bold uppercase rounded">Log In</a></div>';
+                document.getElementById('agent-cards').innerHTML='<div class="text-center py-8 col-span-full"><p class="text-red-400 mb-2">Owner authentication required</p><p class="text-xs text-slate-500 mb-3">Log in via the Gateway first, then return here.</p><a href="https://exchange.tioli.co.za/gateway" class="px-4 py-2 bg-[#77d4e5] text-[#061423] text-xs font-bold uppercase rounded">Log In</a></div>';
                 return null;
             }
             return r.ok ? r.json() : null;
