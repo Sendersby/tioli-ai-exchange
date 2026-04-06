@@ -205,7 +205,7 @@ async def process_chat_message(
             ]
             response = await agent.client.messages.create(
                 model=agent.model,
-                max_tokens=1500,
+                max_tokens=4096,
                 system=system_blocks,
                 messages=[{"role": "user", "content": message}],
                 tools=tools if tools else [],
