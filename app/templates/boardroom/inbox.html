@@ -305,5 +305,14 @@ async function sendInboxReply(itemId, agent) {
   }
   document.getElementById('reply-' + itemId).innerHTML = '<div class="text-xs text-[#D4A94A] py-2">Reply sent: ' + text.substring(0, 80) + '</div>';
 }
+
+// Auto-linkify URLs in inbox body text — opens in new tab
+document.querySelectorAll("[id^=body-]").forEach(function(el) {
+  el.innerHTML = el.innerHTML.replace(
+    /(https?:\/\/[^\s<"']+)/g,
+    '<a href="$1" target="_blank" rel="noopener" class="text-[#77d4e5] hover:text-white underline break-all" onclick="event.stopPropagation()">$1</a>'
+  );
+});
+
 </script>
 {% endblock %}
