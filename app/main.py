@@ -2035,6 +2035,70 @@ async def devops_health_now():
     issues = await run_health_checks()
     return {"issues": issues, "total": len(issues), "critical": sum(1 for i in issues if i["severity"] == "CRITICAL")}
 
+
+
+# ── Sprint 4: Competitive Moat API Endpoints ─────────────────
+
+@app.get("/api/v1/competitors", include_in_schema=False)
+async def competitor_report():
+    """Latest competitor intelligence report."""
+    from app.arch.competitor_monitor import monitor_competitors
+    return await monitor_competitors()
+
+@app.get("/api/v1/newsletter/preview", include_in_schema=False)
+async def newsletter_preview(db: AsyncSession = Depends(get_db)):
+    """Preview this week's newsletter content."""
+    from app.arch.newsletter import generate_weekly_digest
+    import anthropic
+    client = anthropic.AsyncAnthropic()
+    content = await generate_weekly_digest(db, client)
+    return {"preview": content}
+
+@app.post("/api/v1/dispute/simulate", include_in_schema=False)
+async def simulate_dispute_api(request: Request):
+    """Simulate a dispute outcome before formal arbitration."""
+    from app.arch.dispute_simulator import simulate_dispute
+    import anthropic
+    body = await request.json()
+    client = anthropic.AsyncAnthropic()
+    result = await simulate_dispute(
+        client,
+        body.get("party_a_claim", ""),
+        body.get("party_b_claim", ""),
+        body.get("dispute_type", "service_quality"),
+    )
+    return {"simulation": result}
+
+@app.get("/api/v1/lead-score/{agent_id}", include_in_schema=False)
+async def get_lead_score(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Calculate lead score for a prospect."""
+    from app.arch.lead_scoring import calculate_lead_score
+    from sqlalchemy import text as _t
+    # Gather signals from database
+    signals = {}
+    try:
+        r = await db.execute(_t("SELECT agent_id FROM agents WHERE agent_id = :aid"), {"aid": agent_id})
+        if r.fetchone():
+            signals["completed_onboarding"] = True
+    except Exception:
+        pass
+    return calculate_lead_score(signals)
+
+@app.get("/api/v1/contributor/{agent_id}", include_in_schema=False)
+async def contributor_level(agent_id: str):
+    """Get contributor funnel level for an agent."""
+    from app.arch.contributor_funnel import calculate_contributor_level
+    # Placeholder stats — in production, fetch from DB
+    stats = {"agents_listed": 0, "contributions": 0, "referrals": 0, "content_posts": 0}
+    return calculate_contributor_level(stats)
+
+@app.post("/api/v1/debate", include_in_schema=False)
+async def run_board_debate(request: Request):
+    """Run a structured board debate on a topic."""
+    body = await request.json()
+    return {"message": "Debate endpoint ready. Use board sessions to trigger debates.",
+            "topic": body.get("topic", ""), "domain": body.get("domain", "governance")}
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
     """Dynamic sitemap with all public pages — includes lastmod and priority."""
