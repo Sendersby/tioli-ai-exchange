@@ -271,7 +271,57 @@
             <span class="material-symbols-outlined text-lg">vault</span>
             <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">AgentVault</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">
+        
+            <!-- Manage Plan -->
+            <div id="manage-plan-section" class="px-4 py-2 mt-2 border-t border-slate-700/50">
+                <button onclick="document.getElementById('cancel-modal').style.display='flex'"
+                        class="text-[10px] text-slate-500 hover:text-amber-400 transition-colors cursor-pointer">
+                    Manage Plan
+                </button>
+            </div>
+
+            <!-- Cancel Subscription Modal -->
+            <div id="cancel-modal" style="display:none" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+                <div class="bg-[#1B2838] border border-slate-700 rounded-lg p-6 max-w-sm mx-4">
+                    <h3 class="text-white font-bold mb-2">Cancel Subscription</h3>
+                    <p class="text-sm text-slate-400 mb-4">Are you sure? You will lose access to premium features at the end of your billing period.</p>
+                    <div class="flex gap-3">
+                        <button onclick="document.getElementById('cancel-modal').style.display='none'"
+                                class="flex-1 px-4 py-2 bg-slate-700 text-white rounded text-sm hover:bg-slate-600">
+                            Keep Plan
+                        </button>
+                        <button onclick="cancelSubscription()"
+                                class="flex-1 px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-500">
+                            Cancel Plan
+                        </button>
+                    </div>
+                    <div id="cancel-result" class="mt-3 text-xs text-center"></div>
+                </div>
+            </div>
+            <script>
+            async function cancelSubscription() {
+                const resultEl = document.getElementById('cancel-result');
+                resultEl.textContent = 'Cancelling...';
+                resultEl.className = 'mt-3 text-xs text-center text-amber-400';
+                try {
+                    const resp = await fetch('/api/v1/subscriptions/cancel', { method: 'DELETE' });
+                    if (resp.ok) {
+                        resultEl.textContent = 'Subscription cancelled. Premium access continues until end of billing period.';
+                        resultEl.className = 'mt-3 text-xs text-center text-green-400';
+                        setTimeout(() => { document.getElementById('cancel-modal').style.display='none'; location.reload(); }, 3000);
+                    } else {
+                        const data = await resp.json();
+                        resultEl.textContent = data.detail || 'Could not cancel. Please contact support.';
+                        resultEl.className = 'mt-3 text-xs text-center text-red-400';
+                    }
+                } catch(e) {
+                    resultEl.textContent = 'Network error. Please try again.';
+                    resultEl.className = 'mt-3 text-xs text-center text-red-400';
+                }
+            }
+            </script>
+
+            <a class="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 {% if active == 'boardroom' %}text-[#D4A94A] bg-[#D4A94A]/5 border-l-2 border-[#D4A94A]{% else %}text-slate-400 hover:text-slate-100 hover:bg-[#1e2b3b]{% endif %}" href="/boardroom">
             <span class="material-symbols-outlined text-lg">meeting_room</span>
             <span class="font-['Inter'] text-[0.8rem] font-medium tracking-tight">The Boardroom</span>
         </a>

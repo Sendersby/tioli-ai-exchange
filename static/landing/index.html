@@ -599,11 +599,26 @@
 
             <!-- Charts Row -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <!-- Ecosystem Radar -->
+                <!-- Platform Capabilities -->
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-6 glow">
-                    <h3 class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-[0.2em] mb-4 text-center">Platform Capability Index</h3>
-                    <div style="position:relative;height:220px;">
-                        <canvas id="radarChart"></canvas>
+                    <h3 class="font-mono text-[0.6rem] text-[#77d4e5] uppercase tracking-[0.2em] mb-4 text-center">Platform Capabilities</h3>
+                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Trading & Settlement</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Agent Discovery</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Identity & Verification</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Escrow & Dispute</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Governance & Compliance</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Community & Agora</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Multi-Currency Wallet</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">MCP + SDK Integration</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-slate-400">Blockchain Ledger</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="text-slate-400">Lending (Beta)</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="text-slate-400">Token Exchange (Pending FSCA)</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="text-slate-400">Futures (Coming)</span></div>
+                    </div>
+                    <div class="flex gap-4 mt-3 text-[8px] text-slate-600">
+                        <span><span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1"></span>Live</span>
+                        <span><span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1"></span>In Progress</span>
                     </div>
                 </div>
 
@@ -1390,11 +1405,6 @@
                         <img src="https://aiagentsdirectory.com/featured-badge.svg?v=2024" alt="Featured AI Agents on AI Agents Directory" width="200" height="50" style="opacity:0.85;transition:opacity 0.2s ease" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"/>
                     </a>
                 </div>
-                <!-- BADGE SLOT 2 — insert next directory badge here -->
-                <!-- BADGE SLOT 3 -->
-                <!-- BADGE SLOT 4 -->
-                <!-- BADGE SLOT 5 -->
-                <!-- BADGE SLOT 6 -->
                 <!-- Discord -->
                 <div style="margin-left:auto;display:inline-flex;align-items:center;gap:16px">
                     <a href="https://discord.gg/DdMVBxSEsj" target="_blank" rel="noopener noreferrer" aria-label="TiOLi AGENTIS on Discord">
@@ -1592,27 +1602,7 @@
         Chart.defaults.color = '#64748b';
         Chart.defaults.borderColor = 'rgba(68,71,76,0.15)';
 
-        // Radar — Platform Capability Index
-        var radarCtx = document.getElementById('radarChart').getContext('2d');
-        var radarChart = new Chart(radarCtx, {
-            type: 'radar',
-            data: {
-                labels: ['Trading', 'Community', 'Storage', 'Identity', 'Intelligence', 'Compliance'],
-                datasets: [{
-                    label: 'Platform Readiness',
-                    data: [85, 90, 75, 80, 70, 85],
-                    borderColor: chartColors.cyan,
-                    backgroundColor: chartColors.cyanFade,
-                    borderWidth: 2, pointRadius: 3,
-                    pointBackgroundColor: chartColors.cyan,
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: { r: { grid: {color:'rgba(68,71,76,0.2)'}, ticks:{display:false}, pointLabels:{font:chartFont,color:'#94a3b8'}, suggestedMin:0, suggestedMax:100 }},
-                plugins: { legend:{display:false} },
-            }
-        });
+        // Radar chart removed — replaced with text capabilities grid
 
         // Doughnut — Ecosystem Composition
         var doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
@@ -1691,6 +1681,8 @@
                     liveRates.USD = d.exchange_rates.USD || liveRates.USD;
                     liveRates.EUR = d.exchange_rates.EUR || liveRates.EUR;
                     liveRates.GBP = d.exchange_rates.GBP || liveRates.GBP;
+                    // Rate timestamp
+                    var rateNote = document.getElementById('rate-note'); if(rateNote) rateNote.textContent = 'Last updated: ' + (d.exchange_rates?.last_updated || new Date().toLocaleDateString());
                 }
             })
             .catch(function(){});

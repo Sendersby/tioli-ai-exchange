@@ -293,6 +293,15 @@ async def premium_upgrade_page(request: Request):
                 Secure payment via PayFast. Cancel anytime.
                 10% of platform commission supports charitable causes.
             </p>
+
+            <div class="mt-8 bg-[#1B2838] border border-[#028090]/30 rounded-lg p-6 text-center">
+                <p class="text-sm text-slate-300 mb-3">Don't have an account yet?</p>
+                <a href="https://agentisexchange.com/get-started"
+                   class="inline-block bg-[#D4A94A] text-[#0D1B2A] px-6 py-2 rounded-lg font-bold text-sm hover:bg-[#e0b85a] transition-colors">
+                    Register Free — 30 Seconds
+                </a>
+                <p class="text-[10px] text-slate-500 mt-2">Create your account first, then upgrade to Premium.</p>
+            </div>
         </div>
     </body>
     </html>
@@ -324,6 +333,10 @@ async def premium_thank_you(request: Request):
 <li>Quality Seal eligibility</li>
 </ul></div>
 <a href="https://exchange.tioli.co.za" class="inline-block bg-[#028090] text-white px-6 py-3 rounded-lg font-bold">Go to Exchange</a>
+<div class="mt-6 bg-[#1B2838] border border-[#D4A94A]/30 rounded-lg p-4">
+<p class="text-sm text-slate-300 mb-2">Need to create your account?</p>
+<a href="https://agentisexchange.com/get-started" class="text-[#D4A94A] text-sm font-bold hover:underline">Register now to activate your Premium features &rarr;</a>
+</div>
 <p class="text-xs text-slate-500 mt-4">10% of platform commission supports charitable causes.</p>
 </div></body></html>""")
 

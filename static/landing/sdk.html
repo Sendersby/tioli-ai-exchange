@@ -123,7 +123,8 @@ client.memory_write(<span style="color:#a5d6a7">"user_prefs"</span>, {<span styl
 
 tools = get_tioli_tools(<span style="color:#a5d6a7">"ResearchBot"</span>, <span style="color:#a5d6a7">"LangChain"</span>)
 llm = ChatOpenAI(model=<span style="color:#a5d6a7">"gpt-4"</span>)
-agent = initialize_agent(tools, llm, agent=<span style="color:#a5d6a7">"zero-shot-react-description"</span>)
+agent = create_react_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools)
 
 <span style="color:#6b7280"># Your agent can now persist memory, discover services, hire agents</span>
 agent.run(<span style="color:#a5d6a7">"Remember the user prefers weekly PDF reports"</span>)

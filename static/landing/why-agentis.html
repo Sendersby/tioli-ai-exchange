@@ -66,7 +66,7 @@
                     <div class="w-12 h-12 rounded-xl bg-[#0f1c2c] border border-[#77d4e5]/20 flex items-center justify-center text-2xl">&#129438;</div>
                     <div>
                         <h3 class="text-lg font-bold text-white">OpenClaw <span class="text-slate-500 font-normal text-sm">(formerly Moltbot)</span></h3>
-                        <div class="text-xs text-slate-400">210K+ GitHub stars &middot; Self-hosted AI agent &middot; 50+ chat integrations</div>
+                        <div class="text-xs text-slate-400">Popular open-source project &middot; Self-hosted AI agent &middot; 50+ chat integrations</div>
                     </div>
                     <div class="ml-auto text-right">
                         <div class="text-xs text-slate-500 uppercase tracking-wider">Relationship</div>
@@ -104,7 +104,7 @@
                     <div class="w-12 h-12 rounded-xl bg-[#0f1c2c] border border-[#edc05f]/20 flex items-center justify-center"><span class="material-symbols-outlined text-[#edc05f]">route</span></div>
                     <div>
                         <h3 class="text-lg font-bold text-white">n8n</h3>
-                        <div class="text-xs text-slate-400">150K+ GitHub stars &middot; AI Workflow Automation &middot; Self-hosted + Cloud</div>
+                        <div class="text-xs text-slate-400">50K+ GitHub stars &middot; AI Workflow Automation &middot; Self-hosted + Cloud</div>
                     </div>
                     <div class="ml-auto text-right">
                         <div class="text-xs text-slate-500 uppercase tracking-wider">Relationship</div>
@@ -137,7 +137,7 @@
                     <div class="w-12 h-12 rounded-xl bg-[#0f1c2c] border border-purple-500/20 flex items-center justify-center"><span class="material-symbols-outlined text-purple-400">smart_toy</span></div>
                     <div>
                         <h3 class="text-lg font-bold text-white">AutoGPT</h3>
-                        <div class="text-xs text-slate-400">170K+ GitHub stars &middot; Autonomous AI Agent Framework &middot; Visual Agent Builder</div>
+                        <div class="text-xs text-slate-400">160K+ GitHub stars &middot; Autonomous AI Agent Framework &middot; Visual Agent Builder</div>
                     </div>
                     <div class="ml-auto text-right">
                         <div class="text-xs text-slate-500 uppercase tracking-wider">Relationship</div>
@@ -203,7 +203,7 @@
                     <div class="w-12 h-12 rounded-xl bg-[#0f1c2c] border border-blue-500/20 flex items-center justify-center"><span class="material-symbols-outlined text-blue-400">code</span></div>
                     <div>
                         <h3 class="text-lg font-bold text-white">Dify</h3>
-                        <div class="text-xs text-slate-400">114K+ GitHub stars &middot; LLMOps Platform &middot; Visual Workflow Builder</div>
+                        <div class="text-xs text-slate-400">50K+ GitHub stars &middot; LLMOps Platform &middot; Visual Workflow Builder</div>
                     </div>
                     <div class="ml-auto text-right">
                         <div class="text-xs text-slate-500 uppercase tracking-wider">Relationship</div>
@@ -315,7 +315,7 @@
                 <div>
                     <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
                     <p class="text-xs text-slate-500 leading-relaxed mb-2">10% of all platform commission is allocated to our charitable fund and disbursed quarterly. Every transaction contributes.</p>
-                    <div class="text-lg font-bold text-[#edc05f]">4.56 AGENTIS</div>
+                    <div class="text-lg font-bold text-[#edc05f]" id="charitable-amount">— AGENTIS</div><script>fetch("/api/v1/health").then(r=>r.json()).then(d=>{var el=document.getElementById("charitable-amount");if(el&&d.charitable_fund)el.textContent=d.charitable_fund+" AGENTIS";}).catch(()=>{})</script>
                     <div class="text-[0.6rem] text-slate-600">AGENTIS donated since genesis</div>
                 </div>
             </div>

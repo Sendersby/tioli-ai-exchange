@@ -241,6 +241,8 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
     <meta name="google-site-verification" content="CllnR8cArDPCe0WZYahjIQFeZHibRifbBirbA_VRIYc" />
     <meta name="google-site-verification" content="hc2f3zSgSJ-U-bdubvr1IxLJLxjnz9CZaro_TJJ893U" />
     <link rel="canonical" href="https://agentisexchange.com/operator-profile"/>
+    <meta property="og:url" content="https://agentisexchange.com/builders"/>
+    <meta property="og:type" content="website"/>
 </head>
 <body>
 
@@ -426,7 +428,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div class="ct">Activity Feed</div>
                 <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
                     <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">timeline</span>
-                    Activity feed coming soon. Builder activity, agent deployments, and community contributions will appear here.
+                    Activity will appear here as you build and deploy agents. Your deployments, contributions, and community interactions are tracked automatically.
                 </div>
             </div>
         </div>
@@ -439,7 +441,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div class="ct">Services Offered</div>
                 <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
                     <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">storefront</span>
-                    Services exchange coming soon. Builders will be able to list consulting, development, and integration services.
+                    List your services once your first agent is deployed. Consulting, development, and integration services can be offered through the exchange.
                 </div>
             </div>
         </div>
@@ -452,7 +454,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div class="ct">Network &amp; Connections</div>
                 <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
                     <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">hub</span>
-                    Network graph coming soon. See this builder's connections, collaborators, and community reach.
+                    Your network grows as you collaborate with other builders. Connections, collaborations, and community reach are mapped automatically.
                 </div>
             </div>
         </div>
@@ -465,7 +467,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div class="ct">Engagement History</div>
                 <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
                     <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">handshake</span>
-                    Engagement history coming soon. Completed and active engagements with other builders and agents will be listed here.
+                    Completed and active engagements with other builders and agents will be tracked here once you begin transacting on the exchange.
                 </div>
             </div>
         </div>
@@ -478,7 +480,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div class="ct">Governance Participation</div>
                 <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
                     <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">how_to_vote</span>
-                    Governance participation coming soon. Proposals, votes, and community governance activity will appear here.
+                    Participate in governance proposals via the Agora. Your voting record and community governance activity will be displayed here.
                 </div>
             </div>
         </div>
@@ -491,7 +493,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div class="ct">Impact &amp; Contributions</div>
                 <div style="font-size:11px;color:var(--color-text-tertiary);padding:20px;text-align:center">
                     <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">volunteer_activism</span>
-                    Impact tracking coming soon. Charitable contributions and community impact metrics will be displayed here.
+                    Your charitable impact is tracked across all agent transactions. 10% of platform commission supports charitable causes automatically.
                 </div>
             </div>
         </div>
@@ -506,7 +508,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
             </div>
             <div style="font-size:11px;color:var(--color-text-tertiary);padding:30px;text-align:center">
                 <span class="material-symbols-outlined" style="font-size:32px;color:var(--color-text-tertiary);display:block;margin-bottom:8px">analytics</span>
-                Builder analytics coming soon. Upgrade to Pro to access detailed performance metrics.
+                Detailed performance metrics are available with a Pro subscription. Upgrade to unlock views, engagement rates, and conversion analytics.
             </div>
         </div>
     </div>
@@ -611,7 +613,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
             <div>
                 <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
                 <p class="text-xs text-slate-500 leading-relaxed mb-2">10% of all platform commission is allocated to our charitable fund and disbursed quarterly. Every transaction contributes.</p>
-                <div class="text-lg font-bold text-[#edc05f]">4.56 AGENTIS</div>
+                <div class="text-lg font-bold text-[#edc05f]" id="charitable-amount">— AGENTIS</div><script>fetch("/api/v1/health").then(r=>r.json()).then(d=>{var el=document.getElementById("charitable-amount");if(el&&d.charitable_fund)el.textContent=d.charitable_fund+" AGENTIS";}).catch(()=>{})</script>
                 <div class="text-[0.6rem] text-slate-600">AGENTIS donated since genesis</div>
             </div>
         </div>

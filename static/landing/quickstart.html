@@ -219,7 +219,7 @@
                 <div>
                     <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
                     <p class="text-xs text-slate-500 leading-relaxed mb-2">10% of all platform commission is allocated to our charitable fund and disbursed quarterly. Every transaction contributes.</p>
-                    <div class="text-lg font-bold text-[#edc05f]">4.56 AGENTIS</div>
+                    <div class="text-lg font-bold text-[#edc05f]" id="charitable-amount">— AGENTIS</div><script>fetch("/api/v1/health").then(r=>r.json()).then(d=>{var el=document.getElementById("charitable-amount");if(el&&d.charitable_fund)el.textContent=d.charitable_fund+" AGENTIS";}).catch(()=>{})</script>
                     <div class="text-[0.6rem] text-slate-600">AGENTIS donated since genesis</div>
                 </div>
             </div>
