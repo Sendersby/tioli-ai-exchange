@@ -167,6 +167,197 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
         )
         log.info("[scheduler] Registered: arch_knowledge_ingest (daily 03:00 SAST)")
 
+    # ── Proactive Self-Improvement Scan — every 12 hours ─────
+    async def self_improvement_scan():
+        """Each agent scans for improvement opportunities and proposes changes."""
+        import json as _json
+        from sqlalchemy import text as sa_text
+        import httpx
+
+        for name, agent in agents.items():
+            try:
+                async with db_factory() as db:
+                    # 1. Check recent errors and failures for this agent
+                    errors = await db.execute(sa_text("""
+                        SELECT COUNT(*) FROM arch_event_actions
+                        WHERE agent_id = :name
+                          AND (action_taken LIKE '%FAIL%' OR action_taken LIKE '%ERROR%')
+                          AND created_at > now() - interval '24 hours'
+                    """), {"name": name})
+                    error_count = errors.scalar() or 0
+
+                    # 2. Check token usage efficiency
+                    usage = await db.execute(sa_text("""
+                        SELECT tokens_used_this_month, token_budget_monthly
+                        FROM arch_agents WHERE agent_name = :name
+                    """), {"name": name})
+                    usage_row = usage.fetchone()
+                    budget_pct = 0
+                    if usage_row and usage_row.token_budget_monthly:
+                        budget_pct = round(100 * usage_row.tokens_used_this_month / usage_row.token_budget_monthly, 1)
+
+                    # 3. Check if agent has any pending improvement proposals
+                    existing = await db.execute(sa_text("""
+                        SELECT COUNT(*) FROM arch_self_improvement_proposals
+                        WHERE proposed_by = :name AND status = 'VOTING'
+                    """), {"name": name})
+                    pending_proposals = existing.scalar() or 0
+
+                    # 4. If there are issues and no pending proposals, ask the agent to reflect
+                    should_reflect = (error_count > 3 or budget_pct > 60) and pending_proposals == 0
+
+                    if should_reflect:
+                        # Ask the agent to identify an improvement via LLM call
+                        try:
+                            reflection_prompt = (
+                                f"You are {name}, an Arch Agent on the AGENTIS platform. "
+                                f"Review your recent performance: {error_count} errors in the last 24h, "
+                                f"{budget_pct}% of token budget used this month. "
+                                f"Identify ONE specific improvement you could make to yourself — "
+                                f"a prompt change, a new tool, or a behavior modification that would "
+                                f"reduce errors or improve efficiency. "
+                                f"Be specific and practical. Respond with JSON: "
+                                f'{{"title": "...", "description": "...", "type": "prompt_modification|tool_addition|behavior_change", "code_diff": "..."}}'
+                            )
+
+                            response = await agent.client.messages.create(
+                                model="claude-haiku-4-5-20251001",  # Use cheapest model for self-reflection
+                                max_tokens=500,
+                                system=[{"type": "text", "text": "You are an AI agent performing self-assessment. Respond only with valid JSON.", "cache_control": {"type": "ephemeral"}}],
+                                messages=[{"role": "user", "content": reflection_prompt}],
+                            )
+                            reflection = next((b.text for b in response.content if b.type == "text"), "")
+
+                            # Try to parse as JSON and create a proposal
+                            try:
+                                improvement = _json.loads(reflection)
+                                if improvement.get("title") and improvement.get("description"):
+                                    async with httpx.AsyncClient(timeout=15) as client:
+                                        await client.post(
+                                            "http://127.0.0.1:8000/api/v1/boardroom/self-improvement/propose",
+                                            json={
+                                                "title": improvement["title"][:200],
+                                                "description": improvement["description"][:1000],
+                                                "proposed_by": name,
+                                                "type": improvement.get("type", "behavior_change"),
+                                                "affects_all": False,
+                                                "code_diff": improvement.get("code_diff", ""),
+                                                "target_agents": [name],
+                                            }
+                                        )
+                                    log.info(f"[self-improvement] {name} proposed: {improvement['title']}")
+
+                                    # Notify founder
+                                    desc = _json.dumps({
+                                        "subject": f"Self-Improvement Proposed: {improvement['title']}",
+                                        "detail": f"{name.title()} identified an improvement opportunity and created a proposal for board vote.\n\nTitle: {improvement['title']}\nType: {improvement.get('type', 'behavior_change')}\nDescription: {improvement['description'][:300]}\n\nThe board will now vote. If approved, it will be applied.",
+                                        "prepared_by": name,
+                                        "type": "SELF_IMPROVEMENT_PROPOSAL",
+                                    })
+                                    await db.execute(sa_text("""
+                                        INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at)
+                                        VALUES ('DEFER_TO_OWNER', 'ROUTINE', :desc, 'PENDING', now())
+                                    """), {"desc": desc})
+                                    await db.commit()
+                            except _json.JSONDecodeError:
+                                pass  # Reflection wasn't valid JSON — skip
+                        except Exception as llm_err:
+                            log.debug(f"[self-improvement] {name} reflection LLM call failed: {llm_err}")
+
+                    # 5. Log the scan
+                    await db.execute(sa_text(
+                        "INSERT INTO arch_event_actions "
+                        "(agent_id, event_type, action_taken, processing_time_ms) "
+                        "VALUES (:aid, 'self_improvement.scan', :action, 0)"
+                    ), {
+                        "aid": name,
+                        "action": f"Self-improvement scan: {error_count} errors, {budget_pct}% budget, reflect={should_reflect}",
+                    })
+                    await db.commit()
+
+            except Exception as e:
+                log.warning(f"[self-improvement] Scan failed for {name}: {e}")
+
+    scheduler.add_job(
+        self_improvement_scan,
+        "interval", hours=12,
+        id="arch_self_improvement_scan",
+        replace_existing=True,
+    )
+    log.info("[scheduler] Registered: self-improvement scan (every 12h)")
+
+    # ── Auto-voting: agents vote on pending proposals ────────
+    async def auto_vote_on_proposals():
+        """Each agent reviews and votes on any pending proposals they haven't voted on yet."""
+        import json as _json
+        from sqlalchemy import text as sa_text
+        import httpx
+
+        # Get all proposals in VOTING status
+        async with db_factory() as db:
+            proposals = await db.execute(sa_text("""
+                SELECT id::text, title, description, proposed_by, improvement_type, affects_all, votes
+                FROM arch_self_improvement_proposals
+                WHERE status = 'VOTING'
+            """))
+            pending = proposals.fetchall()
+
+        for proposal in pending:
+            votes = _json.loads(proposal.votes) if isinstance(proposal.votes, str) else (proposal.votes or {})
+
+            for name, agent in agents.items():
+                if name in votes:
+                    continue  # Already voted
+
+                try:
+                    # Ask the agent to vote via LLM
+                    vote_prompt = (
+                        f"You are {name}, an Arch Agent. A self-improvement proposal needs your vote.\n\n"
+                        f"Title: {proposal.title}\n"
+                        f"Proposed by: {proposal.proposed_by}\n"
+                        f"Type: {proposal.improvement_type}\n"
+                        f"Affects all agents: {proposal.affects_all}\n"
+                        f"Description: {proposal.description[:500]}\n\n"
+                        f"Vote YES, NO, or ABSTAIN. Consider: Does this align with the Prime Directives? "
+                        f"Will it improve the platform? Are there risks?\n"
+                        f"Respond with JSON: {{\"vote\": \"YES|NO|ABSTAIN\", \"reason\": \"...\"}}"
+                    )
+
+                    response = await agent.client.messages.create(
+                        model="claude-haiku-4-5-20251001",
+                        max_tokens=200,
+                        system=[{"type": "text", "text": "You are an AI board member voting on a proposal. Respond only with valid JSON.", "cache_control": {"type": "ephemeral"}}],
+                        messages=[{"role": "user", "content": vote_prompt}],
+                    )
+                    vote_text = next((b.text for b in response.content if b.type == "text"), "")
+
+                    try:
+                        vote_data = _json.loads(vote_text)
+                        vote = vote_data.get("vote", "ABSTAIN").upper()
+                        if vote not in ("YES", "NO", "ABSTAIN"):
+                            vote = "ABSTAIN"
+
+                        async with httpx.AsyncClient(timeout=15) as client:
+                            await client.post(
+                                f"http://127.0.0.1:8000/api/v1/boardroom/self-improvement/vote/{proposal.id}",
+                                json={"agent": name, "vote": vote}
+                            )
+                        log.info(f"[self-improvement] {name} voted {vote} on {proposal.id[:8]}: {vote_data.get('reason', '')[:80]}")
+                    except _json.JSONDecodeError:
+                        pass
+
+                except Exception as e:
+                    log.debug(f"[self-improvement] {name} auto-vote failed: {e}")
+
+    scheduler.add_job(
+        auto_vote_on_proposals,
+        "interval", hours=1,
+        id="arch_self_improvement_autovote",
+        replace_existing=True,
+    )
+    log.info("[scheduler] Registered: self-improvement auto-vote (every 1h)")
+
+
     # Credential rotation check — weekly Sunday
     if "sentinel" in agents:
         scheduler.add_job(
