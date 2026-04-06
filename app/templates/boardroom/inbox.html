@@ -314,5 +314,25 @@ document.querySelectorAll("[id^=body-]").forEach(function(el) {
   );
 });
 
+
+
+// Auto-refresh inbox every 30 seconds — check for new items
+let _lastCount = document.querySelectorAll(".inbox-item").length;
+setInterval(async function() {
+    try {
+        const resp = await fetch("/api/v1/boardroom/inbox");
+        const data = await resp.json();
+        const newCount = (data.inbox || data.items || []).length;
+        if (newCount !== _lastCount) {
+            // New items arrived — show notification then reload
+            const banner = document.createElement("div");
+            banner.className = "fixed top-14 left-1/2 -translate-x-1/2 z-[100] bg-[#D4A94A] text-[#0D1B2A] px-4 py-2 rounded-lg text-xs font-bold shadow-lg animate-pulse";
+            banner.textContent = "New inbox items — refreshing...";
+            document.body.appendChild(banner);
+            setTimeout(() => location.reload(), 1500);
+        }
+    } catch(e) {}
+}, 30000);
+
 </script>
 {% endblock %}
