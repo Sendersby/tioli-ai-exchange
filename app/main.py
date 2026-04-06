@@ -2259,6 +2259,8 @@ async def serve_sitemap_xml():
         ("/compare/virtuals", "0.7", "monthly"),
         ("/compare/agent-ai", "0.7", "monthly"),
         ("/templates", "0.7", "monthly"),
+        ("/builder", "0.9", "monthly"),
+        ("/learn", "0.8", "weekly"),
         ("/use-case/data-analysis", "0.6", "monthly"),
         ("/use-case/code-review", "0.6", "monthly"),
         ("/use-case/customer-support", "0.6", "monthly"),

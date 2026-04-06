@@ -574,6 +574,37 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="arch_forex_refresh", replace_existing=True)
     log.info("[scheduler] Registered: Forex rate refresh (every 6h)")
 
+    # ── Daily AI Agent News — 08:00 SAST ─────────────────────
+    async def daily_news_generation():
+        """Ambassador generates daily AI agent industry news."""
+        if "ambassador" not in agents:
+            return
+        try:
+            from app.arch.daily_news import generate_daily_news
+            news = await generate_daily_news(agents["ambassador"].client)
+            import json as _j
+            async with db_factory() as db:
+                from sqlalchemy import text as _t
+                desc = _j.dumps({
+                    "subject": "Daily AI Agent News",
+                    "detail": news[:1500],
+                    "prepared_by": "ambassador",
+                    "type": "DAILY_NEWS",
+                })
+                await db.execute(_t(
+                    "INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at) "
+                    "VALUES ('EXECUTION_PROOF', 'ROUTINE', :desc, 'PENDING', now())"
+                ), {"desc": desc})
+                await db.commit()
+            log.info("[news] Daily news generated and delivered")
+        except Exception as e:
+            log.error(f"[news] Daily generation failed: {e}")
+
+    scheduler.add_job(daily_news_generation, "cron", hour=6, minute=0,
+                      id="arch_daily_news", replace_existing=True)
+    log.info("[scheduler] Registered: Daily news (08:00 SAST)")
+
+
 
 
 
