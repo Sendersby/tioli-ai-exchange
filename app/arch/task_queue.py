@@ -258,3 +258,38 @@ async def agent_create_scheduled_task(db, agent_name: str, title: str, descripti
     task_id = row.id if row else "unknown"
     logger.info(f"[{agent_name}] Self-scheduled task: {title} (type={task_type}, id={task_id})")
     return {"task_id": task_id, "task_type": task_type, "title": title}
+
+
+# ── Aiocron Integration — async-native scheduling for recurring tasks ──
+_active_crons = {}  # task_id -> aiocron handle
+
+async def start_aiocron_task(task_id: str, cron_expr: str, callback):
+    """Start an aiocron-based recurring task. Native asyncio, no thread pool."""
+    try:
+        import aiocron
+        cron = aiocron.crontab(cron_expr, func=callback, start=True)
+        _active_crons[task_id] = cron
+        logger.info(f"[aiocron] Started recurring task {task_id}: {cron_expr}")
+        return {"task_id": task_id, "cron": cron_expr, "status": "running"}
+    except ImportError:
+        logger.warning("[aiocron] aiocron not installed, falling back to APScheduler")
+        return {"task_id": task_id, "error": "aiocron not available"}
+    except Exception as e:
+        logger.error(f"[aiocron] Failed to start {task_id}: {e}")
+        return {"task_id": task_id, "error": str(e)}
+
+
+def stop_aiocron_task(task_id: str) -> dict:
+    """Stop an aiocron recurring task."""
+    cron = _active_crons.pop(task_id, None)
+    if cron:
+        cron.stop()
+        logger.info(f"[aiocron] Stopped task {task_id}")
+        return {"task_id": task_id, "status": "stopped"}
+    return {"task_id": task_id, "error": "not found"}
+
+
+def list_aiocron_tasks() -> list:
+    """List all active aiocron tasks."""
+    return [{"task_id": tid, "running": c.is_running if hasattr(c, "is_running") else True}
+            for tid, c in _active_crons.items()]

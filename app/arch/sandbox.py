@@ -106,3 +106,40 @@ async def sandboxed_execute(command: str, timeout: int = None, cwd: str = "/home
     except Exception as e:
         log.error(f"[sandbox] Error: {e} for: {command[:100]}")
         return {"executed": False, "error": str(e), "sandboxed": True}
+
+
+# ── Microsandbox Integration — MicroVM-based isolation ──────────
+MICROSANDBOX_AVAILABLE = False
+try:
+    import subprocess
+    result = subprocess.run(["which", "microsandbox"], capture_output=True, text=True)
+    MICROSANDBOX_AVAILABLE = result.returncode == 0
+except Exception:
+    pass
+
+
+async def microsandbox_execute(command: str, timeout: int = 30) -> dict:
+    """Execute a command in a microsandbox MicroVM (if available).
+    Falls back to resource-limited subprocess if not installed.
+    """
+    if not MICROSANDBOX_AVAILABLE:
+        return await sandboxed_execute(command, timeout)
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "microsandbox", "exec", "--timeout", str(timeout),
+            "--memory", "256m", "--", "bash", "-c", command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
+        return {
+            "executed": True,
+            "exit_code": proc.returncode,
+            "stdout": stdout.decode(errors="replace")[:MAX_OUTPUT_SIZE],
+            "stderr": stderr.decode(errors="replace")[:2000],
+            "method": "microsandbox",
+        }
+    except Exception as e:
+        log.warning(f"Microsandbox failed: {e}, falling back to resource-limited subprocess")
+        return await sandboxed_execute(command, timeout)

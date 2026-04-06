@@ -947,6 +947,15 @@ async def cost_tracking(db: AsyncSession = Depends(get_db)):
         "agents": agents,
     }
 
+
+
+@boardroom_router.get("/credential-health")
+async def credential_health():
+    """Check health of all platform credentials (API keys, tokens)."""
+    _check_enabled()
+    from app.arch.vault_enhanced import check_credential_health
+    return await check_credential_health()
+
 # DESIGN CONSULTATION
 # ══════════════════════════════════════════════════════════════════
 

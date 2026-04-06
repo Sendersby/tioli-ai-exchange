@@ -17,6 +17,44 @@ from sqlalchemy.ext.asyncio import AsyncSession
 log = logging.getLogger("arch.memory")
 
 
+
+
+# ── HuggingFace Cross-Encoder Reranking ──────────────────────────
+import httpx as _httpx
+
+async def _hf_rerank(query: str, candidates: list[dict], top_k: int = 5) -> list[dict]:
+    """Rerank candidates using HuggingFace Inference API (BAAI/bge-reranker-v2-m3).
+    Falls back to input order if API unavailable."""
+    hf_token = os.getenv("HF_TOKEN", "")
+    if not hf_token or not candidates:
+        return candidates[:top_k]
+
+    try:
+        passages = [c.get("content", "")[:500] for c in candidates[:20]]
+        async with _httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                "https://router.huggingface.co/hf-inference/models/BAAI/bge-reranker-v2-m3",
+                headers={"Authorization": f"Bearer {hf_token}"},
+                json={"query": query, "texts": passages, "raw_scores": False},
+            )
+            if resp.status_code == 200:
+                scores = resp.json()
+                # scores is a list of floats, same order as passages
+                if isinstance(scores, list) and len(scores) == len(candidates[:20]):
+                    for i, score in enumerate(scores):
+                        if i < len(candidates):
+                            candidates[i]["rerank_score"] = score if isinstance(score, (int, float)) else 0
+                    candidates.sort(key=lambda x: x.get("rerank_score", 0), reverse=True)
+                    logger.debug(f"HF reranking: top score={candidates[0].get('rerank_score', 0):.3f}")
+                    return candidates[:top_k]
+            else:
+                logger.debug(f"HF reranking unavailable: HTTP {resp.status_code}")
+    except Exception as e:
+        logger.debug(f"HF reranking failed: {e}")
+
+    return candidates[:top_k]
+
+
 class ArchMemory:
     """pgvector-backed agent memory with outbox pattern."""
 
@@ -164,14 +202,17 @@ class ArchMemory:
                 c["rrf_score"] += (overlap / max(len(query_terms), 1)) * 0.01
             candidates.sort(key=lambda x: x["rrf_score"], reverse=True)
 
+        # Cross-encoder reranking via HuggingFace API (if available)
+        reranked = await _hf_rerank(query, candidates, top_k=k)
+
         return [
             {
                 "content": r["content"],
                 "metadata": r["metadata"],
-                "similarity": r.get("similarity", r["rrf_score"]),
+                "similarity": r.get("rerank_score", r.get("similarity", r["rrf_score"])),
                 "source_type": r["source_type"],
             }
-            for r in candidates[:k]
+            for r in reranked
         ]
 
     async def bootstrap(self, documents: list[dict]):

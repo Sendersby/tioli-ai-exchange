@@ -264,6 +264,7 @@ class ArchAgentBase(ABC):
                 "write_file": lambda p: self.executor.write_file(p["path"], p["content"]),
                 "read_file": lambda p: self.executor.read_file(p["path"]),
                 "browse_website": lambda p: self.executor.browse_url(p["url"], p.get("screenshot", True)),
+                "browse_with_ai": lambda p: _browse_ai_handler(p),
                 "post_social_content": lambda p: self.executor.post_content(p["platform"], p["content"], p.get("title")),
                 "generate_content": lambda p: self.executor.generate_content(p["prompt"], p.get("voice"), p.get("max_tokens", 1000)),
                 "research_competitor": lambda p: self.executor.research_competitor(p["url"]),
