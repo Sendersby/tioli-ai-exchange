@@ -123,4 +123,17 @@ EXECUTOR_TOOLS = [
             "required": ["method", "url"],
         },
     },
+    {
+        "name": "request_human_help",
+        "description": "Request human intervention from the founder. Use when you cannot complete a task because it requires human action — account creation, credentials, physical verification, legal signature, payment, or any action that requires a person.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Short description of what you need"},
+                "detail": {"type": "string", "description": "Full explanation: what you tried, why it failed, what the founder needs to do"},
+                "priority": {"type": "string", "enum": ["ROUTINE", "URGENT", "CRITICAL"], "default": "URGENT"},
+            },
+            "required": ["title", "detail"],
+        },
+    },
 ]

@@ -161,6 +161,31 @@ class ArchAgentBase(ABC):
             defer_reason = self._defer_reason(state)
             log.info(f"[{self.agent_id}] DEFER_TO_OWNER: {defer_reason}")
             await self._log_capability_gap(state, defer_reason)
+            # Create inbox item so founder sees this
+            try:
+                from sqlalchemy import text as _dt
+                agent_row = await self.db.execute(_dt(
+                    "SELECT id FROM arch_agents WHERE agent_name = :n"
+                ), {"n": self.agent_id})
+                agent_uuid = agent_row.scalar()
+                await self.db.execute(_dt(
+                    "INSERT INTO arch_founder_inbox "
+                    "(item_type, priority, description, prepared_by, status, due_at) "
+                    "VALUES ('DEFER_TO_OWNER', 'URGENT', :desc, :agent, 'PENDING', now() + interval '24 hours')"
+                ), {
+                    "desc": json.dumps({
+                        "subject": f"{self.agent_id.title()} needs your decision",
+                        "detail": f"I was asked to: {state.get('instruction', '')[:300]}. "
+                                  f"I cannot proceed because: {defer_reason}. "
+                                  f"Please review and provide direction.",
+                        "agent": self.agent_id,
+                        "original_instruction": state.get("instruction", "")[:500],
+                    }),
+                    "agent": agent_uuid,
+                })
+                await self.db.commit()
+            except Exception as e:
+                log.warning(f"[{self.agent_id}] Failed to create inbox item for DEFER: {e}")
             return {**state, "defer_to_owner": True, "defer_reason": defer_reason}
 
         memories = await self.recall(state["instruction"])
@@ -239,6 +264,7 @@ class ArchAgentBase(ABC):
                 "generate_image": lambda p: self._generate_image(p),
                 "create_social_graphic": lambda p: self._create_social_graphic(p),
                 "send_to_discord": lambda p: self._send_discord(p),
+                "request_human_help": lambda p: self.request_human_help(p["title"], p["detail"], p.get("priority", "URGENT")),
                 "create_subordinate_agent": lambda p: self._create_subordinate(p),
                 "issue_subordinate_instruction": lambda p: self._issue_instruction(p),
                 "verify_subordinate_capability": lambda p: self._verify_capability(p),
@@ -503,6 +529,36 @@ class ArchAgentBase(ABC):
     async def _get_team_status(self, params):
         from app.arch.subordinate_manager import get_team_status
         return await get_team_status(self.db, self.agent_id)
+
+
+    async def request_human_help(self, title: str, detail: str, priority: str = "URGENT"):
+        """Request human intervention — creates an inbox item for the founder."""
+        try:
+            from sqlalchemy import text as _ht
+            agent_row = await self.db.execute(_ht(
+                "SELECT id FROM arch_agents WHERE agent_name = :n"
+            ), {"n": self.agent_id})
+            agent_uuid = agent_row.scalar()
+            await self.db.execute(_ht(
+                "INSERT INTO arch_founder_inbox "
+                "(item_type, priority, description, prepared_by, status, due_at) "
+                "VALUES ('DEFER_TO_OWNER', :pri, :desc, :agent, 'PENDING', now() + interval '24 hours')"
+            ), {
+                "pri": priority,
+                "desc": json.dumps({
+                    "subject": title,
+                    "detail": detail,
+                    "agent": self.agent_id,
+                    "type": "human_intervention_required",
+                }),
+                "agent": agent_uuid,
+            })
+            await self.db.commit()
+            log.info(f"[{self.agent_id}] Human help requested: {title}")
+            return {"requested": True, "title": title}
+        except Exception as e:
+            log.error(f"[{self.agent_id}] Failed to request human help: {e}")
+            return {"requested": False, "error": str(e)}
 
     async def _log_capability_gap(self, state: dict, reason: str):
         event_type = (
