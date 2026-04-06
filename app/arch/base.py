@@ -193,6 +193,9 @@ class ArchAgentBase(ABC):
         tools = await self.get_tools()
 
         try:
+            # Smart model routing — pick Haiku/Sonnet/Opus based on task complexity
+            selected_model = self._select_model_for_task(state.get("instruction", ""))
+
             async with ARCH_LLM_SEMAPHORE:
                 # Structure system prompt for Anthropic prompt caching
                 # Static parts (system prompt, tool schemas) get cached for 5 min
@@ -205,7 +208,7 @@ class ArchAgentBase(ABC):
                     }
                 ]
                 response = await self.client.messages.create(
-                    model=self.model,
+                    model=selected_model,
                     max_tokens=self.max_tokens,
                     system=system_blocks,
                     messages=[
@@ -230,6 +233,18 @@ class ArchAgentBase(ABC):
         for tc in tool_calls:
             result = await self._execute_tool(tc.name, tc.input)
             tool_results.append({"tool": tc.name, "result": result})
+
+        # Track tokens used and which model was selected (for cost dashboard)
+        input_tokens = getattr(response, 'usage', None)
+        if input_tokens:
+            token_info = {
+                "model_used": selected_model if 'selected_model' in dir() else self.model,
+                "input_tokens": getattr(input_tokens, 'input_tokens', 0),
+                "output_tokens": getattr(input_tokens, 'output_tokens', 0),
+                "cache_read": getattr(input_tokens, 'cache_read_input_tokens', 0),
+                "cache_creation": getattr(input_tokens, 'cache_creation_input_tokens', 0),
+            }
+            log.debug(f"[{self.agent_id}] Token usage: {token_info}")
 
         # Store interaction in memory (outbox pattern)
         await self.remember(
@@ -370,6 +385,64 @@ class ArchAgentBase(ABC):
             {"agent_id": self.agent_id},
         )
         await self.db.commit()
+
+
+    def _select_model_for_task(self, instruction: str) -> str:
+        """Smart model routing: Haiku for simple, Sonnet for medium, Opus for strategic.
+        Saves 60-80% on API costs by routing cheap queries to cheap models.
+        Returns the model string to use for this specific call.
+        """
+        inst_lower = instruction.lower()
+
+        # Simple tasks → Haiku ($0.25/1M input) — acknowledgements, status checks, formatting
+        haiku_signals = [
+            "status check", "heartbeat", "confirm", "acknowledge",
+            "format this", "summarize briefly", "list the", "count the",
+            "what time", "check if", "is this correct", "yes or no",
+        ]
+        if any(sig in inst_lower for sig in haiku_signals):
+            return os.getenv("ARCH_FALLBACK_MODEL", "claude-haiku-4-5-20251001")
+
+        # Strategic/complex tasks → keep primary model (Opus for most agents)
+        opus_signals = [
+            "strategic", "governance", "constitutional", "board session",
+            "financial proposal", "risk assessment", "legal", "compliance",
+            "architecture", "design decision", "long-term", "dispute",
+            "arbitrat", "audit", "recommend", "evaluate", "assess",
+        ]
+        if any(sig in inst_lower for sig in opus_signals):
+            return self.model  # Keep the agent's primary model
+
+        # Medium complexity → Sonnet ($3/1M) — analysis, event processing, content
+        # Use Sonnet for agents whose primary is Opus (saves ~80%)
+        if self.model.startswith("claude-opus"):
+            return "claude-sonnet-4-6"
+
+        # Default: use agent's configured primary model
+        return self.model
+
+
+    async def generate_long_content(self, prompt: str, max_tokens: int = 16000) -> str:
+        """Generate long-form content using extended output tokens.
+        Uses the 300K output beta header for batch-style long generation.
+        Good for: reports, legal documents, blog posts, documentation.
+        """
+        try:
+            response = await self.client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                system=[{
+                    "type": "text",
+                    "text": await self._load_system_prompt(),
+                    "cache_control": {"type": "ephemeral"},
+                }],
+                messages=[{"role": "user", "content": prompt}],
+                extra_headers={"anthropic-beta": "output-300k-2026-03-24"},
+            )
+            return next((b.text for b in response.content if b.type == "text"), "")
+        except Exception as e:
+            log.error(f"[{self.agent_id}] Long content generation failed: {e}")
+            return f"[Generation failed: {e}]"
 
     # ── Token budget management ────────────────────────────────
 

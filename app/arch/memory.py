@@ -150,6 +150,20 @@ class ArchMemory:
 
         scored.sort(key=lambda x: x["rrf_score"], reverse=True)
 
+        # Take top candidates for potential reranking
+        candidates = scored[:k * 3] if len(scored) > k else scored
+
+        # Lightweight reranking: if we have more candidates than needed,
+        # use string-overlap scoring to boost exact-match relevance
+        if len(candidates) > k:
+            query_terms = set(query.lower().split())
+            for c in candidates:
+                content_terms = set(c["content"].lower().split())
+                overlap = len(query_terms & content_terms)
+                # Boost RRF score by term overlap ratio
+                c["rrf_score"] += (overlap / max(len(query_terms), 1)) * 0.01
+            candidates.sort(key=lambda x: x["rrf_score"], reverse=True)
+
         return [
             {
                 "content": r["content"],
@@ -157,7 +171,7 @@ class ArchMemory:
                 "similarity": r.get("similarity", r["rrf_score"]),
                 "source_type": r["source_type"],
             }
-            for r in scored[:k]
+            for r in candidates[:k]
         ]
 
     async def bootstrap(self, documents: list[dict]):

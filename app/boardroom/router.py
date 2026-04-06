@@ -893,6 +893,60 @@ async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(g
 
 
 # ══════════════════════════════════════════════════════════════════
+
+
+@boardroom_router.get("/cost-tracking")
+async def cost_tracking(db: AsyncSession = Depends(get_db)):
+    """Per-agent token usage and estimated cost for the current month."""
+    _check_enabled()
+    result = await db.execute(text("""
+        SELECT agent_name, display_name, model_primary, model_fallback,
+               tokens_used_this_month, token_budget_monthly
+        FROM arch_agents ORDER BY tokens_used_this_month DESC
+    """))
+
+    # Cost per million tokens (approximate)
+    costs = {
+        "claude-opus-4-6": {"input": 15.0, "output": 75.0},
+        "claude-sonnet-4-6": {"input": 3.0, "output": 15.0},
+        "claude-haiku-4-5-20251001": {"input": 0.25, "output": 1.25},
+    }
+
+    agents = []
+    total_tokens = 0
+    total_cost_est = 0
+    for r in result.fetchall():
+        used = r.tokens_used_this_month or 0
+        budget = r.token_budget_monthly or 3000000
+        model_cost = costs.get(r.model_primary, {"input": 3.0, "output": 15.0})
+        # Rough estimate: assume 70% input, 30% output
+        est_cost = (used * 0.7 * model_cost["input"] + used * 0.3 * model_cost["output"]) / 1_000_000
+        # With prompt caching: ~90% savings on input
+        est_cost_cached = (used * 0.7 * model_cost["input"] * 0.1 + used * 0.3 * model_cost["output"]) / 1_000_000
+
+        total_tokens += used
+        total_cost_est += est_cost_cached
+
+        agents.append({
+            "agent": r.agent_name,
+            "display_name": r.display_name,
+            "model": r.model_primary,
+            "tokens_used": used,
+            "token_budget": budget,
+            "budget_pct": round(used / budget * 100, 1) if budget > 0 else 0,
+            "est_cost_usd": round(est_cost, 4),
+            "est_cost_cached_usd": round(est_cost_cached, 4),
+        })
+
+    return {
+        "period": "current_month",
+        "total_tokens": total_tokens,
+        "total_est_cost_usd": round(total_cost_est, 4),
+        "prompt_caching": "enabled",
+        "smart_routing": "enabled",
+        "agents": agents,
+    }
+
 # DESIGN CONSULTATION
 # ══════════════════════════════════════════════════════════════════
 
