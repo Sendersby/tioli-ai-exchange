@@ -68,7 +68,7 @@
                 <span class="text-[10px] font-bold text-red-400 bg-red-500/20 px-1.5 py-0.5 rounded-full">OVERDUE</span>
                 {% endif %}
               </div>
-              <div class="text-xs text-slate-400 mb-1">{{ item.body }}</div>
+              <div class="text-xs text-slate-400 mb-1"><div id="body-{{ item.id }}" style="max-height:40px;overflow:hidden;cursor:pointer" onclick="var el=document.getElementById('body-{{ item.id }}');if(el.style.maxHeight==='40px'){el.style.maxHeight='none'}else{el.style.maxHeight='40px'}">{{ item.body }}</div><span class="text-[10px] text-[#77d4e5] cursor-pointer" onclick="var el=document.getElementById('body-{{ item.id }}');if(el.style.maxHeight==='40px'){el.style.maxHeight='none';this.textContent='Click to collapse'}else{el.style.maxHeight='40px';this.textContent='Click to expand'}">Click to expand</span></div>
               <div class="text-[10px] text-slate-500">From: {{ item.agent }} &bull; {{ item.created_at.strftime('%d %b %Y %H:%M') if item.created_at else '—' }}</div>
             </div>
           </div>

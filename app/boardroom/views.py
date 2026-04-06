@@ -306,12 +306,38 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
             due_at ASC NULLS LAST
         LIMIT 50
     """))
-    ctx["inbox_items"] = [
-        {"id": row.id, "type": row.item_type, "priority": row.priority,
-         "desc": row.description, "status": row.status,
-         "response": row.founder_response, "due": row.due_at, "at": row.created_at}
-        for row in items.fetchall()
-    ]
+    inbox_list = []
+    for row in items.fetchall():
+        # Parse description — may be JSON or plain text
+        desc = row.description or ""
+        try:
+            desc_data = json.loads(desc) if desc.startswith("{") else {}
+        except Exception:
+            desc_data = {}
+
+        title = desc_data.get("subject", row.item_type.replace("_", " ").title())
+        body = desc_data.get("detail", desc_data.get("situation", desc if not desc.startswith("{") else json.dumps(desc_data, indent=2)))
+        agent = desc_data.get("prepared_by", desc_data.get("assigned_to", "Board"))
+        
+        from datetime import datetime, timezone
+        overdue = row.due_at < datetime.now(timezone.utc) if row.due_at else False
+        action_type = "APPROVAL" if row.item_type in ("FINANCIAL_PROPOSAL", "TIER0_NOTIFICATION", "TIER1_NOTIFICATION") else "ACKNOWLEDGE"
+
+        inbox_list.append({
+            "id": row.id,
+            "type": row.item_type,
+            "priority": row.priority,
+            "title": title,
+            "body": body,
+            "agent": agent,
+            "status": row.status,
+            "response": row.founder_response,
+            "due": row.due_at,
+            "overdue": overdue,
+            "action_type": action_type,
+            "created_at": row.created_at,
+        })
+    ctx["inbox_items"] = inbox_list
 
     return templates.TemplateResponse("boardroom/inbox.html", {
         "request": request, "active": "boardroom", "authenticated": True, **ctx,
