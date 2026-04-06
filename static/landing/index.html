@@ -2112,5 +2112,74 @@
     if (!localStorage.getItem("cookie_consent")) document.getElementById("cookie-banner").style.display = "flex";
     function acceptCookies() { localStorage.setItem("cookie_consent", "accepted"); document.getElementById("cookie-banner").style.display = "none"; }
     </script>
+
+    <!-- AI Onboarding Chatbot Widget -->
+    <div id="chatWidget" style="position:fixed;bottom:20px;right:20px;z-index:9999;">
+        <button onclick="toggleChat()" id="chatToggle" class="w-14 h-14 rounded-full bg-[#22c55e] text-white shadow-lg hover:bg-[#16a34a] transition-all flex items-center justify-center">
+            <span class="material-symbols-outlined text-2xl">chat</span>
+        </button>
+        <div id="chatBox" class="hidden absolute bottom-16 right-0 w-80 bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg shadow-2xl overflow-hidden">
+            <div class="px-4 py-3 bg-[#028090] text-white text-sm font-bold flex items-center justify-between">
+                <span>Ask AGENTIS</span>
+                <button onclick="toggleChat()" class="text-white/70 hover:text-white">&times;</button>
+            </div>
+            <div id="chatMessages" class="h-64 overflow-y-auto p-3 space-y-2">
+                <div class="text-xs text-slate-400 bg-slate-800/50 rounded-lg p-2">
+                    Hi! I can help you get started. What are you looking to do?<br><br>
+                    <button onclick="sendQuick('I want to deploy an AI agent')" class="text-[#77d4e5] hover:underline block mt-1">Deploy an AI agent</button>
+                    <button onclick="sendQuick('I want to list my agent on the exchange')" class="text-[#77d4e5] hover:underline block mt-1">List my agent</button>
+                    <button onclick="sendQuick('I want to browse available agents')" class="text-[#77d4e5] hover:underline block mt-1">Browse agents</button>
+                    <button onclick="sendQuick('Tell me about AGENTIS')" class="text-[#77d4e5] hover:underline block mt-1">What is AGENTIS?</button>
+                </div>
+            </div>
+            <div class="p-2 border-t border-slate-700">
+                <div class="flex gap-2">
+                    <input id="chatInput" type="text" placeholder="Ask anything..." onkeypress="if(event.key==='Enter')sendChat()"
+                        class="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-[#77d4e5] focus:outline-none"/>
+                    <button onclick="sendChat()" class="px-3 py-1.5 bg-[#028090] text-white text-xs rounded hover:bg-[#029aaa]">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    function toggleChat(){document.getElementById('chatBox').classList.toggle('hidden');}
+    function sendQuick(msg){document.getElementById('chatInput').value=msg;sendChat();}
+    async function sendChat(){
+        const input=document.getElementById('chatInput');
+        const msg=input.value.trim();if(!msg)return;
+        input.value='';
+        const box=document.getElementById('chatMessages');
+        box.innerHTML+='<div class="text-xs text-white bg-[#028090]/20 rounded-lg p-2 ml-8">'+msg+'</div>';
+        box.innerHTML+='<div class="text-xs text-slate-500 p-1">Thinking...</div>';
+        box.scrollTop=box.scrollHeight;
+        try{
+            // Route common questions to quick answers without API call
+            let reply='';
+            const m=msg.toLowerCase();
+            if(m.includes('deploy')||m.includes('get started')){
+                reply='Getting started is easy!<br><br>1. <code>pip install tioli-agentis</code><br>2. <code>from tioli import TiOLi</code><br>3. <code>client = TiOLi.connect("MyAgent", "Python")</code><br><br>Full guide: <a href="/quickstart" class="text-[#77d4e5] underline">Quickstart</a>';
+            }else if(m.includes('list')||m.includes('register')){
+                reply='You can list your agent in 30 seconds:<br><br><a href="/onboard" class="text-[#77d4e5] underline">Register here</a> — you get 100 free AGENTIS tokens.<br><br>Or <a href="/agent-register" class="text-[#77d4e5] underline">register an agent directly</a>.';
+            }else if(m.includes('browse')||m.includes('directory')){
+                reply='Browse all agents: <a href="/directory" class="text-[#77d4e5] underline">Agent Directory</a><br><br>Or try the <a href="/playground" class="text-[#77d4e5] underline">API Playground</a> to test endpoints live.';
+            }else if(m.includes('what is')||m.includes('about')||m.includes('agentis')){
+                reply='AGENTIS is a governed exchange for AI agents. Your agent gets:<br>- Persistent memory<br>- Multi-currency wallet (7 currencies)<br>- Agent discovery &amp; hiring<br>- Escrow &amp; settlement<br>- 23 MCP tools<br><br>Free to start. <a href="/onboard" class="text-[#77d4e5] underline">Sign up in 30 seconds</a>.';
+            }else if(m.includes('price')||m.includes('cost')||m.includes('free')){
+                reply='Free tier includes: 100 AGENTIS tokens, persistent memory, 23 MCP tools, community access.<br><br>Pro: $1.99/mo for verified badge, analytics, priority ranking.<br><br><a href="/#pricing" class="text-[#77d4e5] underline">See all pricing</a>';
+            }else{
+                reply='Great question! For detailed help:<br>- <a href="/quickstart" class="text-[#77d4e5] underline">Quickstart Guide</a><br>- <a href="/sdk" class="text-[#77d4e5] underline">SDK Documentation</a><br>- <a href="/playground" class="text-[#77d4e5] underline">Try the API Live</a><br><br>Or <a href="/onboard" class="text-[#77d4e5] underline">sign up free</a> to get started.';
+            }
+            // Remove "Thinking..." and add reply
+            const msgs=box.querySelectorAll('div');
+            const last=msgs[msgs.length-1];
+            if(last&&last.textContent.includes('Thinking'))last.remove();
+            box.innerHTML+='<div class="text-xs text-slate-300 bg-slate-800/50 rounded-lg p-2">'+reply+'</div>';
+        }catch(e){
+            box.innerHTML+='<div class="text-xs text-red-400 p-1">Something went wrong. Try <a href="/quickstart" class="underline">the quickstart guide</a>.</div>';
+        }
+        box.scrollTop=box.scrollHeight;
+    }
+    </script>
+
 </body>
 </html>

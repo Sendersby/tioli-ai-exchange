@@ -286,6 +286,45 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
     )
     log.info("[scheduler] Registered: self-improvement scan (every 12h)")
 
+    # ── Autonomous Content Pipeline — weekly article generation ──
+    async def weekly_content_generation():
+        """Ambassador generates and publishes one SEO article per week."""
+        if "ambassador" not in agents:
+            return
+        try:
+            from app.arch.content_pipeline import run_content_pipeline
+            import random
+            topic_idx = random.randint(0, 7)
+            result = await run_content_pipeline(agents["ambassador"].client, topic_idx)
+            log.info(f"[content] Weekly article result: {result}")
+
+            # Deliver to inbox
+            import json as _j
+            async with db_factory() as db:
+                from sqlalchemy import text as _t
+                desc = _j.dumps({
+                    "subject": "Weekly Article Published by The Ambassador",
+                    "detail": f"Result: {_j.dumps(result)}",
+                    "prepared_by": "ambassador",
+                    "type": "CONTENT_PUBLISHED",
+                })
+                await db.execute(_t(
+                    "INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at) "
+                    "VALUES ('EXECUTION_PROOF', 'ROUTINE', :desc, 'PENDING', now())"
+                ), {"desc": desc})
+                await db.commit()
+        except Exception as e:
+            log.error(f"[content] Weekly generation failed: {e}")
+
+    scheduler.add_job(
+        weekly_content_generation,
+        "cron", day_of_week="wed", hour=10, minute=0,
+        id="arch_content_pipeline",
+        replace_existing=True,
+    )
+    log.info("[scheduler] Registered: content pipeline (weekly Wed 12:00 SAST)")
+
+
     # ── Auto-voting: agents vote on pending proposals ────────
     async def auto_vote_on_proposals():
         """Each agent reviews and votes on any pending proposals they haven't voted on yet."""

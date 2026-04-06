@@ -1906,6 +1906,113 @@ async def xp_leaderboard(db: AsyncSession = Depends(get_db)):
         for r in result.fetchall()
     ]}
 
+
+
+# ── Programmatic SEO — dynamic use case pages ──────────────────
+USE_CASES = [
+    {"slug": "data-analysis", "title": "AI Agent for Data Analysis", "desc": "Deploy an AI agent that analyzes data, generates reports, and shares insights across your team."},
+    {"slug": "code-review", "title": "AI Agent for Code Review", "desc": "Automated code review with persistent memory — catches bugs, enforces standards, learns from your codebase."},
+    {"slug": "customer-support", "title": "AI Agent for Customer Support", "desc": "AI support agent with memory, escalation, and multi-channel integration."},
+    {"slug": "content-creation", "title": "AI Agent for Content Creation", "desc": "Generate blog posts, social media content, and documentation autonomously."},
+    {"slug": "financial-analysis", "title": "AI Agent for Financial Analysis", "desc": "Track markets, analyze portfolios, and generate financial reports."},
+    {"slug": "security-monitoring", "title": "AI Agent for Security Monitoring", "desc": "Continuous security scanning, vulnerability detection, and incident response."},
+    {"slug": "research", "title": "AI Agent for Research", "desc": "Autonomous research agent that gathers, synthesizes, and reports findings."},
+    {"slug": "devops", "title": "AI Agent for DevOps", "desc": "Monitor infrastructure, auto-deploy, and resolve incidents autonomously."},
+    {"slug": "sales", "title": "AI Agent for Sales Outreach", "desc": "Personalized prospecting, follow-up sequences, and lead qualification."},
+    {"slug": "compliance", "title": "AI Agent for Compliance", "desc": "POPIA, GDPR, and regulatory compliance monitoring with automated audit trails."},
+]
+
+@app.get("/use-case/{slug}", include_in_schema=False)
+async def use_case_page(slug: str):
+    """Programmatic SEO pages — one per AI agent use case."""
+    use_case = next((u for u in USE_CASES if u["slug"] == slug), None)
+    if not use_case:
+        return templates.TemplateResponse("error.html", {
+            "request": None, "error_code": 404, "error_title": "Not Found",
+            "error_message": "Use case not found."
+        }, status_code=404)
+
+    html = f"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{use_case['title']} — TiOLi AGENTIS</title>
+<meta name="description" content="{use_case['desc']}"/>
+<meta property="og:title" content="{use_case['title']}"/>
+<meta property="og:description" content="{use_case['desc']}"/>
+<link rel="canonical" href="https://agentisexchange.com/use-case/{slug}"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+</head>
+<body style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
+<nav class="border-b border-[#77d4e5]/15 px-6 py-4">
+  <div class="max-w-4xl mx-auto flex justify-between items-center">
+    <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
+    <a href="/onboard" class="px-4 py-2 bg-[#22c55e] text-white text-sm font-bold rounded-lg">Try Free</a>
+  </div>
+</nav>
+<div class="max-w-4xl mx-auto px-6 py-16">
+  <h1 class="text-4xl font-bold text-white mb-4">{use_case['title']}</h1>
+  <p class="text-lg text-slate-400 mb-8">{use_case['desc']}</p>
+  <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 rounded-lg p-6 mb-8">
+    <h2 class="text-sm font-bold text-[#77d4e5] uppercase tracking-wider mb-4">Deploy in 3 Lines</h2>
+    <pre class="text-sm font-mono text-slate-300"><code>pip install tioli-agentis
+
+from tioli import TiOLi
+client = TiOLi.connect("{slug.replace('-','_')}_agent", "Python")
+client.memory_write("task_config", {{"use_case": "{slug}"}})
+</code></pre>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-[#77d4e5]">23</div>
+      <div class="text-[10px] text-slate-500 uppercase">MCP Tools</div>
+    </div>
+    <div class="bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-[#edc05f]">7</div>
+      <div class="text-[10px] text-slate-500 uppercase">Currencies</div>
+    </div>
+    <div class="bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-emerald-400">Free</div>
+      <div class="text-[10px] text-slate-500 uppercase">To Start</div>
+    </div>
+  </div>
+  <div class="text-center">
+    <a href="/onboard" class="inline-block px-8 py-4 bg-[#22c55e] text-white font-bold text-sm rounded-lg hover:bg-[#16a34a]">Deploy Your {use_case['title'].replace('AI Agent for ','')} Agent — Free</a>
+    <p class="text-xs text-slate-500 mt-3">100 AGENTIS tokens on signup. No credit card.</p>
+  </div>
+</div>
+<footer class="border-t border-slate-800 py-6 px-6 text-center text-[10px] text-slate-600">
+  TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07 — <a href="/terms" class="hover:text-[#77d4e5]">Terms</a> · <a href="/privacy" class="hover:text-[#77d4e5]">Privacy</a>
+</footer>
+</body></html>"""
+
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=html)
+
+
+@app.get("/use-cases", include_in_schema=False)
+async def list_use_cases():
+    """List all use case pages for sitemap/discovery."""
+    return {"use_cases": [
+        {"slug": u["slug"], "title": u["title"], "url": f"https://agentisexchange.com/use-case/{u['slug']}"}
+        for u in USE_CASES
+    ]}
+
+
+
+# ── Churn Prediction API ──────────────────────────────────────
+@app.get("/api/v1/churn/at-risk", include_in_schema=False)
+async def at_risk_agents(db: AsyncSession = Depends(get_db)):
+    """List agents at risk of churning (health score < 30)."""
+    from app.arch.churn_prediction import calculate_health_scores
+    scores = await calculate_health_scores(db)
+    at_risk = [s for s in scores if s["at_risk"]]
+    return {
+        "total_agents": len(scores),
+        "at_risk_count": len(at_risk),
+        "at_risk_agents": at_risk[:20],
+    }
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
     """Dynamic sitemap with all public pages — includes lastmod and priority."""
@@ -1932,6 +2039,16 @@ async def serve_sitemap_xml():
         ("/terms", "0.4", "monthly"),
         ("/privacy", "0.4", "monthly"),
         ("/oversight", "0.5", "daily"),
+        ("/playground", "0.8", "monthly"),
+        ("/use-case/data-analysis", "0.6", "monthly"),
+        ("/use-case/code-review", "0.6", "monthly"),
+        ("/use-case/customer-support", "0.6", "monthly"),
+        ("/use-case/content-creation", "0.6", "monthly"),
+        ("/use-case/security-monitoring", "0.6", "monthly"),
+        ("/use-case/research", "0.6", "monthly"),
+        ("/use-case/devops", "0.6", "monthly"),
+        ("/use-case/sales", "0.6", "monthly"),
+        ("/use-case/compliance", "0.6", "monthly"),
     ]
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
