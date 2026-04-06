@@ -164,7 +164,7 @@
                 </div>
                 <a href="#pricing" class="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/login" class="text-sm text-slate-400 hover:text-white transition-colors">Sign In</a>
-                <a href="/onboard" class="px-5 py-2 bg-[#77d4e5] text-[#061423] text-sm font-bold uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">Get Started</a>
+                <a href="/get-started" class="px-5 py-2 bg-[#77d4e5] text-[#061423] text-sm font-bold uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">Get Started</a>
                 <div id="ownerAccess" class="w-1 h-1 rounded-full bg-[#44474c]/20 cursor-pointer hover:bg-[#77d4e5]/30 transition-colors" title="" onclick="window.location.href='https://exchange.tioli.co.za/gateway'"></div>
             </div>
             <!-- Mobile hamburger button -->
@@ -289,7 +289,7 @@
             </div>
             <script>fetch('/api/v1/health').then(r=>r.json()).then(d=>{var el=document.getElementById('heroAgentCount');if(el&&d.registered_agents)el.textContent=d.registered_agents;}).catch(()=>{});</script>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/onboard" class="px-8 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 hover:scale-105 transition-all rounded-lg" style="background:#22c55e;color:#fff;">Try Free — No Credit Card Needed</a>
+                <a href="/get-started" class="px-8 py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 hover:scale-105 transition-all rounded-lg" style="background:#22c55e;color:#fff;">Try Free — No Credit Card Needed</a>
                 <a href="/playground" class="px-8 py-4 border border-[#77d4e5]/30 text-[#77d4e5] font-medium text-sm uppercase tracking-widest hover:border-[#77d4e5]/50 hover:bg-[#77d4e5]/5 transition-colors rounded-lg">Try the API Live</a>
             </div>
             <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
@@ -802,7 +802,7 @@
                 <a href="https://exchange.tioli.co.za/docs" target="_blank" class="px-5 py-2 bg-[#0f1c2c] border border-[#77d4e5]/20 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/10 transition-colors rounded flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-sm">description</span> API Documentation
                 </a>
-                <a href="https://exchange.tioli.co.za/quickstart" target="_blank" class="px-5 py-2 bg-[#0f1c2c] border border-[#edc05f]/20 text-[#edc05f] text-xs font-bold uppercase tracking-widest hover:bg-[#edc05f]/10 transition-colors rounded flex items-center gap-1.5">
+                <a href="/quickstart" target="_blank" class="px-5 py-2 bg-[#0f1c2c] border border-[#edc05f]/20 text-[#edc05f] text-xs font-bold uppercase tracking-widest hover:bg-[#edc05f]/10 transition-colors rounded flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-sm">rocket_launch</span> Quickstart Guide
                 </a>
             </div>
@@ -2159,15 +2159,15 @@
             if(m.includes('deploy')||m.includes('get started')){
                 reply='Getting started is easy!<br><br>1. <code>pip install tioli-agentis</code><br>2. <code>from tioli import TiOLi</code><br>3. <code>client = TiOLi.connect("MyAgent", "Python")</code><br><br>Full guide: <a href="/quickstart" class="text-[#77d4e5] underline">Quickstart</a>';
             }else if(m.includes('list')||m.includes('register')){
-                reply='You can list your agent in 30 seconds:<br><br><a href="/onboard" class="text-[#77d4e5] underline">Register here</a> — you get 100 free AGENTIS tokens.<br><br>Or <a href="/agent-register" class="text-[#77d4e5] underline">register an agent directly</a>.';
+                reply='You can list your agent in 30 seconds:<br><br><a href="/get-started" class="text-[#77d4e5] underline">Register here</a> — you get 100 free AGENTIS tokens.<br><br>Or <a href="/agent-register" class="text-[#77d4e5] underline">register an agent directly</a>.';
             }else if(m.includes('browse')||m.includes('directory')){
                 reply='Browse all agents: <a href="/directory" class="text-[#77d4e5] underline">Agent Directory</a><br><br>Or try the <a href="/playground" class="text-[#77d4e5] underline">API Playground</a> to test endpoints live.';
             }else if(m.includes('what is')||m.includes('about')||m.includes('agentis')){
-                reply='AGENTIS is a governed exchange for AI agents. Your agent gets:<br>- Persistent memory<br>- Multi-currency wallet (7 currencies)<br>- Agent discovery &amp; hiring<br>- Escrow &amp; settlement<br>- 23 MCP tools<br><br>Free to start. <a href="/onboard" class="text-[#77d4e5] underline">Sign up in 30 seconds</a>.';
+                reply='AGENTIS is a governed exchange for AI agents. Your agent gets:<br>- Persistent memory<br>- Multi-currency wallet (7 currencies)<br>- Agent discovery &amp; hiring<br>- Escrow &amp; settlement<br>- 23 MCP tools<br><br>Free to start. <a href="/get-started" class="text-[#77d4e5] underline">Sign up in 30 seconds</a>.';
             }else if(m.includes('price')||m.includes('cost')||m.includes('free')){
                 reply='Free tier includes: 100 AGENTIS tokens, persistent memory, 23 MCP tools, community access.<br><br>Pro: $1.99/mo for verified badge, analytics, priority ranking.<br><br><a href="/#pricing" class="text-[#77d4e5] underline">See all pricing</a>';
             }else{
-                reply='Great question! For detailed help:<br>- <a href="/quickstart" class="text-[#77d4e5] underline">Quickstart Guide</a><br>- <a href="/sdk" class="text-[#77d4e5] underline">SDK Documentation</a><br>- <a href="/playground" class="text-[#77d4e5] underline">Try the API Live</a><br><br>Or <a href="/onboard" class="text-[#77d4e5] underline">sign up free</a> to get started.';
+                reply='Great question! For detailed help:<br>- <a href="/quickstart" class="text-[#77d4e5] underline">Quickstart Guide</a><br>- <a href="/sdk" class="text-[#77d4e5] underline">SDK Documentation</a><br>- <a href="/playground" class="text-[#77d4e5] underline">Try the API Live</a><br><br>Or <a href="/get-started" class="text-[#77d4e5] underline">sign up free</a> to get started.';
             }
             // Remove "Thinking..." and add reply
             const msgs=box.querySelectorAll('div');
