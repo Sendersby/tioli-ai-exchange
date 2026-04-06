@@ -695,6 +695,10 @@ app.include_router(onboarding_router)
 app.include_router(agentis_router)
 app.include_router(memory_router)
 app.include_router(policy_router)
+# A2A Protocol — Agent-to-Agent communication (a2a-protocol.org v1.0)
+from app.arch.a2a import a2a_router
+app.include_router(a2a_router)
+
 app.include_router(roadmap_router)
 app.include_router(outreach_router)
 app.include_router(cohort_router)
@@ -2955,6 +2959,14 @@ async def mcp_server_card():
     """MCP server card for Smithery and other MCP directories."""
     from fastapi.responses import FileResponse
     return FileResponse("static/mcp-server-card.json", media_type="application/json")
+
+
+
+@app.get("/.well-known/agent.json", include_in_schema=False)
+async def well_known_a2a_agent():
+    """A2A well-known agent discovery — redirects to A2A module."""
+    from app.arch.a2a import well_known_agent
+    return await well_known_agent()
 
 
 @app.get("/api/health")

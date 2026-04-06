@@ -47,6 +47,12 @@ class ArchExecutor:
                 return {"error": f"BLOCKED: dangerous command pattern '{b}'",
                         "executed": False}
 
+        # Route through sandbox for safety
+        from app.arch.sandbox import sandboxed_execute, is_command_safe
+        safe, reason = is_command_safe(command)
+        if not safe:
+            return {"error": reason, "executed": False, "blocked": True}
+
         try:
             proc = await asyncio.create_subprocess_shell(
                 command,
