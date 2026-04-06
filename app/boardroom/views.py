@@ -296,15 +296,20 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
     _check_enabled()
     ctx = await _get_boardroom_context(db)
 
+    # Fetch agent display name mapping
+    agent_map_result = await db.execute(text("SELECT agent_name, display_name FROM arch_agents"))
+    agent_display_map = {r.agent_name.lower(): r.display_name for r in agent_map_result.fetchall()}
+
     items = await db.execute(text("""
         SELECT id::text, item_type, priority::text, description, status,
                founder_response, due_at, created_at
         FROM arch_founder_inbox
         ORDER BY
-            CASE priority WHEN 'EMERGENCY' THEN 0 WHEN 'URGENT' THEN 1 ELSE 2 END,
+            CASE status WHEN 'PENDING' THEN 0 ELSE 1 END,
+            CASE priority::text WHEN 'EMERGENCY' THEN 0 WHEN 'URGENT' THEN 1 ELSE 2 END,
             CASE WHEN due_at < now() THEN 0 ELSE 1 END,
-            due_at ASC NULLS LAST
-        LIMIT 50
+            created_at DESC
+        LIMIT 100
     """))
     inbox_list = []
     for row in items.fetchall():
@@ -333,6 +338,7 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
             body = desc if not desc.startswith("{") else "No additional details provided."
 
         agent = desc_data.get("prepared_by", desc_data.get("assigned_to", desc_data.get("agent", "Board")))
+        agent_display = agent_display_map.get(agent.lower(), agent.replace('_', ' ').title())
         
         from datetime import datetime, timezone
         overdue = row.due_at < datetime.now(timezone.utc) if row.due_at else False
@@ -345,6 +351,7 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
             "title": title,
             "body": body,
             "agent": agent,
+            "agent_display": agent_display,
             "status": row.status,
             "response": row.founder_response,
             "due": row.due_at,
