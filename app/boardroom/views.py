@@ -315,9 +315,24 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
         except Exception:
             desc_data = {}
 
-        title = desc_data.get("subject", row.item_type.replace("_", " ").title())
-        body = desc_data.get("detail", desc_data.get("situation", desc if not desc.startswith("{") else json.dumps(desc_data, indent=2)))
-        agent = desc_data.get("prepared_by", desc_data.get("assigned_to", "Board"))
+        # Build readable title
+        title = desc_data.get("subject", "")
+        if not title:
+            title = row.item_type.replace("_", " ").title()
+
+        # Build readable body — never show raw JSON to the founder
+        body = desc_data.get("detail", "")
+        if not body:
+            body = desc_data.get("situation", "")
+        if not body:
+            body = desc_data.get("description", "")
+        if not body and desc_data:
+            # Format any remaining JSON fields as readable text
+            body = ". ".join(f"{k.replace(chr(95), chr(32)).title()}: {v}" for k, v in desc_data.items() if k != "subject" and v)
+        if not body:
+            body = desc if not desc.startswith("{") else "No additional details provided."
+
+        agent = desc_data.get("prepared_by", desc_data.get("assigned_to", desc_data.get("agent", "Board")))
         
         from datetime import datetime, timezone
         overdue = row.due_at < datetime.now(timezone.utc) if row.due_at else False
