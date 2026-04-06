@@ -697,6 +697,10 @@ app.include_router(memory_router)
 app.include_router(policy_router)
 # A2A Protocol — Agent-to-Agent communication (a2a-protocol.org v1.0)
 from app.arch.a2a import a2a_router
+# Self-Improvement Governance — agent-proposed improvements with board voting
+from app.arch.self_improvement import self_improvement_router
+app.include_router(self_improvement_router)
+
 app.include_router(a2a_router)
 
 app.include_router(roadmap_router)
