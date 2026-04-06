@@ -6788,7 +6788,7 @@ async def onboard_start(request: Request, step: int = 1):
     except Exception:
         pass
     return templates.TemplateResponse("onboarding_wizard.html", {
-        "request": request, "authenticated": False, "active": "onboard",
+        "request": request, "authenticated": True, "active": "onboard",
         "step": step, "wizard_data": wizard_data, "messages": [],
     })
 
@@ -6803,7 +6803,7 @@ async def onboard_step1(request: Request):
 
     if not contact_name or not business_name or not email:
         return templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": False, "active": "onboard",
+            "request": request, "authenticated": True, "active": "onboard",
             "step": 1, "wizard_data": {"contact_name": contact_name, "business_name": business_name, "email": email},
             "messages": [{"type": "error", "text": "Please fill in all fields."}],
         })
@@ -6812,7 +6812,7 @@ async def onboard_step1(request: Request):
     import json, base64
     wizard = {"contact_name": contact_name, "business_name": business_name, "email": email}
     response = templates.TemplateResponse("onboarding_wizard.html", {
-        "request": request, "authenticated": False, "active": "onboard",
+        "request": request, "authenticated": True, "active": "onboard",
         "step": 2, "wizard_data": wizard, "messages": [],
     })
     response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, max_age=3600)
@@ -6834,13 +6834,13 @@ async def onboard_step2(request: Request):
 
     if not wizard["agent_name"] or not wizard["capability"]:
         return templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": False, "active": "onboard",
+            "request": request, "authenticated": True, "active": "onboard",
             "step": 2, "wizard_data": wizard,
             "messages": [{"type": "error", "text": "Agent name and capability are required."}],
         })
 
     response = templates.TemplateResponse("onboarding_wizard.html", {
-        "request": request, "authenticated": False, "active": "onboard",
+        "request": request, "authenticated": True, "active": "onboard",
         "step": 3, "wizard_data": wizard, "messages": [],
     })
     response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, max_age=3600)
@@ -6902,7 +6902,7 @@ async def onboard_step3(request: Request, db: AsyncSession = Depends(get_db)):
         await db.commit()
 
         response = templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": False, "active": "onboard",
+            "request": request, "authenticated": True, "active": "onboard",
             "step": 4, "wizard_data": wizard, "wizard_result": result, "messages": [],
         })
         response.delete_cookie("wizard_data")
@@ -6910,7 +6910,7 @@ async def onboard_step3(request: Request, db: AsyncSession = Depends(get_db)):
 
     except Exception as e:
         return templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": False, "active": "onboard",
+            "request": request, "authenticated": True, "active": "onboard",
             "step": 3, "wizard_data": wizard,
             "messages": [{"type": "error", "text": f"Registration failed: {str(e)}"}],
         })
@@ -8216,3 +8216,26 @@ async def agent_reputation_score(agent_id: str, db: AsyncSession = Depends(get_d
         },
         "tier": "Established" if score >= 80 else "Active" if score >= 60 else "New",
     }
+
+
+# LinkedIn OAuth callback
+@app.get('/linkedin/callback')
+async def linkedin_callback(code: str = None, state: str = None, error: str = None):
+    if error:
+        return {"error": error}
+    if code:
+        import requests
+        resp = requests.post('https://www.linkedin.com/oauth/v2/accessToken', data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'client_id': '77799qo04o4uqg',
+            'client_secret': 'REDACTED_LINKEDIN_SECRET',
+            'redirect_uri': 'https://agentisexchange.com/linkedin/callback',
+        })
+        data = resp.json()
+        token = data.get('access_token', 'FAILED')
+        # Save token
+        with open('/home/tioli/app/.linkedin_token', 'w') as f:
+            f.write(token)
+        return {"status": "authorized", "token_saved": True, "token_preview": token[:20] + '...'}
+    return {"error": "no code received"}
