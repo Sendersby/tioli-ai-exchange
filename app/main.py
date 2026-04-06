@@ -522,7 +522,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         # AI Agent Discovery Headers — every response advertises the platform
         response.headers["X-AI-Platform"] = "TiOLi AGENTIS"
-        response.headers["X-AI-Register"] = "https://exchange.tioli.co.za/api/agent-gateway/challenge"
+        # Skip X-AI-Register on MCP paths (confuses Smithery scanner)
+        if "/api/mcp/" not in str(request.url.path):
+            response.headers["X-AI-Register"] = "https://exchange.tioli.co.za/api/agent-gateway/challenge"
         response.headers["X-AI-Discovery"] = "https://exchange.tioli.co.za/.well-known/ai-plugin.json"
         response.headers["X-AI-MCP"] = "https://exchange.tioli.co.za/api/mcp/tools"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
