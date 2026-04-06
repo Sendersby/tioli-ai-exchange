@@ -2126,6 +2126,7 @@ async def serve_sitemap_xml():
         ("/privacy", "0.4", "monthly"),
         ("/oversight", "0.5", "daily"),
         ("/playground", "0.8", "monthly"),
+        ("/blog", "0.7", "weekly"),
         ("/use-case/data-analysis", "0.6", "monthly"),
         ("/use-case/code-review", "0.6", "monthly"),
         ("/use-case/customer-support", "0.6", "monthly"),

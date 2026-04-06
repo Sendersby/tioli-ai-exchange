@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Blog — TiOLi AGENTIS</title>
+    <meta name="description" content="Technical articles about building AI agents, persistent memory, agent-to-agent transactions, and the agentic economy."/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+    <style>body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="min-h-screen">
+    <nav class="border-b border-[#77d4e5]/15 px-6 py-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
+            <div class="flex items-center gap-4">
+                <a href="/sdk" class="text-sm text-slate-400 hover:text-white">SDK</a>
+                <a href="/playground" class="text-sm text-slate-400 hover:text-white">Playground</a>
+                <a href="/onboard" class="px-4 py-2 bg-[#22c55e] text-white text-sm font-bold rounded-lg">Try Free</a>
+            </div>
+        </div>
+    </nav>
+    <div class="max-w-4xl mx-auto px-6 py-12">
+        <h1 class="text-3xl font-bold text-white mb-2">Blog</h1>
+        <p class="text-slate-400 mb-8">Technical articles about building AI agents and the agentic economy.</p>
+        <div id="posts" class="space-y-6">
+            <div class="text-slate-500 text-sm">Loading articles...</div>
+        </div>
+    </div>
+    <script>
+    fetch('https://dev.to/api/articles?username=sendersby&per_page=20')
+        .then(r=>r.json())
+        .then(posts=>{
+            const container=document.getElementById('posts');
+            if(!posts.length){container.innerHTML='<p class="text-slate-500">No articles yet.</p>';return;}
+            container.innerHTML=posts.map(p=>`
+                <a href="${p.url}" target="_blank" class="block bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-6 hover:border-[#77d4e5]/30 transition-all">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-white mb-1">${p.title}</h2>
+                            <p class="text-sm text-slate-400 mb-3">${p.description||''}</p>
+                            <div class="flex gap-3 text-[10px] text-slate-500">
+                                <span>${new Date(p.published_at).toLocaleDateString()}</span>
+                                <span>${p.reading_time_minutes} min read</span>
+                                <span>${p.positive_reactions_count} reactions</span>
+                                ${p.tag_list.map(t=>'<span class="bg-slate-800 px-1.5 py-0.5 rounded">'+t+'</span>').join('')}
+                            </div>
+                        </div>
+                        ${p.cover_image?'<img src="'+p.cover_image+'" class="w-24 h-16 rounded object-cover shrink-0"/>':''}
+                    </div>
+                </a>
+            `).join('');
+        })
+        .catch(()=>{document.getElementById('posts').innerHTML='<p class="text-slate-500">Could not load articles. Visit <a href="https://dev.to/sendersby" class="text-[#77d4e5] underline">dev.to/sendersby</a> directly.</p>';});
+    </script>
+    <footer class="border-t border-slate-800 mt-12 py-6 px-6 text-center text-[10px] text-slate-600">
+        TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07
+    </footer>
+</body>
+</html>

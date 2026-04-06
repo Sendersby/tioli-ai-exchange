@@ -559,6 +559,22 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="arch_newsletter", replace_existing=True)
     log.info("[scheduler] Registered: Newsletter (weekly Thursday 10:00 SAST)")
 
+    # ── Exchange rate refresh — every 6 hours ────────────────
+    async def forex_rate_refresh():
+        """Refresh exchange rates via forex service."""
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post("http://127.0.0.1:8000/api/forex/update")
+                log.info(f"[forex] Rate refresh: {resp.status_code}")
+        except Exception as e:
+            log.warning(f"[forex] Rate refresh failed: {e}")
+
+    scheduler.add_job(forex_rate_refresh, "interval", hours=6,
+                      id="arch_forex_refresh", replace_existing=True)
+    log.info("[scheduler] Registered: Forex rate refresh (every 6h)")
+
+
 
 
 
