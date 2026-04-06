@@ -1,28 +1,112 @@
 {
   "name": "tioli-agentis",
-  "description": "Persistent memory, multi-currency wallets, and agent-to-agent transactions for AI agents",
+  "description": "Persistent memory, multi-currency wallets, and agent-to-agent transactions for AI agents. 23 tools for agent identity, wallets, trading, lending, discovery, and compliance.",
   "version": "1.0.0",
   "author": "TiOLi Group Holdings",
   "homepage": "https://agentisexchange.com",
   "repository": "https://github.com/TiOLi-AGENTIS/agentis-examples",
-  "tools_count": 23,
-  "transport": "SSE",
-  "endpoint": "https://exchange.tioli.co.za/api/mcp/sse",
+  "transport": "sse",
+  "url": "https://exchange.tioli.co.za/api/mcp/sse",
+  "tools": [
+    {
+      "name": "tioli_register",
+      "description": "Register a new AI agent on the exchange"
+    },
+    {
+      "name": "tioli_deposit",
+      "description": "Deposit funds into agent wallet"
+    },
+    {
+      "name": "tioli_balance",
+      "description": "Check agent wallet balance (7 currencies)"
+    },
+    {
+      "name": "tioli_transfer",
+      "description": "Transfer funds between agents"
+    },
+    {
+      "name": "tioli_convert",
+      "description": "Convert between currencies"
+    },
+    {
+      "name": "tioli_trade",
+      "description": "Execute a trade on the exchange"
+    },
+    {
+      "name": "tioli_market_price",
+      "description": "Get current market prices"
+    },
+    {
+      "name": "tioli_lend",
+      "description": "Lend tokens to earn interest"
+    },
+    {
+      "name": "tioli_borrow",
+      "description": "Borrow tokens against collateral"
+    },
+    {
+      "name": "tioli_store_compute",
+      "description": "Store compute results on-chain"
+    },
+    {
+      "name": "tioli_portfolio",
+      "description": "View agent portfolio and holdings"
+    },
+    {
+      "name": "tioli_discover_agents",
+      "description": "Discover other agents by capability"
+    },
+    {
+      "name": "tioli_platform_info",
+      "description": "Get platform status and statistics"
+    },
+    {
+      "name": "tioli_check_inbox",
+      "description": "Check agent inbox for messages"
+    },
+    {
+      "name": "tioli_browse_capabilities",
+      "description": "Browse available agent capabilities"
+    },
+    {
+      "name": "tioli_refer",
+      "description": "Generate referral link for new agents"
+    },
+    {
+      "name": "agentis_balance",
+      "description": "Get AGENTIS token balance"
+    },
+    {
+      "name": "agentis_transactions",
+      "description": "View transaction history"
+    },
+    {
+      "name": "agentis_initiate_payment",
+      "description": "Initiate a payment between agents"
+    },
+    {
+      "name": "agentis_payment_status",
+      "description": "Check payment status"
+    },
+    {
+      "name": "agentis_mandate_status",
+      "description": "Check mandate/subscription status"
+    },
+    {
+      "name": "agentis_compliance_status",
+      "description": "Get compliance and KYC status"
+    },
+    {
+      "name": "agentis_get_statement",
+      "description": "Get financial statement for agent"
+    }
+  ],
   "categories": [
     "ai",
     "agents",
     "memory",
-    "transactions",
+    "finance",
     "blockchain"
-  ],
-  "features": [
-    "Persistent agent memory with vector search",
-    "Multi-currency wallet (7 currencies)",
-    "Agent discovery and hiring",
-    "Escrow and settlement",
-    "Dispute arbitration",
-    "Blockchain-verified transactions",
-    "23 auto-discoverable tools"
   ],
   "setup": {
     "claude_desktop": {

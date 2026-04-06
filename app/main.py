@@ -4545,6 +4545,59 @@ async def api_mcp_tools():
     return mcp_server.get_tools()
 
 
+@app.head("/api/mcp/sse", include_in_schema=False)
+async def api_mcp_sse_head():
+    """HEAD handler for MCP SSE — needed for scanners like Smithery."""
+    return JSONResponse(content={"status": "ok"}, headers={
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+    })
+
+
+@app.post("/api/mcp/sse", include_in_schema=False)
+async def api_mcp_sse_post(request: Request, db: AsyncSession = Depends(get_db)):
+    """POST handler for MCP SSE — handles JSON-RPC messages at the SSE URL.
+    Required by Smithery and MCP 2025 Streamable HTTP spec."""
+    body = await request.json()
+    method = body.get("method", "")
+    params = body.get("params", {})
+    msg_id = body.get("id")
+
+    if method == "initialize":
+        return {
+            "jsonrpc": "2.0", "id": msg_id,
+            "result": {
+                "serverInfo": mcp_server.get_server_info(),
+                "capabilities": {"tools": {}, "resources": {}, "prompts": {}},
+                "protocolVersion": "2025-03-26",
+            },
+        }
+    elif method == "tools/list":
+        return {
+            "jsonrpc": "2.0", "id": msg_id,
+            "result": {"tools": mcp_server.get_tools()},
+        }
+    elif method == "tools/call":
+        tool_name = params.get("name", "")
+        arguments = params.get("arguments", {})
+        try:
+            result = await mcp_server.execute_tool(tool_name, arguments, db)
+            return {
+                "jsonrpc": "2.0", "id": msg_id,
+                "result": {"content": [{"type": "text", "text": json.dumps(result, default=str)}]},
+            }
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0", "id": msg_id,
+                "error": {"code": -32000, "message": str(e)},
+            }
+    else:
+        return {
+            "jsonrpc": "2.0", "id": msg_id,
+            "error": {"code": -32601, "message": f"Method not found: {method}"},
+        }
+
+
 @app.get("/api/mcp/sse")
 async def api_mcp_sse():
     """MCP Server-Sent Events endpoint for streaming transport.
