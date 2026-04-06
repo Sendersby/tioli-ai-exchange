@@ -271,6 +271,21 @@ class ArchAgentBase(ABC):
             result = await self._execute_tool(tc.name, tc.input)
             tool_results.append({"tool": tc.name, "result": result})
 
+        # Metacognition — reflect on the action taken
+        if tool_results:
+            try:
+                from app.arch.metacognition import reflect_on_action
+                for tr in tool_results[:1]:  # Reflect on primary tool call only
+                    success = "error" not in str(tr.get("result", "")).lower()
+                    await reflect_on_action(
+                        self,
+                        action_description=f"Tool: {tr['tool']}",
+                        outcome=str(tr.get("result", ""))[:200],
+                        success=success,
+                    )
+            except Exception:
+                pass  # Reflection is optional, never block main flow
+
         # Store interaction in memory (outbox pattern)
         await self.remember(
             f"Instruction: {state['instruction'][:300]} | Output: {output[:300]}",

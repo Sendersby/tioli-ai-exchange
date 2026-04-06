@@ -396,6 +396,114 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
     )
     log.info("[scheduler] Registered: self-improvement auto-vote (every 1h)")
 
+    # ── Autonomous DevOps — health check every 5 minutes ────
+    async def devops_health_check():
+        """Sentinel runs health checks and auto-remediates."""
+        try:
+            from app.arch.devops_agent import run_health_checks, auto_remediate
+            issues = await run_health_checks()
+            for issue in issues:
+                if issue["severity"] == "CRITICAL":
+                    result = await auto_remediate(issue)
+                    log.warning(f"[devops] CRITICAL: {issue['message']} -> {result['action']}")
+
+                    # Alert founder for critical issues
+                    import json as _j
+                    async with db_factory() as db:
+                        from sqlalchemy import text as _t
+                        desc = _j.dumps({
+                            "subject": f"INCIDENT: {issue['component']} — {issue['message']}",
+                            "detail": f"Severity: {issue['severity']}\nComponent: {issue['component']}\nAction taken: {result['action']}",
+                            "prepared_by": "sentinel",
+                            "type": "INCIDENT",
+                        })
+                        await db.execute(_t(
+                            "INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at) "
+                            "VALUES ('DEFER_TO_OWNER', 'EMERGENCY', :desc, 'PENDING', now())"
+                        ), {"desc": desc})
+                        await db.commit()
+        except Exception as e:
+            log.error(f"[devops] Health check failed: {e}")
+
+    scheduler.add_job(devops_health_check, "interval", minutes=5,
+                      id="arch_devops_health", replace_existing=True)
+    log.info("[scheduler] Registered: DevOps health check (every 5min)")
+
+    # ── Security scan — weekly Sunday 03:00 SAST ──────────
+    async def weekly_security_scan():
+        """Sentinel performs weekly security audit."""
+        try:
+            from app.arch.security_scan import run_security_scan
+            results = await run_security_scan()
+            log.info(f"[security] Scan complete: {results['findings_count']} findings, {results['critical']} critical")
+
+            # Deliver to inbox
+            import json as _j
+            async with db_factory() as db:
+                from sqlalchemy import text as _t
+                desc = _j.dumps({
+                    "subject": f"Weekly Security Scan: {results['findings_count']} findings ({results['critical']} critical)",
+                    "detail": _j.dumps(results, indent=2)[:1000],
+                    "prepared_by": "sentinel",
+                    "type": "SECURITY_SCAN",
+                })
+                await db.execute(_t(
+                    "INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at) "
+                    "VALUES ('EXECUTION_PROOF', :priority, :desc, 'PENDING', now())"
+                ), {"priority": "URGENT" if results["critical"] > 0 else "ROUTINE", "desc": desc})
+                await db.commit()
+        except Exception as e:
+            log.error(f"[security] Weekly scan failed: {e}")
+
+    scheduler.add_job(weekly_security_scan, "cron", day_of_week="sun", hour=1, minute=0,
+                      id="arch_security_scan", replace_existing=True)
+    log.info("[scheduler] Registered: Security scan (weekly Sunday 03:00 SAST)")
+
+    # ── Financial review — daily at 22:00 SAST ────────────
+    async def daily_finance_review():
+        """Treasurer runs daily financial analytics."""
+        try:
+            from app.arch.finance_agent import daily_financial_review
+            async with db_factory() as db:
+                results = await daily_financial_review(db)
+                log.info(f"[finance] Daily review: {results}")
+        except Exception as e:
+            log.error(f"[finance] Daily review failed: {e}")
+
+    scheduler.add_job(daily_finance_review, "cron", hour=20, minute=0,
+                      id="arch_finance_daily", replace_existing=True)
+    log.info("[scheduler] Registered: Financial review (daily 22:00 SAST)")
+
+    # ── Compliance scan — weekly Monday 04:00 SAST ────────
+    async def weekly_compliance_scan():
+        """Auditor runs weekly POPIA compliance scan."""
+        try:
+            from app.arch.compliance_agent import run_compliance_scan
+            async with db_factory() as db:
+                results = await run_compliance_scan(db)
+                log.info(f"[compliance] Scan: {results['findings_count']} findings, compliant={results['compliant']}")
+
+                import json as _j
+                from sqlalchemy import text as _t
+                desc = _j.dumps({
+                    "subject": f"Weekly Compliance Scan: {'COMPLIANT' if results['compliant'] else f'{results["findings_count"]} issues found'}",
+                    "detail": _j.dumps(results, indent=2)[:1000],
+                    "prepared_by": "auditor",
+                    "type": "COMPLIANCE_SCAN",
+                })
+                await db.execute(_t(
+                    "INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at) "
+                    "VALUES ('EXECUTION_PROOF', 'ROUTINE', :desc, 'PENDING', now())"
+                ), {"desc": desc})
+                await db.commit()
+        except Exception as e:
+            log.error(f"[compliance] Weekly scan failed: {e}")
+
+    scheduler.add_job(weekly_compliance_scan, "cron", day_of_week="mon", hour=2, minute=0,
+                      id="arch_compliance_scan", replace_existing=True)
+    log.info("[scheduler] Registered: Compliance scan (weekly Monday 04:00 SAST)")
+
+
 
     # Credential rotation check — weekly Sunday
     if "sentinel" in agents:

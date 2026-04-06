@@ -2013,6 +2013,28 @@ async def at_risk_agents(db: AsyncSession = Depends(get_db)):
         "at_risk_agents": at_risk[:20],
     }
 
+
+
+# ── Security & Compliance API endpoints ──────────────────────
+@app.get("/api/v1/security/scan", include_in_schema=False)
+async def run_security_scan_now():
+    """Trigger an immediate security scan."""
+    from app.arch.security_scan import run_security_scan
+    return await run_security_scan()
+
+@app.get("/api/v1/compliance/scan", include_in_schema=False)
+async def run_compliance_scan_now(db: AsyncSession = Depends(get_db)):
+    """Trigger an immediate compliance scan."""
+    from app.arch.compliance_agent import run_compliance_scan
+    return await run_compliance_scan(db)
+
+@app.get("/api/v1/devops/health", include_in_schema=False)
+async def devops_health_now():
+    """Trigger an immediate DevOps health check."""
+    from app.arch.devops_agent import run_health_checks
+    issues = await run_health_checks()
+    return {"issues": issues, "total": len(issues), "critical": sum(1 for i in issues if i["severity"] == "CRITICAL")}
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
     """Dynamic sitemap with all public pages — includes lastmod and priority."""
