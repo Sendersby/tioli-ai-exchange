@@ -66,34 +66,98 @@ class ArchMemory:
         )
 
     async def retrieve(self, query: str, k: int = None) -> list[dict]:
-        """Semantic similarity search over agent memories."""
+        """Hybrid retrieval: weighted RRF fusion of semantic (pgvector) + keyword (ILIKE) search."""
         k = k or self.k
-        embedding = await self._embed(query)
-        result = await self.db.execute(
-            text("""
-                SELECT content, metadata, source_type,
-                       1 - (embedding <=> cast(:emb as vector)) AS similarity
-                FROM arch_memories
-                WHERE agent_id = :agent_id
-                  AND 1 - (embedding <=> cast(:emb as vector)) > :threshold
-                ORDER BY embedding <=> cast(:emb as vector)
-                LIMIT :k
-            """),
-            {
-                "agent_id": self.agent_id,
-                "emb": str(embedding),
-                "threshold": self.threshold,
-                "k": k,
-            },
-        )
+        results_map = {}  # content_key -> data dict
+
+        # 1. Semantic search (pgvector cosine similarity)
+        try:
+            embedding = await self._embed(query)
+            semantic = await self.db.execute(
+                text("""
+                    SELECT content, metadata, source_type,
+                           1 - (embedding <=> cast(:emb as vector)) AS similarity
+                    FROM arch_memories
+                    WHERE agent_id = :agent_id
+                      AND 1 - (embedding <=> cast(:emb as vector)) > :threshold
+                    ORDER BY embedding <=> cast(:emb as vector)
+                    LIMIT :k
+                """),
+                {"agent_id": self.agent_id, "emb": str(embedding), "threshold": self.threshold, "k": k * 2},
+            )
+            for rank, r in enumerate(semantic.fetchall()):
+                key = r.content[:100]
+                results_map[key] = {
+                    "content": r.content,
+                    "metadata": json.loads(r.metadata) if isinstance(r.metadata, str) else r.metadata,
+                    "source_type": r.source_type,
+                    "similarity": float(r.similarity),
+                    "semantic_rank": rank + 1,
+                    "keyword_rank": None,
+                }
+        except Exception as e:
+            logger.warning(f"Semantic search failed: {e}")
+
+        # 2. Keyword search (ILIKE)
+        try:
+            terms = [t.strip().lower() for t in query.split() if len(t.strip()) > 3]
+            if terms:
+                conditions = " OR ".join([f"lower(content) LIKE :t{i}" for i in range(len(terms))])
+                params = {f"t{i}": f"%{t}%" for i, t in enumerate(terms)}
+                params["agent_id"] = self.agent_id
+                params["k"] = k * 2
+                keyword = await self.db.execute(
+                    text(f"""
+                        SELECT content, metadata, source_type
+                        FROM arch_memories
+                        WHERE agent_id = :agent_id AND ({conditions})
+                        ORDER BY created_at DESC
+                        LIMIT :k
+                    """),
+                    params,
+                )
+                for rank, r in enumerate(keyword.fetchall()):
+                    key = r.content[:100]
+                    if key in results_map:
+                        results_map[key]["keyword_rank"] = rank + 1
+                    else:
+                        results_map[key] = {
+                            "content": r.content,
+                            "metadata": json.loads(r.metadata) if isinstance(r.metadata, str) else r.metadata,
+                            "source_type": r.source_type,
+                            "similarity": 0.0,
+                            "semantic_rank": None,
+                            "keyword_rank": rank + 1,
+                        }
+        except Exception as e:
+            logger.warning(f"Keyword search failed: {e}")
+
+        # 3. Weighted RRF fusion
+        specific_terms = ["payfast", "jwt", "api", "endpoint", "error", "config", "password", "token", "webhook", "nginx"]
+        is_factual = any(t in query.lower() for t in specific_terms)
+        kw_weight = 0.7 if is_factual else 0.3
+        sem_weight = 0.3 if is_factual else 0.7
+        rrf_k = 60
+
+        scored = []
+        for data in results_map.values():
+            score = 0
+            if data["semantic_rank"]:
+                score += sem_weight / (rrf_k + data["semantic_rank"])
+            if data["keyword_rank"]:
+                score += kw_weight / (rrf_k + data["keyword_rank"])
+            scored.append({**data, "rrf_score": score})
+
+        scored.sort(key=lambda x: x["rrf_score"], reverse=True)
+
         return [
             {
-                "content": r.content,
-                "metadata": json.loads(r.metadata) if isinstance(r.metadata, str) else r.metadata,
-                "similarity": float(r.similarity),
-                "source_type": r.source_type,
+                "content": r["content"],
+                "metadata": r["metadata"],
+                "similarity": r.get("similarity", r["rrf_score"]),
+                "source_type": r["source_type"],
             }
-            for r in result.fetchall()
+            for r in scored[:k]
         ]
 
     async def bootstrap(self, documents: list[dict]):

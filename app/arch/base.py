@@ -323,6 +323,33 @@ class ArchAgentBase(ABC):
 
     # ── Heartbeat ──────────────────────────────────────────────
 
+
+    async def _tool_self_schedule(self, args: dict) -> dict:
+        """Create a self-scheduled task. Agents use this to schedule their own work.
+
+        Args:
+            title: What the task is
+            description: Detailed instructions
+            action_type: One of: run_command, write_file, generate_content, http_request, post_content
+            action_params: Dict of parameters for the action
+            schedule_at: (optional) ISO datetime for one-time execution
+            cron_expression: (optional) Cron string for recurring
+        """
+        from app.arch.task_queue import agent_create_scheduled_task
+        async with self.db_factory() as db:
+            result = await agent_create_scheduled_task(
+                db,
+                agent_name=self.agent_name,
+                title=args.get("title", "Self-scheduled task"),
+                description=args.get("description", ""),
+                action_type=args.get("action_type", "generate_content"),
+                action_params=args.get("action_params", {}),
+                schedule_at=args.get("schedule_at"),
+                cron_expression=args.get("cron_expression"),
+                priority=args.get("priority", 5),
+            )
+            return result
+
     async def heartbeat(self):
         """Scheduled every 60 seconds — updates last_heartbeat."""
         await self.db.execute(

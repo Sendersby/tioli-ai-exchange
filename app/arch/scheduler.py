@@ -48,12 +48,62 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
     interval = int(os.getenv("ARCH_HEARTBEAT_INTERVAL_SECONDS", "60"))
     
     async def _heartbeat_with_session(agent_name, db_fac):
+        """Heartbeat with decision loop — checks for pending work on each tick."""
         from sqlalchemy import text as sa_text
+        import json as _json
         try:
             async with db_fac() as db:
+                # 1. Update heartbeat timestamp
                 await db.execute(sa_text(
                     "UPDATE arch_agents SET last_heartbeat = now() WHERE agent_name = :n"
                 ), {"n": agent_name})
+
+                # 2. Check for PENDING tasks in the task queue assigned to this agent
+                agent_id_row = await db.execute(sa_text(
+                    "SELECT id::text FROM arch_agents WHERE agent_name = :n"
+                ), {"n": agent_name})
+                agent_row = agent_id_row.fetchone()
+                if agent_row:
+                    agent_uuid = agent_row.id
+                    pending_tasks = await db.execute(sa_text("""
+                        SELECT id::text, title, status FROM arch_task_queue
+                        WHERE agent_id = :aid AND status = 'PENDING'
+                          AND (schedule_at IS NULL OR schedule_at <= now())
+                        ORDER BY priority ASC, created_at ASC LIMIT 2
+                    """), {"aid": agent_uuid})
+                    for task in pending_tasks.fetchall():
+                        log.info(f"[{agent_name}] Heartbeat: found pending task {task.id}: {task.title}")
+
+                # 3. Check for APPROVED inbox items that mention this agent
+                inbox_approved = await db.execute(sa_text("""
+                    SELECT id::text, description FROM arch_founder_inbox
+                    WHERE status = 'APPROVED'
+                      AND description LIKE :pattern
+                    ORDER BY created_at ASC LIMIT 1
+                """), {"pattern": f'%"prepared_by": "{agent_name}"%'})
+                inbox_rows = inbox_approved.fetchall()
+                if not inbox_rows and agent_name == "architect":
+                    print(f"[{agent_name}] Heartbeat decision: no approved inbox items found")
+                for item in inbox_rows:
+                    print(f"[{agent_name}] Heartbeat: FOUND approved inbox item {item.id}")
+                    try:
+                        desc = _json.loads(item.description) if item.description and item.description.startswith("{") else {}
+                        title = desc.get("subject", "Approved task")
+                        detail = desc.get("detail", "")
+                        # Queue it for execution
+                        await db.execute(sa_text("""
+                            INSERT INTO arch_task_queue
+                                (agent_id, task_type, priority, title, description, action_type, action_params, status, created_at)
+                            VALUES (:aid, 'IMMEDIATE', 5, :title, :detail, 'generate_content', :params, 'PENDING', now())
+                        """), {"aid": agent_uuid, "title": title, "detail": detail, "params": _json.dumps({"task": title, "detail": detail})})
+                        # Mark inbox item as picked up
+                        await db.execute(sa_text(
+                            "UPDATE arch_founder_inbox SET status = 'EXECUTING' WHERE id = cast(:iid as uuid)"
+                        ), {"iid": item.id})
+                        print(f"[{agent_name}] Inbox item QUEUED for execution: {title}")
+                    except Exception as te:
+                        log.error(f"[{agent_name}] Inbox pickup failed: {te}")
+
                 await db.commit()
         except Exception as e:
             log.warning(f"[scheduler] Heartbeat failed for {agent_name}: {e}")

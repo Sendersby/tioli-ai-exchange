@@ -214,3 +214,47 @@ TASK_QUEUE_TOOLS = [
         },
     },
 ]
+
+
+# ── Agent Self-Scheduling Helper ──────────────────────────────────
+async def agent_create_scheduled_task(db, agent_name: str, title: str, description: str,
+                                       action_type: str, action_params: dict,
+                                       schedule_at=None, cron_expression=None,
+                                       priority: int = 5):
+    """Allow an agent to create its own scheduled or recurring task.
+
+    Usage by agents:
+        - schedule_at: ISO datetime string for one-time execution
+        - cron_expression: cron string for recurring execution (e.g., "0 */2 * * *")
+        - If neither provided, executes immediately
+    """
+    task_type = "IMMEDIATE"
+    if cron_expression:
+        task_type = "RECURRING"
+    elif schedule_at:
+        task_type = "SCHEDULED"
+
+    result = await db.execute(text("""
+        INSERT INTO arch_task_queue (agent_id, task_type, priority, title, description,
+                                     action_type, action_params, cron_expression, schedule_at,
+                                     status, created_at)
+        SELECT id, :task_type, :priority, :title, :desc,
+               :action_type, :params, :cron, :schedule_at, 'PENDING', now()
+        FROM arch_agents WHERE agent_name = :name
+        RETURNING id::text
+    """), {
+        "task_type": task_type,
+        "priority": priority,
+        "title": title,
+        "desc": description,
+        "action_type": action_type,
+        "params": json.dumps(action_params),
+        "cron": cron_expression,
+        "schedule_at": schedule_at,
+        "name": agent_name,
+    })
+    row = result.fetchone()
+    await db.commit()
+    task_id = row.id if row else "unknown"
+    logger.info(f"[{agent_name}] Self-scheduled task: {title} (type={task_type}, id={task_id})")
+    return {"task_id": task_id, "task_type": task_type, "title": title}
