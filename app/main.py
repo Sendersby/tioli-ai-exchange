@@ -419,7 +419,12 @@ async def not_found_handler(request: Request, exc):
             status_code=404,
             content={"error": True, "code": "NOT_FOUND", "message": "Endpoint not found", "path": str(request.url.path)},
         )
-    raise exc
+    # Render branded 404 page instead of re-raising (which cascades to 500)
+    return templates.TemplateResponse("error.html", {
+        "request": request, "error_code": 404,
+        "error_title": "Not Found",
+        "error_message": "The page you are looking for does not exist.",
+    }, status_code=404)
 
 # ── Rate Limiting ────────────────────────────────────────────────────
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -1832,23 +1837,35 @@ async def serve_robots_txt():
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
-    """Dynamic sitemap with all public pages."""
+    """Dynamic sitemap with all public pages — includes lastmod and priority."""
     from fastapi.responses import Response
-    urls = [
-        "https://agentisexchange.com/",
-        "https://agentisexchange.com/terms",
-        "https://agentisexchange.com/privacy",
-        "https://agentisexchange.com/governance",
-        "https://agentisexchange.com/get-started",
-        "https://agentisexchange.com/explorer",
-        "https://agentisexchange.com/login",
-        "https://agentisexchange.com/sdk",
-        "https://agentisexchange.com/quickstart",
+    from datetime import date
+    today = date.today().isoformat()
+    pages = [
+        ("/", "1.0", "daily"),
+        ("/get-started", "0.9", "weekly"),
+        ("/governance", "0.8", "monthly"),
+        ("/directory", "0.8", "daily"),
+        ("/explorer", "0.7", "daily"),
+        ("/sdk", "0.7", "monthly"),
+        ("/quickstart", "0.7", "monthly"),
+        ("/why-agentis", "0.7", "monthly"),
+        ("/agora", "0.7", "daily"),
+        ("/charter", "0.5", "monthly"),
+        ("/agent-register", "0.6", "monthly"),
+        ("/founding-operator", "0.6", "monthly"),
+        ("/operator-register", "0.6", "monthly"),
+        ("/operator-directory", "0.6", "daily"),
+        ("/builders", "0.6", "daily"),
+        ("/login", "0.5", "monthly"),
+        ("/terms", "0.4", "monthly"),
+        ("/privacy", "0.4", "monthly"),
+        ("/oversight", "0.5", "daily"),
     ]
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    for url in urls:
-        xml += f'  <url><loc>{url}</loc><changefreq>weekly</changefreq></url>\n'
+    for path, priority, freq in pages:
+        xml += f'  <url><loc>https://agentisexchange.com{path}</loc><lastmod>{today}</lastmod><changefreq>{freq}</changefreq><priority>{priority}</priority></url>\n'
     xml += '</urlset>'
     return Response(content=xml, media_type="application/xml")
 
@@ -6815,7 +6832,7 @@ async def onboard_step1(request: Request):
         "request": request, "authenticated": True, "active": "onboard",
         "step": 2, "wizard_data": wizard, "messages": [],
     })
-    response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, max_age=3600)
+    response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, secure=True, samesite="lax", max_age=3600)
     return response
 
 
@@ -6843,7 +6860,7 @@ async def onboard_step2(request: Request):
         "request": request, "authenticated": True, "active": "onboard",
         "step": 3, "wizard_data": wizard, "messages": [],
     })
-    response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, max_age=3600)
+    response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, secure=True, samesite="lax", max_age=3600)
     return response
 
 
@@ -8240,6 +8257,33 @@ async def linkedin_callback(code: str = None, state: str = None, error: str = No
         return {"status": "authorized", "token_saved": True, "token_preview": token[:20] + '...'}
     return {"error": "no code received"}
 
+
+
+# ── Fallback routes for static pages on backend domain ───────────────
+@app.get("/get-started", include_in_schema=False)
+async def serve_get_started():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/get-started.html", media_type="text/html")
+
+@app.get("/sdk", include_in_schema=False)
+async def serve_sdk_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/sdk.html", media_type="text/html")
+
+@app.get("/founding-operator", include_in_schema=False)
+async def serve_founding_operator():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/founding-operator.html", media_type="text/html")
+
+@app.get("/operator-directory", include_in_schema=False)
+async def serve_operator_directory():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/operator-directory.html", media_type="text/html")
+
+@app.get("/profile", include_in_schema=False)
+async def serve_profile_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/profile.html", media_type="text/html")
 
 # Redirect /get-started to /onboard wizard
 from starlette.responses import RedirectResponse as _GetStartedRedirect
