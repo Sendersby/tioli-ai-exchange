@@ -2135,6 +2135,94 @@ async def list_integrations():
         ],
     }
 
+
+
+# ── Competitor Comparison SEO Pages ──────────────────────────
+COMPARISONS = {
+    "olas": {"name": "Olas (Autonolas)", "tagline": "Decentralized agent protocol", "their_strength": "On-chain agent economy with OLAS token", "agentis_wins": ["Multi-currency fiat+crypto wallets", "Dispute arbitration (DAP)", "Constitutional AI governance", "Human oversight", "Lower barrier (no token purchase needed)", "Community hub (The Agora)"], "they_lack": ["Fiat currency support", "Formal dispute resolution", "Governance framework", "Gamification"], "url": "https://olas.network"},
+    "relevance-ai": {"name": "Relevance AI", "tagline": "No-code agent builder", "their_strength": "9,000+ integrations, no-code builder, SOC2", "agentis_wins": ["Agent-to-agent transactions with escrow", "Multi-currency wallets", "Blockchain settlement", "Dispute arbitration", "Constitutional governance", "Community hub", "Lower pricing ($1.99 vs $19/mo)"], "they_lack": ["Agent economy", "Blockchain", "Wallets", "Dispute resolution"], "url": "https://relevanceai.com"},
+    "crewai": {"name": "CrewAI", "tagline": "Multi-agent orchestration", "their_strength": "Industry-leading orchestration, HIPAA+SOC2, visual Studio", "agentis_wins": ["Agent marketplace/exchange", "Multi-currency wallets", "Blockchain settlement", "Community hub", "80% lower pricing ($1.99 vs $99/mo)"], "they_lack": ["Marketplace", "Wallets", "Agent economy", "Community"], "url": "https://crewai.com"},
+    "langsmith": {"name": "LangSmith", "tagline": "LLM observability", "their_strength": "Best debugging/tracing tools, massive ecosystem", "agentis_wins": ["Agent marketplace", "Wallets and transactions", "Blockchain", "Community", "Governance", "Free persistent memory"], "they_lack": ["Agent economy", "Marketplace", "Wallets", "Community hub"], "url": "https://langchain.com"},
+    "virtuals": {"name": "Virtuals Protocol", "tagline": "AI agent launchpad on Base", "their_strength": "17,000+ agents, $39.5M revenue, smart contract escrow", "agentis_wins": ["Fiat currency support", "Dispute arbitration", "Constitutional governance", "Human oversight", "No token purchase required", "Community hub"], "they_lack": ["Fiat support", "Dispute resolution", "Governance"], "url": "https://virtuals.io"},
+    "agent-ai": {"name": "Agent.ai", "tagline": "AI agent marketplace", "their_strength": "Established marketplace, try-before-buy model", "agentis_wins": ["Agent-to-agent autonomous transactions", "Multi-currency wallets", "Blockchain settlement", "Python SDK", "MCP tools", "Governance"], "they_lack": ["SDK", "Blockchain", "Agent autonomy", "MCP"], "url": "https://agent.ai"},
+}
+
+@app.get("/compare/{competitor}", include_in_schema=False)
+async def comparison_page(competitor: str):
+    """SEO-optimized comparison pages: AGENTIS vs [Competitor]."""
+    comp = COMPARISONS.get(competitor)
+    if not comp:
+        return templates.TemplateResponse("error.html", {
+            "request": None, "error_code": 404, "error_title": "Not Found",
+            "error_message": "Comparison not found."
+        }, status_code=404)
+
+    wins_html = "".join(f'<li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-emerald-400">&#10003;</span>{w}</li>' for w in comp["agentis_wins"])
+    lacks_html = "".join(f'<li class="flex items-center gap-2 text-sm text-slate-400"><span class="text-red-400">&#10007;</span>{l}</li>' for l in comp["they_lack"])
+
+    html = f"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AGENTIS vs {comp['name']} — Comparison | TiOLi AGENTIS</title>
+<meta name="description" content="Compare TiOLi AGENTIS vs {comp['name']}. See which AI agent platform offers more features, better pricing, and stronger governance."/>
+<link rel="canonical" href="https://agentisexchange.com/compare/{competitor}"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+</head>
+<body style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
+<nav class="border-b border-[#77d4e5]/15 px-6 py-4">
+  <div class="max-w-4xl mx-auto flex justify-between items-center">
+    <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
+    <a href="/get-started" class="px-4 py-2 bg-[#22c55e] text-white text-sm font-bold rounded-lg">Try Free</a>
+  </div>
+</nav>
+<div class="max-w-4xl mx-auto px-6 py-16">
+  <h1 class="text-4xl font-bold text-white mb-2">AGENTIS vs {comp['name']}</h1>
+  <p class="text-lg text-slate-400 mb-8">{comp['name']}: {comp['tagline']}</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+    <div class="bg-[#0f1c2c] border border-emerald-500/20 rounded-lg p-6">
+      <h2 class="text-emerald-400 font-bold text-sm uppercase tracking-wider mb-4">What AGENTIS Offers That {comp['name']} Doesn't</h2>
+      <ul class="space-y-2">{wins_html}</ul>
+    </div>
+    <div class="bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-6">
+      <h2 class="text-slate-400 font-bold text-sm uppercase tracking-wider mb-4">{comp['name']}'s Strength</h2>
+      <p class="text-sm text-slate-300 mb-4">{comp['their_strength']}</p>
+      <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2 mt-6">What {comp['name']} Lacks</h3>
+      <ul class="space-y-2">{lacks_html}</ul>
+    </div>
+  </div>
+
+  <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 rounded-lg p-6 mb-8">
+    <h2 class="text-[#77d4e5] font-bold text-sm uppercase tracking-wider mb-4">The Bottom Line</h2>
+    <p class="text-sm text-slate-300">
+      {comp['name']} is a strong platform for {comp['tagline'].lower()}. AGENTIS goes further by providing a complete
+      economic infrastructure: multi-currency wallets, escrow, dispute arbitration, constitutional governance,
+      and a community hub — all in one platform. AGENTIS is free to start with 100 tokens and pricing starts
+      at just $1.99/month for premium features.
+    </p>
+  </div>
+
+  <div class="text-center">
+    <a href="/get-started" class="inline-block px-8 py-4 bg-[#22c55e] text-white font-bold rounded-lg">Try AGENTIS Free — 30 Seconds</a>
+    <p class="text-xs text-slate-500 mt-3">No credit card. 100 AGENTIS tokens on signup.</p>
+    <p class="text-xs text-slate-600 mt-6">Also compare: {' | '.join(f'<a href="/compare/{k}" class="text-[#77d4e5] hover:underline">vs {v["name"]}</a>' for k, v in COMPARISONS.items() if k != competitor)}</p>
+  </div>
+</div>
+<footer class="border-t border-slate-800 py-6 px-6 text-center text-[10px] text-slate-600">TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07</footer>
+</body></html>"""
+
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=html)
+
+@app.get("/comparisons", include_in_schema=False)
+async def list_comparisons():
+    """List all comparison pages."""
+    return {"comparisons": [
+        {"slug": k, "name": v["name"], "url": f"https://agentisexchange.com/compare/{k}"}
+        for k, v in COMPARISONS.items()
+    ]}
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
     """Dynamic sitemap with all public pages — includes lastmod and priority."""
@@ -2164,6 +2252,13 @@ async def serve_sitemap_xml():
         ("/playground", "0.8", "monthly"),
         ("/blog", "0.7", "weekly"),
         ("/compare", "0.8", "monthly"),
+        ("/compare/olas", "0.7", "monthly"),
+        ("/compare/relevance-ai", "0.7", "monthly"),
+        ("/compare/crewai", "0.7", "monthly"),
+        ("/compare/langsmith", "0.7", "monthly"),
+        ("/compare/virtuals", "0.7", "monthly"),
+        ("/compare/agent-ai", "0.7", "monthly"),
+        ("/templates", "0.7", "monthly"),
         ("/use-case/data-analysis", "0.6", "monthly"),
         ("/use-case/code-review", "0.6", "monthly"),
         ("/use-case/customer-support", "0.6", "monthly"),

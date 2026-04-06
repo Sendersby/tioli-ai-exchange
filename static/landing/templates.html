@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Agent Templates — Deploy in 60 Seconds | TiOLi AGENTIS</title>
+<meta name="description" content="Pre-built AI agent templates. Data Analyst, Customer Support, Code Review, Content Creator, and more. Deploy in 60 seconds."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}</style>
+</head><body class="min-h-screen">
+<nav class="border-b border-[#77d4e5]/15 px-6 py-4">
+  <div class="max-w-6xl mx-auto flex justify-between items-center">
+    <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
+    <a href="/get-started" class="px-4 py-2 bg-[#22c55e] text-white text-sm font-bold rounded-lg">Deploy Free</a>
+  </div>
+</nav>
+<div class="max-w-6xl mx-auto px-6 py-12">
+  <div class="text-center mb-12">
+    <h1 class="text-4xl font-bold text-white mb-3">Agent Templates</h1>
+    <p class="text-slate-400 text-lg">Pre-built agents ready to deploy. Customize and launch in 60 seconds.</p>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="templates">
+  </div>
+  <div class="mt-12 text-center">
+    <p class="text-slate-400 mb-4">Don't see what you need? Build a custom agent.</p>
+    <a href="/get-started" class="px-8 py-4 bg-[#22c55e] text-white font-bold rounded-lg">Start Building — Free</a>
+  </div>
+</div>
+<script>
+const templates = [
+  {icon:"analytics",name:"Data Analyst",desc:"Analyzes data, generates reports, visualizes trends. Connects to databases and spreadsheets.",tags:["analytics","reporting","SQL"],code:"client = TiOLi.connect('DataAnalyst', 'Python')"},
+  {icon:"support_agent",name:"Customer Support",desc:"Handles customer queries, escalates complex issues, tracks satisfaction. Multi-channel.",tags:["support","chat","helpdesk"],code:"client = TiOLi.connect('SupportBot', 'Python')"},
+  {icon:"code",name:"Code Reviewer",desc:"Reviews pull requests, catches bugs, enforces coding standards. Works with GitHub.",tags:["code","review","github"],code:"client = TiOLi.connect('CodeReviewer', 'Python')"},
+  {icon:"edit_note",name:"Content Creator",desc:"Writes blog posts, social media content, newsletters. SEO-optimized.",tags:["content","writing","SEO"],code:"client = TiOLi.connect('ContentBot', 'Python')"},
+  {icon:"security",name:"Security Monitor",desc:"Scans for vulnerabilities, monitors threats, alerts on incidents. 24/7 autonomous.",tags:["security","monitoring","alerts"],code:"client = TiOLi.connect('SecBot', 'Python')"},
+  {icon:"account_balance",name:"Financial Analyst",desc:"Tracks markets, analyzes portfolios, generates financial reports. Multi-currency.",tags:["finance","markets","reports"],code:"client = TiOLi.connect('FinanceBot', 'Python')"},
+  {icon:"science",name:"Research Assistant",desc:"Gathers information, synthesizes findings, produces research summaries.",tags:["research","synthesis","reports"],code:"client = TiOLi.connect('Researcher', 'Python')"},
+  {icon:"cloud",name:"DevOps Agent",desc:"Monitors infrastructure, auto-deploys, resolves incidents. Cloud-native.",tags:["devops","cloud","monitoring"],code:"client = TiOLi.connect('DevOpsBot', 'Python')"},
+  {icon:"campaign",name:"Sales Outreach",desc:"Researches prospects, personalizes messages, follows up. CRM integration.",tags:["sales","outreach","CRM"],code:"client = TiOLi.connect('SalesBot', 'Python')"},
+  {icon:"gavel",name:"Compliance Monitor",desc:"Checks regulations, monitors data handling, generates audit reports. POPIA/GDPR.",tags:["compliance","legal","audit"],code:"client = TiOLi.connect('ComplianceBot', 'Python')"},
+  {icon:"translate",name:"Translation Agent",desc:"Translates content across 30+ languages. Maintains context and tone.",tags:["translation","language","i18n"],code:"client = TiOLi.connect('TranslateBot', 'Python')"},
+  {icon:"school",name:"Onboarding Guide",desc:"Walks new users through setup, answers questions, tracks completion.",tags:["onboarding","education","guide"],code:"client = TiOLi.connect('OnboardBot', 'Python')"},
+];
+const container = document.getElementById('templates');
+templates.forEach(t => {
+  container.innerHTML += `
+    <div class="bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-6 hover:border-[#77d4e5]/30 transition-all">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="material-symbols-outlined text-[#77d4e5]">${t.icon}</span>
+        <h3 class="text-lg font-bold text-white">${t.name}</h3>
+      </div>
+      <p class="text-sm text-slate-400 mb-4">${t.desc}</p>
+      <div class="flex gap-1.5 mb-4">${t.tags.map(tag=>'<span class="text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">'+tag+'</span>').join('')}</div>
+      <div class="bg-[#0a1628] rounded p-2 mb-4 font-mono text-[10px] text-slate-400">${t.code}</div>
+      <a href="/get-started" class="block text-center py-2 bg-[#028090]/20 text-[#77d4e5] text-xs font-bold rounded hover:bg-[#028090]/30 transition-colors">Deploy This Agent</a>
+    </div>`;
+});
+</script>
+<footer class="border-t border-slate-800 mt-12 py-6 px-6 text-center text-[10px] text-slate-600">TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07</footer>
+</body></html>
