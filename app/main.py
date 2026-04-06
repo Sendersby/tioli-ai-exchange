@@ -1845,6 +1845,67 @@ async def serve_robots_txt():
     return Response(content=txt, media_type="text/plain")
 
 
+
+
+from sqlalchemy import text as _quest_text
+
+# ── Gamification Engine — quests, XP, badges, streaks ──────────
+@app.get("/api/v1/quests", include_in_schema=False)
+async def list_quests(db: AsyncSession = Depends(get_db)):
+    """List all available quests with rewards."""
+    result = await db.execute(_quest_text(
+        "SELECT id::text, quest_name, description, reward_credits, xp_reward, badge_name "
+        "FROM agentis_quests WHERE active = true ORDER BY reward_credits ASC"
+    ))
+    return {"quests": [
+        {"id": r.id, "name": r.quest_name, "description": r.description,
+         "credits": r.reward_credits, "xp": r.xp_reward, "badge": r.badge_name}
+        for r in result.fetchall()
+    ]}
+
+
+@app.get("/api/v1/quests/{agent_id}/progress", include_in_schema=False)
+async def quest_progress(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Check an agent's quest progress, XP, and badges."""
+    # Get XP and level
+    xp_row = await db.execute(_quest_text(
+        "SELECT total_xp, level, streak_days, badges FROM agentis_agent_xp WHERE agent_id = :aid"
+    ), {"aid": agent_id})
+    xp = xp_row.fetchone()
+
+    # Get completed quests
+    completed = await db.execute(_quest_text(
+        "SELECT q.quest_name, qc.completed_at "
+        "FROM agentis_quest_completions qc JOIN agentis_quests q ON qc.quest_id = q.id "
+        "WHERE qc.agent_id = :aid ORDER BY qc.completed_at DESC"
+    ), {"aid": agent_id})
+
+    return {
+        "agent_id": agent_id,
+        "xp": xp.total_xp if xp else 0,
+        "level": xp.level if xp else 1,
+        "streak_days": xp.streak_days if xp else 0,
+        "badges": xp.badges if xp else [],
+        "completed_quests": [
+            {"quest": r.quest_name, "completed_at": r.completed_at.isoformat()}
+            for r in completed.fetchall()
+        ],
+    }
+
+
+@app.get("/api/v1/leaderboard", include_in_schema=False)
+async def xp_leaderboard(db: AsyncSession = Depends(get_db)):
+    """Top agents by XP — gamification leaderboard."""
+    result = await db.execute(_quest_text(
+        "SELECT agent_id, total_xp, level, streak_days, badges "
+        "FROM agentis_agent_xp ORDER BY total_xp DESC LIMIT 20"
+    ))
+    return {"leaderboard": [
+        {"agent": r.agent_id, "xp": r.total_xp, "level": r.level,
+         "streak": r.streak_days, "badges": r.badges}
+        for r in result.fetchall()
+    ]}
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def serve_sitemap_xml():
     """Dynamic sitemap with all public pages — includes lastmod and priority."""

@@ -31,3 +31,36 @@ async def generate_referral_link(agent_id: str, db: AsyncSession = Depends(get_d
 async def validate_referral(code: str):
     """Validate a referral code."""
     return {"code": code, "valid": True, "reward": "1 month free premium listing"}
+
+
+@referral_router.get("/leaderboard")
+async def referral_leaderboard(db: AsyncSession = Depends(get_db)):
+    """Top referrers with tiered rewards status."""
+    result = await db.execute(text("""
+        SELECT referrer_agent_id, COUNT(*) as referral_count
+        FROM agent_referrals
+        WHERE status = 'COMPLETED'
+        GROUP BY referrer_agent_id
+        ORDER BY referral_count DESC
+        LIMIT 20
+    """))
+    leaders = []
+    for row in result.fetchall():
+        tier = "Bronze"
+        if row.referral_count >= 20: tier = "Platinum"
+        elif row.referral_count >= 10: tier = "Gold"
+        elif row.referral_count >= 5: tier = "Silver"
+
+        reward = "50 credits per referral"
+        if tier == "Silver": reward += " + 1 month Pro trial"
+        elif tier == "Gold": reward += " + 3 months Pro"
+        elif tier == "Platinum": reward += " + lifetime credit bonus"
+
+        leaders.append({
+            "agent": row.referrer_agent_id,
+            "referrals": row.referral_count,
+            "tier": tier,
+            "reward": reward,
+        })
+    return {"leaderboard": leaders, "your_referral_link": "https://agentisexchange.com/get-started?ref=YOUR_CODE"}
+
