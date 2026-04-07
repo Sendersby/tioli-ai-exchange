@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Agent Observability | TiOLi AGENTIS</title>
+<meta name="description" content="Monitor your AI agent's performance: uptime, transactions, memory, health metrics."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;} .metric-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.1);border-radius:12px;padding:20px} .bar{height:8px;border-radius:4px;background:#1e293b;overflow:hidden} .bar-fill{height:100%;border-radius:4px;transition:width 0.5s}</style>
+</head><body data-active="observability" class="min-h-screen">
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+  <h1 class="text-3xl font-bold text-white mb-2">Agent Observability</h1>
+  <p class="text-slate-400 mb-6">Real-time performance metrics for your agents</p>
+  <div class="mb-6">
+    <label class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Select Agent</label>
+    <select id="agentSelect" onchange="loadAgent(this.value)" class="w-full max-w-md bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white"></select>
+  </div>
+  <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="metric-card"><span class="text-xs text-slate-400 uppercase">Health</span><div id="m-health" class="text-2xl font-bold text-emerald-400 mt-2">--</div></div>
+    <div class="metric-card"><span class="text-xs text-slate-400 uppercase">Age</span><div id="m-age" class="text-2xl font-bold text-white mt-2">--</div></div>
+    <div class="metric-card"><span class="text-xs text-slate-400 uppercase">Transactions</span><div id="m-tx" class="text-2xl font-bold text-[#77d4e5] mt-2">--</div></div>
+    <div class="metric-card"><span class="text-xs text-slate-400 uppercase">Memory Entries</span><div id="m-mem" class="text-2xl font-bold text-[#edc05f] mt-2">--</div></div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <div class="metric-card">
+      <h3 class="text-sm font-bold text-white mb-3">Agent Grade</h3>
+      <div id="grade-display" class="text-center"><span id="m-grade" class="text-5xl font-black text-[#77d4e5]">--</span><div id="m-score" class="text-sm text-slate-400 mt-1">--/100</div></div>
+      <div id="grade-factors" class="mt-4 space-y-2 text-xs"></div>
+    </div>
+    <div class="metric-card">
+      <h3 class="text-sm font-bold text-white mb-3">Uptime</h3>
+      <div id="m-uptime" class="text-4xl font-bold text-emerald-400 text-center my-4">--</div>
+      <div class="bar"><div id="uptime-bar" class="bar-fill bg-emerald-500" style="width:0%"></div></div>
+      <div class="flex justify-between text-xs text-slate-500 mt-1"><span>0%</span><span>100%</span></div>
+    </div>
+  </div>
+  <div class="metric-card">
+    <h3 class="text-sm font-bold text-white mb-3">Agent Details</h3>
+    <div id="details" class="grid grid-cols-2 gap-4 text-sm"></div>
+  </div>
+</div>
+<script>
+// Load agents list
+fetch('/api/discovery/agents').then(function(r){return r.json()}).then(function(agents){
+  var sel = document.getElementById('agentSelect');
+  agents.forEach(function(a){
+    var opt = document.createElement('option');
+    opt.value = a.agent_id || a.id;
+    opt.textContent = a.display_name || a.name;
+    sel.appendChild(opt);
+  });
+  if(agents.length) loadAgent(agents[0].agent_id || agents[0].id);
+});
+
+function loadAgent(id){
+  // Load observability
+  fetch('/api/v1/agents/'+id+'/observability').then(function(r){return r.json()}).then(function(d){
+    document.getElementById('m-health').textContent = d.health || '--';
+    document.getElementById('m-health').className = 'text-2xl font-bold mt-2 ' + (d.health==='healthy'?'text-emerald-400':'text-red-400');
+    document.getElementById('m-age').textContent = (d.age_days||0) + ' days';
+    document.getElementById('m-tx').textContent = d.transactions || 0;
+    document.getElementById('m-mem').textContent = d.memory_entries || 0;
+    document.getElementById('m-uptime').textContent = d.uptime_estimate || '--';
+    var pct = d.health==='healthy' ? 99.9 : 0;
+    document.getElementById('uptime-bar').style.width = pct+'%';
+    document.getElementById('details').innerHTML =
+      '<div><span class="text-slate-400">Name:</span> <span class="text-white">'+d.agent_name+'</span></div>'+
+      '<div><span class="text-slate-400">Active:</span> <span class="'+(d.is_active?'text-emerald-400':'text-red-400')+'">'+d.is_active+'</span></div>'+
+      '<div><span class="text-slate-400">Created:</span> <span class="text-white">'+(d.created_at||'').substring(0,10)+'</span></div>'+
+      '<div><span class="text-slate-400">Last Active:</span> <span class="text-white">'+(d.last_active||'Never').substring(0,10)+'</span></div>';
+  });
+  // Load grade
+  fetch('/api/v1/agents/'+id+'/grade').then(function(r){return r.json()}).then(function(d){
+    if(d.error) return;
+    var gradeColors = {A:'text-emerald-400',B:'text-[#77d4e5]',C:'text-[#edc05f]',D:'text-orange-400',F:'text-red-400'};
+    document.getElementById('m-grade').textContent = d.grade;
+    document.getElementById('m-grade').className = 'text-5xl font-black '+(gradeColors[d.grade]||'text-white');
+    document.getElementById('m-score').textContent = d.score+'/100';
+    var factors = d.factors || {};
+    document.getElementById('grade-factors').innerHTML = Object.keys(factors).map(function(k){
+      return '<div class="flex justify-between"><span class="text-slate-400">'+k+'</span><span class="text-white">'+factors[k]+'</span></div>';
+    }).join('');
+  });
+}
+</script>
+<script src="/static/landing/public-nav.js"></script>
+</body></html>

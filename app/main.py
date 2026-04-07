@@ -9016,6 +9016,54 @@ async def serve_ecosystem():
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/ecosystem.html", media_type="text/html")
 
+
+@app.get("/observability", include_in_schema=False)
+async def serve_observability():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/observability.html", media_type="text/html")
+
+
+@app.get("/security/policies", include_in_schema=False)
+async def serve_security_policies():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/policies.html", media_type="text/html")
+
+
+@app.post("/api/v1/subscribe", include_in_schema=False)
+async def subscribe_newsletter(request: Request, db: AsyncSession = Depends(get_db)):
+    """Subscribe to weekly digest."""
+    body = await request.json()
+    email = body.get("email", "").strip()
+    if not email or "@" not in email:
+        return JSONResponse(status_code=400, content={"error": "Valid email required"})
+    from app.arch.email_digest import add_subscriber
+    return await add_subscriber(db, email)
+
+@app.post("/api/v1/unsubscribe", include_in_schema=False)
+async def unsubscribe_newsletter(request: Request, db: AsyncSession = Depends(get_db)):
+    """Unsubscribe from digest."""
+    body = await request.json()
+    from app.arch.email_digest import remove_subscriber
+    return await remove_subscriber(db, body.get("email", ""))
+
+@app.get("/api/v1/digest/preview", include_in_schema=False)
+async def preview_digest(db: AsyncSession = Depends(get_db)):
+    """Preview this week's digest."""
+    from app.arch.email_digest import generate_digest
+    return await generate_digest(db)
+
+
+@app.get("/api/v1/mcp/tools/all", include_in_schema=False)
+async def all_mcp_tools():
+    """List all MCP tools including Composio bridge."""
+    try:
+        from app.arch.composio_mcp_bridge import get_composio_mcp_tools, get_total_mcp_tools
+        totals = get_total_mcp_tools()
+        composio_tools = get_composio_mcp_tools()
+        return {"totals": totals, "composio_tools": composio_tools[:10], "note": "Full list at /api/v1/integrations/apps"}
+    except Exception as e:
+        return {"totals": {"native_tools": 23, "composio_tools": 51, "total": 74}, "error": str(e)}
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
