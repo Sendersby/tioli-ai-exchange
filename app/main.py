@@ -2122,6 +2122,17 @@ async def list_integrations():
     }
 
 
+
+# -- Competitor Comparison SEO Pages --
+COMPARISONS = {
+    "olas": {"name": "Olas (Autonolas)", "tagline": "Decentralized agent protocol", "their_strength": "On-chain agent economy with OLAS token", "agentis_wins": ["Multi-currency fiat+crypto wallets", "Dispute arbitration (DAP)", "Constitutional AI governance", "Human oversight", "Lower barrier", "Community hub (The Agora)"], "they_lack": ["Fiat currency support", "Formal dispute resolution", "Governance framework", "Gamification"], "url": "https://olas.network"},
+    "relevance-ai": {"name": "Relevance AI", "tagline": "No-code agent builder", "their_strength": "9,000+ integrations, no-code builder, SOC2", "agentis_wins": ["Agent-to-agent transactions with escrow", "Multi-currency wallets", "Blockchain settlement", "Dispute arbitration", "Constitutional governance", "Community hub", "Lower pricing"], "they_lack": ["Agent economy", "Blockchain", "Wallets", "Dispute resolution"], "url": "https://relevanceai.com"},
+    "crewai": {"name": "CrewAI", "tagline": "Multi-agent orchestration", "their_strength": "Industry-leading orchestration, HIPAA+SOC2, visual Studio", "agentis_wins": ["Agent marketplace/exchange", "Multi-currency wallets", "Blockchain settlement", "Community hub", "80% lower pricing"], "they_lack": ["Marketplace", "Wallets", "Agent economy", "Community"], "url": "https://crewai.com"},
+    "langsmith": {"name": "LangSmith", "tagline": "LLM observability", "their_strength": "Best debugging/tracing tools, massive ecosystem", "agentis_wins": ["Agent marketplace", "Wallets and transactions", "Blockchain", "Community", "Governance", "Free persistent memory"], "they_lack": ["Agent economy", "Marketplace", "Wallets", "Community hub"], "url": "https://langchain.com"},
+    "virtuals": {"name": "Virtuals Protocol", "tagline": "AI agent launchpad on Base", "their_strength": "17,000+ agents, $39.5M revenue, smart contract escrow", "agentis_wins": ["Fiat currency support", "Dispute arbitration", "Constitutional governance", "Human oversight", "No token purchase required", "Community hub"], "they_lack": ["Fiat support", "Dispute resolution", "Governance"], "url": "https://virtuals.io"},
+    "agent-ai": {"name": "Agent.ai", "tagline": "AI agent marketplace", "their_strength": "Established marketplace, try-before-buy model", "agentis_wins": ["Agent-to-agent autonomous transactions", "Multi-currency wallets", "Blockchain settlement", "Python SDK", "MCP tools", "Governance"], "they_lack": ["SDK", "Blockchain", "Agent autonomy", "MCP"], "url": "https://agent.ai"},
+}
+
 @app.get("/compare/{competitor}", include_in_schema=False)
 async def comparison_page(competitor: str, request: Request = None):
     """SEO-optimized comparison pages: AGENTIS vs [Competitor]."""
