@@ -1426,6 +1426,32 @@
     })();
     </script>
 
+
+<!-- ── Latest from the Blog ── -->
+<section id="blog-feed" style="background:linear-gradient(180deg, #061423 0%, #0a1929 100%);padding:64px 24px;border-top:1px solid rgba(119,212,229,0.1);border-bottom:1px solid rgba(119,212,229,0.1)">
+  <div style="max-width:900px;margin:0 auto">
+    <h2 style="font-size:1.5rem;font-weight:700;color:#fff;text-align:center;margin-bottom:8px">Latest from the Blog</h2>
+    <p style="color:#64748b;text-align:center;margin-bottom:32px;font-size:0.875rem">Industry insights, guides, and platform updates</p>
+    <div id="blog-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px">
+      <p style="color:#475569;text-align:center;grid-column:1/-1">Loading...</p>
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <a href="/learn" style="color:#77d4e5;font-size:0.875rem;text-decoration:none">View all articles &rarr;</a>
+    </div>
+  </div>
+</section>
+<script>
+fetch('/api/v1/news/latest?limit=3')
+  .then(function(r){return r.json()})
+  .then(function(d){
+    var items = (d.articles || d.curated || []).slice(0,3);
+    var cards = items.map(function(a){
+      return '<a href="' + (a.url||'/blog/'+a.slug) + '" style="display:block;padding:20px;background:#0f1c2c;border:1px solid rgba(119,212,229,0.1);border-radius:8px;text-decoration:none;transition:border-color 0.2s" onmouseover="this.style.borderColor=\'rgba(119,212,229,0.3)\'" onmouseout="this.style.borderColor=\'rgba(119,212,229,0.1)\'"><div style="font-weight:600;color:#fff;font-size:0.875rem">' + a.title + '</div><div style="font-size:0.75rem;color:#475569;margin-top:8px">' + (a.category||'Insights') + '</div></a>';
+    }).join('');
+    document.getElementById('blog-cards').innerHTML = cards || '<p style="color:#475569;text-align:center;grid-column:1/-1">Content coming soon.</p>';
+  });
+</script>
+
     <!-- Directory Badges Footer Strip -->
     <section id="directory-badges" class="relative z-10" style="background:#0D1B2A;padding:32px 24px;border-top:1px solid rgba(255,255,255,0.08)">
         <div style="max-width:1100px;margin:0 auto">
@@ -2190,32 +2216,6 @@
         box.scrollTop=box.scrollHeight;
     }
     </script>
-
-
-<!-- Latest from the Blog -->
-<section id="blog-feed" class="py-16 px-6" style="background:rgba(6,20,35,0.5)">
-  <div class="max-w-4xl mx-auto">
-    <h2 class="text-2xl font-bold text-white text-center mb-2">Latest from the Blog</h2>
-    <p class="text-slate-400 text-center mb-8 text-sm">Industry insights, guides, and platform updates</p>
-    <div id="blog-cards" class="grid md:grid-cols-3 gap-4">
-      <p class="text-slate-500 text-center col-span-3">Loading...</p>
-    </div>
-    <div class="text-center mt-6">
-      <a href="/learn" class="text-sm text-[#77d4e5] hover:underline">View all articles &rarr;</a>
-    </div>
-  </div>
-</section>
-<script>
-fetch('/api/v1/news/latest?limit=3')
-  .then(function(r){return r.json()})
-  .then(function(d){
-    var items = (d.articles || d.curated || []).slice(0,3);
-    var cards = items.map(function(a){
-      return '<a href="' + (a.url||'/blog/'+a.slug) + '" class="block p-5 bg-[#0a1929] border border-[#77d4e5]/10 rounded-lg hover:border-[#77d4e5]/30 transition"><div class="font-semibold text-white text-sm">' + a.title + '</div><div class="text-xs text-slate-500 mt-2">' + (a.category||'Insights') + '</div></a>';
-    }).join('');
-    document.getElementById('blog-cards').innerHTML = cards || '<p class="text-slate-500 text-center col-span-3">Content coming soon.</p>';
-  });
-</script>
 
 </body>
 </html>
