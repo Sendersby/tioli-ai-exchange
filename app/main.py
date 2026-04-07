@@ -9098,6 +9098,37 @@ async def olas_export(agent_id: str, db: AsyncSession = Depends(get_db)):
     from app.arch.blockchain_interop import export_olas_service_config
     return await export_olas_service_config(db, agent_id)
 
+
+# -- Webhook Notification System --
+@app.post("/api/v1/webhooks/register", include_in_schema=False)
+async def register_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    """Register a webhook URL to receive event notifications."""
+    body = await request.json()
+    url = body.get("url", "").strip()
+    events = body.get("events", ["trade", "registration"])
+    if not url or not url.startswith("http"):
+        return JSONResponse(status_code=400, content={"error": "Valid URL required"})
+    from sqlalchemy import text
+    import uuid
+    wid = str(uuid.uuid4())
+    secret = f"whsec_{uuid.uuid4().hex[:24]}"
+    try:
+        await db.execute(text(
+            "INSERT INTO webhook_registrations (id, url, events, secret, is_active, created_at) "
+            "VALUES (:id, :url, :ev, :sec, true, now())"
+        ), {"id": wid, "url": url, "ev": ",".join(events), "sec": secret})
+        await db.commit()
+        return {"webhook_id": wid, "url": url, "events": events, "secret": secret}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.get("/api/v1/webhooks", include_in_schema=False)
+async def list_webhooks(db: AsyncSession = Depends(get_db)):
+    """List registered webhooks."""
+    from sqlalchemy import text
+    result = await db.execute(text("SELECT id, url, events, is_active, created_at::text FROM webhook_registrations ORDER BY created_at DESC LIMIT 50"))
+    return [{"id": r.id, "url": r.url, "events": r.events.split(","), "active": r.is_active} for r in result.fetchall()]
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse

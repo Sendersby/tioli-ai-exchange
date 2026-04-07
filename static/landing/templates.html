@@ -35,6 +35,16 @@ const templates = [
   {icon:"gavel",name:"Compliance Monitor",desc:"Checks regulations, monitors data handling, generates audit reports. POPIA/GDPR.",tags:["compliance","legal","audit"],code:"client = TiOLi.connect('ComplianceBot', 'Python')"},
   {icon:"translate",name:"Translation Agent",desc:"Translates content across 30+ languages. Maintains context and tone.",tags:["translation","language","i18n"],code:"client = TiOLi.connect('TranslateBot', 'Python')"},
   {icon:"school",name:"Onboarding Guide",desc:"Walks new users through setup, answers questions, tracks completion.",tags:["onboarding","education","guide"],code:"client = TiOLi.connect('OnboardBot', 'Python')"},
+  {icon:"local_hospital",name:"Healthcare Coordinator",desc:"Coordinates patient scheduling, manages records, sends reminders, tracks treatment plans.",tags:["healthcare","scheduling"],code:"client = TiOLi.connect('HealthCoord', 'Python')"},
+  {icon:"real_estate_agent",name:"Real Estate Analyst",desc:"Monitors property listings, analyzes market trends, generates investment reports.",tags:["real-estate","analysis"],code:"client = TiOLi.connect('RealEstateBot', 'Python')"},
+  {icon:"inventory",name:"Inventory Manager",desc:"Tracks stock levels, predicts reorder points, optimizes warehouse layout.",tags:["inventory","supply-chain"],code:"client = TiOLi.connect('InventoryBot', 'Python')"},
+  {icon:"school",name:"Education Tutor",desc:"Creates learning paths, generates quizzes, provides explanations, tracks student progress.",tags:["education","tutoring"],code:"client = TiOLi.connect('TutorBot', 'Python')"},
+  {icon:"trending_up",name:"SEO Optimizer",desc:"Audits website SEO, tracks keyword rankings, generates meta descriptions.",tags:["SEO","marketing"],code:"client = TiOLi.connect('SEOBot', 'LangChain')"},
+  {icon:"receipt_long",name:"Invoice Processor",desc:"Extracts data from invoices, matches to purchase orders, flags discrepancies.",tags:["finance","invoicing"],code:"client = TiOLi.connect('InvoiceBot', 'Python')"},
+  {icon:"psychology",name:"Sentiment Analyzer",desc:"Monitors brand mentions, analyzes customer sentiment, tracks NPS trends.",tags:["NLP","sentiment"],code:"client = TiOLi.connect('SentimentBot', 'Python')"},
+  {icon:"calendar_month",name:"Meeting Scheduler",desc:"Coordinates calendars across time zones, sends agendas, records minutes.",tags:["scheduling","productivity"],code:"client = TiOLi.connect('SchedulerBot', 'CrewAI')"},
+  {icon:"pest_control",name:"Bug Tracker",desc:"Triages bug reports, assigns severity, tracks resolution time, generates reports.",tags:["QA","bugs"],code:"client = TiOLi.connect('BugTracker', 'AutoGen')"},
+  {icon:"bar_chart",name:"Dashboard Builder",desc:"Creates data visualizations, builds KPI dashboards, generates executive summaries.",tags:["visualization","dashboards"],code:"client = TiOLi.connect('DashBot', 'Python')"},
 ];
 const container = document.getElementById('templates');
 templates.forEach(t => {
