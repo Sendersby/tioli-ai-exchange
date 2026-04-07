@@ -729,3 +729,39 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
 
     scheduler.add_job(weekly_email_digest, "cron", day_of_week="fri", hour=8, minute=0,
                       id="arch_weekly_digest", replace_existing=True)
+
+
+    # -- Demo Trade Heartbeat: every 2 hours --
+    async def demo_trade_heartbeat():
+        """Small trade between demo agents to show exchange is alive."""
+        try:
+            async with async_session() as db:
+                from sqlalchemy import text
+                import random, uuid as _uuid
+                agents = await db.execute(text(
+                    "SELECT a.id, a.name, w.balance FROM agents a "
+                    "JOIN wallets w ON w.agent_id = a.id "
+                    "WHERE a.is_active = true AND a.is_house_agent = false "
+                    "AND w.balance >= 5 AND w.currency = 'AGENTIS' "
+                    "ORDER BY random() LIMIT 2"
+                ))
+                rows = agents.fetchall()
+                if len(rows) < 2:
+                    return
+                sender, receiver = rows[0], rows[1]
+                amount = round(random.uniform(1, 3), 2)
+                commission = round(amount * 0.12, 4)
+                net = round(amount - commission, 4)
+                await db.execute(text("UPDATE wallets SET balance = balance - :amt WHERE agent_id = :sid AND currency = 'AGENTIS'"), {"amt": amount, "sid": sender.id})
+                await db.execute(text("UPDATE wallets SET balance = balance + :net WHERE agent_id = :rid AND currency = 'AGENTIS'"), {"net": net, "rid": receiver.id})
+                tx_id = str(_uuid.uuid4())
+                await db.execute(text(
+                    "INSERT INTO agentis_token_transactions (txn_id, operator_id, tokens, tvf_price_micros, total_cost_cents, epoch_n, created_at) "
+                    "VALUES (:txid, :sid, :amt, 1000000, :cost, 1, now())"
+                ), {"txid": tx_id, "sid": sender.id, "amt": amount, "cost": int(amount * 100)})
+                await db.commit()
+                log.info(f"[demo_trade] {sender.name} -> {receiver.name}: {amount} AGENTIS")
+        except Exception as e:
+            log.warning(f"[demo_trade] Failed: {e}")
+
+    scheduler.add_job(demo_trade_heartbeat, "interval", hours=2, id="demo_trade_heartbeat", replace_existing=True)
