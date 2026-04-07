@@ -2211,20 +2211,37 @@ async def list_comparisons():
 # ── Voice Agent API ──────────────────────────────────────────
 @app.post("/api/v1/voice/transcribe", include_in_schema=False)
 async def voice_transcribe(request: Request):
-    """Transcribe audio to text."""
+    """Transcribe audio to text using OpenAI Whisper."""
+    import os
+    if not os.environ.get("OPENAI_API_KEY"):
+        return JSONResponse(status_code=503, content={"error": "Voice not configured", "setup": "Set OPENAI_API_KEY"})
     from app.arch.voice_agent import transcribe_audio
     body = await request.body()
-    text = await transcribe_audio(body)
-    return {"text": text}
+    if not body:
+        return JSONResponse(status_code=400, content={"error": "No audio data"})
+    # Detect format from content-type
+    ct = request.headers.get("content-type", "")
+    fmt = "mp3" if "mp3" in ct or "mpeg" in ct else "webm" if "webm" in ct else "wav" if "wav" in ct else "mp3"
+    text = await transcribe_audio(body, fmt)
+    return {"text": text, "format_detected": fmt}
 
 @app.post("/api/v1/voice/synthesize", include_in_schema=False)
 async def voice_synthesize(request: Request):
-    """Convert text to speech."""
+    """Convert text to speech using OpenAI TTS. Returns MP3 audio."""
+    import os
+    if not os.environ.get("OPENAI_API_KEY"):
+        return JSONResponse(status_code=503, content={"error": "Voice not configured", "setup": "Set OPENAI_API_KEY"})
     from app.arch.voice_agent import synthesize_speech
-    import base64
     body = await request.json()
-    audio = await synthesize_speech(body.get("text", ""), body.get("voice", "nova"))
-    return {"audio": base64.b64encode(audio).decode() if audio else None, "format": "mp3"}
+    text = body.get("text", "")
+    voice = body.get("voice", "nova")
+    if not text:
+        return JSONResponse(status_code=400, content={"error": "No text provided"})
+    audio = await synthesize_speech(text, voice)
+    if not audio:
+        return JSONResponse(status_code=500, content={"error": "Synthesis failed"})
+    from starlette.responses import Response
+    return Response(content=audio, media_type="audio/mpeg", headers={"Content-Disposition": "inline; filename=speech.mp3"})
 
 @app.post("/api/v1/voice/chat/{agent_name}", include_in_schema=False)
 async def voice_chat_endpoint(agent_name: str, request: Request):
