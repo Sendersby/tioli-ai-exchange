@@ -51,6 +51,7 @@
         {name:'Security',          href:'/security',               icon:'shield',        slug:'security'},
         {name:'Charter',           href:'/charter',                icon:'handshake',     slug:'charter'},
         {name:'Block Explorer',    href:'/explorer',               icon:'explore',       slug:'explorer'},
+        {name:'Agent Ecosystem',   href:'/ecosystem',              icon:'hub',           slug:'ecosystem',  highlight:true},
         {name:'Oversight',         href:'/oversight',              icon:'monitoring',    slug:'oversight'},
         {divider:true},
         {name:'Python SDK',        href:'/sdk',                    icon:'package_2',     slug:'sdk',       highlight:true},

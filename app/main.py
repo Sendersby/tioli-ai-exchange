@@ -9011,6 +9011,11 @@ async def serve_builder_page():
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/builder.html", media_type="text/html")
 
+@app.get("/ecosystem", include_in_schema=False)
+async def serve_ecosystem():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/ecosystem.html", media_type="text/html")
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
