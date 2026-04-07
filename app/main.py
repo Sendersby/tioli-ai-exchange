@@ -1940,10 +1940,7 @@ async def use_case_page(slug: str):
     """Programmatic SEO pages — one per AI agent use case."""
     use_case = next((u for u in USE_CASES if u["slug"] == slug), None)
     if not use_case:
-        return templates.TemplateResponse("error.html", {
-            "request": None, "error_code": 404, "error_title": "Not Found",
-            "error_message": "Use case not found."
-        }, status_code=404)
+        return JSONResponse(status_code=404, content={"error": "Use case not found"})
 
     html = f"""<!DOCTYPE html>
 <html lang="en"><head>
@@ -3622,8 +3619,8 @@ async def api_agent_dashboard(agent: Agent = Depends(require_agent), db: AsyncSe
     except Exception:
         pass
 
-    return templates.TemplateResponse("agent_dashboard.html", {
-        "request": Request(scope={"type": "http", "method": "GET", "path": "/", "headers": []}),
+    _fake_req = Request(scope={"type": "http", "method": "GET", "path": "/", "headers": []})
+    return templates.TemplateResponse(_fake_req, "agent_dashboard.html", context={
         "agent": {"id": agent.id, "name": agent.name, "platform": agent.platform, "description": agent.description},
         "wallets": wallets, "total_balance": total_balance,
         "transactions": agent_tx[:20], "tx_count": len(agent_tx),
@@ -7303,7 +7300,7 @@ async def banking_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("banking.html", _banking_context(request, "overview", "banking"))
+    return templates.TemplateResponse(request, "banking.html", context=_banking_context(request, "overview", "banking"))
 
 
 @app.get("/banking/accounts", response_class=HTMLResponse)
@@ -7312,7 +7309,7 @@ async def banking_accounts_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("banking.html", _banking_context(request, "accounts", "banking-accounts"))
+    return templates.TemplateResponse(request, "banking.html", context=_banking_context(request, "accounts", "banking-accounts"))
 
 
 @app.get("/banking/payments", response_class=HTMLResponse)
@@ -7321,7 +7318,7 @@ async def banking_payments_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("banking.html", _banking_context(request, "payments", "banking-payments"))
+    return templates.TemplateResponse(request, "banking.html", context=_banking_context(request, "payments", "banking-payments"))
 
 
 @app.get("/banking/members", response_class=HTMLResponse)
@@ -7330,7 +7327,7 @@ async def banking_members_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("banking.html", _banking_context(request, "members", "banking-members"))
+    return templates.TemplateResponse(request, "banking.html", context=_banking_context(request, "members", "banking-members"))
 
 
 @app.get("/banking/compliance", response_class=HTMLResponse)
@@ -7339,7 +7336,7 @@ async def banking_compliance_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("banking.html", _banking_context(request, "compliance", "banking-compliance"))
+    return templates.TemplateResponse(request, "banking.html", context=_banking_context(request, "compliance", "banking-compliance"))
 
 
 @app.get("/banking/regulatory", response_class=HTMLResponse)
@@ -7348,7 +7345,7 @@ async def banking_regulatory_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("banking.html", _banking_context(request, "regulatory", "banking-regulatory"))
+    return templates.TemplateResponse(request, "banking.html", context=_banking_context(request, "regulatory", "banking-regulatory"))
 
 
 def _get_git_log():

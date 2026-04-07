@@ -25,9 +25,8 @@ async def home(request: Request):
     owner = get_current_owner(request)
     if owner:
         return RedirectResponse(url="/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", {
-        "request": request,
-        "challenge": None,
+    return templates.TemplateResponse(request, "login.html",  context={
+                "challenge": None,
         "status": {},
         "authenticated": False,
     })
@@ -39,14 +38,13 @@ async def initiate_login(request: Request):
     challenge = owner_auth.initiate_login(ip=client_ip)
     # Handle lockout
     if challenge.get("locked_out") or challenge.get("error"):
-        return templates.TemplateResponse("login.html", {
-            "request": request, "challenge": None,
+        return templates.TemplateResponse(request, "login.html",  context={
+            "challenge": None,
             "status": {}, "authenticated": False,
             "messages": [{"type": "error", "text": challenge.get("error", "Login temporarily blocked.")}],
         })
-    return templates.TemplateResponse("login.html", {
-        "request": request,
-        "challenge": challenge,
+    return templates.TemplateResponse(request, "login.html",  context={
+                "challenge": challenge,
         "status": {"email_verified": False, "phone_verified": False, "cli_verified": False},
         "authenticated": False,
         "messages": [{"type": "info", "text": "Check your email for a 6-digit verification code."}] if challenge.get("email_sent") else [],
@@ -80,8 +78,8 @@ async def verify_email(
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
-    return templates.TemplateResponse("login.html", {
-        "request": request, "challenge": challenge, "status": status, "authenticated": False,
+    return templates.TemplateResponse(request, "login.html",  context={
+        "challenge": challenge, "status": status, "authenticated": False,
         "messages": messages,
     })
 
@@ -101,8 +99,8 @@ async def verify_phone(request: Request, challenge_id: str = Form(...), phone: s
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
-    return templates.TemplateResponse("login.html", {
-        "request": request, "challenge": challenge, "status": status, "authenticated": False,
+    return templates.TemplateResponse(request, "login.html",  context={
+        "challenge": challenge, "status": status, "authenticated": False,
     })
 
 
@@ -115,8 +113,8 @@ async def verify_cli(request: Request, challenge_id: str = Form(...), code: str 
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
-    return templates.TemplateResponse("login.html", {
-        "request": request, "challenge": challenge, "status": status, "authenticated": False,
+    return templates.TemplateResponse(request, "login.html",  context={
+        "challenge": challenge, "status": status, "authenticated": False,
     })
 
 
@@ -128,8 +126,8 @@ async def complete_login(request: Request, challenge_id: str = Form(...)):
         response.set_cookie("session_token", status["access_token"], httponly=True, secure=True, samesite="lax")
         return response
     challenge = {"challenge_id": challenge_id, "cli_code": owner_auth.get_cli_code(challenge_id)}
-    return templates.TemplateResponse("login.html", {
-        "request": request, "challenge": challenge, "status": status,
+    return templates.TemplateResponse(request, "login.html",  context={
+        "challenge": challenge, "status": status,
         "authenticated": False,
         "messages": [{"type": "error", "text": "Not all factors verified yet."}],
     })
@@ -141,8 +139,8 @@ async def setup_authenticator(request: Request):
     from app.auth.totp_verify import get_setup_qr_base64, get_totp_secret
     qr_base64 = get_setup_qr_base64()
     secret = get_totp_secret()
-    return templates.TemplateResponse("setup_authenticator.html", {
-        "request": request, "qr_base64": qr_base64, "secret": secret,
+    return templates.TemplateResponse(request, "setup_authenticator.html",  context={
+        "qr_base64": qr_base64, "secret": secret,
     })
 
 
@@ -230,8 +228,8 @@ async def services_page(request: Request):
     # Verticals
     verticals = VERTICAL_SEEDS
 
-    return templates.TemplateResponse("services.html", {
-        "request": request, "authenticated": True, "active": "services",
+    return templates.TemplateResponse(request, "services.html",  context={
+        "authenticated": True, "active": "services",
         "subscription_tiers": tiers,
         "green_services": green_services,
         "amber_services": amber_services,
@@ -251,6 +249,6 @@ async def chat_page(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("chat.html", {
-        "request": request, "authenticated": True, "active": "chat",
+    return templates.TemplateResponse(request, "chat.html",  context={
+        "authenticated": True, "active": "chat",
     })
