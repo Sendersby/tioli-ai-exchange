@@ -247,6 +247,23 @@ agentis_routes.account_service = agentis_accounts
 agentis_routes.payment_service = agentis_payments
 
 templates = Jinja2Templates(directory="app/templates")
+# Fix Jinja2 + Starlette 1.0 incompatibility: LRUCache can't hash dict globals.
+# Replace the LRU cache with a simple dict that converts keys to strings.
+class _StrKeyCache(dict):
+    def __missing__(self, key):
+        raise KeyError(key)
+    def get(self, key, default=None):
+        try:
+            return self[str(key)]
+        except KeyError:
+            return default
+    def __setitem__(self, key, value):
+        super().__setitem__(str(key), value)
+    def __getitem__(self, key):
+        return super().__getitem__(str(key))
+    def __contains__(self, key):
+        return super().__contains__(str(key))
+templates.env.cache = _StrKeyCache()
 
 
 # ── App Lifecycle ────────────────────────────────────────────────────
@@ -420,11 +437,7 @@ async def not_found_handler(request: Request, exc):
             content={"error": True, "code": "NOT_FOUND", "message": "Endpoint not found", "path": str(request.url.path)},
         )
     # Render branded 404 page instead of re-raising (which cascades to 500)
-    return templates.TemplateResponse("error.html", {
-        "request": request, "error_code": 404,
-        "error_title": "Not Found",
-        "error_message": "The page you are looking for does not exist.",
-    }, status_code=404)
+    return templates.TemplateResponse(request, "error.html", context={"error_code": 404, "error_title": "Not Found", "error_message": "The page you are looking for does not exist."}, status_code=404)
 
 # ── Rate Limiting ────────────────────────────────────────────────────
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -659,8 +672,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     """Dark themed 500 error page or JSON response."""
     security_logger.error(f"Unhandled exception on {request.url.path}: {exc}")
     if "text/html" in request.headers.get("accept", ""):
-        return templates.TemplateResponse("error.html", {
-            "request": request, "error_code": 500,
+        return templates.TemplateResponse(request, "error.html",  context={
+            "error_code": 500,
             "error_title": "Internal Error",
             "error_message": "Something went wrong. Our systems are being notified.",
         }, status_code=500)
@@ -675,8 +688,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     if "text/html" in request.headers.get("accept", ""):
         titles = {404: "Not Found", 403: "Access Denied", 405: "Method Not Allowed"}
         messages = {404: "The page you're looking for doesn't exist.", 403: "You don't have permission.", 405: "Method not allowed."}
-        return templates.TemplateResponse("error.html", {
-            "request": request, "error_code": exc.status_code,
+        return templates.TemplateResponse(request, "error.html",  context={
+            "error_code": exc.status_code,
             "error_title": titles.get(exc.status_code, "Error"),
             "error_message": messages.get(exc.status_code, str(exc.detail)),
         }, status_code=exc.status_code)
@@ -2666,8 +2679,8 @@ async def github_engagement_page(request: Request):
     except Exception:
         pass
 
-    return templates.TemplateResponse("github_engagement.html", {
-        "request": request, "authenticated": True, "active": "github-engagement",
+    return templates.TemplateResponse(request, "github_engagement.html",  context={
+        "authenticated": True, "active": "github-engagement",
         "total_drafts": total_drafts, "pending_review": pending_review,
         "approved": approved, "posted": posted,
         "quality_pass_rate": quality_pass_rate, "drafts": drafts,
@@ -2891,8 +2904,8 @@ async def serve_workflow_map(request: Request):
     owner = get_current_owner(request)
     if not owner:
         return RedirectResponse(url="/", status_code=302)
-    return templates.TemplateResponse("owner/workflow_map.html", {
-        "request": request, "authenticated": True, "active": "workflow-map",
+    return templates.TemplateResponse(request, "owner/workflow_map.html",  context={
+        "authenticated": True, "active": "workflow-map",
     })
 
 
@@ -3057,8 +3070,8 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
     except Exception:
         pass
 
-    return templates.TemplateResponse("oversight.html", {
-        "request": request, "authenticated": True, "active": "oversight",
+    return templates.TemplateResponse(request, "oversight.html",  context={
+        "authenticated": True, "active": "oversight",
         "agent_cards": agent_cards,
         "summary": {"green": green, "amber": amber, "red": red},
         "total_agents": len(agent_cards),
@@ -3392,8 +3405,8 @@ async def regulatory_page(request: Request):
             "description": "National Credit Act compliance for AI agent lending marketplace. Lending services deferred until regulatory clearance.",
         },
     ]
-    return templates.TemplateResponse("regulatory.html", {
-        "request": request, "authenticated": False, "active": "regulatory",
+    return templates.TemplateResponse(request, "regulatory.html",  context={
+        "authenticated": False, "active": "regulatory",
         "statuses": statuses,
     })
 
@@ -3409,8 +3422,8 @@ async def demo_page(request: Request):
         {"num": 5, "title": "Client verifies and releases escrow", "desc": "Client reviews the output. Funds release from escrow to provider.", "highlight": False},
         {"num": 6, "title": "Transaction recorded permanently on-chain", "desc": "Block hash, charitable allocation, reputation update — all immutable. Shareable receipt generated.", "highlight": True},
     ]
-    return templates.TemplateResponse("demo.html", {
-        "request": request, "authenticated": False, "active": "demo",
+    return templates.TemplateResponse(request, "demo.html",  context={
+        "authenticated": False, "active": "demo",
         "steps": steps,
     })
 
@@ -3423,8 +3436,8 @@ async def founding_cohort_page(request: Request, db: AsyncSession = Depends(get_
         select(func.count(FoundingCohortApplication.application_id))
         .where(FoundingCohortApplication.status == "approved")
     )).scalar() or 0
-    return templates.TemplateResponse("founding_cohort.html", {
-        "request": request, "authenticated": False, "active": "cohort",
+    return templates.TemplateResponse(request, "founding_cohort.html",  context={
+        "authenticated": False, "active": "cohort",
         "max_spots": MAX_FOUNDING_SPOTS,
         "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
         "submitted": False, "error": None,
@@ -3449,8 +3462,8 @@ async def founding_cohort_submit(request: Request, db: AsyncSession = Depends(ge
             select(func.count(FoundingCohortApplication.application_id))
             .where(FoundingCohortApplication.status == "approved")
         )).scalar() or 0
-        return templates.TemplateResponse("founding_cohort.html", {
-            "request": request, "authenticated": False, "active": "cohort",
+        return templates.TemplateResponse(request, "founding_cohort.html",  context={
+            "authenticated": False, "active": "cohort",
             "max_spots": MAX_FOUNDING_SPOTS,
             "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
             "submitted": False, "error": "Please fill in all required fields.",
@@ -3465,8 +3478,8 @@ async def founding_cohort_submit(request: Request, db: AsyncSession = Depends(ge
             select(func.count(FoundingCohortApplication.application_id))
             .where(FoundingCohortApplication.status == "approved")
         )).scalar() or 0
-        return templates.TemplateResponse("founding_cohort.html", {
-            "request": request, "authenticated": False, "active": "cohort",
+        return templates.TemplateResponse(request, "founding_cohort.html",  context={
+            "authenticated": False, "active": "cohort",
             "max_spots": MAX_FOUNDING_SPOTS,
             "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
             "submitted": False, "error": "An application with this email already exists.",
@@ -3484,8 +3497,8 @@ async def founding_cohort_submit(request: Request, db: AsyncSession = Depends(ge
         .where(FoundingCohortApplication.status == "approved")
     )).scalar() or 0
 
-    return templates.TemplateResponse("founding_cohort.html", {
-        "request": request, "authenticated": False, "active": "cohort",
+    return templates.TemplateResponse(request, "founding_cohort.html",  context={
+        "authenticated": False, "active": "cohort",
         "max_spots": MAX_FOUNDING_SPOTS,
         "spots_remaining": max(MAX_FOUNDING_SPOTS - approved, 0),
         "submitted": True, "error": None,
@@ -3965,8 +3978,8 @@ async def integrity_page(request: Request, db: AsyncSession = Depends(get_db)):
         return RedirectResponse(url="/", status_code=302)
     from app.integrity.detector import get_integrity_dashboard
     data = await get_integrity_dashboard(db)
-    return templates.TemplateResponse("integrity.html", {
-        "request": request, "authenticated": True, "active": "integrity",
+    return templates.TemplateResponse(request, "integrity.html",  context={
+        "authenticated": True, "active": "integrity",
         "integrity": data,
     })
 
@@ -4039,8 +4052,8 @@ async def reputation_dashboard(request: Request, db: AsyncSession = Depends(get_
         for e in recent_endorsements_raw
     ]
 
-    return templates.TemplateResponse("reputation.html", {
-        "request": request, "authenticated": True, "active": "reputation",
+    return templates.TemplateResponse(request, "reputation.html",  context={
+        "authenticated": True, "active": "reputation",
         "stats": {
             "total_tasks": total_tasks, "completed_tasks": completed_tasks,
             "active_dispatches": active_dispatches, "avg_quality": avg_quality,
@@ -7252,8 +7265,8 @@ async def dashboard_page(request: Request):
     except Exception:
         codelog_summary = {"total": 0, "files": 0, "insertions": 0, "deletions": 0, "recent": []}
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request, "authenticated": True, "active": "dashboard",
+    return templates.TemplateResponse(request, "dashboard.html",  context={
+        "authenticated": True, "active": "dashboard",
         "chain_info": info, "agent_count": agent_count,
         "founder_earnings": founder_earnings, "charity_total": charity_total,
         "recent_transactions": [_tx_display(tx) for tx in recent],
@@ -7279,8 +7292,7 @@ def _banking_context(request, active_tab="overview", active_nav="banking"):
         phase = "1 — CFI (Members)"
     elif settings.agentis_compliance_enabled:
         phase = "0 — Compliance Active"
-    return {
-        "request": request, "authenticated": True, "active": active_nav,
+    return {"request": request, "authenticated": True, "active": active_nav,
         "phase": phase, "active_tab": active_tab,
     }
 
@@ -7449,8 +7461,8 @@ async def codelog_page(request: Request):
         return RedirectResponse(url="/", status_code=302)
     commits, total_files, total_ins, total_del = _get_git_log()
     tasks = _get_tasks()
-    return templates.TemplateResponse("codelog.html", {
-        "request": request, "authenticated": True, "active": "codelog",
+    return templates.TemplateResponse(request, "codelog.html",  context={
+        "authenticated": True, "active": "codelog",
         "active_tab": "commits", "commits": commits,
         "total_files_changed": total_files, "total_insertions": total_ins,
         "total_deletions": total_del, "tasks": tasks,
@@ -7469,8 +7481,8 @@ async def codelog_tasks_page(request: Request):
     progress = len([t for t in tasks if t["status"] == "in_progress"])
     pending = len([t for t in tasks if t["status"] == "pending"])
     pct = int((done / len(tasks)) * 100) if tasks else 0
-    return templates.TemplateResponse("codelog.html", {
-        "request": request, "authenticated": True, "active": "codelog",
+    return templates.TemplateResponse(request, "codelog.html",  context={
+        "authenticated": True, "active": "codelog",
         "active_tab": "tasks", "commits": commits, "tasks": tasks,
         "tasks_done": done, "tasks_progress": progress, "tasks_pending": pending,
         "progress_pct": pct,
@@ -7493,8 +7505,8 @@ async def codelog_files_page(request: Request):
             if f["path"] not in seen:
                 seen.add(f["path"])
                 recent_files.append({**f, "commit_hash": c["hash"]})
-    return templates.TemplateResponse("codelog.html", {
-        "request": request, "authenticated": True, "active": "codelog",
+    return templates.TemplateResponse(request, "codelog.html",  context={
+        "authenticated": True, "active": "codelog",
         "active_tab": "files", "commits": commits, "tasks": tasks,
         "recent_files": recent_files,
         "total_files_changed": total_files, "total_insertions": total_ins,
@@ -7514,8 +7526,8 @@ async def codelog_roadmap(request: Request, db: AsyncSession = Depends(get_db)):
     tasks = await rm.list_tasks(db)
     sprints = await rm.list_sprints(db)
     versions = await rm.list_versions(db)
-    return templates.TemplateResponse("codelog.html", {
-        "request": request, "authenticated": True, "active": "codelog",
+    return templates.TemplateResponse(request, "codelog.html",  context={
+        "authenticated": True, "active": "codelog",
         "active_tab": "roadmap", "commits": [], "tasks": [],
         "total_files_changed": 0, "total_insertions": 0, "total_deletions": 0,
         "roadmap_dashboard": dashboard,
@@ -7538,8 +7550,8 @@ async def onboard_start(request: Request, step: int = 1):
             wizard_data = request.session.get("wizard", {})
     except Exception:
         pass
-    return templates.TemplateResponse("onboarding_wizard.html", {
-        "request": request, "authenticated": True, "active": "onboard",
+    return templates.TemplateResponse(request, "onboarding_wizard.html",  context={
+        "authenticated": True, "active": "onboard",
         "step": step, "wizard_data": wizard_data, "messages": [],
     })
 
@@ -7553,8 +7565,8 @@ async def onboard_step1(request: Request):
     email = form.get("email", "").strip()
 
     if not contact_name or not business_name or not email:
-        return templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": True, "active": "onboard",
+        return templates.TemplateResponse(request, "onboarding_wizard.html",  context={
+            "authenticated": True, "active": "onboard",
             "step": 1, "wizard_data": {"contact_name": contact_name, "business_name": business_name, "email": email},
             "messages": [{"type": "error", "text": "Please fill in all fields."}],
         })
@@ -7562,8 +7574,8 @@ async def onboard_step1(request: Request):
     # Store in a cookie (no session middleware needed)
     import json, base64
     wizard = {"contact_name": contact_name, "business_name": business_name, "email": email}
-    response = templates.TemplateResponse("onboarding_wizard.html", {
-        "request": request, "authenticated": True, "active": "onboard",
+    response = templates.TemplateResponse(request, "onboarding_wizard.html",  context={
+        "authenticated": True, "active": "onboard",
         "step": 2, "wizard_data": wizard, "messages": [],
     })
     response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, secure=True, samesite="lax", max_age=3600)
@@ -7584,14 +7596,14 @@ async def onboard_step2(request: Request):
     wizard["platform"] = form.get("platform", "Claude")
 
     if not wizard["agent_name"] or not wizard["capability"]:
-        return templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": True, "active": "onboard",
+        return templates.TemplateResponse(request, "onboarding_wizard.html",  context={
+            "authenticated": True, "active": "onboard",
             "step": 2, "wizard_data": wizard,
             "messages": [{"type": "error", "text": "Agent name and capability are required."}],
         })
 
-    response = templates.TemplateResponse("onboarding_wizard.html", {
-        "request": request, "authenticated": True, "active": "onboard",
+    response = templates.TemplateResponse(request, "onboarding_wizard.html",  context={
+        "authenticated": True, "active": "onboard",
         "step": 3, "wizard_data": wizard, "messages": [],
     })
     response.set_cookie("wizard_data", base64.b64encode(json.dumps(wizard).encode()).decode(), httponly=True, secure=True, samesite="lax", max_age=3600)
@@ -7652,16 +7664,16 @@ async def onboard_step3(request: Request, db: AsyncSession = Depends(get_db)):
 
         await db.commit()
 
-        response = templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": True, "active": "onboard",
+        response = templates.TemplateResponse(request, "onboarding_wizard.html",  context={
+            "authenticated": True, "active": "onboard",
             "step": 4, "wizard_data": wizard, "wizard_result": result, "messages": [],
         })
         response.delete_cookie("wizard_data")
         return response
 
     except Exception as e:
-        return templates.TemplateResponse("onboarding_wizard.html", {
-            "request": request, "authenticated": True, "active": "onboard",
+        return templates.TemplateResponse(request, "onboarding_wizard.html",  context={
+            "authenticated": True, "active": "onboard",
             "step": 3, "wizard_data": wizard,
             "messages": [{"type": "error", "text": f"Registration failed: {str(e)}"}],
         })
@@ -7678,8 +7690,8 @@ async def transactions_list_page(request: Request):
     total_volume = sum(tx.get("amount", 0) for tx in all_tx)
     total_commission = sum(tx.get("founder_commission", 0) for tx in all_tx)
     types = set(tx.get("type", "") for tx in all_tx)
-    return templates.TemplateResponse("transactions_list.html", {
-        "request": request, "authenticated": True, "active": "transactions",
+    return templates.TemplateResponse(request, "transactions_list.html",  context={
+        "authenticated": True, "active": "transactions",
         "transactions": all_tx_rev, "total_volume": total_volume,
         "total_commission": total_commission, "type_count": len(types),
     })
@@ -7694,8 +7706,8 @@ async def transaction_detail_page(tx_index: int, request: Request):
     all_tx = blockchain.get_all_transactions()
     if tx_index < 0 or tx_index >= len(all_tx):
         raise HTTPException(status_code=404, detail="Transaction not found")
-    return templates.TemplateResponse("transaction_detail.html", {
-        "request": request, "authenticated": True, "active": "transactions",
+    return templates.TemplateResponse(request, "transaction_detail.html",  context={
+        "authenticated": True, "active": "transactions",
         "tx": all_tx[tx_index], "tx_index": tx_index,
     })
 
@@ -7717,8 +7729,8 @@ async def blocks_list_page(request: Request):
             "timestamp": str(block.timestamp),
         })
     blocks.reverse()
-    return templates.TemplateResponse("blocks_list.html", {
-        "request": request, "authenticated": True, "active": "blocks",
+    return templates.TemplateResponse(request, "blocks_list.html",  context={
+        "authenticated": True, "active": "blocks",
         "chain_info": chain_info, "blocks": blocks,
     })
 
@@ -7741,8 +7753,8 @@ async def arm_page(request: Request):
             "registrations": 0, "revenue": 0, "directories": 0, "active_listings": 0, "ctr": 0,
         }}
 
-    return templates.TemplateResponse("arm.html", {
-        "request": request, "authenticated": True, "active": "arm",
+    return templates.TemplateResponse(request, "arm.html",  context={
+        "authenticated": True, "active": "arm",
         "campaigns": data["campaigns"], "directories": data["directories"],
         "totals": data["totals"],
     })
@@ -7769,8 +7781,8 @@ async def proposal_detail_page(proposal_id: str, request: Request):
             "created_at": str(prop.created_at) if prop.created_at else None,
             "resolved_at": str(prop.resolved_at) if prop.resolved_at else None,
         }
-    return templates.TemplateResponse("proposal_detail.html", {
-        "request": request, "authenticated": True, "active": "governance",
+    return templates.TemplateResponse(request, "proposal_detail.html",  context={
+        "authenticated": True, "active": "governance",
         "proposal": proposal_data,
     })
 
@@ -7809,8 +7821,8 @@ async def community_page(request: Request):
             total_matches = (await db.execute(
                 select(func.count(AgentHubCollabMatch.id))
             )).scalar() or 0
-        return templates.TemplateResponse("agenthub.html", {
-            "request": request, "authenticated": True, "active": "community",
+        return templates.TemplateResponse(request, "agenthub.html",  context={
+            "authenticated": True, "active": "community",
             "stats": stats, "feed": feed, "top_agents": top_agents,
             "channels": channels, "leaderboard": leaderboard,
             "trending_agents": trending, "spotlights": spotlights,
@@ -7857,8 +7869,8 @@ async def community_page(request: Request):
     except Exception:
         pass
 
-    return templates.TemplateResponse("community.html", {
-        "request": request, "authenticated": True, "active": "community",
+    return templates.TemplateResponse(request, "community.html",  context={
+        "authenticated": True, "active": "community",
         "total_messages": total, "unique_senders": unique_senders,
         "messages_today": messages_today, "channels": channels_info,
         "recent_messages": recent_messages,
@@ -7890,8 +7902,8 @@ async def awareness_page(request: Request):
 
     conversion_rate = (total_uses / max(codes_issued, 1)) * 100 if codes_issued else 0
 
-    return templates.TemplateResponse("awareness.html", {
-        "request": request, "authenticated": True, "active": "awareness",
+    return templates.TemplateResponse(request, "awareness.html",  context={
+        "authenticated": True, "active": "awareness",
         "referral_codes_issued": codes_issued, "referrals_used": total_uses,
         "conversion_rate": conversion_rate, "bonus_distributed": total_bonus or 0,
         "gateway_challenges": 0, "total_agents": total_agents,
@@ -7940,8 +7952,8 @@ async def escrow_dashboard_page(request: Request):
         elif e.status == "refunded":
             count_refunded += 1
 
-    return templates.TemplateResponse("escrow.html", {
-        "request": request, "authenticated": True, "active": "escrow",
+    return templates.TemplateResponse(request, "escrow.html",  context={
+        "authenticated": True, "active": "escrow",
         "escrows": escrows, "total_held": round(total_held, 4),
         "count_held": count_held, "count_released": count_released,
         "count_disputed": count_disputed,
@@ -7973,8 +7985,8 @@ async def escrow_detail_page(escrow_id: str, request: Request):
             "resolved_at": str(e.resolved_at) if e.resolved_at else None,
         }
 
-    return templates.TemplateResponse("escrow_detail.html", {
-        "request": request, "authenticated": True, "active": "escrow",
+    return templates.TemplateResponse(request, "escrow_detail.html",  context={
+        "authenticated": True, "active": "escrow",
         "escrow": escrow_data,
     })
 
@@ -8007,8 +8019,8 @@ async def agents_list_page(request: Request):
                 "last_active": str(a.last_active) if a.last_active else None,
             })
 
-    return templates.TemplateResponse("agents_list.html", {
-        "request": request, "authenticated": True, "active": "agents",
+    return templates.TemplateResponse(request, "agents_list.html",  context={
+        "authenticated": True, "active": "agents",
         "agents": agents, "platforms": platforms, "total_balance": total_balance,
     })
 
@@ -8080,8 +8092,8 @@ async def agent_detail_page(agent_id: str, request: Request):
     except Exception:
         pass
 
-    return templates.TemplateResponse("agent_detail.html", {
-        "request": request, "authenticated": True, "active": "agents",
+    return templates.TemplateResponse(request, "agent_detail.html",  context={
+        "authenticated": True, "active": "agents",
         "agent": agent_data, "wallets": wallets, "total_balance": total_balance,
         "transactions": agent_tx[:50], "tx_count": len(agent_tx),
         "reputation": reputation,
@@ -8144,8 +8156,8 @@ async def agentbroker_page(request: Request):
     except Exception:
         pass
 
-    return templates.TemplateResponse("agentbroker.html", {
-        "request": request, "authenticated": True, "active": "agentbroker",
+    return templates.TemplateResponse(request, "agentbroker.html",  context={
+        "authenticated": True, "active": "agentbroker",
         "profiles": profiles, "engagements": active_engagements,
         "guilds": guilds_list, "pipelines": pipelines_list,
         "stats": stats, "escalated_disputes": escalated_disputes,
@@ -8171,8 +8183,8 @@ async def exchange_page(request: Request):
             summary = await pricing_engine.get_market_summary(db, base, quote)
             summaries.append(summary)
 
-    return templates.TemplateResponse("exchange.html", {
-        "request": request, "authenticated": True, "active": "exchange",
+    return templates.TemplateResponse(request, "exchange.html",  context={
+        "authenticated": True, "active": "exchange",
         "selected_pair": "AGENTIS/BTC",
         "order_book": order_book,
         "recent_trades": recent_trades,
@@ -8193,8 +8205,8 @@ async def lending_page(request: Request):
         loan_requests = await lending_marketplace.browse_requests(db)
         lending_stats = await lending_marketplace.get_lending_stats(db)
 
-    return templates.TemplateResponse("lending.html", {
-        "request": request, "authenticated": True, "active": "lending",
+    return templates.TemplateResponse(request, "lending.html",  context={
+        "authenticated": True, "active": "lending",
         "loan_offers": loan_offers, "loan_requests": loan_requests,
         "lending_stats": lending_stats,
     })
@@ -8218,8 +8230,8 @@ async def governance_page(request: Request):
         except Exception:
             pass
 
-    return templates.TemplateResponse("governance.html", {
-        "request": request, "authenticated": True, "active": "governance",
+    return templates.TemplateResponse(request, "governance.html",  context={
+        "authenticated": True, "active": "governance",
         "pending_proposals": proposals, "priority_queue": queue,
         "governance_stats": stats, "audit_log": audit,
         "recommendations": recommendations,
@@ -8240,8 +8252,8 @@ async def payout_dashboard_page(request: Request):
         sarb = await payout_engine.get_sarb_status(db)
         disbursements = await payout_engine.get_disbursement_history(db)
 
-    return templates.TemplateResponse("payout.html", {
-        "request": request, "authenticated": True, "active": "payout",
+    return templates.TemplateResponse(request, "payout.html",  context={
+        "authenticated": True, "active": "payout",
         "balance": balance, "split": split, "destination": destination,
         "sarb": sarb, "disbursements": disbursements,
     })
@@ -8339,8 +8351,8 @@ async def services_page(request: Request):
         for k, v in INTELLIGENCE_TIERS.items()
     ]
 
-    return templates.TemplateResponse("services.html", {
-        "request": request, "authenticated": True, "active": "services",
+    return templates.TemplateResponse(request, "services.html",  context={
+        "authenticated": True, "active": "services",
         "services_live": len(green_services),
         "services_conditional": len(amber_services),
         "services_blocked": len(red_services),
@@ -8373,8 +8385,8 @@ async def reports_page(request: Request):
         governance = await governance_service.get_governance_stats(db)
         anomalies = await platform_monitor.detect_anomalies(db)
 
-    return templates.TemplateResponse("reports.html", {
-        "request": request, "authenticated": True, "active": "reports",
+    return templates.TemplateResponse(request, "reports.html",  context={
+        "authenticated": True, "active": "reports",
         "health": health, "financials": financials, "activity": activity,
         "adoption": adoption, "governance": governance, "anomalies": anomalies,
     })
@@ -8549,8 +8561,8 @@ async def chat_page(request: Request):
         llm_available = is_llm_available()
     except Exception:
         pass
-    return templates.TemplateResponse("chat.html", {
-        "request": request, "authenticated": True, "active": "chat",
+    return templates.TemplateResponse(request, "chat.html",  context={
+        "authenticated": True, "active": "chat",
         "llm_available": llm_available,
     })
 
@@ -8675,8 +8687,8 @@ async def modules_page(request: Request):
         {"name": "Brute Force", "status": "healthy", "detail": "Persistent lockouts"},
     ]
 
-    return templates.TemplateResponse("modules.html", {
-        "request": request, "authenticated": True, "active": "modules",
+    return templates.TemplateResponse(request, "modules.html",  context={
+        "authenticated": True, "active": "modules",
         "modules": modules_list, "infra_services": infra_services,
         "quick_tasks": quick_tasks, "auto_matches": auto_matches,
         "at_risk": at_risk, "referral_stats": referral_stats,
@@ -8704,9 +8716,7 @@ async def gateway_page(request: Request):
     cutoff = now - _GATEWAY_LOCKOUT_SECS
     _gateway_failures[client_ip] = [t for t in _gateway_failures[client_ip] if t > cutoff]
     locked = len(_gateway_failures[client_ip]) >= _GATEWAY_MAX_ATTEMPTS
-    return templates.TemplateResponse("gateway.html", {
-        "request": request, "error": None, "locked": locked,
-    })
+    return templates.TemplateResponse(request, "gateway.html", context={"error": None, "locked": locked})
 
 
 @app.post("/gateway", response_class=HTMLResponse)
@@ -8719,8 +8729,8 @@ async def gateway_auth(request: Request):
 
     if len(_gateway_failures[client_ip]) >= _GATEWAY_MAX_ATTEMPTS:
         security_logger.warning(f"Gateway lockout: {client_ip}")
-        return templates.TemplateResponse("gateway.html", {
-            "request": request, "error": None, "locked": True,
+        return templates.TemplateResponse(request, "gateway.html",  context={
+            "error": None, "locked": True,
         })
 
     form = await request.form()
@@ -8743,9 +8753,8 @@ async def gateway_auth(request: Request):
         security_logger.warning(f"Gateway failed attempt: {client_ip} ({remaining} remaining)")
         error = "Access denied. Invalid credentials." if remaining > 0 else None
         locked = remaining <= 0
-        return templates.TemplateResponse("gateway.html", {
-            "request": request,
-            "error": error if not locked else None,
+        return templates.TemplateResponse(request, "gateway.html",  context={
+                        "error": error if not locked else None,
             "locked": locked,
         })
 
@@ -8806,8 +8815,8 @@ async def vault_dashboard_page(request: Request):
     except Exception:
         pass
 
-    return templates.TemplateResponse("vault.html", {
-        "request": request, "authenticated": True, "active": "vault",
+    return templates.TemplateResponse(request, "vault.html",  context={
+        "authenticated": True, "active": "vault",
         "tiers": tiers, "vaults": vaults, "audit_log": audit_log,
         "vault_stats": vault_stats,
     })
@@ -8817,9 +8826,8 @@ async def vault_dashboard_page(request: Request):
 async def pricing_page(request: Request):
     """Pricing page — shows sidebar when authenticated, standalone when not."""
     owner = get_current_owner(request)
-    return templates.TemplateResponse("pricing.html", {
-        "request": request,
-        "authenticated": owner is not None,
+    return templates.TemplateResponse(request, "pricing.html",  context={
+                "authenticated": owner is not None,
         "active": "services",
         "breadcrumbs": [("Operations", "/dashboard"), ("Pricing", None)],
     })
@@ -8833,8 +8841,8 @@ async def revenue_dashboard_page(request: Request):
         return RedirectResponse(url="/", status_code=302)
     async with async_session() as db:
         rev = await revenue_service.get_revenue_dashboard(db)
-    return templates.TemplateResponse("revenue.html", {
-        "request": request, "authenticated": True, "active": "revenue",
+    return templates.TemplateResponse(request, "revenue.html",  context={
+        "authenticated": True, "active": "revenue",
         "rev": rev,
     })
 
