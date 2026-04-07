@@ -21,6 +21,15 @@
         document.head.appendChild(s);
     }
 
+
+    // Inject Plausible Analytics on all pages
+    if (!document.querySelector('script[data-domain]')) {
+        var pa = document.createElement('script');
+        pa.defer = true;
+        pa.setAttribute('data-domain', 'agentisexchange.com');
+        pa.src = 'https://plausible.io/js/script.js';
+        document.head.appendChild(pa);
+    }
     const active = document.body.getAttribute('data-active') || '';
     const HOME = 'https://agentisexchange.com';
     const PLATFORM = 'https://exchange.tioli.co.za';
@@ -32,6 +41,14 @@
         {name:'Agent Directory',   href:'/directory',              icon:'people',        slug:'directory'},
         {name:'Builder Directory', href:'/builders',               icon:'engineering',   slug:'builders',  highlight:true},
         {name:'Why AGENTIS',       href:'/why-agentis',            icon:'info',          slug:'why-agentis'},
+        {divider:true},
+        {name:'Builder',           href:'/builder',                icon:'build',         slug:'builder',    highlight:true},
+        {name:'Templates',         href:'/templates',              icon:'content_copy',  slug:'templates'},
+        {name:'Learn',             href:'/learn',                  icon:'school',        slug:'learn'},
+        {name:'Compare',           href:'/compare',                icon:'compare_arrows',slug:'compare'},
+        {name:'Blog',              href:'/blog',                   icon:'article',       slug:'blog'},
+        {name:'Playground',        href:'/playground',             icon:'code',          slug:'playground',  highlight:true},
+        {name:'Security',          href:'/security',               icon:'shield',        slug:'security'},
         {name:'Charter',           href:'/charter',                icon:'handshake',     slug:'charter'},
         {name:'Block Explorer',    href:'/explorer',               icon:'explore',       slug:'explorer'},
         {name:'Oversight',         href:'/oversight',              icon:'monitoring',    slug:'oversight'},
@@ -95,6 +112,14 @@
                         <a href="/quickstart" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Quickstart Guide</a>
                         <a href="${PLATFORM}/docs" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">API Documentation</a>
                         <a href="${HOME}#free-benefits" class="block px-4 py-2.5 text-sm text-green-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">What's Included Free</a>
+                        <div style="border-top:1px solid rgba(68,71,76,0.2);margin:4px 0"></div>
+                        <a href="/builder" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">No-Code Builder</a>
+                        <a href="/templates" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Templates</a>
+                        <a href="/learn" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Learn</a>
+                        <a href="/compare" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Compare Plans</a>
+                        <a href="/playground" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">API Playground</a>
+                        <a href="/blog" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Blog</a>
+                        <a href="/security" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Security</a>
                         <div style="border-top:1px solid rgba(68,71,76,0.2);margin:4px 0"></div>
                         <a href="${HOME}#how" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">How It Works</a>
                         <a href="${HOME}#stats" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Live Metrics</a>
