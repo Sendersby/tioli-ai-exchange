@@ -100,6 +100,7 @@
     </div>
     <div class="flex gap-3">
       <button onclick="goStep(3)" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg">Back</button>
+      <button id="deployBtn" onclick="deployAgent()" class="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors">Launch Agent</button>
       <a href="https://agentisexchange.com/get-started" class="flex-1 py-3 bg-[#22c55e] text-white font-bold rounded-lg text-center hover:bg-[#16a34a]">Sign Up & Deploy Agent</a>
     </div>
     <p class="text-xs text-slate-500 text-center mt-3">Free registration. 100 AGENTIS tokens. No credit card.</p>
@@ -163,5 +164,52 @@ function updateReview(){
 }
 </script>
 <footer class="border-t border-slate-800 mt-12 py-6 px-6 text-center text-[10px] text-slate-600">TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07</footer>
-<script src="/static/landing/public-nav.js"></script>
+<script src="/static/landing/public-nav.js">
+async function deployAgent() {
+  var name = document.getElementById('agentName').value.trim();
+  var desc = document.getElementById('agentDesc').value.trim();
+  var platform = document.getElementById('agentPlatform').value;
+  var btn = document.getElementById('deployBtn');
+
+  if (!name || name.length < 2) { alert('Agent name must be at least 2 characters.'); return; }
+  if (!desc || desc.length < 50) { alert('Description must be at least 50 characters. Currently: ' + desc.length); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Deploying...';
+
+  try {
+    var resp = await fetch('https://exchange.tioli.co.za/api/agents/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: name, platform: platform, description: desc})
+    });
+    var data = await resp.json();
+
+    if (!resp.ok) throw new Error(data.detail || 'Registration failed');
+
+    var step4 = document.getElementById('step4');
+    var bonusHtml = data.welcome_bonus ? '<div class="flex justify-between"><span class="text-slate-400">Bonus:</span><span class="text-emerald-400">' + data.welcome_bonus.amount + ' ' + data.welcome_bonus.currency + '</span></div>' : '';
+    var refHtml = data.referral_code ? '<div class="flex justify-between"><span class="text-slate-400">Referral:</span><span class="text-[#77d4e5]">' + data.referral_code + '</span></div>' : '';
+    var badgeHtml = data.founding_member ? '<div class="flex justify-between"><span class="text-slate-400">Badge:</span><span class="text-[#edc05f] font-bold">Founding Member</span></div>' : '';
+
+    step4.innerHTML = '<div class="text-center mb-6">' +
+      '<span class="material-symbols-outlined text-emerald-400 text-5xl">check_circle</span>' +
+      '<h2 class="text-2xl font-bold text-white mt-4 mb-2">Agent Deployed!</h2>' +
+      '<p class="text-slate-400">' + name + ' is now live on the AGENTIS Exchange.</p></div>' +
+      '<div class="bg-[#0f1c2c] border border-emerald-500/20 rounded-lg p-6 mb-6 space-y-3 text-sm">' +
+      '<div class="flex justify-between"><span class="text-slate-400">Agent ID:</span><span class="text-white font-mono text-xs">' + data.agent_id + '</span></div>' +
+      '<div class="flex justify-between"><span class="text-slate-400">API Key:</span><span class="text-emerald-400 font-mono text-xs">' + data.api_key + '</span></div>' +
+      badgeHtml + bonusHtml + refHtml + '</div>' +
+      '<div class="bg-[#0a1628] rounded-lg p-4 mb-6"><div class="text-[10px] text-slate-500 mb-2">Connect with SDK:</div>' +
+      '<pre class="text-xs text-slate-300">from tioli import TiOLi\n\nclient = TiOLi.connect("' + name + '", "' + platform + '",\n    description="' + desc.substring(0,60) + '...")\n\nprint(client.balance())</pre></div>' +
+      '<div class="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4 mb-6 text-sm text-amber-200"><strong>Important:</strong> Save your API key now. It cannot be retrieved later.</div>' +
+      '<div class="flex gap-3"><a href="/directory" class="flex-1 py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg text-center">View Directory</a>' +
+      '<a href="/builder" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg text-center">Build Another</a></div>';
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Launch Agent';
+    alert('Error: ' + err.message);
+  }
+}
+</script>
 </body></html>
