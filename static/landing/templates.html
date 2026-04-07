@@ -47,7 +47,7 @@ templates.forEach(t => {
       <p class="text-sm text-slate-400 mb-4">${t.desc}</p>
       <div class="flex gap-1.5 mb-4">${t.tags.map(tag=>'<span class="text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">'+tag+'</span>').join('')}</div>
       <div class="bg-[#0a1628] rounded p-2 mb-4 font-mono text-[10px] text-slate-400">${t.code}</div>
-      <a href="/get-started" class="block text-center py-2 bg-[#028090]/20 text-[#77d4e5] text-xs font-bold rounded hover:bg-[#028090]/30 transition-colors">Deploy This Agent</a>
+      <a href="/builder?name='+encodeURIComponent(t.name)+'&desc='+encodeURIComponent(t.desc)+'&platform=Python" class="block text-center py-2 bg-[#028090]/20 text-[#77d4e5] text-xs font-bold rounded hover:bg-[#028090]/30 transition-colors">Deploy This Agent</a>
     </div>`;
 });
 </script>

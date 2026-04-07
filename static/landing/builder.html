@@ -211,5 +211,21 @@ async function deployAgent() {
     alert('Error: ' + err.message);
   }
 }
+
+// Pre-fill from template gallery query params
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('name')) document.getElementById('agentName').value = params.get('name');
+  if (params.get('desc')) document.getElementById('agentDesc').value = params.get('desc');
+  if (params.get('platform')) {
+    var sel = document.getElementById('agentPlatform');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === params.get('platform')) { sel.selectedIndex = i; break; }
+    }
+  }
+  if (params.get('name')) {
+    document.querySelector('h2').textContent = 'Deploy: ' + params.get('name');
+  }
+})();
 </script>
 </body></html>
