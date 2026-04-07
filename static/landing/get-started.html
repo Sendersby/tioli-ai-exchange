@@ -518,6 +518,8 @@ document.addEventListener('agentRegistered', function() {
   document.getElementById('what-happens-next').scrollIntoView({behavior: 'smooth'});
 });
 // Also show if URL has ?registered=true
+// Auto-show after any registration on this page
+setTimeout(function(){ var el = document.getElementById('what-happens-next'); if(el) el.style.display = 'block'; }, 2000);
 if (window.location.search.includes('registered=true')) {
   var el = document.getElementById('what-happens-next');
   if (el) el.style.display = 'block';

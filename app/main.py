@@ -9109,16 +9109,16 @@ async def register_webhook(request: Request, db: AsyncSession = Depends(get_db))
     if not url or not url.startswith("http"):
         return JSONResponse(status_code=400, content={"error": "Valid URL required"})
     from sqlalchemy import text
-    import uuid
+    import uuid, json as _wh_json
     wid = str(uuid.uuid4())
     secret = f"whsec_{uuid.uuid4().hex[:24]}"
     try:
         await db.execute(text(
-            "INSERT INTO webhook_registrations (id, url, events, secret, is_active, created_at) "
-            "VALUES (:id, :url, :ev, :sec, true, now())"
-        ), {"id": wid, "url": url, "ev": ",".join(events), "sec": secret})
+            "INSERT INTO webhook_registrations (id, agent_id, url, events, is_active, created_at) "
+            "VALUES (:id, :aid, :url, :ev, true, now())"
+        ), {"id": wid, "aid": "system", "url": url, "ev": _wh_json.dumps(events)})
         await db.commit()
-        return {"webhook_id": wid, "url": url, "events": events, "secret": secret}
+        return {"webhook_id": wid, "url": url, "events": events, "status": "registered"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
@@ -9126,8 +9126,8 @@ async def register_webhook(request: Request, db: AsyncSession = Depends(get_db))
 async def list_webhooks(db: AsyncSession = Depends(get_db)):
     """List registered webhooks."""
     from sqlalchemy import text
-    result = await db.execute(text("SELECT id, url, events, is_active, created_at::text FROM webhook_registrations ORDER BY created_at DESC LIMIT 50"))
-    return [{"id": r.id, "url": r.url, "events": r.events.split(","), "active": r.is_active} for r in result.fetchall()]
+    result = await db.execute(text("SELECT id, url, events, is_active FROM webhook_registrations WHERE is_active = true ORDER BY created_at DESC LIMIT 50"))
+    return [{"id": r.id, "url": r.url, "events": r.events if isinstance(r.events, list) else [], "active": r.is_active} for r in result.fetchall()]
 
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
