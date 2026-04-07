@@ -8738,7 +8738,7 @@ async def gateway_auth(request: Request):
     password = form.get("password", "").strip()
 
     user_hash = _gw_hashlib.sha256(username.encode()).hexdigest()
-    pass_hash = _gw_bcrypt_check(password)
+    pass_hash = _gw_hashlib.sha256(password.encode()).hexdigest()
 
     if user_hash == _GATEWAY_USER_HASH and pass_hash == _GATEWAY_PASS_HASH:
         _gateway_failures.pop(client_ip, None)
