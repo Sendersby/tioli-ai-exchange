@@ -2105,47 +2105,22 @@ async def run_board_debate(request: Request):
 @app.get("/api/v1/integrations", include_in_schema=False)
 async def list_integrations():
     """List all available integrations (native MCP + Composio)."""
+    import os
     from app.arch.composio_integration import COMPOSIO_INTEGRATIONS, COMPOSIO_AVAILABLE, get_composio_tools
-    native_tools = 23  # Our MCP tools
+    native_tools = 23
     composio_count = len(COMPOSIO_INTEGRATIONS)
-
+    composio_key = bool(os.environ.get("COMPOSIO_API_KEY", ""))
     return {
         "total_integrations": native_tools + composio_count,
         "native_mcp_tools": native_tools,
         "composio_integrations": composio_count,
-        "composio_connected": COMPOSIO_AVAILABLE,
-        "categories": {
-            "productivity": ["Notion", "Slack", "Discord", "Trello", "Asana", "Monday.com"],
-            "development": ["GitHub", "GitLab", "Bitbucket", "Jira", "Linear"],
-            "communication": ["Gmail", "Outlook", "Twilio", "SendGrid", "Intercom"],
-            "crm": ["Salesforce", "HubSpot", "Zendesk"],
-            "data": ["Google Sheets", "Airtable", "PostgreSQL", "MongoDB"],
-            "social": ["Twitter/X", "LinkedIn", "Facebook", "Instagram", "YouTube"],
-            "commerce": ["Stripe", "Shopify", "WooCommerce"],
-            "cloud": ["AWS", "Azure", "GCP"],
-            "automation": ["Zapier", "Make", "n8n", "Power Automate"],
-        },
-        "native_tools": [
-            "Agent Registration", "Wallet Management", "Token Transfer",
-            "Currency Conversion", "Trading", "Lending", "Borrowing",
-            "Compute Storage", "Portfolio", "Agent Discovery",
-            "Platform Info", "Inbox", "Capabilities Browse", "Referrals",
-            "Banking Balance", "Transactions", "Payments", "Mandates",
-            "Compliance Status", "Statements",
-        ],
+        "composio_connected": COMPOSIO_AVAILABLE and composio_key,
+        "composio_status": "connected" if (COMPOSIO_AVAILABLE and composio_key) else "available_not_configured",
+        "composio_setup": "Set COMPOSIO_API_KEY in environment to enable 51 OAuth app connections" if not composio_key else None,
+        "native_tools": get_composio_tools() if COMPOSIO_AVAILABLE else [],
+        "categories": ["Communication", "Development", "Productivity", "CRM", "Data", "Finance"],
     }
 
-
-
-# ── Competitor Comparison SEO Pages ──────────────────────────
-COMPARISONS = {
-    "olas": {"name": "Olas (Autonolas)", "tagline": "Decentralized agent protocol", "their_strength": "On-chain agent economy with OLAS token", "agentis_wins": ["Multi-currency fiat+crypto wallets", "Dispute arbitration (DAP)", "Constitutional AI governance", "Human oversight", "Lower barrier (no token purchase needed)", "Community hub (The Agora)"], "they_lack": ["Fiat currency support", "Formal dispute resolution", "Governance framework", "Gamification"], "url": "https://olas.network"},
-    "relevance-ai": {"name": "Relevance AI", "tagline": "No-code agent builder", "their_strength": "9,000+ integrations, no-code builder, SOC2", "agentis_wins": ["Agent-to-agent transactions with escrow", "Multi-currency wallets", "Blockchain settlement", "Dispute arbitration", "Constitutional governance", "Community hub", "Lower pricing ($1.99 vs $19/mo)"], "they_lack": ["Agent economy", "Blockchain", "Wallets", "Dispute resolution"], "url": "https://relevanceai.com"},
-    "crewai": {"name": "CrewAI", "tagline": "Multi-agent orchestration", "their_strength": "Industry-leading orchestration, HIPAA+SOC2, visual Studio", "agentis_wins": ["Agent marketplace/exchange", "Multi-currency wallets", "Blockchain settlement", "Community hub", "80% lower pricing ($1.99 vs $99/mo)"], "they_lack": ["Marketplace", "Wallets", "Agent economy", "Community"], "url": "https://crewai.com"},
-    "langsmith": {"name": "LangSmith", "tagline": "LLM observability", "their_strength": "Best debugging/tracing tools, massive ecosystem", "agentis_wins": ["Agent marketplace", "Wallets and transactions", "Blockchain", "Community", "Governance", "Free persistent memory"], "they_lack": ["Agent economy", "Marketplace", "Wallets", "Community hub"], "url": "https://langchain.com"},
-    "virtuals": {"name": "Virtuals Protocol", "tagline": "AI agent launchpad on Base", "their_strength": "17,000+ agents, $39.5M revenue, smart contract escrow", "agentis_wins": ["Fiat currency support", "Dispute arbitration", "Constitutional governance", "Human oversight", "No token purchase required", "Community hub"], "they_lack": ["Fiat support", "Dispute resolution", "Governance"], "url": "https://virtuals.io"},
-    "agent-ai": {"name": "Agent.ai", "tagline": "AI agent marketplace", "their_strength": "Established marketplace, try-before-buy model", "agentis_wins": ["Agent-to-agent autonomous transactions", "Multi-currency wallets", "Blockchain settlement", "Python SDK", "MCP tools", "Governance"], "they_lack": ["SDK", "Blockchain", "Agent autonomy", "MCP"], "url": "https://agent.ai"},
-}
 
 @app.get("/compare/{competitor}", include_in_schema=False)
 async def comparison_page(competitor: str, request: Request = None):
@@ -2283,17 +2258,42 @@ async def interop_status():
     return get_interop_status()
 
 @app.get("/api/v1/news/latest", include_in_schema=False)
-async def get_latest_news():
-    """Get the latest daily AI agent news feed."""
-    import os
-    news_file = "/home/tioli/app/data/daily_news.json"
-    if os.path.exists(news_file):
-        import json
-        with open(news_file) as f:
-            return json.load(f)
+async def get_latest_news(limit: int = 10, db: AsyncSession = Depends(get_db)):
+    """Get latest AI agent news — pulls from blog/SEO content + curated updates."""
+    from sqlalchemy import text as _news_text
+    from datetime import datetime as _news_dt, timezone as _news_tz
+    articles = []
+    try:
+        result = await db.execute(_news_text(
+            "SELECT slug, title, category, views, created_at::text FROM seo_pages ORDER BY created_at DESC LIMIT :lim"
+        ), {"lim": limit})
+        for row in result.fetchall():
+            articles.append({
+                "slug": row.slug, "title": row.title,
+                "category": row.category, "views": row.views,
+                "created_at": row.created_at, "url": f"/blog/{row.slug}"
+            })
+    except Exception:
+        pass
+    # Always include curated industry updates
+    curated = [
+        {"title": "MCP Protocol adoption accelerates across AI platforms",
+         "category": "Industry", "url": "/learn/what-is-an-ai-agent-exchange",
+         "created_at": "2026-04-07"},
+        {"title": "Agent-to-agent commerce: the next frontier",
+         "category": "Insights", "url": "/learn/how-agent-commerce-works",
+         "created_at": "2026-04-06"},
+        {"title": "Why AI agents need financial infrastructure",
+         "category": "Research", "url": "/learn/understanding-agent-wallets",
+         "created_at": "2026-04-05"},
+    ]
+    if not articles:
+        articles = curated
     return {
-        "date": str(__import__("datetime").date.today()),
-        "news": "Daily news generates at 08:00 SAST. Check back soon.",
+        "articles": articles[:limit],
+        "curated": curated,
+        "total": len(articles),
+        "generated_at": _news_dt.now(_news_tz.utc).isoformat(),
         "source": "AGENTIS Ambassador Agent",
         "feed_url": "https://agentisexchange.com/api/v1/news/latest"
     }

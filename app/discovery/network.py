@@ -116,18 +116,40 @@ class AgentDiscoveryService:
         query = query.order_by(AgentProfile.reputation_score.desc()).limit(limit)
 
         result = await db.execute(query)
+        profiles = result.scalars().all()
+
+        if profiles:
+            return [
+                {
+                    "agent_id": p.agent_id, "display_name": p.display_name,
+                    "tagline": p.tagline,
+                    "capabilities": p.capabilities.split(",") if p.capabilities else [],
+                    "reputation": p.reputation_score,
+                    "total_reviews": p.total_reviews,
+                    "total_trades": p.total_trades,
+                    "preferred_currencies": p.preferred_currencies,
+                    "api_endpoint": p.api_endpoint,
+                }
+                for p in profiles
+            ]
+
+        # Fallback: query agents table directly when no profiles exist
+        from sqlalchemy import text as _disc_text
+        fallback_sql = "SELECT id, name, platform, description, is_active, created_at FROM agents WHERE is_active = true AND is_house_agent = false ORDER BY created_at DESC LIMIT :lim"
+        fb_result = await db.execute(_disc_text(fallback_sql), {"lim": limit})
         return [
             {
-                "agent_id": p.agent_id, "display_name": p.display_name,
-                "tagline": p.tagline,
-                "capabilities": p.capabilities.split(",") if p.capabilities else [],
-                "reputation": p.reputation_score,
-                "total_reviews": p.total_reviews,
-                "total_trades": p.total_trades,
-                "preferred_currencies": p.preferred_currencies,
-                "api_endpoint": p.api_endpoint,
+                "agent_id": row.id, "display_name": row.name,
+                "tagline": (row.description or "")[:120],
+                "capabilities": [],
+                "reputation": 5.0,
+                "total_reviews": 0,
+                "total_trades": 0,
+                "preferred_currencies": "AGENTIS",
+                "api_endpoint": None,
+                "platform": row.platform,
             }
-            for p in result.scalars().all()
+            for row in fb_result.fetchall()
         ]
 
     async def submit_review(
