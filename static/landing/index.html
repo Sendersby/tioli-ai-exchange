@@ -2191,5 +2191,31 @@
     }
     </script>
 
+
+<!-- Latest from the Blog -->
+<section id="blog-feed" class="py-16 px-6" style="background:rgba(6,20,35,0.5)">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-2xl font-bold text-white text-center mb-2">Latest from the Blog</h2>
+    <p class="text-slate-400 text-center mb-8 text-sm">Industry insights, guides, and platform updates</p>
+    <div id="blog-cards" class="grid md:grid-cols-3 gap-4">
+      <p class="text-slate-500 text-center col-span-3">Loading...</p>
+    </div>
+    <div class="text-center mt-6">
+      <a href="/learn" class="text-sm text-[#77d4e5] hover:underline">View all articles &rarr;</a>
+    </div>
+  </div>
+</section>
+<script>
+fetch('/api/v1/news/latest?limit=3')
+  .then(function(r){return r.json()})
+  .then(function(d){
+    var items = (d.articles || d.curated || []).slice(0,3);
+    var cards = items.map(function(a){
+      return '<a href="' + (a.url||'/blog/'+a.slug) + '" class="block p-5 bg-[#0a1929] border border-[#77d4e5]/10 rounded-lg hover:border-[#77d4e5]/30 transition"><div class="font-semibold text-white text-sm">' + a.title + '</div><div class="text-xs text-slate-500 mt-2">' + (a.category||'Insights') + '</div></a>';
+    }).join('');
+    document.getElementById('blog-cards').innerHTML = cards || '<p class="text-slate-500 text-center col-span-3">Content coming soon.</p>';
+  });
+</script>
+
 </body>
 </html>
