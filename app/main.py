@@ -2303,16 +2303,16 @@ async def get_latest_news(limit: int = 10, db: AsyncSession = Depends(get_db)):
     articles = []
     try:
         result = await db.execute(_news_text(
-            "SELECT slug, title, category, views, created_at::text FROM seo_pages ORDER BY created_at DESC LIMIT :lim"
+            "SELECT slug, title, category, view_count, created_at::text FROM seo_pages WHERE is_published = true ORDER BY created_at DESC LIMIT :lim"
         ), {"lim": limit})
         for row in result.fetchall():
             articles.append({
                 "slug": row.slug, "title": row.title,
-                "category": row.category, "views": row.views,
+                "category": row.category, "views": row.view_count,
                 "created_at": row.created_at, "url": f"/blog/{row.slug}"
             })
-    except Exception:
-        pass
+    except Exception as _news_err:
+        import logging; logging.getLogger("news").warning(f"News query failed: {_news_err}")
     # Always include curated industry updates
     curated = [
         {"title": "MCP Protocol adoption accelerates across AI platforms",
