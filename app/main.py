@@ -2148,14 +2148,11 @@ COMPARISONS = {
 }
 
 @app.get("/compare/{competitor}", include_in_schema=False)
-async def comparison_page(competitor: str):
+async def comparison_page(competitor: str, request: Request = None):
     """SEO-optimized comparison pages: AGENTIS vs [Competitor]."""
     comp = COMPARISONS.get(competitor)
     if not comp:
-        return templates.TemplateResponse("error.html", {
-            "request": None, "error_code": 404, "error_title": "Not Found",
-            "error_message": "Comparison not found."
-        }, status_code=404)
+        return JSONResponse(status_code=404, content={"error": "Comparison not found", "available": list(COMPARISONS.keys())})
 
     wins_html = "".join(f'<li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-emerald-400">&#10003;</span>{w}</li>' for w in comp["agentis_wins"])
     lacks_html = "".join(f'<li class="flex items-center gap-2 text-sm text-slate-400"><span class="text-red-400">&#10007;</span>{l}</li>' for l in comp["they_lack"])
@@ -2284,6 +2281,29 @@ async def interop_status():
     """Blockchain interoperability status and roadmap."""
     from app.arch.blockchain_interop import get_interop_status
     return get_interop_status()
+
+@app.get("/api/v1/news/latest", include_in_schema=False)
+async def get_latest_news():
+    """Get the latest daily AI agent news feed."""
+    import os
+    news_file = "/home/tioli/app/data/daily_news.json"
+    if os.path.exists(news_file):
+        import json
+        with open(news_file) as f:
+            return json.load(f)
+    return {
+        "date": str(__import__("datetime").date.today()),
+        "news": "Daily news generates at 08:00 SAST. Check back soon.",
+        "source": "AGENTIS Ambassador Agent",
+        "feed_url": "https://agentisexchange.com/api/v1/news/latest"
+    }
+
+@app.get("/api/v1/interop/chains", include_in_schema=False)
+async def interop_chains():
+    """List supported blockchain interoperability chains."""
+    from app.arch.blockchain_interop import get_interop_status
+    status = get_interop_status()
+    return {"chains": status.get("supported_chains", []), "active_chain": "agentis_sovereign_ledger"}
 
 @app.get("/api/v1/interop/export/{agent_id}", include_in_schema=False)
 async def export_agent_chain(agent_id: str, chain: str = "olas", db: AsyncSession = Depends(get_db)):
@@ -8802,6 +8822,53 @@ async def linkedin_callback(code: str = None, state: str = None, error: str = No
     return {"error": "no code received"}
 
 
+
+
+# ── Missing competitive priority page routes ─────────────────────────
+@app.get("/compare", include_in_schema=False)
+async def serve_compare_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/compare.html", media_type="text/html")
+
+@app.get("/builder", include_in_schema=False)
+async def serve_builder_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/builder.html", media_type="text/html")
+
+@app.get("/learn", include_in_schema=False)
+async def serve_learn_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/learn.html", media_type="text/html")
+
+@app.get("/templates", include_in_schema=False)
+async def serve_templates_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/templates.html", media_type="text/html")
+
+@app.get("/security", include_in_schema=False)
+async def serve_security_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/security.html", media_type="text/html")
+
+@app.get("/playground", include_in_schema=False)
+async def serve_playground_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/playground.html", media_type="text/html")
+
+@app.get("/blog", include_in_schema=False)
+async def serve_blog_landing():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/blog.html", media_type="text/html")
+
+@app.get("/why-agentis", include_in_schema=False)
+async def serve_why_agentis():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/why-agentis.html", media_type="text/html")
+
+@app.get("/directory", include_in_schema=False)
+async def serve_directory_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/directory.html", media_type="text/html")
 
 # ── Fallback routes for static pages on backend domain ───────────────
 @app.get("/get-started", include_in_schema=False)
