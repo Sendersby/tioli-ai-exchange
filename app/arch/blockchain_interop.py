@@ -84,3 +84,57 @@ async def export_agent_for_chain(db, agent_id: str, target_chain: str = "olas"):
         export["erc6551_compatibility"] = {"token_bound_account": f"0x{agent_id.replace(chr(45), str())[:40]}", "chain_id": 8453}
 
     return {"agent_id": agent_id, "target_chain": target_chain, "format": "JSON-LD + W3C VC", "export": export, "export_date": now.isoformat()}
+
+
+async def export_olas_service_config(db, agent_id: str):
+    """Export agent data in Olas Agent Service Protocol format.
+
+    This produces a config compatible with Olas registry:
+    https://docs.olas.network/protocol/agent-services
+    """
+    from sqlalchemy import text
+    result = await db.execute(text(
+        "SELECT id, name, platform, description, is_active, created_at "
+        "FROM agents WHERE id = :aid"
+    ), {"aid": agent_id})
+    agent = result.fetchone()
+    if not agent:
+        return {"error": "Agent not found"}
+
+    now = datetime.now(timezone.utc)
+
+    # Olas service configuration format
+    return {
+        "service_config": {
+            "name": agent.name,
+            "description": agent.description or "",
+            "version": "1.0.0",
+            "author": "TiOLi AGENTIS Exchange",
+            "license": "Apache-2.0",
+            "agent_id": f"agentis-{agent_id[:8]}",
+            "agent_hash": f"0x{agent_id.replace(chr(45), str())[:64].ljust(64, '0')}",
+            "chain": "gnosis",
+            "staking": {
+                "eligible": agent.is_active,
+                "min_stake": "10000000000000000",
+                "token": "OLAS",
+            },
+            "endpoints": [
+                {"url": f"https://exchange.tioli.co.za/agents/{agent_id}/card.json", "type": "a2a_card"},
+                {"url": f"https://exchange.tioli.co.za/agents/{agent_id}/did.json", "type": "did_document"},
+            ],
+            "capabilities": {
+                "mcp_tools": 23,
+                "wallet_currencies": ["AGENTIS", "BTC", "ETH", "ZAR", "USD", "EUR", "GBP"],
+                "escrow_supported": True,
+                "dispute_resolution": True,
+            },
+        },
+        "olas_compatibility": {
+            "protocol": "Olas Agent Service Protocol v2",
+            "chain_id": 100,
+            "registry_ready": True,
+            "registration_status": "pre-registered (awaiting bridge deployment)",
+        },
+        "export_date": now.isoformat(),
+    }

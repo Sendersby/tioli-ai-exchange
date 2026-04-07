@@ -9064,6 +9064,38 @@ async def all_mcp_tools():
     except Exception as e:
         return {"totals": {"native_tools": 23, "composio_tools": 51, "total": 74}, "error": str(e)}
 
+
+@app.post("/api/v1/comms/ambassador-weekly", include_in_schema=False)
+async def trigger_ambassador_weekly(db: AsyncSession = Depends(get_db)):
+    """Trigger Ambassador weekly blog + social media generation."""
+    from app.arch.comms_pipeline import generate_ambassador_weekly
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    return await generate_ambassador_weekly(db, client)
+
+@app.post("/api/v1/comms/architect-technical", include_in_schema=False)
+async def trigger_architect_technical(db: AsyncSession = Depends(get_db)):
+    """Trigger Architect technical blog generation."""
+    from app.arch.comms_pipeline import generate_architect_technical
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    return await generate_architect_technical(db, client)
+
+@app.post("/api/v1/comms/sovereign-report", include_in_schema=False)
+async def trigger_sovereign_report(db: AsyncSession = Depends(get_db)):
+    """Trigger Sovereign monthly governance report."""
+    from app.arch.comms_pipeline import generate_sovereign_report
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    return await generate_sovereign_report(db, client)
+
+
+@app.get("/api/v1/interop/olas/{agent_id}", include_in_schema=False)
+async def olas_export(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Export agent in Olas Agent Service Protocol format."""
+    from app.arch.blockchain_interop import export_olas_service_config
+    return await export_olas_service_config(db, agent_id)
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
