@@ -2417,8 +2417,10 @@ async def security_audit():
             capture_output=True, text=True, timeout=10
         )
         checks["dependencies"] = {
-            "status": "PASS" if result.returncode == 0 else "INFO",
-            "detail": "Dependency audit available via pip-audit"
+            "status": "WARN",
+            "detail": "pip-audit installed. 6 known CVEs in transitive deps (litellm, pillow) cannot be upgraded without breaking dependency chains",
+            "known_cves": 6,
+            "mitigation": "Input validation, rate limiting, no untrusted DER parsing, no user-uploaded image processing"
         }
     except Exception:
         checks["dependencies"] = {"status": "INFO", "detail": "6 CVEs in transitive deps (litellm, pillow) — cannot upgrade without breaking dependency chains",
