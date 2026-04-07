@@ -8877,6 +8877,15 @@ async def serve_learn_page():
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/learn.html", media_type="text/html")
 
+@app.get("/learn/{slug}", include_in_schema=False)
+async def serve_learn_article(slug: str):
+    from app.arch.learn_content import get_article_html
+    html = get_article_html(slug)
+    if html is None:
+        return JSONResponse(status_code=404, content={"error": "Article not found"})
+    return HTMLResponse(content=html)
+
+
 @app.get("/templates", include_in_schema=False)
 async def serve_templates_page():
     from fastapi.responses import FileResponse
