@@ -665,3 +665,67 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
             args=[db_factory],
         )
         log.info("[scheduler] Registered: arch_memory_flush (60s)")
+
+
+    # ── Ambassador Weekly Blog + Social — Mondays 09:00 SAST ──
+    async def ambassador_weekly_content():
+        """Ambassador generates weekly blog + social media posts."""
+        try:
+            from app.arch.comms_pipeline import generate_ambassador_weekly
+            import anthropic, os
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            async with async_session() as db:
+                result = await generate_ambassador_weekly(db, client)
+                log.info(f"[ambassador] Weekly content: {result}")
+        except Exception as e:
+            log.error(f"[ambassador] Weekly content failed: {e}")
+
+    scheduler.add_job(ambassador_weekly_content, "cron", day_of_week="mon", hour=7, minute=0,
+                      id="arch_ambassador_weekly", replace_existing=True)
+
+    # ── Architect Technical Blog — 1st and 15th of month, 10:00 SAST ──
+    async def architect_technical_content():
+        """Architect generates technical deep-dive blog."""
+        try:
+            from app.arch.comms_pipeline import generate_architect_technical
+            import anthropic, os
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            async with async_session() as db:
+                result = await generate_architect_technical(db, client)
+                log.info(f"[architect] Technical content: {result}")
+        except Exception as e:
+            log.error(f"[architect] Technical content failed: {e}")
+
+    scheduler.add_job(architect_technical_content, "cron", day="1,15", hour=8, minute=0,
+                      id="arch_architect_technical", replace_existing=True)
+
+    # ── Sovereign Monthly Report — 1st of month, 12:00 SAST ──
+    async def sovereign_monthly_report():
+        """Sovereign generates governance transparency report."""
+        try:
+            from app.arch.comms_pipeline import generate_sovereign_report
+            import anthropic, os
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            async with async_session() as db:
+                result = await generate_sovereign_report(db, client)
+                log.info(f"[sovereign] Monthly report: {result}")
+        except Exception as e:
+            log.error(f"[sovereign] Monthly report failed: {e}")
+
+    scheduler.add_job(sovereign_monthly_report, "cron", day=1, hour=10, minute=0,
+                      id="arch_sovereign_monthly", replace_existing=True)
+
+    # ── Weekly Email Digest — Fridays 10:00 SAST ──
+    async def weekly_email_digest():
+        """Generate and log weekly digest (email send requires SMTP)."""
+        try:
+            from app.arch.email_digest import generate_digest
+            async with async_session() as db:
+                digest = await generate_digest(db)
+                log.info(f"[digest] Weekly digest: {digest['articles']} articles")
+                # TODO: Send via Microsoft Graph when SMTP is configured
+        except Exception as e:
+            log.error(f"[digest] Weekly digest failed: {e}")
+
+    scheduler.add_job(weekly_email_digest, "cron", day_of_week="fri", hour=8, minute=0,
+                      id="arch_weekly_digest", replace_existing=True)

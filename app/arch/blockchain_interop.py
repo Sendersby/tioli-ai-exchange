@@ -112,7 +112,7 @@ async def export_olas_service_config(db, agent_id: str):
             "author": "TiOLi AGENTIS Exchange",
             "license": "Apache-2.0",
             "agent_id": f"agentis-{agent_id[:8]}",
-            "agent_hash": f"0x{agent_id.replace(chr(45), str())[:64].ljust(64, '0')}",
+            "agent_hash": "0x" + __import__('hashlib').sha256(agent_id.encode()).hexdigest(),
             "chain": "gnosis",
             "staking": {
                 "eligible": agent.is_active,
