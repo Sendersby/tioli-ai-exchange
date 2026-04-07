@@ -2349,7 +2349,7 @@ async def interop_chains():
 # -- Security Controls: Real automated scanning --
 @app.get("/api/v1/security/audit", include_in_schema=False)
 async def security_audit():
-    """Run a real security audit checking actual system controls."""
+    """Self-assessment security checklist. NOT a third-party audit. Results reflect automated checks only."""
     import os, ssl, subprocess
     checks = {}
 
@@ -2441,7 +2441,8 @@ async def security_audit():
 
     passed = sum(1 for c in checks.values() if c["status"] == "PASS")
     total = len(checks)
-    grade = "A" if passed >= 9 else "B" if passed >= 7 else "C" if passed >= 5 else "D"
+    grade = "B+" if passed >= 9 else "B" if passed >= 7 else "C" if passed >= 5 else "D"
+        # Note: Grade A requires third-party SOC2 audit. Self-assessment max is B+.
 
     return {
         "audit_date": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
@@ -2450,8 +2451,9 @@ async def security_audit():
         "checks_total": total,
         "score": f"{passed}/{total}",
         "checks": checks,
-        "soc2_status": "Phase 1 - Controls documented, automated scanning active",
-        "next_steps": ["Enable pip-audit for dependency scanning", "Add Sentry for error monitoring", "Schedule quarterly pen tests"]
+        "assessment_type": "SELF-ASSESSMENT (not third-party audited)",
+        "soc2_status": "Phase 1 - Controls documented. SOC2 Type 1 audit not yet started.",
+        "next_steps": ["Enable pip-audit for dependency scanning", "Add Sentry for error monitoring", "Schedule quarterly pen tests", "Enable Cloudflare WAF rules", "Encrypt database at rest", "Engage SOC2 auditor (Vanta/Drata)"]
     }
 
 # -- Agent Grading: A-F quality rating --
