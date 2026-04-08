@@ -77,7 +77,13 @@ async def execute_workflow(workflow, agent_client):
                     model="claude-haiku-4-5-20251001",
                     max_tokens=300,
                     system=[{"type": "text", "text": f"You are {step['agent']} of TiOLi AGENTIS. Execute this task concisely."}],
-                    messages=[{"role": "user", "content": step["task"]}],
+                    messages=[{"role": "user", "content":
+                        step["task"] + (
+                            "\n\nContext from previous steps:\n" +
+                            "\n".join(f"- {s['agent']}: {s['result'][:200]}" for s in workflow.steps if s['status'] == 'completed' and s['result'])
+                            if any(s['status'] == 'completed' and s['result'] for s in workflow.steps)
+                            else ""
+                        )}],
                 )
                 result = next((b.text for b in response.content if b.type == "text"), "No output")
                 workflow.complete_step(step["step_id"], result)

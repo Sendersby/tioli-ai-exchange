@@ -1200,6 +1200,14 @@ async def api_transfer(
         cached = await idempotency_service.check_and_store(db, idempotency_key, "transfer", agent.id)
         if cached:
             return JSONResponse(content=json.loads(cached))
+    # Compliance risk check
+    try:
+        from app.arch.compliance_real import assess_transaction_risk
+        risk = assess_transaction_risk(req.amount, req.currency)
+        if risk.get("requires_manual_review"):
+            return JSONResponse(status_code=403, content={"error": "Transaction flagged for manual review", "risk": risk})
+    except Exception:
+        pass  # Don't block transfers if compliance module fails
     tx = await wallet_service.transfer(
         db, agent.id, req.receiver_id, req.amount, req.currency, req.description
     )
@@ -9435,6 +9443,14 @@ async def api_sandbox_execute(request: Request):
         return JSONResponse(status_code=400, content={"error": "code required"})
     from app.arch.sandbox import execute_in_sandbox
     return await execute_in_sandbox(code, timeout=body.get("timeout", 10))
+
+
+@app.post("/api/v1/catalyst/experiment/{exp_id}/measure", include_in_schema=False)
+async def api_measure_experiment(exp_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Record measurement results for an experiment."""
+    body = await request.json()
+    from app.arch.catalyst import measure_experiment
+    return await measure_experiment(db, exp_id, body)
 
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():

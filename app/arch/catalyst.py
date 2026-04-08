@@ -49,3 +49,27 @@ async def list_experiments(db):
         "SELECT id, title, status, created_at::text FROM arch_growth_experiments ORDER BY created_at DESC LIMIT 20"
     ))
     return [{"id": r.id, "title": r.title, "status": r.status, "created": r.created_at} for r in result.fetchall()]
+
+
+async def measure_experiment(db, experiment_id: str, results: dict):
+    """Record experiment measurement results."""
+    from sqlalchemy import text
+    import json
+    try:
+        await db.execute(text(
+            "UPDATE arch_growth_experiments SET result = :result, status = 'measured' WHERE id = :id"
+        ), {"id": experiment_id, "result": json.dumps(results)})
+
+        # Determine winner if variants have results
+        variants = results.get("variants", {})
+        if variants:
+            winner = max(variants, key=lambda k: variants[k].get("conversion", 0))
+            uplift = variants[winner].get("conversion", 0) - min(variants[v].get("conversion", 0) for v in variants)
+            await db.execute(text(
+                "UPDATE arch_growth_experiments SET winner = :winner, uplift_pct = :uplift, status = 'completed' WHERE id = :id"
+            ), {"id": experiment_id, "winner": winner, "uplift": uplift})
+
+        await db.commit()
+        return {"experiment_id": experiment_id, "status": "measured", "results": results}
+    except Exception as e:
+        return {"error": str(e)}

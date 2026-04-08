@@ -100,11 +100,48 @@ async def post_to_discord(content: str, username: str = "AGENTIS") -> dict:
         return {"error": str(e)}
 
 
+
+
+async def post_to_linkedin(text: str) -> dict:
+    """Post to LinkedIn company page using OAuth token."""
+    access_token = os.getenv("LINKEDIN_ACCESS_TOKEN", "")
+    company_id = os.getenv("LINKEDIN_COMPANY_ID", "")
+
+    if not access_token or not company_id:
+        return {"error": "LinkedIn credentials not configured"}
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                "https://api.linkedin.com/v2/ugcPosts",
+                headers={"Authorization": f"Bearer {access_token}",
+                         "Content-Type": "application/json",
+                         "X-Restli-Protocol-Version": "2.0.0"},
+                json={
+                    "author": f"urn:li:organization:{company_id}",
+                    "lifecycleState": "PUBLISHED",
+                    "specificContent": {
+                        "com.linkedin.ugc.ShareContent": {
+                            "shareCommentary": {"text": text[:1300]},
+                            "shareMediaCategory": "NONE",
+                        }
+                    },
+                    "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
+                })
+            if resp.status_code in (200, 201):
+                log.info("[linkedin] Posted successfully")
+                return {"success": True, "status": resp.status_code}
+            else:
+                return {"error": f"LinkedIn API {resp.status_code}", "detail": resp.text[:200]}
+    except Exception as e:
+        return {"error": str(e)}
+
 async def publish_all(text: str, title: str = "", body: str = "") -> dict:
     """Publish to all configured channels."""
     results = {}
     results["twitter"] = await post_to_twitter(text)
     results["discord"] = await post_to_discord(text)
+    results["linkedin"] = await post_to_linkedin(text)
     if title and body:
         results["devto"] = await post_to_devto(title, body)
     return results

@@ -1,3 +1,4 @@
+from app.arch.guardrails import validate_pre_action, validate_post_action
 """Autonomous Execution Engine — the bridge from intent to action.
 
 Three execution layers:
@@ -331,6 +332,17 @@ class ArchExecutor:
     # ══════════════════════════════════════════════════════════
 
     async def execute_task_plan(self, tasks: list[dict]) -> list[dict]:
+        # Guardrails pre-check on each task
+        for task in tasks:
+            guard = validate_pre_action(
+                task.get("tool", "unknown"),
+                task.get("params", {}),
+                getattr(self, "agent_name", "unknown")
+            )
+            if not guard.get("allowed", True):
+                task["result"] = {"error": guard.get("reason"), "blocked": True}
+                task["status"] = "blocked"
+                continue
         """Execute a sequence of tasks autonomously.
 
         Each task: {"action": "write_file|run_command|browse_url|post_content|...",

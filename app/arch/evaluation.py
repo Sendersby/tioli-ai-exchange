@@ -13,10 +13,13 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
 
     # 1. Activity score (0-25): How active has the agent been?
     try:
+        # Get agent_id first
+        aid_row = await db.execute(text("SELECT id::text FROM arch_agents WHERE agent_name = :name"), {"name": agent_name})
+        aid = aid_row.scalar()
         actions = await db.execute(text(
-            "SELECT count(*) FROM arch_event_actions WHERE agent_name = :name "
+            "SELECT count(*) FROM arch_event_actions WHERE agent_id = :aid "
             "AND created_at > now() - interval '90 days'"
-        ), {"name": agent_name})
+        ), {"aid": aid or ""})
         action_count = actions.scalar() or 0
         scores["activity"] = min(25, action_count * 2)
     except Exception:
@@ -25,10 +28,9 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
     # 2. Memory utilisation (0-20): Is the agent learning?
     try:
         mems = await db.execute(text(
-            "SELECT count(*) FROM arch_memory_outbox WHERE agent_id IN "
-            "(SELECT id::text FROM arch_agents WHERE agent_name = :name) "
+            "SELECT count(*) FROM arch_memory_outbox WHERE agent_id = :aid "
             "AND created_at > now() - interval '90 days'"
-        ), {"name": agent_name})
+        ), {"aid": aid or ""})
         mem_count = mems.scalar() or 0
         scores["memory"] = min(20, mem_count)
     except Exception:

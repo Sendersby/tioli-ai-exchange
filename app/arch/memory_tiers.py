@@ -86,19 +86,36 @@ async def load_from_db(db, agent_name: str) -> TieredMemory:
     mem = TieredMemory(agent_name)
 
     try:
-        # Load core memories
-        rows = await db.execute(text(
-            "SELECT category, content FROM arch_memories "
-            "WHERE agent_name = :agent AND category = 'core' ORDER BY created_at DESC LIMIT 20"
-        ), {"agent": agent_name})
-        for row in rows.fetchall():
-            mem.core[row.category] = row.content[:200]
+        # Get agent_id from name
+        agent_row = await db.execute(text(
+            "SELECT id FROM arch_agents WHERE agent_name = :name"
+        ), {"name": agent_name})
+        agent_id_row = agent_row.fetchone()
+        if not agent_id_row:
+            return mem
+        agent_id = str(agent_id_row.id)
 
-        # Load recent working memories
+        # Load core memories (source_type = 'core_identity')
         rows = await db.execute(text(
-            "SELECT content, metadata, created_at FROM arch_memories "
-            "WHERE agent_name = :agent AND category != 'core' ORDER BY created_at DESC LIMIT 50"
-        ), {"agent": agent_name})
+            "SELECT content FROM arch_memories "
+            "WHERE agent_id = :aid AND source_type = 'core_identity' ORDER BY importance DESC LIMIT 5"
+        ), {"aid": agent_id})
+        core_rows = rows.fetchall()
+        if not core_rows:
+            # Fallback: check outbox for unflushed core memories
+            rows = await db.execute(text(
+                "SELECT content FROM arch_memory_outbox "
+                "WHERE agent_id = :aid AND source_type = 'core_identity' ORDER BY importance DESC LIMIT 5"
+            ), {"aid": agent_id})
+            core_rows = rows.fetchall()
+        for i, row in enumerate(core_rows):
+            mem.core[f"identity_{i}"] = row.content[:200]
+
+        # Load recent working memories (everything else)
+        rows = await db.execute(text(
+            "SELECT content, created_at FROM arch_memories "
+            "WHERE agent_id = :aid AND source_type != 'core_identity' ORDER BY created_at DESC LIMIT 50"
+        ), {"aid": agent_id})
         for row in rows.fetchall():
             mem.working.append({"content": row.content[:500], "timestamp": str(row.created_at)})
 
@@ -114,12 +131,18 @@ async def save_to_db(db, mem: TieredMemory):
     import uuid
 
     try:
+        # Get agent_id
+        agent_row = await db.execute(text("SELECT id FROM arch_agents WHERE agent_name = :name"), {"name": mem.agent_name})
+        agent_id_row = agent_row.fetchone()
+        if not agent_id_row:
+            return
+        agent_id = str(agent_id_row.id)
+
         for key, value in mem.core.items():
             await db.execute(text(
-                "INSERT INTO arch_memories (id, agent_name, category, content, created_at) "
-                "VALUES (:id, :agent, 'core', :content, now()) "
-                "ON CONFLICT DO NOTHING"
-            ), {"id": str(uuid.uuid4()), "agent": mem.agent_name, "content": f"{key}: {value}"})
+                "INSERT INTO arch_memory_outbox (agent_id, content, source_type, importance) "
+                "VALUES (:aid, :content, 'core_identity', 9.99)"
+            ), {"aid": agent_id, "content": f"{key}: {value}"})
         await db.commit()
     except Exception as e:
         log.warning(f"[memory] Failed to save for {mem.agent_name}: {e}")

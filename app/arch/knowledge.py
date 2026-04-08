@@ -11,7 +11,7 @@ async def research_topic(agent_client, topic: str, agent_name: str = "architect"
         response = await agent_client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=800,
-            system=[{"type": "text", "text": f"You are {agent_name} of TiOLi AGENTIS. Research the given topic and provide a structured summary with: (1) Key findings (3-5 bullet points), (2) Relevance to AGENTIS platform, (3) Action items if any. Be factual and concise."}],
+            system=[{"type": "text", "text": f"You are {agent_name} of TiOLi AGENTIS. Based on your knowledge, provide a structured analysis of the given topic. Focus on established facts, known patterns, and strategic implications for an AI agent exchange platform with: (1) Key findings (3-5 bullet points), (2) Relevance to AGENTIS platform, (3) Action items if any. Be factual and concise."}],
             messages=[{"role": "user", "content": f"Research this topic and summarise findings: {topic}"}],
         )
         text = next((b.text for b in response.content if b.type == "text"), "")
@@ -85,7 +85,12 @@ async def web_research_topic(topic: str) -> dict:
                     if resp.status_code == 200:
                         # Extract text content (simplified)
                         text = resp.text[:5000]
-                        findings.append({"source": url, "snippet": text[:500]})
+                        # Extract text content by stripping HTML tags
+                        import re as _re
+                        clean = _re.sub(r'<[^>]+>', ' ', text)
+                        clean = _re.sub(r'\s+', ' ', clean).strip()
+                        if len(clean) > 50:
+                            findings.append({"source": url, "snippet": clean[:800]})
                 except Exception:
                     pass
 

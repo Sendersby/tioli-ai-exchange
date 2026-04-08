@@ -38,7 +38,7 @@ async def execute_in_sandbox(code: str, language: str = "python", timeout: int =
 
         try:
             result = subprocess.run(
-                ["/usr/bin/python3", code_file],
+                ["/home/tioli/app/.venv/bin/python3", code_file],
                 capture_output=True, text=True, timeout=timeout,
                 cwd=tmpdir,
                 env={"PATH": "/usr/bin:/bin", "HOME": tmpdir, "PYTHONPATH": ""},
