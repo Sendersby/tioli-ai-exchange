@@ -9594,6 +9594,57 @@ async def api_cache_metrics(db: AsyncSession = Depends(get_db)):
 
     return {"cache_metrics": metrics, "period": "last_1_hour"}
 
+
+# ARCH-AA-001: Goal Registry endpoints
+@app.post("/api/v1/owner/goals", include_in_schema=False)
+async def api_create_goal(request: Request, db: AsyncSession = Depends(get_db)):
+    """Create a standing goal for an agent."""
+    body = await request.json()
+    from sqlalchemy import text
+    import uuid
+    goal_id = str(uuid.uuid4())
+    await db.execute(text(
+        "INSERT INTO agent_goals (goal_id, agent_id, title, description, success_metric, priority, created_by) "
+        "VALUES (:gid, :aid, :title, :desc, :metric, :pri, 'owner')"
+    ), {"gid": goal_id, "aid": body.get("agent_id",""), "title": body.get("title",""),
+        "desc": body.get("description",""), "metric": body.get("success_metric",""),
+        "pri": body.get("priority", 5)})
+    await db.commit()
+    return {"goal_id": goal_id, "status": "created"}
+
+@app.get("/api/v1/owner/goals", include_in_schema=False)
+async def api_list_goals(db: AsyncSession = Depends(get_db)):
+    """List all agent goals."""
+    from sqlalchemy import text
+    result = await db.execute(text(
+        "SELECT goal_id, agent_id, title, status, priority, progress_pct, last_actioned, created_at "
+        "FROM agent_goals ORDER BY priority ASC, created_at DESC"
+    ))
+    return [{"goal_id": str(r.goal_id), "agent": r.agent_id, "title": r.title,
+             "status": r.status, "priority": r.priority, "progress": r.progress_pct,
+             "last_actioned": str(r.last_actioned) if r.last_actioned else None}
+            for r in result.fetchall()]
+
+@app.get("/api/v1/owner/goals/{goal_id}/actions", include_in_schema=False)
+async def api_goal_actions(goal_id: str, db: AsyncSession = Depends(get_db)):
+    """View actions taken toward a goal."""
+    from sqlalchemy import text
+    result = await db.execute(text(
+        "SELECT action_id, agent_id, action_taken, outcome, tokens_used, executed_at "
+        "FROM goal_actions WHERE goal_id = :gid ORDER BY executed_at DESC"
+    ), {"gid": goal_id})
+    return [{"action_id": str(r.action_id), "agent": r.agent_id, "action": r.action_taken,
+             "outcome": r.outcome, "tokens": r.tokens_used, "executed_at": str(r.executed_at)}
+            for r in result.fetchall()]
+
+@app.post("/api/v1/owner/goals/pursue/{agent_name}", include_in_schema=False)
+async def api_pursue_goals(agent_name: str, db: AsyncSession = Depends(get_db)):
+    """Trigger a goal pursuit cycle for an agent."""
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.goal_engine import goal_pursuit_cycle
+    return await goal_pursuit_cycle(db, agent_name, client)
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse

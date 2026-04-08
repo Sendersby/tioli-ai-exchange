@@ -877,3 +877,26 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
 
     scheduler.add_job(april_campaign_afternoon, "cron", hour=16, minute=0,
                       id="april_campaign_afternoon", replace_existing=True)
+
+
+    # ARCH-AA-001: Goal pursuit cycle — every 30 minutes per agent
+    async def goal_pursuit_all():
+        """All agents pursue their standing goals."""
+        import os
+        if os.environ.get("ARCH_AA_GOAL_REGISTRY_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            for agent_name in ["sovereign", "ambassador", "architect", "sentinel", "treasurer", "auditor", "arbiter"]:
+                try:
+                    async with async_session() as db:
+                        from app.arch.goal_engine import goal_pursuit_cycle
+                        await goal_pursuit_cycle(db, agent_name, client)
+                except Exception as e:
+                    log.warning(f"[goals] {agent_name} pursuit failed: {e}")
+        except Exception as e:
+            log.error(f"[goals] Goal pursuit all failed: {e}")
+
+    scheduler.add_job(goal_pursuit_all, "interval", minutes=30,
+                      id="goal_pursuit_all", replace_existing=True)
