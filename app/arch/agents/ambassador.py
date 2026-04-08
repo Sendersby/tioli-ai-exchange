@@ -53,7 +53,18 @@ class AmbassadorAgent(ArchAgentBase):
         content_id = result.scalar()
         await self.db.commit()
         log.info(f"[ambassador] Content published: {content_type} on {platform}")
-        return {"content_id": content_id, "platform": platform,
+        
+        # ARCH-004: Store content in memory for tracking (feature-flagged)
+        import os as _cs_os
+        if _cs_os.environ.get("ARCH_AGENT_CONTENT_STORE", "false").lower() == "true":
+            try:
+                await self.memory.store(
+                    f"Published content: {params.get('title', 'untitled')} on {params.get('channel', 'unknown')}",
+                    source_type="content_published", importance=0.6)
+            except Exception:
+                pass
+
+return {"content_id": content_id, "platform": platform,
                 "status": "PUBLISHED", "content_type": content_type}
 
     async def _tool_record_growth_experiment(self, params: dict) -> dict:

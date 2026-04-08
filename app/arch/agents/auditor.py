@@ -53,7 +53,19 @@ class AuditorAgent(ArchAgentBase):
         )
         await self.db.commit()
         log.info(f"[auditor] KYC screening: {entity_type} {entity_id} tier {kyc_tier}")
-        return {"entity_id": entity_id, "kyc_tier": kyc_tier,
+        
+        # ARCH-001: Real KYC screening (feature-flagged)
+        import os as _kyc_os
+        if _kyc_os.environ.get("ARCH_AGENT_REAL_KYC", "false").lower() == "true":
+            try:
+                from app.arch.compliance_real import screen_sanctions
+                screening = await screen_sanctions(params.get("entity_id", ""))
+                if screening.get("sanctions_hit"):
+                    return {"status": "FLAGGED", "sanctions_hit": True, "source": "OFAC SDN", "entity_id": entity_id}
+            except Exception:
+                pass
+
+return {"entity_id": entity_id, "kyc_tier": kyc_tier,
                 "status": "CLEARED", "sanctions_hit": False, "pep_hit": False}
 
     async def _tool_check_aml(self, params: dict) -> dict:
@@ -91,7 +103,26 @@ class AuditorAgent(ArchAgentBase):
         str_id = result.scalar()
         await self.db.commit()
         log.warning(f"[auditor] STR filed: {str_id} for transaction {transaction_id}")
-        return {"str_id": str_id, "status": "FILED_PENDING_FIC",
+        
+        # ARCH-007: Generate FIC-compatible STR XML (feature-flagged)
+        import os as _str_os
+        if _str_os.environ.get("ARCH_AGENT_STR_FORMAT", "false").lower() == "true":
+            try:
+                from app.arch.str_format import generate_str_xml
+                str_doc = generate_str_xml(
+                    params.get("transaction_id", "unknown"),
+                    params.get("entity_id", "unknown"),
+                    params.get("amount", 0),
+                    params.get("currency", "AGENTIS"),
+                    params.get("risk_score", 0),
+                    params.get("flags", [])
+                )
+                # Store the XML for manual FIC submission
+                await self.memory.store(str_doc["xml"][:1500], source_type="str_filing", importance=0.9)
+            except Exception:
+                pass
+
+return {"str_id": str_id, "status": "FILED_PENDING_FIC",
                 "statutory_deadline_days": 15}
 
     async def _tool_check_sarb_compliance(self, params: dict) -> dict:

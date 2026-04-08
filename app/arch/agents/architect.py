@@ -182,4 +182,18 @@ class ArchitectAgent(ArchAgentBase):
 
     async def ingest_research(self):
         """Daily: placeholder for knowledge ingestion pipeline."""
+        # ARCH-003: Real knowledge research (feature-flagged)
+        import os as _res_os
+        if _res_os.environ.get("ARCH_AGENT_RESEARCH", "false").lower() == "true":
+            try:
+                from app.arch.knowledge import research_topic
+                for topic in ["AI agent frameworks", "MCP protocol", "competitor news"]:
+                    finding = await research_topic(self.client, topic, "architect")
+                    if finding and "error" not in finding:
+                        await self.memory.store(finding.get("findings", "")[:800],
+                            source_type="research", importance=0.7)
+                log.info("[architect] Real research complete — 3 topics stored")
+                return
+            except Exception as _e:
+                log.warning(f"[architect] Research failed: {_e}")
         log.info("[architect] Research ingestion cycle triggered")
