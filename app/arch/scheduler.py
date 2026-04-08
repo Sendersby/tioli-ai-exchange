@@ -812,3 +812,68 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
 
     scheduler.add_job(arbiter_sla_scan, "cron", day_of_week="wed", hour=10, minute=0,
                       id="arbiter_sla_scan", replace_existing=True)
+
+
+    # ── APRIL CAMPAIGN: Daily multi-platform content ──
+    async def april_campaign_daily():
+        """Daily: generate theme-based content, post to Twitter + LinkedIn + Discord."""
+        import os
+        if os.environ.get("ARCH_CAMPAIGN_ACTIVE", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            from app.arch.campaign import generate_and_publish_daily
+            result = await generate_and_publish_daily(client)
+            log.info(f"[campaign] Daily publish: {result.get('theme', '?')[:50]}")
+        except Exception as e:
+            log.error(f"[campaign] Daily failed: {e}")
+
+    scheduler.add_job(april_campaign_daily, "cron", hour=10, minute=0,
+                      id="april_campaign_daily", replace_existing=True)
+
+    # ── APRIL CAMPAIGN: Weekly DEV.to article ──
+    async def april_campaign_weekly_article():
+        """Weekly: publish DEV.to technical article."""
+        import os
+        if os.environ.get("ARCH_CAMPAIGN_ACTIVE", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            from app.arch.campaign import generate_weekly_devto_article
+            result = await generate_weekly_devto_article(client)
+            log.info(f"[campaign] Weekly article: {result}")
+        except Exception as e:
+            log.error(f"[campaign] Weekly article failed: {e}")
+
+    scheduler.add_job(april_campaign_weekly_article, "cron", day_of_week="tue", hour=11, minute=0,
+                      id="april_campaign_weekly_article", replace_existing=True)
+
+    # ── APRIL CAMPAIGN: Afternoon engagement post ──
+    async def april_campaign_afternoon():
+        """Afternoon: second daily post targeting different timezone."""
+        import os
+        if os.environ.get("ARCH_CAMPAIGN_ACTIVE", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            from app.arch.campaign import get_today_theme
+            theme = get_today_theme()
+
+            # Afternoon variation — different angle on same theme
+            resp = await client.messages.create(
+                model="claude-haiku-4-5-20251001", max_tokens=150,
+                system=[{"type": "text", "text": "Write a Twitter post from a developer's perspective about this topic. Casual but credible. NO emojis. Include https://agentisexchange.com/playground"}],
+                messages=[{"role": "user", "content": f"Topic: {theme}. Different angle from a morning post."}])
+            tweet = next((b.text for b in resp.content if b.type == "text"), "")[:270]
+
+            from app.arch.social_poster import post_to_twitter
+            await post_to_twitter(tweet)
+            log.info(f"[campaign] Afternoon tweet posted")
+        except Exception as e:
+            log.error(f"[campaign] Afternoon failed: {e}")
+
+    scheduler.add_job(april_campaign_afternoon, "cron", hour=16, minute=0,
+                      id="april_campaign_afternoon", replace_existing=True)

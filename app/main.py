@@ -9532,6 +9532,30 @@ async def api_funnel_metrics(db: AsyncSession = Depends(get_db)):
     from app.arch.growth_analytics import get_funnel_metrics
     return await get_funnel_metrics(db)
 
+
+# -- April Campaign Control --
+@app.post("/api/v1/campaign/trigger", include_in_schema=False)
+async def api_campaign_trigger():
+    """Manually trigger today's campaign content generation."""
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.campaign import generate_and_publish_daily
+    return await generate_and_publish_daily(client)
+
+@app.get("/api/v1/campaign/theme", include_in_schema=False)
+async def api_campaign_theme():
+    """Get today's campaign theme."""
+    from app.arch.campaign import get_today_theme
+    return {"theme": get_today_theme(), "campaign": "April 2026 Attraction"}
+
+@app.post("/api/v1/campaign/article", include_in_schema=False)
+async def api_campaign_article():
+    """Trigger weekly DEV.to article generation."""
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.campaign import generate_weekly_devto_article
+    return await generate_weekly_devto_article(client)
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
