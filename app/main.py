@@ -9306,6 +9306,22 @@ async def api_daily_knowledge_scan(db: AsyncSession = Depends(get_db)):
     from app.arch.knowledge import daily_knowledge_scan
     return await daily_knowledge_scan(db, client)
 
+
+@app.post("/api/v1/agents/plan/execute", include_in_schema=False)
+async def api_execute_plan(request: Request, db: AsyncSession = Depends(get_db)):
+    """Create and execute a multi-step plan for a goal."""
+    body = await request.json()
+    goal = body.get("goal", "")
+    agent = body.get("agent", "sovereign")
+    if not goal:
+        return JSONResponse(status_code=400, content={"error": "goal required"})
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.planner import create_plan_from_goal, execute_plan
+    plan = await create_plan_from_goal(client, goal, agent)
+    result = await execute_plan(plan, client, db)
+    return result
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse

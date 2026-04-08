@@ -110,3 +110,46 @@ async def save_plan_to_db(db, plan: TaskPlan):
         await db.commit()
     except Exception as e:
         log.warning(f"[planner] DB save failed: {e}")
+
+
+async def execute_plan(plan, agent_client, db=None):
+    """Execute a plan step by step with retry on failure."""
+    import logging
+    log = logging.getLogger("arch.planner")
+
+    while plan.status == "in_progress":
+        step = plan.next_step()
+        if step is None:
+            break
+
+        log.info(f"[planner] Executing step {plan.current_step + 1}/{len(plan.steps)}: {step['description'][:60]}")
+
+        try:
+            # Use Claude to execute/simulate the step
+            response = await agent_client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=300,
+                system=[{"type": "text", "text": f"You are executing step {plan.current_step + 1} of a plan. Perform the action and report the result concisely."}],
+                messages=[{"role": "user", "content": f"Execute this step: {step['description']}\n\nContext: Goal is '{plan.goal}'. Previous results: {[r['result'][:100] for r in plan.results[-3:]]}"}],
+            )
+            result = next((b.text for b in response.content if b.type == "text"), "No result")
+            plan.record_result(result, success=True)
+            log.info(f"[planner] Step {plan.current_step}/{len(plan.steps)} completed")
+
+        except Exception as e:
+            plan.record_failure(str(e), can_retry=True)
+            log.warning(f"[planner] Step failed: {e}")
+
+            # Retry logic
+            if plan.status != "failed":
+                log.info(f"[planner] Retrying step {plan.current_step + 1}...")
+                continue
+            else:
+                log.error(f"[planner] Plan failed after retries")
+                break
+
+    # Save final state
+    if db:
+        await save_plan_to_db(db, plan)
+
+    return plan.summary()

@@ -63,3 +63,39 @@ async def daily_knowledge_scan(db, agent_client):
 
     log.info(f"[knowledge] Daily scan complete: {len(results)} topics researched")
     return results
+
+
+async def web_research_topic(topic: str) -> dict:
+    """Research a topic by searching the web via httpx."""
+    import httpx
+    log.info(f"[knowledge] Web researching: {topic}")
+
+    try:
+        # Use a search-friendly approach — fetch from known sources
+        sources = [
+            f"https://dev.to/search?q={topic.replace(' ', '+')}",
+            f"https://news.ycombinator.com/newest",
+        ]
+
+        findings = []
+        async with httpx.AsyncClient(timeout=10) as client:
+            for url in sources:
+                try:
+                    resp = await client.get(url, headers={"User-Agent": "AGENTIS-Research/1.0"})
+                    if resp.status_code == 200:
+                        # Extract text content (simplified)
+                        text = resp.text[:5000]
+                        findings.append({"source": url, "snippet": text[:500]})
+                except Exception:
+                    pass
+
+        return {
+            "topic": topic,
+            "method": "web_search",
+            "sources_checked": len(sources),
+            "findings_count": len(findings),
+            "findings": findings,
+            "researched_at": datetime.now(timezone.utc).isoformat(),
+        }
+    except Exception as e:
+        return {"topic": topic, "error": str(e)}

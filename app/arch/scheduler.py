@@ -765,3 +765,19 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
             log.warning(f"[demo_trade] Failed: {e}")
 
     scheduler.add_job(demo_trade_heartbeat, "interval", hours=2, id="demo_trade_heartbeat", replace_existing=True)
+
+
+    # -- Daily Knowledge Acquisition (real) -- 03:30 SAST --
+    async def daily_knowledge_real():
+        try:
+            import anthropic, os
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            async with async_session() as db:
+                from app.arch.knowledge import daily_knowledge_scan
+                results = await daily_knowledge_scan(db, client)
+                log.info(f"[knowledge] Daily scan: {len(results)} topics")
+        except Exception as e:
+            log.error(f"[knowledge] Daily scan failed: {e}")
+
+    scheduler.add_job(daily_knowledge_real, "cron", hour=1, minute=30,
+                      id="daily_knowledge_real", replace_existing=True)

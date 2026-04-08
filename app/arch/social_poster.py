@@ -90,7 +90,7 @@ async def post_to_discord(content: str, username: str = "AGENTIS") -> dict:
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(webhook_url,
-                json={"content": content[:2000], "username": username})
+                json={"content": content[:2000], "username": username, "thread_name": "AGENTIS Updates"})
             if resp.status_code == 204:
                 log.info("[discord] Posted via webhook")
                 return {"success": True}
