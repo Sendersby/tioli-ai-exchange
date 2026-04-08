@@ -441,10 +441,17 @@ async def not_found_handler(request: Request, exc):
 
 # ── Rate Limiting ────────────────────────────────────────────────────
 from slowapi import Limiter, _rate_limit_exceeded_handler
+
+def _rate_limit_key(request):
+    """Rate limit key — exempt localhost."""
+    client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+    if client_ip in ("127.0.0.1", "::1", "localhost"):
+        return "localhost_exempt"
+    return client_ip
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+limiter = Limiter(key_func=_rate_limit_key, default_limits=["100/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Paywall middleware -- check tier on protected endpoints

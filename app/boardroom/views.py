@@ -35,6 +35,15 @@ AGENT_ABBREVS = {
 }
 
 
+
+def _check_auth(request):
+    """Check if user is authenticated for boardroom access."""
+    from starlette.responses import RedirectResponse
+    session = request.cookies.get("session_token", "")
+    if not session:
+        return RedirectResponse(url="/gateway", status_code=302)
+    return None
+
 def _check_enabled():
     if os.getenv("BOARDROOM_ENABLED", "false").lower() != "true":
         raise HTTPException(status_code=404, detail="Boardroom not enabled")

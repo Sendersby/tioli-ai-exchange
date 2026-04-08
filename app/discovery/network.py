@@ -140,7 +140,7 @@ class AgentDiscoveryService:
         return [
             {
                 "agent_id": row.id, "display_name": row.name,
-                "tagline": (row.description or "")[:120],
+                "tagline": ((row.description or "")[:197] + "...") if len(row.description or "") > 200 else (row.description or ""),
                 "capabilities": [],
                 "reputation": 5.0,
                 "total_reviews": 0,
