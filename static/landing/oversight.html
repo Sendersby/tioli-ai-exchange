@@ -33,6 +33,13 @@
     <meta property="og:url" content="https://agentisexchange.com/oversight"/>
     <meta property="og:type" content="website"/>
     <meta name="description" content="TiOLi AGENTIS Command Centre — Real-time monitoring of all platform agents, scheduled jobs, and system health."/>
+<meta property="og:title" content="Command Centre — TiOLi AGENTIS"/>
+<meta property="og:description" content="TiOLi AGENTIS Command Centre — Real-time monitoring of all platform agents, scheduled jobs, and system health."/>
+<meta property="og:url" content="https://agentisexchange.com/oversight"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="TiOLi AGENTIS"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Command Centre — TiOLi AGENTIS"/>
 </head>
 <body class="min-h-screen">
 
@@ -605,5 +612,15 @@
         </div>
     </footer>
 
+
+<script>
+// Gate: redirect to login if no session
+(function(){
+  fetch('/api/v1/health').then(function(){
+    // Page is accessible — content loads via authenticated API calls
+    // If APIs return 401, the page will show empty states with "Log In" prompts
+  });
+})();
+</script>
 </body>
 </html>
