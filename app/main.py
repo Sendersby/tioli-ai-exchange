@@ -9173,6 +9173,79 @@ async def list_webhooks(db: AsyncSession = Depends(get_db)):
     result = await db.execute(text("SELECT id, url, events, is_active FROM webhook_registrations WHERE is_active = true ORDER BY created_at DESC LIMIT 50"))
     return [{"id": r.id, "url": r.url, "events": r.events if isinstance(r.events, list) else [], "active": r.is_active} for r in result.fetchall()]
 
+
+# -- NPS Survey System --
+@app.post("/api/v1/nps", include_in_schema=False)
+async def submit_nps(request: Request, db: AsyncSession = Depends(get_db)):
+    """Submit NPS score (0-10) with optional feedback."""
+    body = await request.json()
+    score = body.get("score")
+    feedback = body.get("feedback", "")
+    agent_id = body.get("agent_id", "anonymous")
+    if score is None or not (0 <= score <= 10):
+        return JSONResponse(status_code=400, content={"error": "Score must be 0-10"})
+    from sqlalchemy import text
+    import uuid
+    await db.execute(text(
+        "INSERT INTO nps_responses (id, agent_id, score, feedback, created_at) "
+        "VALUES (:id, :aid, :score, :fb, now())"
+    ), {"id": str(uuid.uuid4()), "aid": agent_id, "score": score, "fb": feedback})
+    await db.commit()
+    category = "promoter" if score >= 9 else "passive" if score >= 7 else "detractor"
+    return {"status": "recorded", "score": score, "category": category, "thank_you": "Your feedback helps us improve AGENTIS."}
+
+@app.get("/api/v1/nps/summary", include_in_schema=False)
+async def nps_summary(db: AsyncSession = Depends(get_db)):
+    """Get NPS score summary."""
+    from sqlalchemy import text
+    result = await db.execute(text("SELECT score, count(*) FROM nps_responses GROUP BY score ORDER BY score"))
+    rows = result.fetchall()
+    total = sum(r[1] for r in rows)
+    if total == 0:
+        return {"nps_score": 0, "total_responses": 0, "breakdown": {}}
+    promoters = sum(r[1] for r in rows if r[0] >= 9)
+    detractors = sum(r[1] for r in rows if r[0] <= 6)
+    nps = round(((promoters - detractors) / total) * 100)
+    return {"nps_score": nps, "total_responses": total, "promoters": promoters, "passives": total - promoters - detractors, "detractors": detractors}
+
+
+# -- Agent Social Sharing --
+@app.get("/api/v1/agents/{agent_id}/share", include_in_schema=False)
+async def agent_share_card(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Generate shareable card data for an agent."""
+    from sqlalchemy import text
+    r = await db.execute(text("SELECT name, platform, description FROM agents WHERE id = :id"), {"id": agent_id})
+    agent = r.fetchone()
+    if not agent:
+        return JSONResponse(status_code=404, content={"error": "Agent not found"})
+    base = "https://agentisexchange.com"
+    return {
+        "agent_name": agent.name,
+        "platform": agent.platform,
+        "description": (agent.description or "")[:120],
+        "profile_url": f"{base}/agents/{agent_id}/profile",
+        "share_links": {
+            "twitter": f"https://twitter.com/intent/tweet?text=Check out {agent.name} on AGENTIS — the AI agent exchange&url={base}/agents/{agent_id}/profile",
+            "linkedin": f"https://www.linkedin.com/sharing/share-offsite/?url={base}/agents/{agent_id}/profile",
+            "copy_link": f"{base}/agents/{agent_id}/profile",
+        },
+        "embed_badge": f'<a href="{base}/agents/{agent_id}/profile"><img src="{base}/api/badge/agent/{agent_id}" alt="{agent.name} on AGENTIS"/></a>',
+    }
+
+
+# -- Powered By AGENTIS Badge --
+@app.get("/api/v1/badge/powered-by", include_in_schema=False)
+async def powered_by_badge():
+    """SVG badge: Powered by AGENTIS."""
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" width="180" height="28" viewBox="0 0 180 28">
+    <rect width="180" height="28" rx="4" fill="#061423"/>
+    <rect width="90" height="28" rx="4" fill="#0f1c2c"/>
+    <text x="10" y="18" font-family="Inter,sans-serif" font-size="11" fill="#77d4e5" font-weight="600">powered by</text>
+    <text x="96" y="18" font-family="Inter,sans-serif" font-size="11" fill="#edc05f" font-weight="700">AGENTIS</text>
+    </svg>"""
+    from starlette.responses import Response
+    return Response(content=svg, media_type="image/svg+xml")
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse

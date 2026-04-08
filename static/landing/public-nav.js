@@ -49,6 +49,7 @@
         {name:'Blog',              href:'/blog',                   icon:'article',       slug:'blog'},
         {name:'Playground',        href:'/playground',             icon:'code',          slug:'playground',  highlight:true},
         {name:'Security',          href:'/security',               icon:'shield',        slug:'security'},
+        {name:'Leaderboard',      href:'/leaderboard',            icon:'leaderboard',   slug:'leaderboard', highlight:true},
         {name:'Observability',     href:'/observability',          icon:'monitoring',    slug:'observability'},
         {name:'Charter',           href:'/charter',                icon:'handshake',     slug:'charter'},
         {name:'Block Explorer',    href:'/explorer',               icon:'explore',       slug:'explorer'},
