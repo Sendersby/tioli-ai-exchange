@@ -256,7 +256,7 @@ async def agent_create_scheduled_task(db, agent_name: str, title: str, descripti
     row = result.fetchone()
     await db.commit()
     task_id = row.id if row else "unknown"
-    logger.info(f"[{agent_name}] Self-scheduled task: {title} (type={task_type}, id={task_id})")
+    log.info(f"[{agent_name}] Self-scheduled task: {title} (type={task_type}, id={task_id})")
     return {"task_id": task_id, "task_type": task_type, "title": title}
 
 
@@ -269,13 +269,13 @@ async def start_aiocron_task(task_id: str, cron_expr: str, callback):
         import aiocron
         cron = aiocron.crontab(cron_expr, func=callback, start=True)
         _active_crons[task_id] = cron
-        logger.info(f"[aiocron] Started recurring task {task_id}: {cron_expr}")
+        log.info(f"[aiocron] Started recurring task {task_id}: {cron_expr}")
         return {"task_id": task_id, "cron": cron_expr, "status": "running"}
     except ImportError:
-        logger.warning("[aiocron] aiocron not installed, falling back to APScheduler")
+        log.warning("[aiocron] aiocron not installed, falling back to APScheduler")
         return {"task_id": task_id, "error": "aiocron not available"}
     except Exception as e:
-        logger.error(f"[aiocron] Failed to start {task_id}: {e}")
+        log.error(f"[aiocron] Failed to start {task_id}: {e}")
         return {"task_id": task_id, "error": str(e)}
 
 
@@ -284,7 +284,7 @@ def stop_aiocron_task(task_id: str) -> dict:
     cron = _active_crons.pop(task_id, None)
     if cron:
         cron.stop()
-        logger.info(f"[aiocron] Stopped task {task_id}")
+        log.info(f"[aiocron] Stopped task {task_id}")
         return {"task_id": task_id, "status": "stopped"}
     return {"task_id": task_id, "error": "not found"}
 

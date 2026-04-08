@@ -58,3 +58,32 @@ async def execute_in_sandbox(code: str, language: str = "python", timeout: int =
 
 # Alias for backward compatibility with executor
 sandboxed_execute = execute_in_sandbox
+
+
+def is_command_safe(command):
+    """Check if a shell command is safe to execute. Returns (safe, reason)."""
+    dangerous = [
+        "rm -rf /",
+        "rm -rf /*",
+        "mkfs",
+        "dd if=",
+        "format c:",
+        "DROP DATABASE",
+        "DROP TABLE",
+        "TRUNCATE",
+        "DELETE FROM agents",
+        "DELETE FROM wallets",
+        "DELETE FROM arch_",
+        "shutdown",
+        "reboot",
+        "halt",
+        "poweroff",
+        "> /dev/sda",
+        "chmod 777 /",
+        "chown -R",
+    ]
+    cmd_lower = command.lower().strip()
+    for pattern in dangerous:
+        if pattern.lower() in cmd_lower:
+            return False, "Blocked: matches dangerous pattern"
+    return True, "Command appears safe"

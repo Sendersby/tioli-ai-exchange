@@ -45,12 +45,12 @@ async def _hf_rerank(query: str, candidates: list[dict], top_k: int = 5) -> list
                         if i < len(candidates):
                             candidates[i]["rerank_score"] = score if isinstance(score, (int, float)) else 0
                     candidates.sort(key=lambda x: x.get("rerank_score", 0), reverse=True)
-                    logger.debug(f"HF reranking: top score={candidates[0].get('rerank_score', 0):.3f}")
+                    log.debug(f"HF reranking: top score={candidates[0].get('rerank_score', 0):.3f}")
                     return candidates[:top_k]
             else:
-                logger.debug(f"HF reranking unavailable: HTTP {resp.status_code}")
+                log.debug(f"HF reranking unavailable: HTTP {resp.status_code}")
     except Exception as e:
-        logger.debug(f"HF reranking failed: {e}")
+        log.debug(f"HF reranking failed: {e}")
 
     return candidates[:top_k]
 
@@ -134,7 +134,7 @@ class ArchMemory:
                     "keyword_rank": None,
                 }
         except Exception as e:
-            logger.warning(f"Semantic search failed: {e}")
+            log.warning(f"Semantic search failed: {e}")
 
         # 2. Keyword search (ILIKE)
         try:
@@ -168,7 +168,7 @@ class ArchMemory:
                             "keyword_rank": rank + 1,
                         }
         except Exception as e:
-            logger.warning(f"Keyword search failed: {e}")
+            log.warning(f"Keyword search failed: {e}")
 
         # 3. Weighted RRF fusion
         specific_terms = ["payfast", "jwt", "api", "endpoint", "error", "config", "password", "token", "webhook", "nginx"]
