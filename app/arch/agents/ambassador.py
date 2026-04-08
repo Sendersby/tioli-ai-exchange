@@ -64,7 +64,7 @@ class AmbassadorAgent(ArchAgentBase):
             except Exception:
                 pass
 
-return {"content_id": content_id, "platform": platform,
+        return {"content_id": content_id, "platform": platform,
                 "status": "PUBLISHED", "content_type": content_type}
 
     async def _tool_record_growth_experiment(self, params: dict) -> dict:

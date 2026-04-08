@@ -264,7 +264,7 @@ class SentinelAgent(ArchAgentBase):
             except Exception as _e:
                 return {"backup_type": backup_type, "verified": False, "error": str(_e)}
 
-return {"backup_type": backup_type, "verified": True}
+        return {"backup_type": backup_type, "verified": True}
 
     # ── Sentinel-specific methods ──────────────────────────────
 

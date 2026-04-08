@@ -65,7 +65,7 @@ class AuditorAgent(ArchAgentBase):
             except Exception:
                 pass
 
-return {"entity_id": entity_id, "kyc_tier": kyc_tier,
+        return {"entity_id": entity_id, "kyc_tier": kyc_tier,
                 "status": "CLEARED", "sanctions_hit": False, "pep_hit": False}
 
     async def _tool_check_aml(self, params: dict) -> dict:
@@ -122,7 +122,7 @@ return {"entity_id": entity_id, "kyc_tier": kyc_tier,
             except Exception:
                 pass
 
-return {"str_id": str_id, "status": "FILED_PENDING_FIC",
+        return {"str_id": str_id, "status": "FILED_PENDING_FIC",
                 "statutory_deadline_days": 15}
 
     async def _tool_check_sarb_compliance(self, params: dict) -> dict:

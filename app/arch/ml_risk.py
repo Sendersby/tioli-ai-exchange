@@ -51,7 +51,10 @@ async def score_transaction_risk(db, agent_id, amount, currency):
         flags.append(f"Cryptocurrency transaction ({currency})")
 
     # Factor 4: Amount threshold
-    if amount > 25000:
+    if amount >= 100000:
+        risk_score += 40
+        flags.append("Very large transaction (>R100K)")
+    elif amount > 25000:
         risk_score += 20
         flags.append("Exceeds R25,000 AML reporting threshold")
 
