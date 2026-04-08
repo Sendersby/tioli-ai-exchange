@@ -9258,6 +9258,54 @@ async def powered_by_badge():
     from starlette.responses import Response
     return Response(content=svg, media_type="image/svg+xml")
 
+
+# -- Sprint 1 Gap Closure: Social posting, Planning, Knowledge --
+@app.post("/api/v1/social/post", include_in_schema=False)
+async def api_social_post(request: Request):
+    """Post to all social channels (Twitter, Discord, DEV.to)."""
+    body = await request.json()
+    text = body.get("text", "")
+    title = body.get("title", "")
+    article_body = body.get("body", "")
+    if not text:
+        return JSONResponse(status_code=400, content={"error": "text required"})
+    from app.arch.social_poster import publish_all
+    return await publish_all(text, title, article_body)
+
+@app.post("/api/v1/agents/plan", include_in_schema=False)
+async def api_create_plan(request: Request):
+    """Create a multi-step execution plan for a goal."""
+    body = await request.json()
+    goal = body.get("goal", "")
+    agent = body.get("agent", "sovereign")
+    if not goal:
+        return JSONResponse(status_code=400, content={"error": "goal required"})
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.planner import create_plan_from_goal
+    plan = await create_plan_from_goal(client, goal, agent)
+    return plan.summary()
+
+@app.post("/api/v1/knowledge/research", include_in_schema=False)
+async def api_research_topic(request: Request):
+    """Research a topic and store findings."""
+    body = await request.json()
+    topic = body.get("topic", "")
+    if not topic:
+        return JSONResponse(status_code=400, content={"error": "topic required"})
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.knowledge import research_topic
+    return await research_topic(client, topic)
+
+@app.post("/api/v1/knowledge/daily-scan", include_in_schema=False)
+async def api_daily_knowledge_scan(db: AsyncSession = Depends(get_db)):
+    """Run daily knowledge acquisition scan."""
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.knowledge import daily_knowledge_scan
+    return await daily_knowledge_scan(db, client)
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
