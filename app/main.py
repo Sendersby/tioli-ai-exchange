@@ -9483,6 +9483,55 @@ async def api_ml_risk(request: Request, db: AsyncSession = Depends(get_db)):
     from app.arch.ml_risk import score_transaction_risk
     return await score_transaction_risk(db, body.get("agent_id",""), body.get("amount",0), body.get("currency","AGENTIS"))
 
+
+# -- Tier 3: Agent teams, adaptive planning, FIC pipeline, growth analytics --
+@app.post("/api/v1/agents/team", include_in_schema=False)
+async def api_agent_team(request: Request):
+    """Execute an agent team mission."""
+    import os
+    if os.environ.get("ARCH_AGENT_TEAMS", "false").lower() != "true":
+        return JSONResponse(status_code=503, content={"error": "Agent teams not enabled"})
+    body = await request.json()
+    import anthropic
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.agent_teams import AgentTeam
+    team = AgentTeam(body.get("objective", ""), body.get("lead", "sovereign"))
+    for member in body.get("members", []):
+        team.add_member(member.get("agent", ""), member.get("role", ""), member.get("task", ""))
+    return await team.execute(client)
+
+@app.post("/api/v1/agents/adaptive-plan", include_in_schema=False)
+async def api_adaptive_plan(request: Request):
+    """Execute an adaptive plan that self-modifies on failure."""
+    import os
+    if os.environ.get("ARCH_AGENT_ADAPTIVE", "false").lower() != "true":
+        return JSONResponse(status_code=503, content={"error": "Adaptive planning not enabled"})
+    body = await request.json()
+    import anthropic
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.adaptive_plan import execute_adaptive_plan
+    return await execute_adaptive_plan(client, body.get("goal", ""), body.get("agent", "sovereign"))
+
+@app.post("/api/v1/compliance/str-filing", include_in_schema=False)
+async def api_str_filing(request: Request, db: AsyncSession = Depends(get_db)):
+    """Prepare an STR filing for FIC submission. [DEFER_TO_OWNER]"""
+    body = await request.json()
+    from app.arch.fic_pipeline import prepare_str_filing
+    return await prepare_str_filing(db, body.get("transaction_id",""), body.get("agent_id",""),
+        body.get("amount",0), body.get("currency","AGENTIS"), body.get("risk_score",0), body.get("flags",[]))
+
+@app.get("/api/v1/analytics/growth", include_in_schema=False)
+async def api_growth_analytics(db: AsyncSession = Depends(get_db)):
+    """Full growth analytics report."""
+    from app.arch.growth_analytics import get_full_growth_report
+    return await get_full_growth_report(db)
+
+@app.get("/api/v1/analytics/funnel", include_in_schema=False)
+async def api_funnel_metrics(db: AsyncSession = Depends(get_db)):
+    """Conversion funnel metrics."""
+    from app.arch.growth_analytics import get_funnel_metrics
+    return await get_funnel_metrics(db)
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
