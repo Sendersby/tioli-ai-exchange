@@ -668,6 +668,27 @@ class ArchAgentBase(ABC):
         await self.db.execute(
             text("""
                 UPDATE arch_agents
+                # ARCH-CO-001: Log cache hit/miss from API response
+                import os as _cache_os
+                if _cache_os.environ.get("ARCH_CO_PROMPT_CACHE_ENABLED", "false").lower() == "true":
+                    try:
+                        usage = response.usage
+                        cache_creation = getattr(usage, "cache_creation_input_tokens", 0) or 0
+                        cache_read = getattr(usage, "cache_read_input_tokens", 0) or 0
+                        is_hit = cache_read > 0
+                        await self.db.execute(
+                            text("""
+                                INSERT INTO job_execution_log (job_id, status, tokens_consumed, duration_ms, executed_at)
+                                VALUES (:jid, :status, :tokens, 0, now())
+                            """),
+                            {"jid": f"cache_{self.agent_id}",
+                             "status": "CACHE_HIT" if is_hit else "CACHE_MISS",
+                             "tokens": cache_read if is_hit else cache_creation},
+                        )
+                        await self.db.commit()
+                    except Exception:
+                        pass
+
                 SET tokens_used_this_month = tokens_used_this_month + :total
                 WHERE agent_name = :agent_id
             """),

@@ -9567,6 +9567,33 @@ async def api_llm_calls_metric(db: AsyncSession = Depends(get_db)):
     ))
     return {"llm_calls_last_hour": result.scalar() or 0, "target": "< 10 during idle"}
 
+
+# ARCH-CO-001: Cache hit rate metric
+@app.get("/api/v1/metrics/cache", include_in_schema=False)
+async def api_cache_metrics(db: AsyncSession = Depends(get_db)):
+    """Prompt cache hit rate per agent."""
+    from sqlalchemy import text
+    result = await db.execute(text(
+        "SELECT job_id, status, count(*) FROM job_execution_log "
+        "WHERE job_id LIKE 'cache_%' AND executed_at > now() - interval '1 hour' "
+        "GROUP BY job_id, status ORDER BY job_id"
+    ))
+    metrics = {}
+    for row in result.fetchall():
+        agent = row.job_id.replace("cache_", "")
+        if agent not in metrics:
+            metrics[agent] = {"hits": 0, "misses": 0}
+        if row.status == "CACHE_HIT":
+            metrics[agent]["hits"] = row[2]
+        else:
+            metrics[agent]["misses"] = row[2]
+
+    for agent, data in metrics.items():
+        total = data["hits"] + data["misses"]
+        data["hit_rate"] = f"{(data['hits']/total*100):.1f}%" if total > 0 else "N/A"
+
+    return {"cache_metrics": metrics, "period": "last_1_hour"}
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
