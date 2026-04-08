@@ -21,7 +21,11 @@ async def execute_in_sandbox(code: str, language: str = "python", timeout: int =
 
     # Safety checks
     dangerous = ["import os", "import subprocess", "import shutil", "rm -rf",
-                 "open('/etc", "open('/home", "__import__('os')", "exec(", "eval("]
+                 "open('/etc", "open('/home", "__import__", "exec(", "eval(",
+                 "import httpx", "import asyncpg", "import psycopg",
+                 "import requests", "import urllib", "import socket",
+                 "import sqlite3", "import paramiko", "import fabric",
+                 "tioli", "DhQHhP", "password", "api_key", "secret"]
     for d in dangerous:
         if d in code:
             return {"error": f"Blocked: code contains prohibited pattern '{d}'",
@@ -34,7 +38,7 @@ async def execute_in_sandbox(code: str, language: str = "python", timeout: int =
 
         try:
             result = subprocess.run(
-                ["/home/tioli/app/.venv/bin/python3", code_file],
+                ["/usr/bin/python3", code_file],
                 capture_output=True, text=True, timeout=timeout,
                 cwd=tmpdir,
                 env={"PATH": "/usr/bin:/bin", "HOME": tmpdir, "PYTHONPATH": ""},
@@ -50,3 +54,7 @@ async def execute_in_sandbox(code: str, language: str = "python", timeout: int =
             return {"success": False, "error": "Execution timed out", "timeout": True}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+
+# Alias for backward compatibility with executor
+sandboxed_execute = execute_in_sandbox

@@ -15,7 +15,7 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
     try:
         actions = await db.execute(text(
             "SELECT count(*) FROM arch_event_actions WHERE agent_name = :name "
-            "AND created_at > now() - interval '7 days'"
+            "AND created_at > now() - interval '90 days'"
         ), {"name": agent_name})
         action_count = actions.scalar() or 0
         scores["activity"] = min(25, action_count * 2)
@@ -27,7 +27,7 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
         mems = await db.execute(text(
             "SELECT count(*) FROM arch_memory_outbox WHERE agent_id IN "
             "(SELECT id::text FROM arch_agents WHERE agent_name = :name) "
-            "AND created_at > now() - interval '7 days'"
+            "AND created_at > now() - interval '90 days'"
         ), {"name": agent_name})
         mem_count = mems.scalar() or 0
         scores["memory"] = min(20, mem_count)

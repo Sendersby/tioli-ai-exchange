@@ -14,7 +14,7 @@ async def generate_social_post(agent_client, topic: str, platform: str = "twitte
         response = await agent_client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=300,
-            system=[{"type": "text", "text": f"You are the Ambassador of TiOLi AGENTIS. Write a {platform} post about the given topic. Max {char_limit} chars. Professional, developer-friendly, confident tone. Include relevant hashtags for {platform}."}],
+            system=[{"type": "text", "text": f"You are the Ambassador of TiOLi AGENTIS. Write a {platform} post about the given topic. Max {char_limit} chars. Professional, developer-friendly, confident tone. NO emojis unless specifically requested. Include relevant hashtags for {platform}."}],
             messages=[{"role": "user", "content": topic}],
         )
         text = next((b.text for b in response.content if b.type == "text"), "")
@@ -55,7 +55,7 @@ async def generate_video_script(agent_client, topic: str, duration_seconds: int 
         response = await agent_client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=400,
-            system=[{"type": "text", "text": f"Write a {duration_seconds}-second video script outline for a TiOLi AGENTIS demo/tutorial. Format: [TIMESTAMP] VISUAL | NARRATION. Keep it concise and action-oriented."}],
+            system=[{"type": "text", "text": f"Write a EXACTLY {duration_seconds}-second video script outline. Timestamps MUST add up to {duration_seconds} seconds total for a TiOLi AGENTIS demo/tutorial. Format: [TIMESTAMP] VISUAL | NARRATION. Keep it concise and action-oriented."}],
             messages=[{"role": "user", "content": topic}],
         )
         script = next((b.text for b in response.content if b.type == "text"), "")
