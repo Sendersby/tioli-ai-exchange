@@ -9357,6 +9357,26 @@ async def api_memory_tiers(agent_name: str, db: AsyncSession = Depends(get_db)):
     mem = await load_from_db(db, agent_name)
     return mem.summary()
 
+
+@app.post("/api/v1/test/self-correction", include_in_schema=False)
+async def api_test_self_correction():
+    """Test the self-correction system with a deliberate failure."""
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.self_correction import RetryHandler
+
+    handler = RetryHandler("test_agent", max_retries=3)
+
+    call_count = [0]
+    async def flaky_action():
+        call_count[0] += 1
+        if call_count[0] < 3:
+            raise ValueError(f"Simulated failure #{call_count[0]}")
+        return "Success on attempt 3"
+
+    result = await handler.execute_with_retry(flaky_action, agent_client=client)
+    return {"result": result, "total_calls": call_count[0]}
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
