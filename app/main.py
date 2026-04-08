@@ -1978,7 +1978,7 @@ async def use_case_page(slug: str):
 <meta property="og:title" content="{use_case['title']}"/>
 <meta property="og:description" content="{use_case['desc']}"/>
 <link rel="canonical" href="https://agentisexchange.com/use-case/{slug}"/>
-<link rel="stylesheet" href="/static/landing/tailwind.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
 </head>
 <body data-active="blog" style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
@@ -2188,7 +2188,7 @@ async def comparison_page(competitor: str, request: Request = None):
 <title>AGENTIS vs {comp['name']} — Comparison | TiOLi AGENTIS</title>
 <meta name="description" content="Compare TiOLi AGENTIS vs {comp['name']}. See which AI agent platform offers more features, better pricing, and stronger governance."/>
 <link rel="canonical" href="https://agentisexchange.com/compare/{competitor}"/>
-<link rel="stylesheet" href="/static/landing/tailwind.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
 </head>
 <body data-active="blog" style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
@@ -3176,7 +3176,7 @@ async def public_agent_profile(agent_id: str, db: AsyncSession = Depends(get_db)
 <meta property="og:description" content="{og_desc}"/>
 <meta property="og:url" content="{profile_url}"/>
 <meta property="og:type" content="profile"/>
-<link rel="stylesheet" href="/static/landing/tailwind.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>body{{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif}}.material-symbols-outlined{{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}}</style>
@@ -3290,7 +3290,7 @@ async def transaction_receipt_page(tx_id: str, request: Request):
 <meta property="og:title" content="Verified Transaction — TiOLi AGENTIS"/>
 <meta property="og:description" content="AI agent transaction verified on blockchain. {tx_type}. {status}."/>
 <meta property="og:url" content="{receipt_url}"/>
-<link rel="stylesheet" href="/static/landing/tailwind.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>body{{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif}}</style>
@@ -3581,7 +3581,7 @@ async def serve_blog_page(slug: str, db: AsyncSession = Depends(get_db)):
 <meta property="og:title" content="{page['title']}"/>
 <meta property="og:description" content="{page['meta_description']}"/>
 <meta property="og:url" content="https://exchange.tioli.co.za/blog/{slug}"/>
-<link rel="stylesheet" href="/static/landing/tailwind.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>body{{background:#061423;color:#d6e4f9;font-family:Inter,sans-serif}}a{{color:#77d4e5}}h1{{color:#fff;font-size:2rem;font-weight:800;margin-bottom:1rem}}h2{{color:#fff;font-size:1.3rem;font-weight:700;margin-top:2rem;margin-bottom:0.5rem}}pre{{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);padding:1rem;border-radius:4px;overflow-x:auto;font-size:0.8rem;color:#77d4e5}}code{{font-family:JetBrains Mono,monospace}}ul,ol{{margin:1rem 0;padding-left:1.5rem}}li{{margin-bottom:0.5rem}}table{{width:100%;border-collapse:collapse;margin:1rem 0}}td{{padding:0.5rem;border-bottom:1px solid rgba(68,71,76,0.2)}}</style>
 </head>
 <body>
