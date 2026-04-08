@@ -9377,6 +9377,41 @@ async def api_test_self_correction():
     result = await handler.execute_with_retry(flaky_action, agent_client=client)
     return {"result": result, "total_calls": call_count[0]}
 
+
+# -- Sprint 3: Collaboration, Evaluation, Catalyst --
+@app.post("/api/v1/agents/workflow", include_in_schema=False)
+async def api_create_workflow(request: Request):
+    """Create and execute a multi-agent workflow."""
+    body = await request.json()
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.collaboration import AgentWorkflow, execute_workflow
+    wf = AgentWorkflow(body.get("name", "unnamed"), body.get("initiator", "sovereign"))
+    for step in body.get("steps", []):
+        wf.add_step(step.get("agent", "sovereign"), step.get("task", ""), step.get("depends_on", []))
+    result = await execute_workflow(wf, client)
+    return result
+
+@app.get("/api/v1/agents/evaluate", include_in_schema=False)
+async def api_evaluate_agents(db: AsyncSession = Depends(get_db)):
+    """Evaluate all Arch Agents."""
+    from app.arch.evaluation import evaluate_all_agents
+    return await evaluate_all_agents(db)
+
+@app.post("/api/v1/catalyst/experiment", include_in_schema=False)
+async def api_create_experiment(request: Request, db: AsyncSession = Depends(get_db)):
+    """Create an A/B experiment."""
+    body = await request.json()
+    from app.arch.catalyst import create_experiment
+    return await create_experiment(db, body.get("title",""), body.get("hypothesis",""),
+                                   body.get("variants",[]), body.get("metric",""))
+
+@app.get("/api/v1/catalyst/experiments", include_in_schema=False)
+async def api_list_experiments(db: AsyncSession = Depends(get_db)):
+    """List all experiments."""
+    from app.arch.catalyst import list_experiments
+    return await list_experiments(db)
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
