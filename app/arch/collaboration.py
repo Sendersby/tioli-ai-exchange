@@ -70,7 +70,27 @@ async def execute_workflow(workflow, agent_client):
                 workflow.status = "blocked"
             break
 
-        for step in ready:
+        # ARCH-008: Parallel execution for independent steps (feature-flagged)
+        import os as _p_os
+        if _p_os.environ.get("ARCH_AGENT_PARALLEL", "false").lower() == "true" and len(ready) > 1:
+            import asyncio as _aio
+            async def _exec_step(s):
+                s["status"] = "in_progress"
+                try:
+                    response = await agent_client.messages.create(
+                        model="claude-haiku-4-5-20251001", max_tokens=300,
+                        system=[{"type": "text", "text": f"You are {s['agent']} of TiOLi AGENTIS. Execute this task concisely."}],
+                        messages=[{"role": "user", "content":
+                            s["task"] + ("\n\nContext from previous steps:\n" +
+                            "\n".join(f"- {p['agent']}: {p['result'][:200]}" for p in workflow.steps if p['status'] == 'completed' and p['result'])
+                            if any(p['status'] == 'completed' and p['result'] for p in workflow.steps) else "")}])
+                    result = next((b.text for b in response.content if b.type == "text"), "No output")
+                    workflow.complete_step(s["step_id"], result)
+                except Exception as e:
+                    s["status"] = "failed"; s["result"] = str(e)[:200]
+            await _aio.gather(*[_exec_step(s) for s in ready])
+        else:
+          for step in ready:
             step["status"] = "in_progress"
             try:
                 response = await agent_client.messages.create(

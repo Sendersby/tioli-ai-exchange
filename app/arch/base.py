@@ -229,6 +229,19 @@ class ArchAgentBase(ABC):
             return {**state, "defer_to_owner": True, "defer_reason": defer_reason}
 
         memories = await self.recall(state["instruction"])
+
+        # ARCH-009: Inject tiered memory (feature-flagged)
+        import os as _tm_os
+        if _tm_os.environ.get("ARCH_AGENT_TIERED_MEMORY", "false").lower() == "true":
+            try:
+                from app.arch.memory_tiers import load_from_db
+                tiered = await load_from_db(self.db, self.agent_name)
+                core_context = tiered.get_context_window()
+                if core_context.get("core"):
+                    core_text = "\n".join(f"[CORE] {k}: {v}" for k, v in core_context["core"].items())
+                    memories = [{"content": core_text, "source": "core_identity"}] + memories
+            except Exception:
+                pass
         prompt = await self._load_system_prompt()
         tools = await self.get_tools()
 
@@ -285,6 +298,31 @@ class ArchAgentBase(ABC):
                     )
             except Exception:
                 pass  # Reflection is optional, never block main flow
+
+        # ARCH-013: Enhanced reflection on significant actions (feature-flagged)
+        import os as _ref_os
+        if _ref_os.environ.get("ARCH_AGENT_REFLECTION", "false").lower() == "true":
+            try:
+                # Reflect on board decisions, escalations, and financial actions
+                significant_tools = ["convene_board_session", "submit_financial_proposal",
+                                    "issue_constitutional_ruling", "declare_incident",
+                                    "submit_to_founder_inbox", "publish_content"]
+                for tr in tool_results:
+                    if tr.get("tool") in significant_tools:
+                        reflection_prompt = f"You just executed {tr['tool']}. Result: {str(tr.get('result',''))[:200]}. What did you learn? What would you do differently next time? Be concise (2-3 sentences)."
+                        try:
+                            ref_response = await self.client.messages.create(
+                                model="claude-haiku-4-5-20251001", max_tokens=100,
+                                messages=[{"role": "user", "content": reflection_prompt}])
+                            ref_text = next((bl.text for bl in ref_response.content if bl.type == "text"), "")
+                            if ref_text:
+                                await self.memory.store(
+                                    f"[REFLECTION on {tr['tool']}] {ref_text}",
+                                    source_type="strategic_reflection", importance=0.8)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
 
         # Store interaction in memory (outbox pattern)
         await self.remember(

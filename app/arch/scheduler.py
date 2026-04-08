@@ -781,3 +781,34 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
 
     scheduler.add_job(daily_knowledge_real, "cron", hour=1, minute=30,
                       id="daily_knowledge_real", replace_existing=True)
+
+
+    # ARCH-011: Arbiter weekly SLA scan
+    async def arbiter_sla_scan():
+        """Arbiter checks SLA compliance and creates disputes for breaches."""
+        import os
+        if os.environ.get("ARCH_AGENT_SLA_SCAN", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from sqlalchemy import text
+                # Check for SLA breaches
+                breaches = await db.execute(text(
+                    "SELECT service_name, actual_ms_p95, target_ms, breach_count_30d "
+                    "FROM arch_sla_monitor WHERE actual_ms_p95 > target_ms"
+                ))
+                for breach in breaches.fetchall():
+                    log.warning(f"[arbiter] SLA breach: {breach.service_name} "
+                               f"({breach.actual_ms_p95}ms > {breach.target_ms}ms target)")
+                    # Record breach as platform event for Arbiter to process
+                    await db.execute(text(
+                        "INSERT INTO arch_platform_events (event_type, severity, detail, created_at) "
+                        "VALUES ('sla.breach', 'HIGH', :detail, now())"
+                    ), {"detail": f"SLA breach: {breach.service_name} at {breach.actual_ms_p95}ms (target {breach.target_ms}ms)"})
+                await db.commit()
+                log.info("[arbiter] SLA scan complete")
+        except Exception as e:
+            log.warning(f"[arbiter] SLA scan failed: {e}")
+
+    scheduler.add_job(arbiter_sla_scan, "cron", day_of_week="wed", hour=10, minute=0,
+                      id="arbiter_sla_scan", replace_existing=True)

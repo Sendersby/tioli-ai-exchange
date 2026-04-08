@@ -1203,6 +1203,14 @@ async def api_transfer(
     # Compliance risk check
     try:
         from app.arch.compliance_real import assess_transaction_risk
+        # ARCH-010: ML-lite risk scoring
+        try:
+            from app.arch.ml_risk import score_transaction_risk
+            ml_risk = await score_transaction_risk(db, agent.id, req.amount, req.currency)
+            if ml_risk.get("risk_level") == "CRITICAL":
+                return JSONResponse(status_code=403, content={"error": "ML risk: CRITICAL", "risk": ml_risk})
+        except Exception:
+            pass
         risk = assess_transaction_risk(req.amount, req.currency)
         if risk.get("requires_manual_review"):
             return JSONResponse(status_code=403, content={"error": "Transaction flagged for manual review", "risk": risk})
@@ -9466,6 +9474,14 @@ async def api_measure_experiment(exp_id: str, request: Request, db: AsyncSession
     body = await request.json()
     from app.arch.catalyst import measure_experiment
     return await measure_experiment(db, exp_id, body)
+
+
+@app.post("/api/v1/compliance/ml-risk", include_in_schema=False)
+async def api_ml_risk(request: Request, db: AsyncSession = Depends(get_db)):
+    """ML-lite transaction risk scoring."""
+    body = await request.json()
+    from app.arch.ml_risk import score_transaction_risk
+    return await score_transaction_risk(db, body.get("agent_id",""), body.get("amount",0), body.get("currency","AGENTIS"))
 
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():

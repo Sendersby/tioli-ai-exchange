@@ -94,7 +94,28 @@ class ArchitectAgent(ArchAgentBase):
             {"pid": proposal_id},
         )
         await self.db.commit()
-        return {"proposal_id": proposal_id, "status": "SANDBOX_PENDING",
+        
+        # ARCH-012: Real sandbox execution (feature-flagged)
+        import os as _ci_os
+        if _ci_os.environ.get("ARCH_AGENT_SANDBOX_CI", "false").lower() == "true":
+            try:
+                from app.arch.sandbox import execute_in_sandbox
+                # Get the code proposal content
+                proposal_id = params.get("proposal_id", "")
+                test_code = params.get("test_code", "print('No test code provided')")
+                result = await execute_in_sandbox(test_code, timeout=15)
+                sandbox_pass = result.get("success", False)
+                return {
+                    "proposal_id": proposal_id,
+                    "sandbox_result": "PASS" if sandbox_pass else "FAIL",
+                    "stdout": result.get("stdout", "")[:500],
+                    "stderr": result.get("stderr", "")[:500],
+                    "method": "real_sandbox",
+                }
+            except Exception as _e:
+                pass
+
+return {"proposal_id": proposal_id, "status": "SANDBOX_PENDING",
                 "note": "Staging environment deployment queued"}
 
     async def _tool_update_tech_radar(self, params: dict) -> dict:
