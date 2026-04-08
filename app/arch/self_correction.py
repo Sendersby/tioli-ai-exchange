@@ -59,10 +59,11 @@ class RetryHandler:
             response = await agent_client.messages.create(
                 model="claude-haiku-4-5-20251001",
                 max_tokens=200,
-                messages=[{"role": "user", "content":
-                    f"An agent action failed with error: {error_msg[:300]}\n\n"
-                    f"Should we: (1) retry with modified params, (2) escalate to human, (3) abort?\n"
-                    f"Respond with JSON: {{"action": "retry|escalate|abort", "reason": "...", "suggestion": "..."}}"}],
+                messages=[{"role": "user", "content": "An agent action failed: " + error_msg[:300] + ". Should we retry, escalate, or abort? Respond JSON: {action: retry or escalate or abort, reason: why}"}],
+
+
+
+
             )
             import json
             text = next((b.text for b in response.content if b.type == "text"), "{}")
