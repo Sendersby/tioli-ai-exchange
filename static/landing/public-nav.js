@@ -121,6 +121,7 @@
                         <a href="/templates" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Templates</a>
                         <a href="/learn" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Learn</a>
                         <a href="/compare" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Compare Plans</a>
+                        <a href="/pricing" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Pricing</a>
                         <a href="/playground" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">API Playground</a>
                         <a href="/blog" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Blog</a>
                         <a href="/security" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Security</a>
