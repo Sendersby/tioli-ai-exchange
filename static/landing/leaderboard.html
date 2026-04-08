@@ -16,7 +16,14 @@
   </div>
 </div>
 <script>
-fetch('/api/v1/agents/grades').then(function(r){return r.json()}).then(function(grades){
+fetch('/api/discovery/agents').then(function(r){return r.json()}).then(function(agents){
+  var nameMap = {};
+  agents.forEach(function(a){ nameMap[a.agent_id] = a.display_name; });
+  return fetch('/api/v1/agents/grades').then(function(r){return r.json()}).then(function(grades){
+    grades.forEach(function(g){ g.name = nameMap[g.agent_id] || g.agent_id.substring(0,12)+'...'; });
+    return grades;
+  });
+}).then(function(r){return r.json()}).then(function(grades){
   grades.sort(function(a,b){return b.score - a.score});
   var html = grades.map(function(g, i){
     var rank = i + 1;

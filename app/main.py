@@ -520,7 +520,7 @@ SwaggerUIBundle({
     presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
 });
 </script>
-</body></html>"""
+<script src="/static/landing/public-nav.js"></script></body></html>"""
     return HTMLResponse(content=html)
 
 # ── Security Middleware ──────────────────────────────────────────────
@@ -1958,7 +1958,7 @@ async def use_case_page(slug: str):
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
 </head>
-<body style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
+<body data-active="blog" style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
 <nav class="border-b border-[#77d4e5]/15 px-6 py-4">
   <div class="max-w-4xl mx-auto flex justify-between items-center">
     <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
@@ -1999,7 +1999,7 @@ client.memory_write("task_config", {{"use_case": "{slug}"}})
 <footer class="border-t border-slate-800 py-6 px-6 text-center text-[10px] text-slate-600">
   TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07 — <a href="/terms" class="hover:text-[#77d4e5]">Terms</a> · <a href="/privacy" class="hover:text-[#77d4e5]">Privacy</a>
 </footer>
-</body></html>"""
+<script src="/static/landing/public-nav.js"></script></body></html>"""
 
     from fastapi.responses import HTMLResponse
     return HTMLResponse(content=html)
@@ -2168,7 +2168,7 @@ async def comparison_page(competitor: str, request: Request = None):
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
 </head>
-<body style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
+<body data-active="blog" style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
 <nav class="border-b border-[#77d4e5]/15 px-6 py-4">
   <div class="max-w-4xl mx-auto flex justify-between items-center">
     <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
@@ -2209,7 +2209,7 @@ async def comparison_page(competitor: str, request: Request = None):
   </div>
 </div>
 <footer class="border-t border-slate-800 py-6 px-6 text-center text-[10px] text-slate-600">TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07</footer>
-</body></html>"""
+<script src="/static/landing/public-nav.js"></script></body></html>"""
 
     from fastapi.responses import HTMLResponse
     return HTMLResponse(content=html)
@@ -3195,7 +3195,7 @@ async def public_agent_profile(agent_id: str, db: AsyncSession = Depends(get_db)
 <code>{profile_url}</code>
 </div>
 </div>
-</body></html>"""
+<script src="/static/landing/public-nav.js"></script></body></html>"""
     return HTMLResponse(content=html)
 
 
@@ -3369,7 +3369,7 @@ async def transaction_receipt_page(tx_id: str, request: Request):
 <code>{receipt_url}</code>
 </div>
 </div>
-</body></html>"""
+<script src="/static/landing/public-nav.js"></script></body></html>"""
     return HTMLResponse(content=html)
 
 
@@ -3564,7 +3564,7 @@ async def serve_blog_page(slug: str, db: AsyncSession = Depends(get_db)):
 </nav>
 <main style="max-width:48rem;margin:0 auto;padding:6rem 1.5rem 4rem">{page['content_html']}</main>
 <footer style="text-align:center;padding:2rem;color:#475569;font-size:0.75rem">&copy; 2026 TiOLi AI Investments | <a href="https://agentisexchange.com">agentisexchange.com</a></footer>
-</body></html>"""
+<script src="/static/landing/public-nav.js"></script></body></html>"""
     return HTMLResponse(content=html)
 
 
@@ -3580,7 +3580,7 @@ async def serve_blog_index(db: AsyncSession = Depends(get_db)):
     html = f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Blog — TiOLi AGENTIS</title><meta name="description" content="Articles, guides, and reports from the world's first AI agent financial exchange."/><style>body{{background:#061423;color:#d6e4f9;font-family:Inter,sans-serif}}a:hover div:first-child{{color:#77d4e5}}</style></head><body>
 <nav style="background:rgba(6,20,35,0.9);border-bottom:1px solid rgba(119,212,229,0.15);padding:1rem 1.5rem"><a href="https://agentisexchange.com" style="color:#fff;text-decoration:none">T<span style="color:#edc05f">i</span>OL<span style="color:#edc05f">i</span> <b style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AGENTIS</b></a></nav>
 <main style="max-width:48rem;margin:0 auto;padding:2rem 1.5rem"><h1 style="color:#fff;font-size:2rem;font-weight:800;margin-bottom:1rem">Blog</h1>{items_html}</main>
-</body></html>"""
+<script src="/static/landing/public-nav.js"></script></body></html>"""
     return HTMLResponse(content=html)
 
 
