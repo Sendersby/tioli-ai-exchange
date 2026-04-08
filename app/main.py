@@ -9412,6 +9412,30 @@ async def api_list_experiments(db: AsyncSession = Depends(get_db)):
     from app.arch.catalyst import list_experiments
     return await list_experiments(db)
 
+
+# -- Sprint 4: Multi-format content + Code sandbox --
+@app.post("/api/v1/content/generate", include_in_schema=False)
+async def api_generate_content(request: Request):
+    """Generate content in all formats for a topic."""
+    body = await request.json()
+    topic = body.get("topic", "")
+    if not topic:
+        return JSONResponse(status_code=400, content={"error": "topic required"})
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.content_formats import generate_all_formats
+    return await generate_all_formats(client, topic)
+
+@app.post("/api/v1/sandbox/execute", include_in_schema=False)
+async def api_sandbox_execute(request: Request):
+    """Execute Python code in isolated sandbox."""
+    body = await request.json()
+    code = body.get("code", "")
+    if not code:
+        return JSONResponse(status_code=400, content={"error": "code required"})
+    from app.arch.sandbox import execute_in_sandbox
+    return await execute_in_sandbox(code, timeout=body.get("timeout", 10))
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse

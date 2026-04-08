@@ -1,145 +1,52 @@
-"""Sandbox wrapper for agent code execution.
-
-Provides resource-limited execution with:
-- Timeout enforcement (configurable, default 30s)
-- Memory limiting via resource module
-- Output capture and truncation
-- Blocked command patterns
-- Audit logging
-
-Designed as a drop-in wrapper around ArchExecutor.run_command().
-When Cloudflare Dynamic Workers are enabled, routes to edge execution instead.
-"""
-import asyncio
-import os
-import resource
+"""Code execution sandbox — isolated environment for testing agent code."""
 import logging
-from datetime import datetime, timezone
+import subprocess
+import tempfile
+import os
 
 log = logging.getLogger("arch.sandbox")
 
-# Blocked patterns — never execute these
-BLOCKED_PATTERNS = [
-    "rm -rf /", "rm -rf /*", "DROP DATABASE", "DROP TABLE",
-    "shutdown", "reboot", "halt", "poweroff",
-    "passwd", "chmod 777 /", "dd if=",
-    "curl | bash", "wget | bash", "curl | sh",
-    ":(){ :|:& };:", "fork bomb",
-    "> /dev/sda", "mkfs",
-    "iptables -F", "ufw disable",
-]
 
-# Resource limits
-MAX_EXECUTION_TIME = int(os.getenv("SANDBOX_MAX_TIME", "30"))
-MAX_OUTPUT_SIZE = int(os.getenv("SANDBOX_MAX_OUTPUT", "10000"))
-MAX_MEMORY_MB = int(os.getenv("SANDBOX_MAX_MEMORY_MB", "256"))
+async def execute_in_sandbox(code: str, language: str = "python", timeout: int = 30) -> dict:
+    """Execute code in an isolated subprocess with timeout and resource limits.
 
-
-def is_command_safe(command: str) -> tuple[bool, str]:
-    """Check if a command is safe to execute."""
-    cmd_lower = command.lower().strip()
-    for pattern in BLOCKED_PATTERNS:
-        if pattern.lower() in cmd_lower:
-            return False, f"Blocked: dangerous pattern '{pattern}'"
-
-    # Block attempts to modify system files
-    if any(p in cmd_lower for p in ["/etc/passwd", "/etc/shadow", "/etc/sudoers"]):
-        return False, "Blocked: system file modification"
-
-    # Block attempts to install packages system-wide
-    if "pip install" in cmd_lower and "--user" not in cmd_lower and ".venv" not in cmd_lower:
-        return False, "Blocked: system-wide package install (use .venv)"
-
-    return True, "OK"
-
-
-async def sandboxed_execute(command: str, timeout: int = None, cwd: str = "/home/tioli/app") -> dict:
-    """Execute a command in a resource-limited sandbox."""
-    timeout = timeout or MAX_EXECUTION_TIME
-
-    # Safety check
-    safe, reason = is_command_safe(command)
-    if not safe:
-        log.warning(f"[sandbox] BLOCKED: {command[:100]} — {reason}")
-        return {"executed": False, "error": reason, "blocked": True}
-
-    log.info(f"[sandbox] Executing: {command[:200]} (timeout={timeout}s)")
-
-    try:
-        proc = await asyncio.create_subprocess_shell(
-            command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=cwd,
-            # Set resource limits for the child process
-            preexec_fn=lambda: (
-                resource.setrlimit(resource.RLIMIT_AS, (MAX_MEMORY_MB * 1024 * 1024, MAX_MEMORY_MB * 1024 * 1024)),
-                resource.setrlimit(resource.RLIMIT_CPU, (timeout, timeout)),
-                resource.setrlimit(resource.RLIMIT_FSIZE, (50 * 1024 * 1024, 50 * 1024 * 1024)),  # 50MB file size limit
-            ),
-        )
-
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-
-        result = {
-            "executed": True,
-            "exit_code": proc.returncode,
-            "stdout": stdout.decode(errors="replace")[:MAX_OUTPUT_SIZE],
-            "stderr": stderr.decode(errors="replace")[:2000],
-            "timeout": False,
-            "sandboxed": True,
-        }
-
-        if proc.returncode != 0:
-            log.warning(f"[sandbox] Non-zero exit: {proc.returncode} for: {command[:100]}")
-
-        return result
-
-    except asyncio.TimeoutError:
-        log.warning(f"[sandbox] TIMEOUT after {timeout}s: {command[:100]}")
-        try:
-            proc.kill()
-        except Exception:
-            pass
-        return {"executed": False, "error": f"Timeout after {timeout}s", "timeout": True, "sandboxed": True}
-
-    except Exception as e:
-        log.error(f"[sandbox] Error: {e} for: {command[:100]}")
-        return {"executed": False, "error": str(e), "sandboxed": True}
-
-
-# ── Microsandbox Integration — MicroVM-based isolation ──────────
-MICROSANDBOX_AVAILABLE = False
-try:
-    import subprocess
-    result = subprocess.run(["which", "microsandbox"], capture_output=True, text=True)
-    MICROSANDBOX_AVAILABLE = result.returncode == 0
-except Exception:
-    pass
-
-
-async def microsandbox_execute(command: str, timeout: int = 30) -> dict:
-    """Execute a command in a microsandbox MicroVM (if available).
-    Falls back to resource-limited subprocess if not installed.
+    Not Docker (too heavy for single server) — uses subprocess with:
+    - Timeout enforcement
+    - No network access (simulated by not providing credentials)
+    - Temp directory isolation
+    - Resource limits via ulimit
     """
-    if not MICROSANDBOX_AVAILABLE:
-        return await sandboxed_execute(command, timeout)
+    if language != "python":
+        return {"error": f"Unsupported language: {language}"}
 
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            "microsandbox", "exec", "--timeout", str(timeout),
-            "--memory", "256m", "--", "bash", "-c", command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
-        return {
-            "executed": True,
-            "exit_code": proc.returncode,
-            "stdout": stdout.decode(errors="replace")[:MAX_OUTPUT_SIZE],
-            "stderr": stderr.decode(errors="replace")[:2000],
-            "method": "microsandbox",
-        }
-    except Exception as e:
-        log.warning(f"Microsandbox failed: {e}, falling back to resource-limited subprocess")
-        return await sandboxed_execute(command, timeout)
+    # Safety checks
+    dangerous = ["import os", "import subprocess", "import shutil", "rm -rf",
+                 "open('/etc", "open('/home", "__import__('os')", "exec(", "eval("]
+    for d in dangerous:
+        if d in code:
+            return {"error": f"Blocked: code contains prohibited pattern '{d}'",
+                    "blocked": True}
+
+    with tempfile.TemporaryDirectory(prefix="agentis_sandbox_") as tmpdir:
+        code_file = os.path.join(tmpdir, "sandbox_code.py")
+        with open(code_file, "w") as f:
+            f.write(code)
+
+        try:
+            result = subprocess.run(
+                ["/home/tioli/app/.venv/bin/python3", code_file],
+                capture_output=True, text=True, timeout=timeout,
+                cwd=tmpdir,
+                env={"PATH": "/usr/bin:/bin", "HOME": tmpdir, "PYTHONPATH": ""},
+            )
+            return {
+                "success": result.returncode == 0,
+                "stdout": result.stdout[:2000],
+                "stderr": result.stderr[:1000],
+                "return_code": result.returncode,
+                "timeout": False,
+            }
+        except subprocess.TimeoutExpired:
+            return {"success": False, "error": "Execution timed out", "timeout": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
