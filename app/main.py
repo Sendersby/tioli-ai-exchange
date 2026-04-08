@@ -9015,16 +9015,31 @@ async def linkedin_callback(code: str = None, state: str = None, error: str = No
         resp = requests.post('https://www.linkedin.com/oauth/v2/accessToken', data={
             'grant_type': 'authorization_code',
             'code': code,
-            'client_id': '77799qo04o4uqg',
+            'client_id': '77sb9fcs4y3ya5',
             'client_secret': 'REDACTED_LINKEDIN_SECRET',
             'redirect_uri': 'https://agentisexchange.com/linkedin/callback',
         })
         data = resp.json()
         token = data.get('access_token', 'FAILED')
-        # Save token
+        id_token = data.get('id_token', '')
+        # Extract sub (person ID) from id_token JWT
+        sub = ''
+        if id_token:
+            import base64, json as _li_json
+            try:
+                payload = id_token.split('.')[1]
+                payload += '=' * (4 - len(payload) % 4)
+                claims = _li_json.loads(base64.urlsafe_b64decode(payload))
+                sub = claims.get('sub', '')
+            except Exception:
+                pass
+        # Save token and sub
         with open('/home/tioli/app/.linkedin_token', 'w') as f:
             f.write(token)
-        return {"status": "authorized", "token_saved": True, "token_preview": token[:20] + '...'}
+        if sub:
+            with open('/home/tioli/app/.linkedin_sub', 'w') as f:
+                f.write(sub)
+        return {"status": "authorized", "token_saved": True, "sub": sub or "not_in_response", "token_preview": token[:20] + '...'}
     return {"error": "no code received"}
 
 

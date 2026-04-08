@@ -106,27 +106,32 @@ async def post_to_linkedin(text: str) -> dict:
     """Post to LinkedIn company page using OAuth token."""
     access_token = os.getenv("LINKEDIN_ACCESS_TOKEN", "")
     company_id = os.getenv("LINKEDIN_COMPANY_ID", "")
+    # Get person sub for posting as individual
+    person_sub = ""
+    try:
+        with open("/home/tioli/app/.linkedin_sub") as _f:
+            person_sub = _f.read().strip()
+    except Exception:
+        pass
 
     if not access_token or not company_id:
         return {"error": "LinkedIn credentials not configured"}
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
+            author_urn = f"urn:li:person:{person_sub}" if person_sub else f"urn:li:organization:{company_id}"
             resp = await client.post(
-                "https://api.linkedin.com/v2/ugcPosts",
+                "https://api.linkedin.com/rest/posts",
                 headers={"Authorization": f"Bearer {access_token}",
                          "Content-Type": "application/json",
+                         "LinkedIn-Version": "202504",
                          "X-Restli-Protocol-Version": "2.0.0"},
                 json={
-                    "author": f"urn:li:organization:{company_id}",
+                    "author": author_urn,
+                    "commentary": text[:1300],
+                    "visibility": "PUBLIC",
+                    "distribution": {"feedDistribution": "MAIN_FEED"},
                     "lifecycleState": "PUBLISHED",
-                    "specificContent": {
-                        "com.linkedin.ugc.ShareContent": {
-                            "shareCommentary": {"text": text[:1300]},
-                            "shareMediaCategory": "NONE",
-                        }
-                    },
-                    "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
                 })
             if resp.status_code in (200, 201):
                 log.info("[linkedin] Posted successfully")
