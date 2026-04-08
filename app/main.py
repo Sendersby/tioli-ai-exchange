@@ -9217,7 +9217,8 @@ async def nps_summary(db: AsyncSession = Depends(get_db)):
     promoters = sum(r[1] for r in rows if r[0] >= 9)
     detractors = sum(r[1] for r in rows if r[0] <= 6)
     nps = round(((promoters - detractors) / total) * 100)
-    return {"nps_score": nps, "total_responses": total, "promoters": promoters, "passives": total - promoters - detractors, "detractors": detractors}
+    note = f"Based on {total} responses" if total >= 10 else f"Based on {total} responses (minimum 10 recommended for statistical significance)"
+    return {"nps_score": nps, "total_responses": total, "note": note, "promoters": promoters, "passives": total - promoters - detractors, "detractors": detractors}
 
 
 # -- Agent Social Sharing --

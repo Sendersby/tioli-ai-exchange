@@ -135,13 +135,13 @@ class AgentDiscoveryService:
 
         # Fallback: query agents table directly when no profiles exist
         from sqlalchemy import text as _disc_text
-        fallback_sql = "SELECT id, name, platform, description, is_active, created_at FROM agents WHERE is_active = true AND is_house_agent = false ORDER BY created_at DESC LIMIT :lim"
+        fallback_sql = "SELECT a.id, a.name, a.platform, a.description, a.is_active, a.created_at, p.specialisation_domains as caps FROM agents a LEFT JOIN agenthub_profiles p ON p.agent_id = a.id WHERE a.is_active = true AND a.is_house_agent = false ORDER BY a.created_at DESC LIMIT :lim"
         fb_result = await db.execute(_disc_text(fallback_sql), {"lim": limit})
         return [
             {
                 "agent_id": row.id, "display_name": row.name,
                 "tagline": ((row.description or "")[:197] + "...") if len(row.description or "") > 200 else (row.description or ""),
-                "capabilities": [],
+                "capabilities": (row.caps if isinstance(row.caps, list) else []) if hasattr(row, "caps") and row.caps else [],
                 "reputation": 5.0,
                 "total_reviews": 0,
                 "total_trades": 0,

@@ -91,6 +91,10 @@ async def _get_boardroom_context(db: AsyncSession) -> dict:
 @boardroom_views.get("", response_class=HTMLResponse)
 @boardroom_views.get("/", response_class=HTMLResponse)
 async def boardroom_home(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Board Home — the main Boardroom view."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -140,6 +144,10 @@ async def boardroom_home(request: Request, db: AsyncSession = Depends(get_db)):
 
 @boardroom_views.get("/board", response_class=HTMLResponse)
 async def boardroom_board(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Full Board / Board Chamber."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -257,6 +265,10 @@ async def boardroom_agent(request: Request, agent_id: str, db: AsyncSession = De
 
 @boardroom_views.get("/treasury", response_class=HTMLResponse)
 async def boardroom_treasury(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Treasury — The Foundation."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -301,6 +313,10 @@ async def boardroom_treasury(request: Request, db: AsyncSession = Depends(get_db
 
 @boardroom_views.get("/inbox", response_class=HTMLResponse)
 async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Founder Inbox."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -383,6 +399,10 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
 
 @boardroom_views.get("/record", response_class=HTMLResponse)
 async def boardroom_record(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """The Record — immutable audit trail."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -406,6 +426,10 @@ async def boardroom_record(request: Request, db: AsyncSession = Depends(get_db))
 
 @boardroom_views.get("/votes", response_class=HTMLResponse)
 async def boardroom_votes(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Vote registry."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -467,6 +491,10 @@ async def boardroom_votes(request: Request, db: AsyncSession = Depends(get_db)):
 
 @boardroom_views.get("/mission-control", response_class=HTMLResponse)
 async def boardroom_mission(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Mission Control — full agent hierarchy."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -481,6 +509,10 @@ async def boardroom_mission(request: Request, db: AsyncSession = Depends(get_db)
 
 @boardroom_views.get("/board/convene", response_class=HTMLResponse)
 async def boardroom_convene(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Convene a new board session — redirects to active session after creation."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
@@ -570,6 +602,10 @@ async def boardroom_session_detail(request: Request, session_id: str, db: AsyncS
 
 @boardroom_views.get("/org-design", response_class=HTMLResponse)
 async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_db)):
+
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     """Organisational Design — full organogram."""
     _check_enabled()
     ctx = await _get_boardroom_context(db)
