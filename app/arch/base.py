@@ -515,7 +515,9 @@ class ArchAgentBase(ABC):
             return result
 
     async def heartbeat(self):
-        """Scheduled every 60 seconds — updates last_heartbeat."""
+        """Scheduled every 60 seconds — pure DB write + conditional anomaly check.
+        ARCH-CO-002: No LLM call unless anomaly detected."""
+        # Pure DB write — zero LLM cost
         await self.db.execute(
             text("""
                 UPDATE arch_agents SET last_heartbeat = now()
@@ -524,6 +526,98 @@ class ArchAgentBase(ABC):
             {"agent_id": self.agent_id},
         )
         await self.db.commit()
+
+        # Log heartbeat execution
+        try:
+            await self.db.execute(
+                text("""
+                    INSERT INTO job_execution_log (job_id, status, skip_reason, tokens_consumed, duration_ms, executed_at)
+                    VALUES (:job_id, 'EXECUTED', NULL, 0, 0, now())
+                """),
+                {"job_id": f"heartbeat_{self.agent_id}"},
+            )
+            await self.db.commit()
+        except Exception:
+            pass  # job_execution_log may not exist yet
+
+        # ARCH-CO-002: Conditional anomaly check — only invoke LLM if anomaly detected
+        import os as _hb_os
+        if _hb_os.environ.get("ARCH_CO_LEAN_HEARTBEAT_ENABLED", "false").lower() != "true":
+            return
+
+        anomaly_detected = False
+        anomaly_reason = ""
+
+        try:
+            # Check agent-specific anomaly conditions
+            if self.agent_id == "sentinel":
+                # Any health check returning non-healthy
+                r = await self.db.execute(text(
+                    "SELECT count(*) FROM arch_infrastructure_health WHERE status != 'healthy' AND checked_at > now() - interval '5 minutes'"
+                ))
+                if (r.scalar() or 0) > 0:
+                    anomaly_detected = True
+                    anomaly_reason = "Infrastructure health degradation detected"
+
+            elif self.agent_id == "treasurer":
+                # Reserve floor within 10% of breach
+                r = await self.db.execute(text(
+                    "SELECT total_balance_zar, floor_zar FROM arch_reserve_ledger ORDER BY recorded_at DESC LIMIT 1"
+                ))
+                row = r.fetchone()
+                if row and row.floor_zar > 0:
+                    if float(row.total_balance_zar) < float(row.floor_zar) * 1.1:
+                        anomaly_detected = True
+                        anomaly_reason = "Reserve floor within 10% of breach"
+
+            elif self.agent_id == "auditor":
+                # Unprocessed high-risk flags older than 15 minutes
+                r = await self.db.execute(text(
+                    "SELECT count(*) FROM arch_compliance_events WHERE severity = 'HIGH' AND created_at < now() - interval '15 minutes'"
+                ))
+                if (r.scalar() or 0) > 0:
+                    anomaly_detected = True
+                    anomaly_reason = "Unprocessed high-risk compliance flag"
+
+            # Universal: circuit breaker tripped
+            r = await self.db.execute(text(
+                "SELECT circuit_breaker_tripped FROM arch_agents WHERE agent_name = :aid"
+            ), {"aid": self.agent_id})
+            row = r.fetchone()
+            if row and row.circuit_breaker_tripped:
+                anomaly_detected = True
+                anomaly_reason = f"Circuit breaker tripped for {self.agent_id}"
+
+        except Exception:
+            pass  # Never let anomaly check crash the heartbeat
+
+        # Only invoke LLM on anomaly
+        if anomaly_detected:
+            try:
+                response = await self.client.messages.create(
+                    model="claude-haiku-4-5-20251001", max_tokens=200,
+                    messages=[{"role": "user", "content":
+                        f"ANOMALY DETECTED during {self.agent_id} heartbeat: {anomaly_reason}. "
+                        f"Generate a concise incident summary and recommended action (2-3 sentences)."}])
+                summary = next((bl.text for bl in response.content if bl.type == "text"), "")
+
+                # Route to founder inbox
+                import json
+                await self.db.execute(
+                    text("""
+                        INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at)
+                        VALUES ('EXECUTION_PROOF', 'URGENT'::arch_msg_priority, :desc, 'PENDING', now())
+                    """),
+                    {"desc": json.dumps({
+                        "subject": f"ANOMALY: {self.agent_id} — {anomaly_reason}",
+                        "detail": summary,
+                        "prepared_by": self.agent_id,
+                        "type": "HEARTBEAT_ANOMALY",
+                    })},
+                )
+                await self.db.commit()
+            except Exception:
+                pass
 
     # ── Token budget management ────────────────────────────────
 

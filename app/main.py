@@ -9556,6 +9556,17 @@ async def api_campaign_article():
     from app.arch.campaign import generate_weekly_devto_article
     return await generate_weekly_devto_article(client)
 
+
+# ARCH-CO-002: LLM calls per hour metric
+@app.get("/api/v1/metrics/llm-calls", include_in_schema=False)
+async def api_llm_calls_metric(db: AsyncSession = Depends(get_db)):
+    """LLM calls per hour across all agents."""
+    from sqlalchemy import text
+    result = await db.execute(text(
+        "SELECT count(*) FROM job_execution_log WHERE tokens_consumed > 0 AND executed_at > now() - interval '1 hour'"
+    ))
+    return {"llm_calls_last_hour": result.scalar() or 0, "target": "< 10 during idle"}
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
