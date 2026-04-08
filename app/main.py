@@ -9322,6 +9322,41 @@ async def api_execute_plan(request: Request, db: AsyncSession = Depends(get_db))
     result = await execute_plan(plan, client, db)
     return result
 
+
+# -- Sprint 2 Gap Closure: Memory, Guardrails, Compliance, Self-Correction --
+@app.post("/api/v1/compliance/screen", include_in_schema=False)
+async def api_compliance_screen(request: Request):
+    """Screen a name against OFAC sanctions list."""
+    body = await request.json()
+    name = body.get("name", "")
+    if not name:
+        return JSONResponse(status_code=400, content={"error": "name required"})
+    from app.arch.compliance_real import screen_sanctions
+    return await screen_sanctions(name)
+
+@app.post("/api/v1/compliance/risk", include_in_schema=False)
+async def api_transaction_risk(request: Request):
+    """Assess transaction risk."""
+    body = await request.json()
+    from app.arch.compliance_real import assess_transaction_risk
+    return assess_transaction_risk(body.get("amount", 0), body.get("currency", "AGENTIS"), body.get("country", "ZA"))
+
+@app.post("/api/v1/guardrails/check", include_in_schema=False)
+async def api_guardrails_check(request: Request):
+    """Validate an action against guardrails."""
+    body = await request.json()
+    from app.arch.guardrails import validate_pre_action, validate_social_content
+    action_check = validate_pre_action(body.get("action_type", ""), body.get("params", {}), body.get("agent", "test"))
+    content_check = validate_social_content(body.get("content", ""), body.get("agent", "test")) if body.get("content") else None
+    return {"action": action_check, "content": content_check}
+
+@app.get("/api/v1/memory/tiers/{agent_name}", include_in_schema=False)
+async def api_memory_tiers(agent_name: str, db: AsyncSession = Depends(get_db)):
+    """Get tiered memory status for an agent."""
+    from app.arch.memory_tiers import load_from_db
+    mem = await load_from_db(db, agent_name)
+    return mem.summary()
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
