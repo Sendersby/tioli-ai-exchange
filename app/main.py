@@ -10015,3 +10015,127 @@ async def api_performance_review(request: Request, db: AsyncSession = Depends(ge
 async def api_prospect_scan(db: AsyncSession = Depends(get_db)):
     from app.arch.prospect_engine import identify_prospects
     return await identify_prospects(db, None)
+
+# ═══════════════════════════════════════════════════════════
+# PHASE 4: Dashboard Widgets API (Gap Closure Brief ACs)
+# ═══════════════════════════════════════════════════════════
+
+@app.get("/api/v1/owner/dashboard-widgets", include_in_schema=False)
+async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
+    """Return all 8 dashboard widget data in one call."""
+    from sqlalchemy import text
+    widgets = {}
+
+    # Widget 1: Cache Hit Rate per agent
+    try:
+        r = await db.execute(text(
+            "SELECT job_id, SUM(cache_hits) as hits, SUM(cache_misses) as misses "
+            "FROM job_execution_log WHERE job_id LIKE 'cache_%' "
+            "GROUP BY job_id"
+        ))
+        cache = {}
+        for row in r.fetchall():
+            agent = row.job_id.replace("cache_", "")
+            total = (row.hits or 0) + (row.misses or 0)
+            rate = round((row.hits or 0) / total * 100, 1) if total > 0 else 0
+            cache[agent] = {"hits": row.hits or 0, "misses": row.misses or 0, "rate": rate}
+        widgets["cache_hit_rate"] = cache
+    except Exception:
+        widgets["cache_hit_rate"] = {}
+
+    # Widget 2: LLM Calls Per Hour
+    try:
+        r = await db.execute(text(
+            "SELECT count(*) FROM job_execution_log WHERE executed_at > now() - interval '1 hour' "
+            "AND status IN ('CACHE_HIT', 'CACHE_MISS', 'EXECUTED')"
+        ))
+        widgets["llm_calls_per_hour"] = r.scalar() or 0
+    except Exception:
+        widgets["llm_calls_per_hour"] = 0
+
+    # Widget 3: Scheduled Jobs status
+    try:
+        r = await db.execute(text(
+            "SELECT job_id, status, tokens_consumed, executed_at "
+            "FROM job_execution_log ORDER BY executed_at DESC LIMIT 20"
+        ))
+        jobs = [{"job": row.job_id, "status": row.status, "tokens": row.tokens_consumed or 0,
+                 "at": str(row.executed_at) if row.executed_at else None} for row in r.fetchall()]
+        widgets["scheduled_jobs"] = jobs
+    except Exception:
+        widgets["scheduled_jobs"] = []
+
+    # Widget 4: Goals
+    try:
+        r = await db.execute(text(
+            "SELECT agent_id, title, priority, status, progress_pct, last_actioned "
+            "FROM agent_goals ORDER BY priority ASC"
+        ))
+        goals = [{"agent": row.agent_id, "title": row.title, "priority": row.priority,
+                  "status": row.status, "progress": row.progress_pct or 0,
+                  "last_actioned": str(row.last_actioned) if row.last_actioned else None}
+                 for row in r.fetchall()]
+        widgets["goals"] = goals
+    except Exception:
+        widgets["goals"] = []
+
+    # Widget 5: Today's Agenda
+    try:
+        r = await db.execute(text(
+            "SELECT items, completion_pct FROM sovereign_agendas WHERE date = CURRENT_DATE ORDER BY generated_at DESC LIMIT 1"
+        ))
+        row = r.fetchone()
+        if row:
+            import json
+            items = json.loads(row.items) if isinstance(row.items, str) else row.items
+            widgets["todays_agenda"] = {"items": items, "completion": row.completion_pct or 0}
+        else:
+            widgets["todays_agenda"] = {"items": [], "completion": 0}
+    except Exception:
+        widgets["todays_agenda"] = {"items": [], "completion": 0}
+
+    # Widget 6: Social Signals
+    try:
+        r = await db.execute(text(
+            "SELECT signal_id, platform, signal_type, source_handle, content, classification, actioned "
+            "FROM social_signals WHERE actioned = false ORDER BY detected_at DESC LIMIT 10"
+        ))
+        signals = [{"platform": row.platform, "type": row.signal_type or "unknown",
+                    "handle": row.source_handle, "content": (row.content or "")[:100],
+                    "classification": row.classification}
+                   for row in r.fetchall()]
+        widgets["social_signals"] = signals
+    except Exception:
+        widgets["social_signals"] = []
+
+    # Widget 7: Threat Correlation
+    try:
+        r = await db.execute(text(
+            "SELECT source_agent, anomaly_type, severity, correlated, created_at "
+            "FROM anomaly_events ORDER BY created_at DESC LIMIT 15"
+        ))
+        events = [{"source": row.source_agent, "type": row.anomaly_type,
+                   "severity": row.severity, "correlated": row.correlated,
+                   "at": str(row.created_at)} for row in r.fetchall()]
+        corr = await db.execute(text("SELECT pattern, combined_severity, narrative, created_at FROM anomaly_correlations ORDER BY created_at DESC LIMIT 5"))
+        correlations = [{"pattern": row.pattern, "severity": row.combined_severity,
+                        "narrative": (row.narrative or "")[:200], "at": str(row.created_at)}
+                       for row in corr.fetchall()]
+        widgets["threat_correlation"] = {"events": events, "correlations": correlations}
+    except Exception:
+        widgets["threat_correlation"] = {"events": [], "correlations": []}
+
+    # Widget 8: Prospect Pipeline
+    try:
+        r = await db.execute(text(
+            "SELECT signal, signal_source, qualification_score, outreach_draft, status "
+            "FROM operator_prospects ORDER BY identified_at DESC LIMIT 10"
+        ))
+        prospects = [{"signal": (row.signal or "")[:100], "source": row.signal_source,
+                     "score": row.qualification_score, "status": row.status,
+                     "draft": (row.outreach_draft or "")[:150]} for row in r.fetchall()]
+        widgets["prospect_pipeline"] = prospects
+    except Exception:
+        widgets["prospect_pipeline"] = []
+
+    return widgets

@@ -186,4 +186,129 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
   </div>
 </div>
+
+<!-- ═══ Phase 4: Gap Closure Dashboard Widgets ═══ -->
+<div id="gap-widgets" class="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-4">
+
+  <!-- Widget 1: Cache Hit Rate -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">CACHE HIT RATE</h3>
+    <div id="w-cache" class="text-slate-400 text-xs">Loading...</div>
+  </div>
+
+  <!-- Widget 2: LLM Calls/Hour -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">LLM CALLS / HOUR</h3>
+    <div id="w-llm" class="text-3xl font-bold text-white">--</div>
+  </div>
+
+  <!-- Widget 3: Scheduled Jobs -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">SCHEDULED JOBS</h3>
+    <div id="w-jobs" class="text-slate-400 text-xs max-h-32 overflow-y-auto">Loading...</div>
+  </div>
+
+  <!-- Widget 4: Goals -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">AGENT GOALS</h3>
+    <div id="w-goals" class="text-slate-400 text-xs max-h-40 overflow-y-auto">Loading...</div>
+  </div>
+
+  <!-- Widget 5: Today's Agenda -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">TODAY'S AGENDA</h3>
+    <div id="w-agenda" class="text-slate-400 text-xs">Loading...</div>
+  </div>
+
+  <!-- Widget 6: Social Signals -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">SOCIAL SIGNALS</h3>
+    <div id="w-social" class="text-slate-400 text-xs">Loading...</div>
+  </div>
+
+  <!-- Widget 7: Threat Correlation -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">THREAT CORRELATION</h3>
+    <div id="w-threats" class="text-slate-400 text-xs max-h-32 overflow-y-auto">Loading...</div>
+  </div>
+
+  <!-- Widget 8: Prospect Pipeline -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">PROSPECT PIPELINE</h3>
+    <div id="w-prospects" class="text-slate-400 text-xs">Loading...</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  fetch('/api/v1/owner/dashboard-widgets')
+    .then(r=>r.json())
+    .then(d=>{
+      // Cache Hit Rate
+      let ch='';
+      for(let [a,v] of Object.entries(d.cache_hit_rate||{})){
+        ch+=`<div class="flex justify-between py-0.5"><span class="text-slate-300">${a}</span><span class="text-emerald-400 font-mono">${v.rate}%</span></div>`;
+      }
+      document.getElementById('w-cache').innerHTML=ch||'<span class="text-slate-500">No cache data yet</span>';
+
+      // LLM Calls
+      document.getElementById('w-llm').textContent=d.llm_calls_per_hour||0;
+
+      // Scheduled Jobs
+      let jh='';
+      (d.scheduled_jobs||[]).slice(0,8).forEach(j=>{
+        let col=j.status==='EXECUTED'?'text-emerald-400':j.status==='SKIPPED'?'text-amber-400':'text-slate-400';
+        jh+=`<div class="flex justify-between py-0.5"><span class="truncate mr-2">${j.job}</span><span class="${col} font-mono">${j.status}</span></div>`;
+      });
+      document.getElementById('w-jobs').innerHTML=jh||'<span class="text-slate-500">No job history</span>';
+
+      // Goals
+      let gh='';
+      (d.goals||[]).forEach(g=>{
+        let bar=`<div class="w-full bg-slate-700 rounded-full h-1.5 mt-1"><div class="bg-[#D4A94A] h-1.5 rounded-full" style="width:${g.progress}%"></div></div>`;
+        gh+=`<div class="py-1 border-b border-slate-700/30"><div class="flex justify-between"><span class="text-slate-300">${g.agent}</span><span class="text-slate-500">P${g.priority}</span></div><div class="text-slate-400">${g.title}</div>${bar}</div>`;
+      });
+      document.getElementById('w-goals').innerHTML=gh||'<span class="text-slate-500">No active goals</span>';
+
+      // Agenda
+      let items=d.todays_agenda?.items||[];
+      let ah='';
+      if(Array.isArray(items)){
+        items.forEach((it,i)=>{
+          let t=typeof it==='string'?it:it.title||it.item||JSON.stringify(it).slice(0,60);
+          ah+=`<div class="py-0.5 text-slate-300">${i+1}. ${t}</div>`;
+        });
+      }
+      document.getElementById('w-agenda').innerHTML=ah||'<span class="text-slate-500">No agenda generated today</span>';
+
+      // Social Signals
+      let sh='';
+      (d.social_signals||[]).forEach(s=>{
+        let badge=s.classification==='OPPORTUNITY'?'bg-emerald-500/20 text-emerald-400':s.classification==='COMPLAINT'?'bg-red-500/20 text-red-400':'bg-slate-500/20 text-slate-400';
+        sh+=`<div class="py-1"><span class="px-1.5 py-0.5 rounded text-[10px] ${badge}">${s.classification||'?'}</span> <span class="text-slate-300">${s.content}</span></div>`;
+      });
+      document.getElementById('w-social').innerHTML=sh||'<span class="text-slate-500">No unactioned signals</span>';
+
+      // Threats
+      let th='';
+      (d.threat_correlation?.correlations||[]).forEach(c=>{
+        let sev=c.severity==='critical'?'text-red-400':c.severity==='high'?'text-amber-400':'text-slate-400';
+        th+=`<div class="py-1"><span class="${sev} font-bold">${c.pattern}</span> <span class="text-slate-400">${c.narrative}</span></div>`;
+      });
+      let ev=(d.threat_correlation?.events||[]).length;
+      th+=`<div class="text-slate-500 mt-1">${ev} anomaly events tracked</div>`;
+      document.getElementById('w-threats').innerHTML=th;
+
+      // Prospects
+      let ph='';
+      (d.prospect_pipeline||[]).forEach(p=>{
+        let st=p.status==='approved'?'text-emerald-400':p.status==='pending'?'text-amber-400':'text-slate-400';
+        ph+=`<div class="py-1 border-b border-slate-700/30"><div class="flex justify-between"><span class="text-slate-300 truncate">${p.signal}</span><span class="${st} text-[10px]">${p.status}</span></div></div>`;
+      });
+      document.getElementById('w-prospects').innerHTML=ph||'<span class="text-slate-500">No prospects identified yet</span>';
+    })
+    .catch(e=>console.warn('Widget load error:',e));
+})();
+</script>
+
 {% endblock %}
