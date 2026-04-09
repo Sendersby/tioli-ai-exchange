@@ -10947,3 +10947,42 @@ async def api_linkedin_thought_leadership():
     """Generate and publish a LinkedIn thought leadership post."""
     from app.arch.linkedin_scheduler import publish_thought_leadership
     return await publish_thought_leadership()
+
+# Social Activity Feed — all outbound engagement across all platforms
+@app.get("/api/v1/owner/social-activity", include_in_schema=False)
+async def api_social_activity(db: AsyncSession = Depends(get_db)):
+    """All published content, comments, and engagement across all platforms."""
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT content_type, title, body_ref, channel, published_at "
+        "FROM arch_content_library ORDER BY published_at DESC LIMIT 50"
+    ))
+    items = []
+    for row in r.fetchall():
+        # Extract proof URL from body_ref if it's JSON
+        proof_url = ""
+        try:
+            import json
+            if row.body_ref and row.body_ref.startswith("{"):
+                data = json.loads(row.body_ref)
+                proof_url = data.get("url", "")
+        except Exception:
+            pass
+
+        items.append({
+            "type": row.content_type,
+            "title": row.title[:100] if row.title else "",
+            "channel": row.channel,
+            "proof_url": proof_url,
+            "published": str(row.published_at)[:19] if row.published_at else "",
+        })
+
+    # Group by channel
+    by_channel = {}
+    for item in items:
+        ch = item["channel"]
+        if ch not in by_channel:
+            by_channel[ch] = 0
+        by_channel[ch] += 1
+
+    return {"items": items, "total": len(items), "by_channel": by_channel}

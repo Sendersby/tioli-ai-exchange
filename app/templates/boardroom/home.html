@@ -251,6 +251,18 @@ document.addEventListener('DOMContentLoaded', function(){
     <div id="w-eval" class="text-slate-400 text-xs">Loading evaluation...</div>
   </div>
 
+
+  <!-- Social Activity Feed Widget -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 md:col-span-2">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-3 tracking-wider flex items-center gap-2">SOCIAL ENGAGEMENT ACTIVITY
+      <span class="relative group cursor-help">
+        <svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg>
+        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">All outbound content and engagement: tweets, LinkedIn posts, GitHub comments, DEV.to articles, Discord messages, and thought leadership pieces. Shows what the agents have published across all platforms.</span>
+      </span>
+    </h3>
+    <div id="w-activity" class="text-slate-400 text-xs max-h-64 overflow-y-auto">Loading...</div>
+  </div>
+
 <!-- I-003: Server Monitoring Widget -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 md:col-span-2">
     <h3 class="text-[#D4A94A] text-xs font-bold mb-3 tracking-wider flex items-center gap-2">SERVER HEALTH
@@ -401,6 +413,33 @@ document.addEventListener('DOMContentLoaded', function(){
         document.getElementById('w-eval').innerHTML=html;
       })
       .catch(e=>{document.getElementById('w-eval').innerHTML='<span class="text-slate-500">Evaluation unavailable</span>';});
+
+    // Social Activity Feed
+    fetch('/api/v1/owner/social-activity')
+      .then(r=>r.json())
+      .then(d=>{
+        let html='';
+        // Summary bar
+        let channels = d.by_channel || {};
+        html+='<div class="flex flex-wrap gap-2 mb-3">';
+        let colors = {twitter:'bg-blue-500/20 text-blue-400', linkedin:'bg-blue-700/20 text-blue-300', discord:'bg-indigo-500/20 text-indigo-400', github:'bg-slate-500/20 text-slate-300', devto:'bg-green-500/20 text-green-400', reddit:'bg-orange-500/20 text-orange-400'};
+        for(let [ch,count] of Object.entries(channels)){
+          let col = colors[ch] || 'bg-slate-500/20 text-slate-400';
+          html+=`<span class="px-2 py-0.5 rounded text-[10px] font-bold ${col}">${ch} ${count}</span>`;
+        }
+        html+=`<span class="px-2 py-0.5 rounded text-[10px] bg-[#D4A94A]/20 text-[#D4A94A] font-bold">TOTAL ${d.total}</span>`;
+        html+='</div>';
+        // Activity list
+        (d.items||[]).slice(0,20).forEach(i=>{
+          let icon = {twitter:'X',linkedin:'in',discord:'DC',github:'GH',devto:'DT',reddit:'RD'}[i.channel]||'?';
+          let col = colors[i.channel] || 'bg-slate-500/20 text-slate-400';
+          let url = i.proof_url ? `<a href="${i.proof_url}" target="_blank" class="text-[#D4A94A] hover:underline ml-1">view</a>` : '';
+          html+=`<div class="flex items-start gap-2 py-1.5 border-b border-slate-700/20"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${col} shrink-0">${icon}</span><div class="flex-1"><span class="text-slate-300">${i.title||i.type}</span>${url}<div class="text-[10px] text-slate-500">${i.type} · ${i.published?.slice(0,16)||''}</div></div></div>`;
+        });
+        document.getElementById('w-activity').innerHTML=html||'<span class="text-slate-500">No activity yet</span>';
+      })
+      .catch(e=>{document.getElementById('w-activity').innerHTML='<span class="text-slate-500">Activity unavailable</span>';});
+
 
 
 })();
