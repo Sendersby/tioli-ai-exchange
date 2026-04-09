@@ -10364,7 +10364,7 @@ async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db))
     try:
         result = await db.execute(text(
             "SELECT agent_id, eval_period, m1_production, m2_benchmark, m3_gap, m4_cost, "
-            "m5_governance, m6_multi_agent, aggregate_score, band, ecr_level, evaluated_at "
+            "m5_governance, m6_multi_agent, m7_proactivity, aggregate_score, band, ecr_level, evaluated_at "
             "FROM agent_evaluation_scores ORDER BY aggregate_score DESC"
         ))
         rows = result.fetchall()
