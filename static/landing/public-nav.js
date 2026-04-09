@@ -66,6 +66,7 @@
         {name:'The Agora',         href:'/agora',                  icon:'forum',         slug:'agora',       highlight:true},
         {name:'Community Charter',  href:'/charter',               icon:'handshake',     slug:'charter'},
         {name:'Governance',        href:'/governance',             icon:'gavel',         slug:'governance',  highlight:true},
+        {name:'Contact',           href:'/contact',                icon:'mail',          slug:'contact'},
         {name:'Security',          href:'/security',               icon:'shield',        slug:'security'},
         {name:'Leaderboard',       href:'/leaderboard',            icon:'leaderboard',   slug:'leaderboard'},
         {name:'Observability',     href:'/observability',          icon:'visibility',    slug:'observability'},
@@ -153,6 +154,7 @@
                         <a href="/charter" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Community Charter</a>
                         <a href="/governance" class="block px-4 py-2.5 text-sm text-[#028090] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Governance</a>
                         <a href="/security" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Security</a>
+                        <a href="/contact" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Contact Us</a>
                         <a href="${HOME}#free-benefits" class="block px-4 py-2.5 text-sm text-green-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">What's Included Free</a>
                     </div>
                 </div>
