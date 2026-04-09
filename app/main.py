@@ -10239,3 +10239,46 @@ async def api_list_checkpoints(request: Request, db: AsyncSession = Depends(get_
 async def api_rollback_checkpoint(checkpoint_id: str, db: AsyncSession = Depends(get_db)):
     from app.arch.checkpoint import rollback_checkpoint
     return await rollback_checkpoint(db, checkpoint_id)
+
+# H-005: Context Compression — debug endpoint
+@app.post("/api/v1/arch/context/compress", include_in_schema=False)
+async def api_compress_context(request: Request):
+    body = await request.json()
+    from app.arch.context_compression import compress_if_needed
+    messages = body.get("messages", [])
+    compressed = await compress_if_needed(messages)
+    return {"original_count": len(messages), "compressed_count": len(compressed),
+            "savings": len(messages) - len(compressed)}
+
+# H-006: SOUL files
+@app.get("/api/v1/arch/souls", include_in_schema=False)
+async def api_list_souls():
+    from app.arch.soul import list_souls
+    return list_souls()
+
+@app.get("/api/v1/arch/souls/{agent_name}", include_in_schema=False)
+async def api_get_soul(agent_name: str):
+    from app.arch.soul import load_soul
+    content = load_soul(agent_name)
+    if content:
+        return {"agent": agent_name, "soul": content}
+    return {"error": f"No SOUL file for {agent_name}"}
+
+# H-007: Natural Language Scheduling
+@app.post("/api/v1/owner/schedule", include_in_schema=False)
+async def api_nl_schedule(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.nl_scheduler import create_nl_job
+    return await create_nl_job(db, body.get("instruction", ""), body.get("task", ""))
+
+@app.post("/api/v1/arch/schedule/parse", include_in_schema=False)
+async def api_parse_schedule(request: Request):
+    body = await request.json()
+    from app.arch.nl_scheduler import parse_nl_schedule
+    return parse_nl_schedule(body.get("instruction", ""))
+
+# H-008: Credential Pool
+@app.get("/api/v1/arch/credentials/pool", include_in_schema=False)
+async def api_credential_pool(db: AsyncSession = Depends(get_db)):
+    from app.arch.credential_pool import get_pool_status
+    return await get_pool_status(db)
