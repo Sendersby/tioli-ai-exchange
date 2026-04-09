@@ -10910,3 +10910,40 @@ async def api_agent_runtime_invoke(agent_id: str, request: Request, db: AsyncSes
         "tools_available": len(row.tools) if row.tools else 0,
         "request_logged": True,
     }
+
+# Social Engagement Engine APIs
+@app.post("/api/v1/arch/github/engage", include_in_schema=False)
+async def api_github_engage(db: AsyncSession = Depends(get_db)):
+    """Run full GitHub engagement cycle — scan, identify, comment, report."""
+    from app.arch.github_engagement import run_full_engagement_cycle
+    return await run_full_engagement_cycle(db)
+
+@app.get("/api/v1/arch/github/trending", include_in_schema=False)
+async def api_github_trending():
+    """Get trending AI agent repos."""
+    from app.arch.github_engagement import scan_trending_repos
+    return await scan_trending_repos(10)
+
+@app.get("/api/v1/arch/github/opportunities", include_in_schema=False)
+async def api_github_opportunities():
+    """Scan for discussion engagement opportunities."""
+    from app.arch.github_engagement import scan_discussions_for_opportunities
+    return await scan_discussions_for_opportunities()
+
+@app.get("/api/v1/arch/github/repo-status", include_in_schema=False)
+async def api_github_repo_status():
+    """Monitor our tioli-agentis repo."""
+    from app.arch.github_engagement import monitor_our_repo
+    return await monitor_our_repo()
+
+@app.post("/api/v1/arch/devto/scan", include_in_schema=False)
+async def api_devto_scan(db: AsyncSession = Depends(get_db)):
+    """Run DEV.to scan cycle."""
+    from app.arch.devto_monitor import run_devto_scan
+    return await run_devto_scan(db)
+
+@app.post("/api/v1/arch/linkedin/thought-leadership", include_in_schema=False)
+async def api_linkedin_thought_leadership():
+    """Generate and publish a LinkedIn thought leadership post."""
+    from app.arch.linkedin_scheduler import publish_thought_leadership
+    return await publish_thought_leadership()

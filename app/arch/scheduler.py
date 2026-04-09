@@ -1365,6 +1365,77 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="proactive_action_scan", replace_existing=True)
     log.info("[scheduler] Registered: proactive_action_scan (every 2h)")
 
+    # ═══════════════════════════════════════════════════════════
+    # SOCIAL ENGAGEMENT ENGINE: GitHub, DEV.to, LinkedIn
+    # ═══════════════════════════════════════════════════════════
+
+    # GitHub engagement — daily at 11:00 SAST (09:00 UTC)
+    async def github_engagement_daily():
+        import os as _os
+        if _os.environ.get("ARCH_GITHUB_ENGAGEMENT_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.github_engagement import run_full_engagement_cycle
+                result = await run_full_engagement_cycle(db)
+                log.info(f"[github_engage] Daily: {result.get('actions_taken', 0)} actions")
+        except Exception as e:
+            log.error(f"[github_engage] Daily failed: {e}")
+
+    scheduler.add_job(github_engagement_daily, "cron", hour=9, minute=0,
+                      id="github_engagement_daily", replace_existing=True)
+    log.info("[scheduler] Registered: github_engagement_daily (11:00 SAST)")
+
+    # GitHub repo monitor — every 4 hours
+    async def github_repo_monitor():
+        import os as _os
+        if _os.environ.get("ARCH_GITHUB_ENGAGEMENT_ENABLED", "false").lower() != "true":
+            return
+        try:
+            from app.arch.github_engagement import monitor_our_repo
+            result = await monitor_our_repo()
+            if result.get("open_issues", 0) > 0:
+                log.info(f"[github] Repo: {result.get('stars', 0)} stars, {result.get('open_issues', 0)} issues")
+        except Exception as e:
+            log.warning(f"[github] Repo monitor failed: {e}")
+
+    scheduler.add_job(github_repo_monitor, "interval", hours=4,
+                      id="github_repo_monitor", replace_existing=True)
+    log.info("[scheduler] Registered: github_repo_monitor (every 4h)")
+
+    # DEV.to scan — every 6 hours
+    async def devto_engagement_scan():
+        import os as _os
+        if _os.environ.get("ARCH_DEVTO_MONITOR_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.devto_monitor import run_devto_scan
+                result = await run_devto_scan(db)
+                log.info(f"[devto] Scan: {result.get('trending_count', 0)} trending, {result.get('opportunity_count', 0)} opportunities")
+        except Exception as e:
+            log.error(f"[devto] Scan failed: {e}")
+
+    scheduler.add_job(devto_engagement_scan, "interval", hours=6,
+                      id="devto_engagement_scan", replace_existing=True)
+    log.info("[scheduler] Registered: devto_engagement_scan (every 6h)")
+
+    # LinkedIn thought leadership — Tuesday + Thursday 08:00 SAST (06:00 UTC)
+    async def linkedin_thought_leadership():
+        import os as _os
+        if _os.environ.get("ARCH_LINKEDIN_THOUGHT_LEADER_ENABLED", "false").lower() != "true":
+            return
+        try:
+            from app.arch.linkedin_scheduler import publish_thought_leadership
+            result = await publish_thought_leadership()
+            log.info(f"[linkedin] Thought leadership: {result.get('theme', '?')[:40]}")
+        except Exception as e:
+            log.error(f"[linkedin] Thought leadership failed: {e}")
+
+    scheduler.add_job(linkedin_thought_leadership, "cron", day_of_week="tue,thu", hour=6, minute=0,
+                      id="linkedin_thought_leadership", replace_existing=True)
+    log.info("[scheduler] Registered: linkedin_thought_leadership (Tue/Thu 08:00 SAST)")
+
 
     scheduler.add_job(daily_regulatory_scan, "cron", hour=2, minute=0, id="daily_regulatory_scan", replace_existing=True)
 
