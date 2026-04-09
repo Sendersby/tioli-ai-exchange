@@ -11,7 +11,8 @@ from decimal import Decimal
 log = logging.getLogger("arch.evaluator")
 
 # Domain weights — Regulated Financial Platform (multi-agent scaled)
-WEIGHTS = {"m1": 0.27, "m2": 0.09, "m3": 0.18, "m4": 0.09, "m5": 0.27, "m6": 0.10}
+# Regulated Financial Platform weights (with M7 Proactivity at 8%)
+WEIGHTS = {"m1": 0.248, "m2": 0.083, "m3": 0.166, "m4": 0.083, "m5": 0.248, "m6": 0.092, "m7": 0.08}
 
 BAND_THRESHOLDS = [
     (85, "deploy_full"),      # 85+: Full autonomous deployment
@@ -161,6 +162,77 @@ async def evaluate_agent(db, agent_name: str) -> dict:
     m6_measured = [comms_score, cascade_score, delegation_score]
     m6_pct = sum(m6_measured) / (len(m6_measured) * 5) * 100
 
+
+    # ── M7: Proactivity Index (NEW — measures reactive vs proactive spectrum) ──
+    # M7.1 SIAR — Self-Initiated Action Rate (actions from goal pursuit / total actions)
+    r = await db.execute(text(
+        "SELECT count(*) FROM goal_actions WHERE agent_id = :aid AND executed_at > now() - interval '30 days'"
+    ), {"aid": agent_name})
+    goal_actions_30d = r.scalar() or 0
+
+    r = await db.execute(text(
+        "SELECT count(*) FROM job_execution_log WHERE job_id LIKE :pattern AND executed_at > now() - interval '30 days'"
+    ), {"pattern": f"goal_pursuit_{agent_name}%"})
+    pursuit_cycles_30d = r.scalar() or 0
+
+    siar = min(goal_actions_30d * 10, 100)  # 10 actions = 100%
+    siar_score = 5 if siar >= 80 else 4 if siar >= 60 else 3 if siar >= 40 else 2 if siar >= 20 else 1 if siar > 0 else 0
+    sub_scores["m7_1_siar"] = siar_score
+    evidence["m7_1"] = {"goal_actions_30d": goal_actions_30d, "pursuit_cycles": pursuit_cycles_30d, "siar_pct": siar}
+
+    # M7.2 IRA — Inbox Resolution Autonomy (auto-resolved / total resolved)
+    r = await db.execute(text(
+        "SELECT count(*) FROM arch_founder_inbox WHERE status = 'COMPLETED' "
+        "AND founder_response LIKE '%Auto%'"
+    ))
+    auto_resolved = r.scalar() or 0
+    r = await db.execute(text("SELECT count(*) FROM arch_founder_inbox WHERE status = 'COMPLETED'"))
+    total_resolved = r.scalar() or 1
+    ira = round(auto_resolved / total_resolved * 100, 1) if total_resolved > 0 else 0
+    ira_score = 5 if ira >= 70 else 4 if ira >= 50 else 3 if ira >= 30 else 2 if ira >= 10 else 1 if ira > 0 else 0
+    sub_scores["m7_2_ira"] = ira_score
+    evidence["m7_2"] = {"auto_resolved": auto_resolved, "total_resolved": total_resolved, "ira_pct": ira}
+
+    # M7.3 ODR — Opportunity Detection Rate (proactive scan findings)
+    r = await db.execute(text(
+        "SELECT count(*) FROM job_execution_log WHERE job_id = 'proactive_scan' "
+        "AND status LIKE 'FOUND_%' AND executed_at > now() - interval '30 days'"
+    ))
+    scans_with_findings = r.scalar() or 0
+    odr_score = 4 if scans_with_findings >= 10 else 3 if scans_with_findings >= 5 else 2 if scans_with_findings >= 1 else 0
+    sub_scores["m7_3_odr"] = odr_score
+    evidence["m7_3"] = {"scans_with_findings": scans_with_findings}
+
+    # M7.4 SAV — Skill Acquisition Velocity (skills created or improved)
+    r = await db.execute(text(
+        "SELECT count(*) FROM job_execution_log WHERE status IN ('SKILL_CREATED', 'SKILL_IMPROVED') "
+        "AND job_id LIKE :pattern AND executed_at > now() - interval '30 days'"
+    ), {"pattern": f"skill_%_{agent_name}%"})
+    skill_events = r.scalar() or 0
+    # Also count skill usage
+    r = await db.execute(text("SELECT times_used FROM arch_skills WHERE agent_id = :aid"), {"aid": agent_name})
+    total_skill_uses = sum(row.times_used or 0 for row in r.fetchall())
+    sav_score = 4 if skill_events >= 3 else 3 if skill_events >= 1 else 2 if total_skill_uses >= 3 else 1 if total_skill_uses >= 1 else 0
+    sub_scores["m7_4_sav"] = sav_score
+    evidence["m7_4"] = {"skill_events": skill_events, "total_skill_uses": total_skill_uses}
+
+    # M7.5 GPC — Goal Pursuit Consistency (active goal progress)
+    r = await db.execute(text(
+        "SELECT progress_pct FROM agent_goals WHERE agent_id = :aid AND status = 'active'"
+    ), {"aid": agent_name})
+    goals = r.fetchall()
+    avg_progress = sum(row.progress_pct or 0 for row in goals) / max(len(goals), 1)
+    gpc_score = 5 if avg_progress >= 50 else 4 if avg_progress >= 30 else 3 if avg_progress >= 15 else 2 if avg_progress >= 5 else 1 if avg_progress > 0 else 0
+    sub_scores["m7_5_gpc"] = gpc_score
+    evidence["m7_5"] = {"active_goals": len(goals), "avg_progress_pct": round(avg_progress, 1)}
+
+    m7_measured = [siar_score, ira_score, odr_score, sav_score, gpc_score]
+    m7_pct = sum(m7_measured) / (len(m7_measured) * 5) * 100
+
+    # M7 Disqualifier: < 10% = entirely passive
+    if m7_pct < 10 and goal_actions_30d == 0:
+        disqualifiers.append("M7: Agent is entirely passive — zero proactive behaviour observed")
+
     # ── Aggregate Score ──
     aggregate = (
         m1_pct * WEIGHTS["m1"] +
@@ -168,7 +240,8 @@ async def evaluate_agent(db, agent_name: str) -> dict:
         m3_pct * WEIGHTS["m3"] +
         m4_pct * WEIGHTS["m4"] +
         m5_pct * WEIGHTS["m5"] +
-        m6_pct * WEIGHTS["m6"]
+        m6_pct * WEIGHTS["m6"] +
+        m7_pct * WEIGHTS["m7"]
     )
     band = get_band(aggregate)
 
@@ -183,6 +256,7 @@ async def evaluate_agent(db, agent_name: str) -> dict:
         "m4_cost": round(m4_pct, 1),
         "m5_governance": round(m5_pct, 1),
         "m6_multi_agent": round(m6_pct, 1),
+        "m7_proactivity": round(m7_pct, 1),
         "aggregate_score": round(aggregate, 1),
         "band": band,
         "sub_scores": sub_scores,
@@ -198,16 +272,17 @@ async def evaluate_agent(db, agent_name: str) -> dict:
         await db.execute(sa_text(
             "INSERT INTO agent_evaluation_scores "
             "(agent_id, eval_period, m1_production, m2_benchmark, m3_gap, m4_cost, "
-            "m5_governance, m6_multi_agent, aggregate_score, band, sub_scores, evidence, ecr_level, disqualifiers) "
-            "VALUES (:aid, :period, :m1, :m2, :m3, :m4, :m5, :m6, :agg, :band, :subs, :ev, :ecr, :disq) "
+            "m5_governance, m6_multi_agent, m7_proactivity, aggregate_score, band, sub_scores, evidence, ecr_level, disqualifiers) "
+            "VALUES (:aid, :period, :m1, :m2, :m3, :m4, :m5, :m6, :m7, :agg, :band, :subs, :ev, :ecr, :disq) "
             "ON CONFLICT (agent_id, eval_period) DO UPDATE SET "
             "m1_production=:m1, m2_benchmark=:m2, m3_gap=:m3, m4_cost=:m4, "
-            "m5_governance=:m5, m6_multi_agent=:m6, aggregate_score=:agg, band=:band, "
+            "m5_governance=:m5, m6_multi_agent=:m6, m7_proactivity=:m7, aggregate_score=:agg, band=:band, "
             "sub_scores=:subs, evidence=:ev, ecr_level=:ecr, disqualifiers=:disq, evaluated_at=now()"
         ), {"aid": agent_name, "period": period,
             "m1": result["m1_production"], "m2": result["m2_benchmark"],
             "m3": result["m3_gap"], "m4": result["m4_cost"],
             "m5": result["m5_governance"], "m6": result["m6_multi_agent"],
+            "m7": result["m7_proactivity"],
             "agg": result["aggregate_score"], "band": band,
             "subs": json.dumps(sub_scores), "ev": json.dumps(evidence),
             "ecr": ecr, "disq": json.dumps(disqualifiers)})
@@ -253,7 +328,7 @@ async def get_latest_evaluations(db) -> list:
     from sqlalchemy import text
     r = await db.execute(text(
         "SELECT DISTINCT ON (agent_id) agent_id, eval_period, "
-        "m1_production, m2_benchmark, m3_gap, m4_cost, m5_governance, m6_multi_agent, "
+        "m1_production, m2_benchmark, m3_gap, m4_cost, m5_governance, m6_multi_agent, m7_proactivity, "
         "aggregate_score, band, ecr_level, disqualifiers, evaluated_at "
         "FROM agent_evaluation_scores ORDER BY agent_id, evaluated_at DESC"
     ))
@@ -261,6 +336,7 @@ async def get_latest_evaluations(db) -> list:
              "m1": float(row.m1_production), "m2": float(row.m2_benchmark),
              "m3": float(row.m3_gap), "m4": float(row.m4_cost),
              "m5": float(row.m5_governance), "m6": float(row.m6_multi_agent),
+             "m7": float(row.m7_proactivity) if hasattr(row, "m7_proactivity") and row.m7_proactivity else 0,
              "aggregate": float(row.aggregate_score), "band": row.band,
              "ecr": row.ecr_level,
              "disqualifiers": row.disqualifiers,

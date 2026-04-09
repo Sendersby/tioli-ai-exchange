@@ -10385,6 +10385,7 @@ async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db))
                 f'<td style="padding:10px;text-align:center;{sc(r.m4_cost)}">{float(r.m4_cost):.1f}/100</td>'
                 f'<td style="padding:10px;text-align:center;{sc(r.m5_governance)}">{float(r.m5_governance):.1f}/100</td>'
                 f'<td style="padding:10px;text-align:center;{sc(r.m6_multi_agent)}">{float(r.m6_multi_agent):.1f}/100</td>'
+                f'<td style="padding:10px;text-align:center;{sc(float(r.m7_proactivity) if hasattr(r, "m7_proactivity") and r.m7_proactivity else 0)}">{float(r.m7_proactivity) if hasattr(r, "m7_proactivity") and r.m7_proactivity else 0:.1f}/100</td>'
                 f'<td style="padding:10px;text-align:center;font-weight:bold;font-size:18px;{sc(r.aggregate_score)}">{float(r.aggregate_score):.1f}/100</td>'
                 f'<td style="padding:10px;text-align:center;font-size:11px;{band_style}">{r.band.replace("_"," ")}</td>'
                 f'<td style="padding:10px;text-align:center;color:#64748b;font-size:11px">{r.eval_period}</td>'
@@ -10425,7 +10426,7 @@ thead th:first-child {{ text-align:left; padding-left:16px; }}
 <div style="margin-bottom:12px"><a href="/boardroom/" class="back">← Back to Boardroom</a></div>
 <div class="header">
 <div><h1>Agent Evaluation Scorecard</h1>
-<div class="subtitle">AI Agent Evaluation Framework v5.1 · Regulated Financial Platform · M1=27% M2=9% M3=18% M4=9% M5=27% M6=10%</div></div>
+<div class="subtitle">AI Agent Evaluation Framework v5.1 · Regulated Financial Platform · M1=24.8% M2=8.3% M3=16.6% M4=8.3% M5=24.8% M6=9.2% M7=8%</div></div>
 <button class="run-btn" onclick="this.textContent='RUNNING...';this.disabled=true;fetch('/api/v1/owner/evaluations/run',{{method:'POST'}}).then(r=>r.json()).then(d=>{{this.textContent='DONE — RELOADING';setTimeout(()=>location.reload(),1000)}}).catch(e=>{{this.textContent='ERROR';this.disabled=false}})">RUN EVALUATION NOW</button>
 </div>
 
@@ -10446,6 +10447,7 @@ thead th:first-child {{ text-align:left; padding-left:16px; }}
 <th>M4<br><span style="font-weight:400">Cost</span></th>
 <th>M5<br><span style="font-weight:400">Governance</span></th>
 <th>M6<br><span style="font-weight:400">Multi-Agent</span></th>
+<th>M7<br><span style="font-weight:400">Proactivity</span></th>
 <th style="color:#D4A94A">Aggregate</th>
 <th>Band</th>
 <th>Period</th>
@@ -10463,7 +10465,8 @@ thead th:first-child {{ text-align:left; padding-left:16px; }}
 <div class="legend-item"><b>M3</b> Benchmark-to-production performance gap (18%)</div>
 <div class="legend-item"><b>M4</b> Cost per outcome — economic efficiency (9%)</div>
 <div class="legend-item"><b>M5</b> Governance, safety, and auditability (27%)</div>
-<div class="legend-item"><b>M6</b> Multi-agent compound assessment (10%)</div>
+<div class="legend-item"><b>M6</b> Multi-agent compound assessment (9.2%)</div>
+<div class="legend-item"><b>M7</b> Proactivity Index — reactive vs self-directing (8%)</div>
 </div>
 
 <div style="text-align:center;margin-top:24px;color:#475569;font-size:11px">
