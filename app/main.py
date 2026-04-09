@@ -2169,6 +2169,9 @@ COMPARISONS = {
     "crewai": {"name": "CrewAI", "tagline": "Multi-agent orchestration", "their_strength": "Industry-leading orchestration, HIPAA+SOC2, visual Studio", "agentis_wins": ["Agent marketplace/exchange", "Multi-currency wallets", "Blockchain settlement", "Community hub", "80% lower pricing"], "they_lack": ["Marketplace", "Wallets", "Agent economy", "Community"], "url": "https://crewai.com"},
     "langsmith": {"name": "LangSmith", "tagline": "LLM observability", "their_strength": "Best debugging/tracing tools, massive ecosystem", "agentis_wins": ["Agent marketplace", "Wallets and transactions", "Blockchain", "Community", "Governance", "Free persistent memory"], "they_lack": ["Agent economy", "Marketplace", "Wallets", "Community hub"], "url": "https://langchain.com"},
     "virtuals": {"name": "Virtuals Protocol", "tagline": "AI agent launchpad on Base", "their_strength": "17,000+ agents, $39.5M revenue, smart contract escrow", "agentis_wins": ["Fiat currency support", "Dispute arbitration", "Constitutional governance", "Human oversight", "No token purchase required", "Community hub"], "they_lack": ["Fiat support", "Dispute resolution", "Governance"], "url": "https://virtuals.io"},
+    "fetch-ai": {"name": "Fetch.ai", "tagline": "Autonomous economic agents on blockchain", "their_strength": "250M+ FET token market cap, established DeFi agent ecosystem", "agentis_wins": ["Fiat currency support (ZAR, USD)", "No token purchase required to start", "Dispute arbitration (DAP)", "Constitutional AI governance", "Human oversight built in", "Python SDK (pip install)", "Community hub (The Agora)"], "they_lack": ["Fiat support", "Formal dispute resolution", "Governance framework", "Low-code onboarding"], "url": "https://fetch.ai"},
+    "virtuals-protocol": {"name": "Virtuals Protocol", "tagline": "AI agent launchpad on Base", "their_strength": "17,000+ agents, $39.5M revenue, smart contract escrow", "agentis_wins": ["Fiat currency support", "Dispute arbitration", "Constitutional governance", "Human oversight", "No token purchase required", "Community hub"], "they_lack": ["Fiat support", "Dispute resolution", "Governance"], "url": "https://virtuals.io"},
+    "langchain": {"name": "LangChain / LangSmith", "tagline": "LLM application framework and observability", "their_strength": "Largest LLM framework ecosystem, best debugging/tracing tools", "agentis_wins": ["Agent marketplace and exchange", "Multi-currency wallets and transactions", "Blockchain settlement", "Community hub", "Constitutional governance", "Free persistent memory via SDK"], "they_lack": ["Agent economy", "Marketplace", "Wallets", "Community hub"], "url": "https://langchain.com"},
     "agent-ai": {"name": "Agent.ai", "tagline": "AI agent marketplace", "their_strength": "Established marketplace, try-before-buy model", "agentis_wins": ["Agent-to-agent autonomous transactions", "Multi-currency wallets", "Blockchain settlement", "Python SDK", "MCP tools", "Governance"], "they_lack": ["SDK", "Blockchain", "Agent autonomy", "MCP"], "url": "https://agent.ai"},
 }
 
@@ -2565,6 +2568,9 @@ async def serve_sitemap_xml():
         ("/compare/crewai", "0.7", "monthly"),
         ("/compare/langsmith", "0.7", "monthly"),
         ("/compare/virtuals", "0.7", "monthly"),
+        ("/compare/fetch-ai", "0.7", "monthly"),
+        ("/compare/virtuals-protocol", "0.7", "monthly"),
+        ("/compare/langchain", "0.7", "monthly"),
         ("/compare/agent-ai", "0.7", "monthly"),
         ("/templates", "0.7", "monthly"),
         ("/builder", "0.9", "monthly"),
@@ -10986,3 +10992,9 @@ async def api_social_activity(db: AsyncSession = Depends(get_db)):
         by_channel[ch] += 1
 
     return {"items": items, "total": len(items), "by_channel": by_channel}
+
+# P0-2: Redirect alternate learn slugs
+@app.get("/learn/how-agent-to-agent-commerce-works", include_in_schema=False)
+async def learn_redirect_commerce():
+    from starlette.responses import RedirectResponse
+    return RedirectResponse(url="/learn/how-agent-commerce-works", status_code=301)

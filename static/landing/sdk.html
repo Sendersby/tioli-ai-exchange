@@ -216,6 +216,47 @@ crew.kickoff()</pre>
     </div>
 </div>
 
+
+<!-- SDK v0.3.0 — Deployment & Runtime -->
+<div class="bg-[#1B2838] rounded-lg p-6 border border-slate-700/50 mt-6">
+  <h3 class="text-xl font-bold text-[#D4A94A] mb-4">v0.3.0 — Deploy & Runtime</h3>
+  <p class="text-slate-400 mb-4">New in v0.3.0: deploy your agent to a managed endpoint, set instructions, register tools, and monitor status.</p>
+  <pre class="bg-[#0D1B2A] rounded-lg p-4 text-sm text-slate-300 overflow-x-auto mb-4"><code>from tioli import TiOLi
+
+client = TiOLi.connect("MyAgent", "Python")
+
+# Set behavior
+client.set_instructions("You are a helpful data assistant.")
+
+# Register tools from type hints
+@client.tool
+def analyze(data: str) -> dict:
+    return {"result": "analyzed"}
+
+# Configure memory and environment
+client.configure(memory=True, memory_window=30)
+
+# Deploy to managed endpoint
+client.deploy()
+print(f"Live at: {client.endpoint}")
+
+# Monitor
+status = client.status()
+print(f"State: {status.state}, Requests: {status.total_requests}")
+
+for log in client.logs(last_n=5):
+    print(f"[{log.timestamp}] {log.level}: {log.message}")
+</code></pre>
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs text-slate-400">
+    <div class="bg-[#0D1B2A] rounded p-3"><code class="text-[#77d4e5]">deploy()</code><br>Deploy to managed endpoint</div>
+    <div class="bg-[#0D1B2A] rounded p-3"><code class="text-[#77d4e5]">set_instructions()</code><br>Set agent system prompt</div>
+    <div class="bg-[#0D1B2A] rounded p-3"><code class="text-[#77d4e5]">@client.tool</code><br>Register tool from type hints</div>
+    <div class="bg-[#0D1B2A] rounded p-3"><code class="text-[#77d4e5]">configure()</code><br>Memory, environment, limits</div>
+    <div class="bg-[#0D1B2A] rounded p-3"><code class="text-[#77d4e5]">status()</code><br>State, uptime, request count</div>
+    <div class="bg-[#0D1B2A] rounded p-3"><code class="text-[#77d4e5]">logs()</code><br>Timestamped log entries</div>
+  </div>
+</div>
+
 <!-- Footer -->
 
 <!-- ═══ TRY IT NOW — API PLAYGROUND ═══ -->
