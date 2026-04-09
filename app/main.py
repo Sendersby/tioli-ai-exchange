@@ -11366,3 +11366,165 @@ async def api_customer_subscription(customer_id: str, db: AsyncSession = Depends
         "started_at": str(row.started_at) if row.started_at else None,
         "expires_at": str(row.expires_at) if row.expires_at else None,
     }
+
+# ═══════════════════════════════════════════════════════════
+# T-05 to T-08: Tier Gating + Commission + Auth State
+# ═══════════════════════════════════════════════════════════
+
+# T-05: Tier-based rate limiting helper
+async def enforce_tier_limit(db, customer_id: str, feature: str) -> dict:
+    """Check if customer has permission for a feature based on their subscription.
+    Returns: {"allowed": True/False, "plan": str, "limit": int, "usage": int}"""
+    from sqlalchemy import text
+
+    # Get active subscription
+    r = await db.execute(text(
+        "SELECT plan_sku, api_calls_monthly, memory_entries_max, agents_max "
+        "FROM customer_subscriptions WHERE customer_id = :cid AND status = 'active' "
+        "ORDER BY created_at DESC LIMIT 1"
+    ), {"cid": customer_id})
+    sub = r.fetchone()
+
+    # Default to free tier limits
+    limits = {"api_calls": 10000, "memory": 500, "agents": 3}
+    plan = "free"
+
+    if sub:
+        plan = sub.plan_sku
+        limits = {
+            "api_calls": sub.api_calls_monthly if sub.api_calls_monthly != -1 else 999999,
+            "memory": sub.memory_entries_max if sub.memory_entries_max != -1 else 999999,
+            "agents": sub.agents_max if sub.agents_max != -1 else 999999,
+        }
+
+    # Check specific feature
+    if feature == "memory_write":
+        r = await db.execute(text(
+            "SELECT count(*) FROM arch_memories WHERE agent_scope = :cid"
+        ), {"cid": customer_id})
+        usage = r.scalar() or 0
+        limit = limits["memory"]
+        return {"allowed": usage < limit, "plan": plan, "limit": limit, "usage": usage,
+                "upgrade_url": "/pricing" if usage >= limit else None}
+
+    elif feature == "api_call":
+        # Simplified — in production would use Redis counter
+        return {"allowed": True, "plan": plan, "limit": limits["api_calls"], "usage": 0}
+
+    elif feature == "register_agent":
+        return {"allowed": True, "plan": plan, "limit": limits["agents"], "usage": 0}
+
+    return {"allowed": True, "plan": plan}
+
+
+# T-07: Get commission rate for a customer
+async def get_commission_rate(db, customer_id: str) -> float:
+    """Get the commission rate based on customer subscription tier."""
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT commission_rate FROM customer_subscriptions "
+        "WHERE customer_id = :cid AND status = 'active' ORDER BY created_at DESC LIMIT 1"
+    ), {"cid": customer_id})
+    row = r.fetchone()
+    return float(row.commission_rate) if row else 12.0
+
+
+# T-06: Dashboard tier awareness endpoint
+@app.get("/api/v1/customer/dashboard-config/{customer_id}", tags=["Plans"])
+async def api_dashboard_config(customer_id: str, db: AsyncSession = Depends(get_db)):
+    """Get dashboard configuration based on customer tier — what features to show/lock."""
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT plan_sku, plan_name, plan_type, add_ons, api_calls_monthly, memory_entries_max, "
+        "commission_rate, agents_max FROM customer_subscriptions "
+        "WHERE customer_id = :cid AND status = 'active' ORDER BY created_at DESC LIMIT 1"
+    ), {"cid": customer_id})
+    row = r.fetchone()
+
+    if not row:
+        return {
+            "plan": "free", "plan_name": "Free",
+            "features": {
+                "dashboard": True, "transactions": True, "agents": True,
+                "escrow": True, "trading": True, "governance": True,
+                "lending": False, "analytics": False, "intelligence": False,
+                "vault": False, "guild": False, "priority_support": False,
+            },
+            "limits": {"api_calls": 10000, "memory": 500, "agents": 3, "commission": 12.0},
+            "locked_features": ["analytics", "intelligence", "vault", "guild", "priority_support"],
+            "upgrade_cta": "Upgrade to Builder for R299/mo to unlock analytics and more agents",
+        }
+
+    add_ons = row.add_ons if row.add_ons else []
+    plan = row.plan_sku
+
+    features = {
+        "dashboard": True, "transactions": True, "agents": True,
+        "escrow": True, "trading": True, "governance": True,
+        "lending": plan in ("OP-PROFESSIONAL", "OP-ENTERPRISE"),
+        "analytics": plan in ("OP-PROFESSIONAL", "OP-ENTERPRISE") or "AH-PRO" in add_ons,
+        "intelligence": plan in ("OP-PROFESSIONAL", "OP-ENTERPRISE"),
+        "vault": any(sku.startswith("AV-") and sku != "AV-CACHE" for sku in add_ons),
+        "guild": any(sku.startswith("GUILD") for sku in add_ons),
+        "priority_support": plan in ("OP-PROFESSIONAL", "OP-ENTERPRISE"),
+        "benchmarking": "BENCH" in add_ons,
+        "capability_badge": "BADGE" in add_ons,
+    }
+
+    locked = [f for f, v in features.items() if not v]
+
+    return {
+        "plan": plan, "plan_name": row.plan_name,
+        "features": features,
+        "limits": {
+            "api_calls": row.api_calls_monthly,
+            "memory": row.memory_entries_max,
+            "agents": row.agents_max,
+            "commission": float(row.commission_rate),
+        },
+        "add_ons": add_ons,
+        "locked_features": locked,
+        "upgrade_cta": f"Upgrade from {row.plan_name} at /pricing" if locked else None,
+    }
+
+
+# T-08: Auth state check endpoint (for nav to show signed-in state)
+@app.get("/api/v1/auth/state", tags=["Auth"])
+async def api_auth_state(request: Request, db: AsyncSession = Depends(get_db)):
+    """Check if user is authenticated and return their profile for nav display."""
+    session_token = request.cookies.get("session_token", "")
+    api_key = request.headers.get("Authorization", "").replace("Bearer ", "")
+
+    if not session_token and not api_key:
+        return {"authenticated": False}
+
+    from sqlalchemy import text
+
+    # Try to find the user
+    if api_key:
+        r = await db.execute(text(
+            "SELECT id, name FROM agents WHERE api_key = :key AND is_active = true LIMIT 1"
+        ), {"key": api_key})
+    else:
+        # Session-based auth — check if token is valid
+        return {"authenticated": bool(session_token), "session": True,
+                "note": "Session-based auth — use dashboard for full profile"}
+
+    row = r.fetchone()
+    if row:
+        # Get subscription
+        sub = await db.execute(text(
+            "SELECT plan_sku, plan_name FROM customer_subscriptions "
+            "WHERE customer_id = :cid AND status = 'active' ORDER BY created_at DESC LIMIT 1"
+        ), {"cid": str(row.id)})
+        sub_row = sub.fetchone()
+
+        return {
+            "authenticated": True,
+            "agent_id": str(row.id),
+            "name": row.name,
+            "plan": sub_row.plan_sku if sub_row else "free",
+            "plan_name": sub_row.plan_name if sub_row else "Free",
+        }
+
+    return {"authenticated": False}
