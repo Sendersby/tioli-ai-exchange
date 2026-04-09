@@ -9645,6 +9645,29 @@ async def api_pursue_goals(agent_name: str, db: AsyncSession = Depends(get_db)):
     from app.arch.goal_engine import goal_pursuit_cycle
     return await goal_pursuit_cycle(db, agent_name, client)
 
+
+# ARCH-AA-003: Agent mesh communication endpoints
+@app.post("/api/v1/arch/messages", include_in_schema=False)
+async def api_send_agent_message(request: Request, db: AsyncSession = Depends(get_db)):
+    """Send a message between agents."""
+    body = await request.json()
+    from app.arch.mesh_comms import send_message
+    return await send_message(db, body.get("from",""), body.get("to",""),
+        body.get("subject",""), body.get("body",""), body.get("type","notify"), body.get("priority","normal"))
+
+@app.get("/api/v1/arch/messages/inbox/{agent_name}", include_in_schema=False)
+async def api_agent_inbox(agent_name: str, db: AsyncSession = Depends(get_db)):
+    """Get agent inbox."""
+    from app.arch.mesh_comms import get_inbox
+    return await get_inbox(db, agent_name)
+
+@app.post("/api/v1/arch/messages/{message_id}/reply", include_in_schema=False)
+async def api_reply_message(message_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Reply to a message."""
+    body = await request.json()
+    from app.arch.mesh_comms import reply_to_message
+    return await reply_to_message(db, message_id, body.get("from",""), body.get("body",""))
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
