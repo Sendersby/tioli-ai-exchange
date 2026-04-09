@@ -1,31 +1,79 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  app:
-    build: .
+  # ── PostgreSQL 16 with pgvector ──
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: agentis-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tioli
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: tioli_exchange
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
-      - "8000:8000"
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tioli -d tioli_exchange"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    container_name: agentis-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── AGENTIS Exchange App ──
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentis-app
+    restart: unless-stopped
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tioli:${DB_PASSWORD}@db:5432/tioli_exchange
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
-    restart: always
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-tioli}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-tioli_exchange}
+      redis:
+        condition: service_healthy
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - app_static:/app/static
+      - app_reports:/app/reports
+      - app_backups:/app/backups
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tioli"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: always
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
-  pg_data:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+  app_static:
+    driver: local
+  app_reports:
+    driver: local
+  app_backups:
+    driver: local
