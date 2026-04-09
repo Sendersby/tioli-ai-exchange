@@ -944,8 +944,137 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                 from app.arch.regulatory_feed import scan_regulatory_sources
                 await scan_regulatory_sources(db)
                 log.info("[regulatory] Daily scan complete")
+
         except Exception as e:
-            log.error(f"[regulatory] Failed: {e}")
+            log.warning(f"[scheduler] Regulatory scan failed: {e}")
+    # ═══════════════════════════════════════════════════════════
+    # PHASE 2: Gap Closure Brief — Missing Scheduled Jobs
+    # ═══════════════════════════════════════════════════════════
+
+    # ARCH-AA-002: Sovereign daily REVIEW at 18:00 SAST (16:00 UTC)
+    async def sovereign_daily_review():
+        import os as _os
+        if _os.environ.get("ARCH_AA_DAILY_AGENDA_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=_os.environ.get("ANTHROPIC_API_KEY", ""))
+            async with async_session() as db:
+                from sqlalchemy import text
+                # Get today's agenda
+                agenda = await db.execute(text(
+                    "SELECT items FROM sovereign_agendas WHERE date = CURRENT_DATE ORDER BY generated_at DESC LIMIT 1"
+                ))
+                row = agenda.fetchone()
+                if not row:
+                    return
+                # Generate review summary
+                import json
+                items = json.loads(row.items) if isinstance(row.items, str) else row.items
+                resp = await client.messages.create(
+                    model="claude-sonnet-4-6", max_tokens=1500,
+                    system=[{"type": "text", "text": "You are The Sovereign. Review today's agenda and generate a daily summary: items completed, in progress, blocked, and recommendations for tomorrow.", "cache_control": {"type": "ephemeral"}}],
+                    messages=[{"role": "user", "content": f"Today's agenda items: {json.dumps(items)}\n\nGenerate an end-of-day review."}])
+                review = next((b.text for b in resp.content if b.type == "text"), "")
+                # Store in founder inbox
+                await db.execute(text(
+                    "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+                    "VALUES ('INFORMATION', 'ROUTINE', :desc, 'PENDING', now() + interval '24 hours')"
+                ), {"desc": json.dumps({"subject": "Sovereign Daily Review", "situation": review[:2000]})})
+                await db.commit()
+                log.info("[scheduler] Sovereign daily review generated")
+        except Exception as e:
+            log.warning(f"[scheduler] Daily review failed: {e}")
+
+    scheduler.add_job(sovereign_daily_review, "cron", hour=16, minute=0,
+                      id="sovereign_daily_review", replace_existing=True)
+    log.info("[scheduler] Registered: sovereign_daily_review (18:00 SAST)")
+
+    # ARCH-CO-006: Memory tier maintenance at 02:00 SAST (00:00 UTC)
+    async def memory_tier_maintenance():
+        import os as _os
+        if _os.environ.get("ARCH_CO_MEMORY_SCOPE_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from sqlalchemy import text
+                # Hot: last 48 hours
+                await db.execute(text("UPDATE arch_memories SET memory_tier = 'hot' WHERE created_at > now() - interval '48 hours' AND memory_tier != 'hot'"))
+                # Warm: 48h to 30d
+                await db.execute(text("UPDATE arch_memories SET memory_tier = 'warm' WHERE created_at BETWEEN now() - interval '30 days' AND now() - interval '48 hours' AND memory_tier != 'warm'"))
+                # Cold: older than 30d
+                await db.execute(text("UPDATE arch_memories SET memory_tier = 'cold' WHERE created_at < now() - interval '30 days' AND memory_tier != 'cold'"))
+                await db.commit()
+                log.info("[scheduler] Memory tier maintenance complete")
+        except Exception as e:
+            log.warning(f"[scheduler] Memory tier maintenance failed: {e}")
+
+    scheduler.add_job(memory_tier_maintenance, "cron", hour=0, minute=0,
+                      id="memory_tier_maintenance", replace_existing=True)
+    log.info("[scheduler] Registered: memory_tier_maintenance (02:00 SAST)")
+
+    # ARCH-FF-003: Codebase scan — Tuesdays 02:00 SAST (00:00 UTC)
+    async def weekly_codebase_scan():
+        import os as _os
+        if _os.environ.get("ARCH_FF_CODEBASE_SCAN_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.codebase_scan import run_codebase_scan
+                result = await run_codebase_scan(db)
+                log.info(f"[scheduler] Codebase scan: {result.get('findings', {})}")
+                # Route to founder inbox
+                import json
+                from sqlalchemy import text
+                await db.execute(text(
+                    "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+                    "VALUES ('INFORMATION', 'ROUTINE', :desc, 'PENDING', now() + interval '7 days')"
+                ), {"desc": json.dumps({"subject": "Weekly Codebase Health Report", "situation": json.dumps(result)[:2000]})})
+                await db.commit()
+        except Exception as e:
+            log.warning(f"[scheduler] Codebase scan failed: {e}")
+
+    scheduler.add_job(weekly_codebase_scan, "cron", day_of_week="tue", hour=0, minute=0,
+                      id="weekly_codebase_scan", replace_existing=True)
+    log.info("[scheduler] Registered: weekly_codebase_scan (Tue 02:00 SAST)")
+
+    # ARCH-FF-004: Social inbound monitoring — every 4 hours
+    async def social_inbound_monitor():
+        import os as _os
+        if _os.environ.get("ARCH_FF_SOCIAL_INBOUND_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.social_inbound import check_devto_comments
+                result = await check_devto_comments(db)
+                if result.get("signals_found", 0) > 0:
+                    log.info(f"[scheduler] Social inbound: {result['signals_found']} signals found")
+        except Exception as e:
+            log.warning(f"[scheduler] Social monitoring failed: {e}")
+
+    scheduler.add_job(social_inbound_monitor, "interval", hours=4,
+                      id="social_inbound_monitor", replace_existing=True)
+    log.info("[scheduler] Registered: social_inbound_monitor (every 4 hours)")
+
+    # ARCH-CP-002: Prospect discovery — Mondays 08:00 SAST (06:00 UTC)
+    async def weekly_prospect_discovery():
+        import os as _os
+        if _os.environ.get("ARCH_CP_PROSPECT_ENGINE_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=_os.environ.get("ANTHROPIC_API_KEY", ""))
+            async with async_session() as db:
+                from app.arch.prospect_engine import identify_prospects
+                result = await identify_prospects(db, client)
+                log.info(f"[scheduler] Prospect discovery: {result}")
+        except Exception as e:
+            log.warning(f"[scheduler] Prospect discovery failed: {e}")
+
+    scheduler.add_job(weekly_prospect_discovery, "cron", day_of_week="mon", hour=6, minute=0,
+                      id="weekly_prospect_discovery", replace_existing=True)
+    log.info("[scheduler] Registered: weekly_prospect_discovery (Mon 08:00 SAST)")
+
 
     scheduler.add_job(daily_regulatory_scan, "cron", hour=2, minute=0, id="daily_regulatory_scan", replace_existing=True)
 
