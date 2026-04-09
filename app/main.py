@@ -9620,8 +9620,8 @@ async def api_list_goals(db: AsyncSession = Depends(get_db)):
         "SELECT goal_id, agent_id, title, status, priority, progress_pct, last_actioned, created_at "
         "FROM agent_goals ORDER BY priority ASC, created_at DESC"
     ))
-    return [{"goal_id": str(r.goal_id), "agent": r.agent_id, "title": r.title,
-             "status": r.status, "priority": r.priority, "progress": r.progress_pct,
+    return [{"goal_id": str(r.goal_id), "agent_id": r.agent_id, "title": r.title,
+             "status": r.status, "priority": r.priority, "progress_pct": r.progress_pct or 0,
              "last_actioned": str(r.last_actioned) if r.last_actioned else None}
             for r in result.fetchall()]
 
@@ -9731,7 +9731,7 @@ async def api_rba_assess(agent_id: str, db: AsyncSession = Depends(get_db)):
 async def api_risk_profiles(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     result = await db.execute(text("SELECT agent_id, risk_tier, risk_score, edd_required FROM agent_risk_profiles ORDER BY risk_score DESC"))
-    return [{"agent_id": r.agent_id, "tier": r.risk_tier, "score": r.risk_score, "edd": r.edd_required} for r in result.fetchall()]
+    return [{"agent_id": r.agent_id, "risk_tier": r.risk_tier, "risk_score": r.risk_score, "edd_required": r.edd_required} for r in result.fetchall()]
 
 @app.post("/api/v1/anomaly/post", include_in_schema=False)
 async def api_post_anomaly(request: Request, db: AsyncSession = Depends(get_db)):
