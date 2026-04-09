@@ -10139,3 +10139,37 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
         widgets["prospect_pipeline"] = []
 
     return widgets
+
+# H-004: Progressive Memory Loading — test/debug endpoint
+@app.post("/api/v1/arch/memory/classify", include_in_schema=False)
+async def api_classify_task_memory(request: Request):
+    """Classify a task and return which memory categories would be loaded."""
+    body = await request.json()
+    from app.arch.progressive_memory import classify_task, estimate_token_savings
+    source_types = classify_task(body.get("task_description", ""), body.get("task_type"))
+    return {"task_description": body.get("task_description", "")[:100],
+            "task_type": body.get("task_type"),
+            "source_types_loaded": source_types,
+            "progressive_loading": len(source_types) > 0,
+            "note": "Empty source_types = full corpus loaded (flag disabled or task=all)"}
+
+@app.get("/api/v1/arch/memory/stats", include_in_schema=False)
+async def api_memory_stats(db: AsyncSession = Depends(get_db)):
+    """Memory corpus statistics for progressive loading analysis."""
+    from sqlalchemy import text
+    total = await db.execute(text("SELECT count(*) FROM arch_memories"))
+    by_tier = await db.execute(text(
+        "SELECT memory_tier, count(*) FROM arch_memories GROUP BY memory_tier"
+    ))
+    by_scope = await db.execute(text(
+        "SELECT agent_scope, count(*) FROM arch_memories GROUP BY agent_scope ORDER BY count DESC LIMIT 10"
+    ))
+    by_source = await db.execute(text(
+        "SELECT source_type, count(*) FROM arch_memories GROUP BY source_type ORDER BY count DESC LIMIT 15"
+    ))
+    return {
+        "total_memories": total.scalar() or 0,
+        "by_tier": {r.memory_tier or "none": r.count for r in by_tier.fetchall()},
+        "by_scope": {r.agent_scope or "global": r.count for r in by_scope.fetchall()},
+        "by_source": {r.source_type or "unknown": r.count for r in by_source.fetchall()},
+    }
