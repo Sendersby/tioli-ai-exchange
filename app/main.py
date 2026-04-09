@@ -9652,8 +9652,12 @@ async def api_send_agent_message(request: Request, db: AsyncSession = Depends(ge
     """Send a message between agents."""
     body = await request.json()
     from app.arch.mesh_comms import send_message
-    return await send_message(db, body.get("from",""), body.get("to",""),
+    result = await send_message(db, body.get("from",""), body.get("to",""),
         body.get("subject",""), body.get("body",""), body.get("type","notify"), body.get("priority","normal"))
+    if result.get("allowed") == False:
+        from starlette.responses import JSONResponse
+        return JSONResponse(status_code=403, content=result)
+    return result
 
 @app.get("/api/v1/arch/messages/inbox/{agent_name}", include_in_schema=False)
 async def api_agent_inbox(agent_name: str, db: AsyncSession = Depends(get_db)):

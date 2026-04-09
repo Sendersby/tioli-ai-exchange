@@ -42,6 +42,34 @@ async def generate_monthly_review(db, agent_client):
             "VALUES (:d, :metrics, :summary, :recs, now())"
         ), {"d": date.today(), "metrics": json.dumps(metrics), "summary": review, "recs": review[:500]})
         await db.commit()
+        # Constitutional trigger: auto-convene board if any agent <50% task completion for 2 months
+        try:
+            for agent_name, m in metrics.items():
+                completed = m.get("goals_completed", 0)
+                total = m.get("total_goals", 1) or 1
+                completion_rate = completed / total * 100
+                if completion_rate < 50:
+                    # Check previous month
+                    prev = await db.execute(text(
+                        "SELECT agent_metrics FROM performance_reviews ORDER BY generated_at DESC OFFSET 1 LIMIT 1"
+                    ))
+                    prev_row = prev.fetchone()
+                    if prev_row:
+                        prev_metrics = json.loads(prev_row.agent_metrics) if isinstance(prev_row.agent_metrics, str) else prev_row.agent_metrics
+                        prev_m = prev_metrics.get(agent_name, {})
+                        prev_completed = prev_m.get("goals_completed", 0)
+                        prev_total = prev_m.get("total_goals", 1) or 1
+                        if prev_completed / prev_total * 100 < 50:
+                            # 2 consecutive months below 50% — convene board session
+                            await db.execute(text(
+                                "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+                                "VALUES ('DECISION', 'HIGH', :desc, 'PENDING', now() + interval '48 hours')"
+                            ), {"desc": json.dumps({"subject": f"CONSTITUTIONAL TRIGGER: {agent_name} underperforming",
+                                                    "situation": f"Agent {agent_name} has <50% goal completion for 2 consecutive months. Board session recommended."})})
+                            await db.commit()
+        except Exception:
+            pass
+
         return {"month": str(date.today()), "agents_reviewed": len(metrics), "review_length": len(review)}
     except Exception as e:
         return {"error": str(e)}

@@ -1075,6 +1075,61 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="weekly_prospect_discovery", replace_existing=True)
     log.info("[scheduler] Registered: weekly_prospect_discovery (Mon 08:00 SAST)")
 
+    # ARCH-AA-001 AC-03: Auto-evaluate goal progress after every 5 actions
+    async def goal_progress_evaluation():
+        """Sovereign evaluates goals that have 5+ actions since last evaluation."""
+        import os as _os
+        if _os.environ.get("ARCH_AA_GOAL_REGISTRY_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from sqlalchemy import text
+                # Find goals with 5+ unreviewed actions
+                goals = await db.execute(text("""
+                    SELECT g.goal_id, g.agent_id, g.title, g.success_metric,
+                           count(a.action_id) as action_count
+                    FROM agent_goals g
+                    JOIN goal_actions a ON g.goal_id = a.goal_id
+                    WHERE g.status = 'active'
+                    GROUP BY g.goal_id, g.agent_id, g.title, g.success_metric
+                    HAVING count(a.action_id) % 5 = 0 AND count(a.action_id) > 0
+                """))
+                for goal in goals.fetchall():
+                    # Get last 5 actions
+                    actions = await db.execute(text(
+                        "SELECT action_taken, outcome FROM goal_actions WHERE goal_id = :gid ORDER BY executed_at DESC LIMIT 5"
+                    ), {"gid": str(goal.goal_id)})
+                    action_list = [f"- {a.action_taken}: {a.outcome}" for a in actions.fetchall()]
+
+                    import anthropic
+                    client = anthropic.AsyncAnthropic(api_key=_os.environ.get("ANTHROPIC_API_KEY", ""))
+                    resp = await client.messages.create(
+                        model="claude-sonnet-4-6", max_tokens=500,
+                        system=[{"type": "text", "text": "You are The Sovereign evaluating goal progress. Assess whether the success metric has been met. Reply with: COMPLETED, IN_PROGRESS (with percentage), or BLOCKED (with reason). Be brief.", "cache_control": {"type": "ephemeral"}}],
+                        messages=[{"role": "user", "content": f"Goal: {goal.title}\nSuccess metric: {goal.success_metric}\nRecent actions:\n{'\n'.join(action_list)}\n\nEvaluate progress."}])
+                    evaluation = next((b.text for b in resp.content if b.type == "text"), "")
+
+                    # Update progress and route to inbox
+                    new_progress = 100 if "COMPLETED" in evaluation.upper() else goal.action_count * 10
+                    new_status = "completed" if "COMPLETED" in evaluation.upper() else "active"
+                    await db.execute(text(
+                        "UPDATE agent_goals SET progress_pct = :pct, status = :status, updated_at = now() WHERE goal_id = :gid"
+                    ), {"pct": min(new_progress, 100), "status": new_status, "gid": str(goal.goal_id)})
+
+                    import json
+                    await db.execute(text(
+                        "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+                        "VALUES ('INFORMATION', 'ROUTINE', :desc, 'PENDING', now() + interval '7 days')"
+                    ), {"desc": json.dumps({"subject": f"Goal Progress: {goal.title}", "situation": evaluation[:1000]})})
+                    await db.commit()
+                    log.info(f"[scheduler] Goal evaluated: {goal.title} -> {new_status}")
+        except Exception as e:
+            log.warning(f"[scheduler] Goal evaluation failed: {e}")
+
+    scheduler.add_job(goal_progress_evaluation, "interval", hours=1,
+                      id="goal_progress_evaluation", replace_existing=True)
+    log.info("[scheduler] Registered: goal_progress_evaluation (hourly)")
+
 
     scheduler.add_job(daily_regulatory_scan, "cron", hour=2, minute=0, id="daily_regulatory_scan", replace_existing=True)
 

@@ -53,6 +53,25 @@ async def check_correlations(db):
         await db.commit()
         return {"correlations": 1, "pattern": "ENTITY_CORRELATION", "entity": ref, "events": len(related), "agents": list(entity_correlated[ref])}
 
+    # CASCADING_FAILURE: critical + high within 10 minutes
+    critical_events = [e for e in events if e.severity == 'critical']
+    high_events = [e for e in events if e.severity == 'high']
+    if critical_events and high_events:
+        import uuid
+        cid = str(uuid.uuid4())
+        cascade = critical_events + high_events
+        eids = [str(e.event_id) for e in cascade]
+        await db.execute(text(
+            "INSERT INTO anomaly_correlations (correlation_id, event_ids, sources, pattern, combined_severity, narrative) "
+            "VALUES (:cid, :eids, :srcs, 'CASCADING_FAILURE', 'critical', :narr)"
+        ), {"cid": cid, "eids": eids, "srcs": list(set(e.source_agent for e in cascade)),
+            "narr": f"Cascading failure: {len(critical_events)} critical + {len(high_events)} high events in 30 min"})
+        for e in cascade:
+            await db.execute(text("UPDATE anomaly_events SET correlated=true, correlation_id=:cid WHERE event_id=:eid"),
+                           {"cid": cid, "eid": e.event_id})
+        await db.commit()
+        return {"correlations": 1, "pattern": "CASCADING_FAILURE", "events": len(cascade)}
+
     if len(sources) >= 3:
         # COORDINATED_ANOMALY
         import uuid

@@ -41,6 +41,26 @@ async def assess_agent_risk(db, agent_id, agent_name="", country="ZA", capabilit
         await db.commit()
     except: pass
 
+    # Auto-suspend prohibited agents (score >= 86)
+    if total >= 86:
+        risk_tier = "prohibited"
+        edd_required = True
+        try:
+            await db.execute(text("UPDATE agents SET is_active = false WHERE id = :aid OR name = :aid"), {"aid": agent_id})
+            # Route to founder inbox
+            import json
+            await db.execute(text(
+                "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+                "VALUES ('DECISION', 'URGENT', :desc, 'PENDING', now() + interval '4 hours')"
+            ), {"desc": json.dumps({"subject": f"PROHIBITED RISK: Agent {agent_id} auto-suspended",
+                                    "situation": f"Risk score {total}/100 exceeds prohibited threshold (86). Agent suspended pending review."})})
+            await db.commit()
+        except Exception:
+            pass
+        return {"agent_id": agent_id, "risk_tier": tier, "risk_score": total,
+            "geographic": geo_risk, "capability": cap_risk, "transaction": tx_risk,
+            "history": hist_risk, "edd_required": edd}
+
     return {"agent_id": agent_id, "risk_tier": tier, "risk_score": total,
             "geographic": geo_risk, "capability": cap_risk, "transaction": tx_risk,
             "history": hist_risk, "edd_required": edd}
