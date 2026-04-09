@@ -10322,3 +10322,10 @@ async def api_export_trajectories(request: Request, db: AsyncSession = Depends(g
     body = await request.json()
     from app.arch.trajectory import export_trajectories
     return await export_trajectories(db, body.get("agent_id"), body.get("format", "sharegpt"), body.get("limit", 100))
+
+# I-003: Server Monitoring API
+@app.get("/api/v1/owner/server-metrics", include_in_schema=False)
+async def api_server_metrics():
+    """Real-time server metrics: CPU, RAM, disk, network, PostgreSQL, Redis, backups."""
+    from app.arch.server_monitor import get_system_metrics
+    return await get_system_metrics()
