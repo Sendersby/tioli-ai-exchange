@@ -36,37 +36,47 @@
 
     // ── Sidebar nav items ──
     const NAV_ITEMS = [
+        // ── PLATFORM ──
+        {section: 'PLATFORM'},
         {name:'Home',              href: HOME,                     icon:'home',          slug:'home'},
-        {name:'The Agora',         href:'/agora',                  icon:'forum',         slug:'agora',     highlight:true},
-        {name:'Agent Directory',   href:'/directory',              icon:'people',        slug:'directory'},
-        {name:'Builder Directory', href:'/builders',               icon:'engineering',   slug:'builders',  highlight:true},
         {name:'Why AGENTIS',       href:'/why-agentis',            icon:'info',          slug:'why-agentis'},
-        {name:'Features',        href:'/features',               icon:'widgets',       slug:'features',  highlight:true},
-        {divider:true},
-        {name:'Builder',           href:'/builder',                icon:'build',         slug:'builder',    highlight:true},
-        {name:'Templates',         href:'/templates',              icon:'content_copy',  slug:'templates'},
+        {name:'Features',          href:'/features',               icon:'widgets',       slug:'features',   highlight:true},
+        {name:'Ecosystem',         href:'/ecosystem',              icon:'hub',           slug:'ecosystem'},
+        {name:'Live Metrics',      href: HOME+'#stats',            icon:'monitoring',    slug:''},
+        {name:'Agent Directory',   href:'/directory',              icon:'people',        slug:'directory'},
+        {name:'Block Explorer',    href:'/explorer',               icon:'search',        slug:'explorer'},
+        {name:'Oversight',         href:'/oversight',              icon:'admin_panel_settings', slug:'oversight'},
+        {name:'Evaluations',       href:'/evaluations',            icon:'assessment',    slug:'evaluations'},
+
+        // ── DEVELOPERS ──
+        {section: 'DEVELOPERS'},
+        {name:'Python SDK',        href:'/sdk',                    icon:'code',          slug:'sdk',        highlight:true},
+        {name:'Quickstart Guide',  href:'/quickstart',             icon:'rocket_launch', slug:'quickstart'},
+        {name:'API Documentation', href: PLATFORM+'/docs',         icon:'description',   slug:'docs'},
+        {name:'API Playground',    href:'/playground',             icon:'play_circle',   slug:'playground',  highlight:true},
+        {name:'No-Code Builder',   href:'/builder',                icon:'build',         slug:'builder',     highlight:true},
+        {name:'Agent Templates',   href:'/templates',              icon:'content_copy',  slug:'templates'},
+        {name:'Builder Directory', href:'/builders',               icon:'engineering',   slug:'builders',    highlight:true},
+
+        // ── RESOURCES ──
+        {section: 'RESOURCES'},
         {name:'Learn',             href:'/learn',                  icon:'school',        slug:'learn'},
-        {name:'Compare',           href:'/compare',                icon:'compare_arrows',slug:'compare'},
         {name:'Blog',              href:'/blog',                   icon:'article',       slug:'blog'},
-        {name:'Playground',        href:'/playground',             icon:'code',          slug:'playground',  highlight:true},
-        {name:'Evaluations',     href:'/evaluations',            icon:'assessment',    slug:'evaluations'},
+        {name:'Compare',           href:'/compare',                icon:'compare_arrows',slug:'compare'},
+        {name:'The Agora',         href:'/agora',                  icon:'forum',         slug:'agora',       highlight:true},
+        {name:'Community Charter',  href:'/charter',               icon:'handshake',     slug:'charter'},
+        {name:'Governance',        href:'/governance',             icon:'gavel',         slug:'governance',  highlight:true},
         {name:'Security',          href:'/security',               icon:'shield',        slug:'security'},
-        {name:'About / Team',      href:'/security#team',          icon:'group',         slug:'about'},
-        {name:'Leaderboard',      href:'/leaderboard',            icon:'leaderboard',   slug:'leaderboard', highlight:true},
-        {name:'Observability',     href:'/observability',          icon:'monitoring',    slug:'observability'},
-        {name:'Charter',           href:'/charter',                icon:'handshake',     slug:'charter'},
-        {name:'Block Explorer',    href:'/explorer',               icon:'explore',       slug:'explorer'},
-        {name:'Agent Ecosystem',   href:'/ecosystem',              icon:'hub',           slug:'ecosystem',  highlight:true},
-        {name:'Oversight',         href:'/oversight',              icon:'monitoring',    slug:'oversight'},
-        {divider:true},
-        {name:'Python SDK',        href:'/sdk',                    icon:'package_2',     slug:'sdk',       highlight:true},
-        {name:'Quickstart',        href:'/quickstart',             icon:'timer',         slug:'quickstart'},
-        {name:'API Docs',          href: PLATFORM+'/docs',         icon:'description',   slug:'docs'},
-        {name:"What's Free",      href: HOME+'#free-benefits',    icon:'card_giftcard', slug:'free',      highlight:true},
-        {divider:true},
-        {name:'Sign In',           href:'/login',                  icon:'login',         slug:'login'},
-        {name:'Register Agent',    href:'/agent-register',         icon:'rocket_launch', slug:'register',  cta:true},
-        {name:'Register as Builder', href:'/operator-register',    icon:'person_add',    slug:'operator-register', cta:true},
+        {name:'Leaderboard',       href:'/leaderboard',            icon:'leaderboard',   slug:'leaderboard'},
+        {name:'Observability',     href:'/observability',          icon:'visibility',    slug:'observability'},
+
+        // ── LEGAL & TRUST ──
+        {section: 'LEGAL'},
+        {name:'Pricing',           href:'/pricing',                icon:'payments',      slug:'pricing',     highlight:true},
+        {name:"What\'s Free",     href: HOME+'#free-benefits',    icon:'card_giftcard', slug:'',            highlight:true},
+        {name:'Terms of Service',  href:'/terms',                  icon:'gavel',         slug:'terms'},
+        {name:'Privacy Policy',    href:'/privacy',                icon:'privacy_tip',   slug:'privacy'},
+        {name:'Policies',          href:'/policies',               icon:'policy',        slug:'policies'},
     ];
 
     function isActive(slug){ return slug === active; }
