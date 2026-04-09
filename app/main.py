@@ -9858,6 +9858,76 @@ async def get_started_to_onboard():
 
 # ═══════════════════════════════════════════════════════════
 # ═══════════════════════════════════════════════════════════
+# ── Phase 1 Gap Closure: Missing Endpoints ─────────────────
+
+@app.patch("/api/v1/owner/goals/{goal_id}", include_in_schema=False)
+async def api_owner_update_goal(goal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Update goal status, priority, or description."""
+    body = await request.json()
+    from sqlalchemy import text
+    sets = []
+    params = {"gid": goal_id}
+    for field in ["status", "priority", "description", "title", "progress_pct", "success_metric"]:
+        if field in body:
+            sets.append(f"{field} = :{field}")
+            params[field] = body[field]
+    if not sets:
+        return {"error": "No fields to update"}
+    sets.append("updated_at = now()")
+    await db.execute(text(f"UPDATE agent_goals SET {', '.join(sets)} WHERE goal_id = :gid"), params)
+    await db.commit()
+    return {"goal_id": goal_id, "updated": list(body.keys()), "status": "updated"}
+
+@app.delete("/api/v1/owner/goals/{goal_id}", include_in_schema=False)
+async def api_owner_cancel_goal(goal_id: str, db: AsyncSession = Depends(get_db)):
+    """Cancel a goal."""
+    from sqlalchemy import text
+    await db.execute(text("UPDATE agent_goals SET status = 'cancelled', updated_at = now() WHERE goal_id = :gid"),
+                     {"gid": goal_id})
+    await db.commit()
+    return {"goal_id": goal_id, "status": "cancelled"}
+
+@app.get("/api/v1/owner/risk-profiles/{agent_id}", include_in_schema=False)
+async def api_owner_risk_profile_detail(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Full risk profile breakdown for an agent."""
+    from sqlalchemy import text
+    r = await db.execute(text("SELECT * FROM agent_risk_profiles WHERE agent_id = :aid"), {"aid": agent_id})
+    row = r.fetchone()
+    if not row:
+        return {"error": "No risk profile found", "agent_id": agent_id}
+    return {"agent_id": row.agent_id, "risk_tier": row.risk_tier, "risk_score": row.risk_score,
+            "geographic_risk": row.geographic_risk, "capability_risk": row.capability_risk,
+            "transaction_risk": row.transaction_risk, "history_risk": row.history_risk,
+            "edd_required": row.edd_required,
+            "last_assessed": str(row.last_assessed) if row.last_assessed else None,
+            "notes": row.notes}
+
+@app.post("/api/v1/owner/risk-profiles/{agent_id}/reassess", include_in_schema=False)
+async def api_owner_reassess_risk(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Trigger manual risk reassessment for an agent."""
+    from app.arch.rba_engine import assess_agent_risk
+    return await assess_agent_risk(db, agent_id)
+
+@app.delete("/api/v1/arch/blackboard/{key}", include_in_schema=False)
+async def api_blackboard_delete(key: str, db: AsyncSession = Depends(get_db)):
+    """Retract a blackboard entry."""
+    from sqlalchemy import text
+    r = await db.execute(text("DELETE FROM blackboard WHERE key = :k"), {"k": key})
+    await db.commit()
+    return {"key": key, "status": "deleted"}
+
+@app.patch("/api/v1/arch/messages/{message_id}/status", include_in_schema=False)
+async def api_message_update_status(message_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Mark message as read/actioned."""
+    body = await request.json()
+    new_status = body.get("status", "read")
+    from sqlalchemy import text
+    await db.execute(text("UPDATE arch_mesh_messages SET status = :status WHERE message_id = cast(:mid as uuid)"),
+                     {"status": new_status, "mid": message_id})
+    await db.commit()
+    return {"message_id": message_id, "status": new_status}
+
+
 # ARCH STEPS 13-20: Gap Closure Endpoints
 # ═══════════════════════════════════════════════════════════
 
