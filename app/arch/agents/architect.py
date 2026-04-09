@@ -115,7 +115,7 @@ class ArchitectAgent(ArchAgentBase):
             except Exception as _e:
                 pass
 
-return {"proposal_id": proposal_id, "status": "SANDBOX_PENDING",
+        return {"proposal_id": proposal_id, "status": "SANDBOX_PENDING",
                 "note": "Staging environment deployment queued"}
 
     async def _tool_update_tech_radar(self, params: dict) -> dict:

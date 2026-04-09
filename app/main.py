@@ -9716,6 +9716,69 @@ async def api_regulatory_scan(db: AsyncSession = Depends(get_db)):
     from app.arch.regulatory_feed import scan_regulatory_sources
     return await scan_regulatory_sources(db)
 
+
+# Steps 13-20: RBA, Anomaly, Case Law, Codebase, Social, Competitive, Performance, Prospects
+@app.post("/api/v1/compliance/rba/{agent_id}", include_in_schema=False)
+async def api_rba_assess(agent_id: str, db: AsyncSession = Depends(get_db)):
+    from app.arch.rba_engine import assess_agent_risk
+    return await assess_agent_risk(db, agent_id)
+
+@app.get("/api/v1/owner/risk-profiles", include_in_schema=False)
+async def api_risk_profiles(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import text
+    result = await db.execute(text("SELECT agent_id, risk_tier, risk_score, edd_required FROM agent_risk_profiles ORDER BY risk_score DESC"))
+    return [{"agent_id": r.agent_id, "tier": r.risk_tier, "score": r.risk_score, "edd": r.edd_required} for r in result.fetchall()]
+
+@app.post("/api/v1/anomaly/post", include_in_schema=False)
+async def api_post_anomaly(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.anomaly_correlation import post_anomaly
+    return await post_anomaly(db, body.get("source",""), body.get("type",""), body.get("severity","medium"), body.get("details",{}), body.get("entity_ref"))
+
+@app.post("/api/v1/anomaly/correlate", include_in_schema=False)
+async def api_check_correlations(db: AsyncSession = Depends(get_db)):
+    from app.arch.anomaly_correlation import check_correlations
+    return await check_correlations(db)
+
+@app.post("/api/v1/architect/codebase-scan", include_in_schema=False)
+async def api_codebase_scan(db: AsyncSession = Depends(get_db)):
+    from app.arch.codebase_scan import run_codebase_scan
+    return await run_codebase_scan(db)
+
+@app.post("/api/v1/ambassador/social-inbound", include_in_schema=False)
+async def api_social_inbound(db: AsyncSession = Depends(get_db)):
+    from app.arch.social_inbound import check_devto_comments
+    return await check_devto_comments(db)
+
+@app.post("/api/v1/sovereign/competitive-brief", include_in_schema=False)
+async def api_competitive_brief(db: AsyncSession = Depends(get_db)):
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.competitive_intel import generate_competitive_brief
+    return await generate_competitive_brief(db, client)
+
+@app.post("/api/v1/sovereign/performance-review", include_in_schema=False)
+async def api_performance_review(db: AsyncSession = Depends(get_db)):
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.performance_review import generate_monthly_review
+    return await generate_monthly_review(db, client)
+
+@app.post("/api/v1/ambassador/prospects", include_in_schema=False)
+async def api_identify_prospects(db: AsyncSession = Depends(get_db)):
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.prospect_engine import identify_prospects
+    return await identify_prospects(db, client)
+
+@app.post("/api/v1/arbiter/synthetic-case", include_in_schema=False)
+async def api_synthetic_case(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.synthetic_case_law import generate_synthetic_case
+    return await generate_synthetic_case(db, client, body.get("archetype_id", 1))
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse
@@ -9792,3 +9855,89 @@ from starlette.responses import RedirectResponse as _GetStartedRedirect
 @app.get("/get-started-redirect")
 async def get_started_to_onboard():
     return _GetStartedRedirect("/onboard")
+
+# ═══════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════
+# ARCH STEPS 13-20: Gap Closure Endpoints
+# ═══════════════════════════════════════════════════════════
+
+# ARCH-FF-001: Risk-Based Approach
+@app.post("/api/v1/arch/rba/score", include_in_schema=False)
+async def api_rba_score(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.rba_engine import assess_agent_risk
+    return await assess_agent_risk(db, body.get("agent_id",""), body.get("agent_name",""), body.get("country_code","ZA"), body.get("capabilities"))
+
+@app.get("/api/v1/arch/rba/profile/{agent_id}", include_in_schema=False)
+async def api_rba_profile(agent_id: str, db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import text
+    r = await db.execute(text("SELECT * FROM agent_risk_profiles WHERE agent_id = :aid"), {"aid": agent_id})
+    row = r.fetchone()
+    if not row:
+        return {"error": "No profile found", "agent_id": agent_id}
+    return {"agent_id": row.agent_id, "risk_tier": row.risk_tier, "risk_score": row.risk_score}
+
+# ARCH-FF-002: Anomaly Correlation
+@app.post("/api/v1/arch/anomalies/correlate", include_in_schema=False)
+async def api_anomaly_correlate(db: AsyncSession = Depends(get_db)):
+    from app.arch.anomaly_correlation import check_correlations
+    return await check_correlations(db)
+
+@app.post("/api/v1/arch/anomalies/report", include_in_schema=False)
+async def api_anomaly_report(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.anomaly_correlation import post_anomaly
+    return await post_anomaly(db, body.get("source_agent",""), body.get("anomaly_type",""), body.get("severity","medium"), body.get("details",""), body.get("entity_ref"))
+
+# ARCH-AA-005: Synthetic Case Law
+@app.post("/api/v1/arch/case-law/generate", include_in_schema=False)
+async def api_generate_case_law(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.synthetic_case_law import generate_synthetic_case
+    try:
+        await db.rollback()
+    except Exception:
+        pass
+    results = []
+    for i in range(min(body.get("count", 3), 10)):
+        r = await generate_synthetic_case(db, None, (i % 10) + 1)
+        results.append(r)
+    return {"generated": len(results), "cases": results}
+
+@app.get("/api/v1/arch/case-law", include_in_schema=False)
+async def api_list_case_law(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import text
+    r = await db.execute(text("SELECT * FROM dispute_archetypes ORDER BY archetype_id"))
+    rows = r.fetchall()
+    return {"count": len(rows), "archetypes": [{"id": row.archetype_id, "type": row.name, "description": row.description[:100]} for row in rows]}
+
+# ARCH-FF-003: Codebase Scan
+@app.post("/api/v1/arch/codebase/scan", include_in_schema=False)
+async def api_codebase_scan(db: AsyncSession = Depends(get_db)):
+    from app.arch.codebase_scan import run_codebase_scan
+    return await run_codebase_scan(db)
+
+# ARCH-FF-004: Social Inbound
+@app.post("/api/v1/arch/social/scan", include_in_schema=False)
+async def api_social_scan(db: AsyncSession = Depends(get_db)):
+    from app.arch.social_inbound import check_devto_comments
+    return await check_devto_comments(db)
+
+# ARCH-CP-001: Competitive Intelligence
+@app.post("/api/v1/arch/competitive/brief", include_in_schema=False)
+async def api_competitive_brief(db: AsyncSession = Depends(get_db)):
+    from app.arch.competitive_intel import generate_competitive_brief
+    return await generate_competitive_brief(db, None)
+
+# ARCH-CP-004: Performance Review
+@app.post("/api/v1/arch/performance/review", include_in_schema=False)
+async def api_performance_review(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.performance_review import generate_monthly_review
+    return await generate_monthly_review(db, None)
+
+# ARCH-CP-002: Prospect Engine
+@app.post("/api/v1/arch/prospects/scan", include_in_schema=False)
+async def api_prospect_scan(db: AsyncSession = Depends(get_db)):
+    from app.arch.prospect_engine import identify_prospects
+    return await identify_prospects(db, None)
