@@ -10539,3 +10539,31 @@ async def api_screenshot(request: Request):
     body = await request.json()
     from app.arch.directory_submitter import take_screenshot
     return await take_screenshot(body.get("url", ""))
+
+# Proactive Autonomy APIs
+@app.post("/api/v1/arch/inbox/auto-resolve", include_in_schema=False)
+async def api_inbox_auto_resolve(db: AsyncSession = Depends(get_db)):
+    """Trigger inbox auto-resolution scan."""
+    from app.arch.inbox_resolver import resolve_inbox_items
+    return await resolve_inbox_items(db)
+
+@app.get("/api/v1/arch/inbox/resolvable", include_in_schema=False)
+async def api_inbox_resolvable(db: AsyncSession = Depends(get_db)):
+    """Preview which inbox items agents CAN resolve."""
+    from app.arch.inbox_resolver import get_resolvable_items
+    items = await get_resolvable_items(db)
+    resolvable = [i for i in items if i["can_resolve"]]
+    return {"total_pending": len(items), "resolvable": len(resolvable),
+            "human_required": len(items) - len(resolvable), "items": items}
+
+@app.post("/api/v1/arch/proactive/scan", include_in_schema=False)
+async def api_proactive_scan(db: AsyncSession = Depends(get_db)):
+    """Trigger proactive action scan."""
+    from app.arch.proactive_scanner import run_proactive_scan
+    return await run_proactive_scan(db)
+
+@app.get("/api/v1/arch/skill-learning/log", include_in_schema=False)
+async def api_skills_learning_log(db: AsyncSession = Depends(get_db)):
+    """Recent skill creation and improvement events."""
+    from app.arch.skill_learner import get_learning_log
+    return await get_learning_log(db)

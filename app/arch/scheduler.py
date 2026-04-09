@@ -1325,6 +1325,46 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="directory_monthly_check", replace_existing=True)
     log.info("[scheduler] Registered: directory_monthly_check (1st of month)")
 
+    # ═══════════════════════════════════════════════════════════
+    # PROACTIVE AUTONOMY: Inbox resolver, proactive scanner
+    # ═══════════════════════════════════════════════════════════
+
+    # Inbox auto-resolver — every 15 minutes
+    async def inbox_auto_resolve():
+        import os as _os
+        if _os.environ.get("ARCH_INBOX_AUTO_RESOLVE_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.inbox_resolver import resolve_inbox_items
+                result = await resolve_inbox_items(db)
+                resolved = result.get("auto_completed", 0) + result.get("executed", 0)
+                if resolved > 0:
+                    log.info(f"[inbox_resolver] Resolved {resolved} items autonomously")
+        except Exception as e:
+            log.warning(f"[inbox_resolver] Scan failed: {e}")
+
+    scheduler.add_job(inbox_auto_resolve, "interval", minutes=15,
+                      id="inbox_auto_resolve", replace_existing=True)
+    log.info("[scheduler] Registered: inbox_auto_resolve (every 15 min)")
+
+    # Proactive action scanner — every 2 hours
+    async def proactive_action_scan():
+        import os as _os
+        if _os.environ.get("ARCH_PROACTIVE_SCANNER_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.proactive_scanner import run_proactive_scan
+                result = await run_proactive_scan(db)
+                log.info(f"[proactive] {result.get('total_opportunities', 0)} opportunities, {result.get('total_actions', 0)} actions")
+        except Exception as e:
+            log.warning(f"[proactive] Scan failed: {e}")
+
+    scheduler.add_job(proactive_action_scan, "interval", hours=2,
+                      id="proactive_action_scan", replace_existing=True)
+    log.info("[scheduler] Registered: proactive_action_scan (every 2h)")
+
 
     scheduler.add_job(daily_regulatory_scan, "cron", hour=2, minute=0, id="daily_regulatory_scan", replace_existing=True)
 

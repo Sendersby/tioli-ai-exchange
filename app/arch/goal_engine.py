@@ -306,6 +306,17 @@ async def goal_pursuit_cycle(db, agent_name, agent_client):
                 except Exception:
                     pass
 
+            # Auto-learn skill from this execution
+            try:
+                from app.arch.skill_learner import learn_from_execution
+                await learn_from_execution(
+                    db, agent_name, f"{goal.title}: {suggestion[:100]}",
+                    [{"step": 1, "tool": tool_name, "suggestion": suggestion[:200],
+                      "proof": str(proof)[:200]}],
+                    outcome[:300])
+            except Exception:
+                pass
+
             results.append({"goal": goal.title, "action": suggestion[:100],
                            "tool": tool_name, "executed": proof.get("executed", False),
                            "status": "actioned"})
