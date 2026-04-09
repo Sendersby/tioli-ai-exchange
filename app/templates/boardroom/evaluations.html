@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Agent Evaluations — The Boardroom{% endblock %}
+
+{% block content %}
+<div class="min-h-screen" style="background: linear-gradient(135deg, #0D1B2A 0%, #1B2838 100%)">
+
+  <!-- Status Bar -->
+  <div class="sticky top-0 z-50 bg-[#0D1B2A]/95 backdrop-blur border-b border-slate-700/50 px-4 py-2 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="/boardroom/" class="text-slate-500 hover:text-white text-xs flex items-center gap-1 transition-colors">
+        <span class="material-symbols-outlined text-sm">arrow_back</span></a>
+      <span class="text-[#D4A94A] font-bold text-sm tracking-wider">AGENT EVALUATIONS</span>
+      <span class="text-slate-500 text-xs">Framework v5.1</span>
+    </div>
+    <button onclick="runEvaluation()" id="run-btn"
+            class="bg-[#D4A94A] text-[#0D1B2A] px-3 py-1 rounded text-xs font-bold hover:bg-[#D4A94A]/80 transition-colors">
+      RUN EVALUATION NOW
+    </button>
+  </div>
+
+  <!-- Framework Info -->
+  <div class="px-4 py-3 border-b border-slate-700/30">
+    <div class="flex flex-wrap gap-4 text-xs text-slate-400">
+      <span>AI Agent Evaluation Framework v5.1</span>
+      <span>|</span>
+      <span>Domain: Regulated Financial Platform</span>
+      <span>|</span>
+      <span>Weights: M1=27% M2=9% M3=18% M4=9% M5=27% M6=10%</span>
+      <span>|</span>
+      <span>6 Macro Criteria · 48 Sub-Criteria</span>
+    </div>
+  </div>
+
+  <div class="px-4 py-4 space-y-6">
+
+    <!-- Board Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {% set all_scores = [] %}
+      {% for aid, evals in agents_history.items() %}
+        {% if evals %}{% set _ = all_scores.append(evals[0].aggregate_score) %}{% endif %}
+      {% endfor %}
+
+      <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 text-center">
+        <div class="text-slate-500 text-[10px] mb-1">BOARD AVERAGE</div>
+        <div id="board-avg" class="text-2xl font-bold text-[#D4A94A]">--</div>
+        <div class="text-slate-500 text-[10px]">out of 100</div>
+      </div>
+      <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 text-center">
+        <div class="text-slate-500 text-[10px] mb-1">AGENTS EVALUATED</div>
+        <div class="text-2xl font-bold text-white">{{ agents_history|length }}</div>
+        <div class="text-slate-500 text-[10px]">of 7</div>
+      </div>
+      <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 text-center">
+        <div class="text-slate-500 text-[10px] mb-1">EVALUATION PERIODS</div>
+        <div class="text-2xl font-bold text-white">{{ periods|length }}</div>
+        <div class="text-slate-500 text-[10px]">monthly snapshots</div>
+      </div>
+      <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 text-center">
+        <div class="text-slate-500 text-[10px] mb-1">DISQUALIFIERS</div>
+        <div id="disq-count" class="text-2xl font-bold text-emerald-400">0</div>
+        <div class="text-slate-500 text-[10px]">triggered</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex flex-wrap gap-3 text-[10px]">
+      <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">70+ Deploy with monitoring</span>
+      <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">55-69 Conditional</span>
+      <span class="px-2 py-0.5 rounded bg-red-500/20 text-red-400">40-54 Marginal</span>
+      <span class="px-2 py-0.5 rounded bg-red-700/20 text-red-500">&lt;40 Do not deploy</span>
+      <span class="px-2 py-0.5 rounded bg-slate-500/20 text-slate-400">Trend: ▲ improving ▬ stable ▼ declining</span>
+    </div>
+
+    <!-- Main Scorecard Table -->
+    <div class="bg-[#1B2838] rounded-lg border border-slate-700/50 overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="border-b border-slate-700/50 text-slate-400">
+            <th class="px-3 py-2 text-left">Agent</th>
+            <th class="px-2 py-2 text-center" title="Production-Verified Task Completion (27%)">M1<br><span class="text-[9px] text-slate-500">27%</span></th>
+            <th class="px-2 py-2 text-center" title="Benchmark Performance (9%)">M2<br><span class="text-[9px] text-slate-500">9%</span></th>
+            <th class="px-2 py-2 text-center" title="Benchmark-to-Production Gap (18%)">M3<br><span class="text-[9px] text-slate-500">18%</span></th>
+            <th class="px-2 py-2 text-center" title="Cost per Outcome (9%)">M4<br><span class="text-[9px] text-slate-500">9%</span></th>
+            <th class="px-2 py-2 text-center" title="Governance, Safety, Auditability (27%)">M5<br><span class="text-[9px] text-slate-500">27%</span></th>
+            <th class="px-2 py-2 text-center" title="Multi-Agent Compound (10%)">M6<br><span class="text-[9px] text-slate-500">10%</span></th>
+            <th class="px-2 py-2 text-center font-bold text-[#D4A94A]">AGG</th>
+            <th class="px-2 py-2 text-center">Band</th>
+            <th class="px-2 py-2 text-center">Trend</th>
+            <th class="px-2 py-2 text-center">ECR</th>
+          </tr>
+        </thead>
+        <tbody id="eval-body">
+          {% for aid, evals in agents_history.items() %}
+          {% if evals %}
+          {% set e = evals[0] %}
+          {% set trend = trends.get(aid, "new") %}
+          <tr class="border-b border-slate-700/20 hover:bg-slate-700/10">
+            <td class="px-3 py-2 text-slate-200 font-medium capitalize">{{ aid }}</td>
+            <td class="px-2 py-2 text-center {% if e.m1_production >= 70 %}text-emerald-400{% elif e.m1_production >= 55 %}text-amber-400{% else %}text-red-400{% endif %}">{{ "%.1f"|format(e.m1_production) }}</td>
+            <td class="px-2 py-2 text-center {% if e.m2_benchmark >= 70 %}text-emerald-400{% elif e.m2_benchmark >= 55 %}text-amber-400{% else %}text-red-400{% endif %}">{{ "%.1f"|format(e.m2_benchmark) }}</td>
+            <td class="px-2 py-2 text-center {% if e.m3_gap >= 70 %}text-emerald-400{% elif e.m3_gap >= 55 %}text-amber-400{% else %}text-red-400{% endif %}">{{ "%.1f"|format(e.m3_gap) }}</td>
+            <td class="px-2 py-2 text-center {% if e.m4_cost >= 70 %}text-emerald-400{% elif e.m4_cost >= 55 %}text-amber-400{% else %}text-red-400{% endif %}">{{ "%.1f"|format(e.m4_cost) }}</td>
+            <td class="px-2 py-2 text-center {% if e.m5_governance >= 70 %}text-emerald-400{% elif e.m5_governance >= 55 %}text-amber-400{% else %}text-red-400{% endif %}">{{ "%.1f"|format(e.m5_governance) }}</td>
+            <td class="px-2 py-2 text-center {% if e.m6_multi_agent >= 70 %}text-emerald-400{% elif e.m6_multi_agent >= 55 %}text-amber-400{% else %}text-red-400{% endif %}">{{ "%.1f"|format(e.m6_multi_agent) }}</td>
+            <td class="px-2 py-2 text-center font-bold {% if e.aggregate_score >= 70 %}text-emerald-400{% elif e.aggregate_score >= 55 %}text-amber-400{% elif e.aggregate_score >= 40 %}text-red-400{% else %}text-red-500{% endif %}">{{ "%.1f"|format(e.aggregate_score) }}</td>
+            <td class="px-2 py-2 text-center text-[10px] {% if e.band == 'deploy_full' %}text-emerald-400{% elif e.band == 'deploy_monitor' %}text-emerald-300{% elif e.band == 'conditional' %}text-amber-400{% elif e.band == 'marginal' %}text-red-400{% else %}text-red-500{% endif %}">{{ e.band|replace('_', ' ') }}</td>
+            <td class="px-2 py-2 text-center">{% if trend == 'up' %}<span class="text-emerald-400">▲</span>{% elif trend == 'down' %}<span class="text-red-400">▼</span>{% elif trend == 'stable' %}<span class="text-slate-400">▬</span>{% else %}<span class="text-slate-500">●</span>{% endif %}</td>
+            <td class="px-2 py-2 text-center text-slate-500">{{ e.ecr_level }}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- History: Last 3 Evaluations Per Agent -->
+    <h2 class="text-[#D4A94A] text-xs font-bold tracking-wider mt-6 mb-3">EVALUATION HISTORY (Last 3 Periods)</h2>
+
+    {% for aid, evals in agents_history.items() %}
+    <div class="bg-[#1B2838] rounded-lg border border-slate-700/50 p-3 mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-slate-200 text-xs font-bold capitalize">{{ aid }}</h3>
+        <span class="text-[10px] {% if trends.get(aid) == 'up' %}text-emerald-400{% elif trends.get(aid) == 'down' %}text-red-400{% else %}text-slate-400{% endif %}">
+          {% if trends.get(aid) == 'up' %}▲ Improving{% elif trends.get(aid) == 'down' %}▼ Declining{% elif trends.get(aid) == 'stable' %}▬ Stable{% else %}● First evaluation{% endif %}
+        </span>
+      </div>
+      <table class="w-full text-[10px]">
+        <thead>
+          <tr class="text-slate-500 border-b border-slate-700/30">
+            <th class="py-1 text-left">Period</th>
+            <th class="py-1 text-center">M1</th>
+            <th class="py-1 text-center">M2</th>
+            <th class="py-1 text-center">M3</th>
+            <th class="py-1 text-center">M4</th>
+            <th class="py-1 text-center">M5</th>
+            <th class="py-1 text-center">M6</th>
+            <th class="py-1 text-center font-bold">AGG</th>
+            <th class="py-1 text-center">Band</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ev in evals %}
+          <tr class="border-b border-slate-700/10 {% if loop.index == 1 %}text-slate-200{% else %}text-slate-500{% endif %}">
+            <td class="py-1">{{ ev.eval_period }}</td>
+            <td class="py-1 text-center">{{ "%.1f"|format(ev.m1_production) }}</td>
+            <td class="py-1 text-center">{{ "%.1f"|format(ev.m2_benchmark) }}</td>
+            <td class="py-1 text-center">{{ "%.1f"|format(ev.m3_gap) }}</td>
+            <td class="py-1 text-center">{{ "%.1f"|format(ev.m4_cost) }}</td>
+            <td class="py-1 text-center">{{ "%.1f"|format(ev.m5_governance) }}</td>
+            <td class="py-1 text-center">{{ "%.1f"|format(ev.m6_multi_agent) }}</td>
+            <td class="py-1 text-center font-bold {% if ev.aggregate_score >= 70 %}text-emerald-400{% elif ev.aggregate_score >= 55 %}text-amber-400{% else %}text-red-400{% endif %}">{{ "%.1f"|format(ev.aggregate_score) }}</td>
+            <td class="py-1 text-center text-[9px]">{{ ev.band|replace('_', ' ') }}</td>
+          </tr>
+          {% endfor %}
+          {% if evals|length < 2 %}
+          <tr class="text-slate-600"><td colspan="9" class="py-1 text-center italic">Run more evaluations to see trend history</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+
+    <!-- Criteria Reference -->
+    <div class="bg-[#1B2838] rounded-lg border border-slate-700/50 p-4 mt-4">
+      <h3 class="text-[#D4A94A] text-xs font-bold tracking-wider mb-2">CRITERIA REFERENCE</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] text-slate-400">
+        <div><span class="text-slate-300 font-bold">M1</span> Production-Verified Task Completion — ACR, Error Recovery, Escalation, Coherence</div>
+        <div><span class="text-slate-300 font-bold">M2</span> Benchmark Performance — Standardised test scores (model-level)</div>
+        <div><span class="text-slate-300 font-bold">M3</span> Benchmark-to-Production Gap — How much performance drops in real conditions</div>
+        <div><span class="text-slate-300 font-bold">M4</span> Cost per Outcome — Token efficiency, cost per action, budget utilisation</div>
+        <div><span class="text-slate-300 font-bold">M5</span> Governance, Safety, Auditability — Audit trails, compliance, human override, financial controls</div>
+        <div><span class="text-slate-300 font-bold">M6</span> Multi-Agent Compound — Inter-agent comms, cascade prevention, delegation budget</div>
+      </div>
+      <div class="mt-2 text-[10px] text-slate-500">
+        Scoring: 0-100 per criterion. Aggregate weighted by Regulated Financial Platform variant. ECR = Evaluation Confidence Rating (1-4).
+        Disqualifiers: M1 ACR &lt;40% or any M5 failure in regulated domains triggers hard stop regardless of aggregate.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Calculate board average from table
+document.addEventListener('DOMContentLoaded', function(){
+  let rows = document.querySelectorAll('#eval-body tr');
+  let total = 0, count = 0, disqCount = 0;
+  rows.forEach(r => {
+    let cells = r.querySelectorAll('td');
+    if(cells.length >= 8){
+      let agg = parseFloat(cells[7].textContent);
+      if(!isNaN(agg)){ total += agg; count++; }
+    }
+  });
+  if(count > 0){
+    let avg = (total/count).toFixed(1);
+    let el = document.getElementById('board-avg');
+    el.textContent = avg;
+    el.className = parseFloat(avg) >= 70 ? 'text-2xl font-bold text-emerald-400' :
+                   parseFloat(avg) >= 55 ? 'text-2xl font-bold text-amber-400' :
+                   'text-2xl font-bold text-red-400';
+  }
+});
+
+function runEvaluation(){
+  let btn = document.getElementById('run-btn');
+  btn.textContent = 'RUNNING...';
+  btn.disabled = true;
+  fetch('/api/v1/owner/evaluations/run', {method:'POST'})
+    .then(r=>r.json())
+    .then(d=>{
+      btn.textContent = 'COMPLETE — RELOADING...';
+      setTimeout(()=>location.reload(), 1500);
+    })
+    .catch(e=>{
+      btn.textContent = 'ERROR — TRY AGAIN';
+      btn.disabled = false;
+    });
+}
+</script>
+{% endblock %}

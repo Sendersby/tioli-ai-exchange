@@ -680,3 +680,52 @@ async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_
     return templates.TemplateResponse(request, "boardroom/org_design.html",  context={
         "active": "boardroom", "authenticated": True, **ctx,
     })
+
+
+@boardroom_views.get("/evaluations")
+async def boardroom_evaluations(request: Request, db: AsyncSession = Depends(get_db)):
+    """Agent Evaluation Framework v5.1 — full scorecard with history and trends."""
+    _check_enabled()
+    from sqlalchemy import text
+
+    # Get all evaluations ordered by agent and date
+    result = await db.execute(text(
+        "SELECT agent_id, eval_period, m1_production, m2_benchmark, m3_gap, m4_cost, "
+        "m5_governance, m6_multi_agent, aggregate_score, band, ecr_level, disqualifiers, evaluated_at "
+        "FROM agent_evaluation_scores ORDER BY agent_id, evaluated_at DESC"
+    ))
+    all_evals = [dict(r._mapping) for r in result.fetchall()]
+
+    # Group by agent, keep last 3
+    agents_history = {}
+    for ev in all_evals:
+        aid = ev["agent_id"]
+        if aid not in agents_history:
+            agents_history[aid] = []
+        if len(agents_history[aid]) < 3:
+            ev["evaluated_at"] = str(ev["evaluated_at"]) if ev["evaluated_at"] else None
+            ev["disqualifiers"] = ev["disqualifiers"] if ev["disqualifiers"] else []
+            for k in ["m1_production", "m2_benchmark", "m3_gap", "m4_cost", "m5_governance", "m6_multi_agent", "aggregate_score"]:
+                ev[k] = float(ev[k]) if ev[k] else 0
+            agents_history[aid].append(ev)
+
+    # Calculate trends (latest vs previous)
+    trends = {}
+    for aid, evals in agents_history.items():
+        if len(evals) >= 2:
+            diff = evals[0]["aggregate_score"] - evals[1]["aggregate_score"]
+            trends[aid] = "up" if diff > 1 else "down" if diff < -1 else "stable"
+        else:
+            trends[aid] = "new"
+
+    # Board averages per period
+    periods = sorted(set(ev["eval_period"] for ev in all_evals), reverse=True)[:3]
+
+    ctx = await _get_boardroom_context(db)
+    ctx.update({
+        "agents_history": agents_history,
+        "trends": trends,
+        "periods": periods,
+    })
+
+    return templates.TemplateResponse(request, "boardroom/evaluations.html", context=ctx)
