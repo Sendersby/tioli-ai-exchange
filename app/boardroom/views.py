@@ -686,7 +686,14 @@ async def boardroom_org_design(request: Request, db: AsyncSession = Depends(get_
 async def boardroom_evaluations(request: Request, db: AsyncSession = Depends(get_db)):
     """Agent Evaluation Framework v5.1 — full scorecard with history and trends."""
     _check_enabled()
+    auth_redirect = _check_auth(request)
+    if auth_redirect:
+        return auth_redirect
     from sqlalchemy import text
+    try:
+        await db.rollback()
+    except Exception:
+        pass
 
     # Get all evaluations ordered by agent and date
     result = await db.execute(text(

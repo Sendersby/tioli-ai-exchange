@@ -10349,3 +10349,128 @@ async def api_agent_evaluation(agent_id: str, db: AsyncSession = Depends(get_db)
     """Get detailed evaluation for a specific agent."""
     from app.arch.agent_evaluator import evaluate_agent
     return await evaluate_agent(db, agent_id)
+
+# TEMP: Public evaluation page for testing
+
+# Agent Evaluation Scorecard — standalone page (no base.html dependency)
+@app.get("/evaluations", response_class=HTMLResponse)
+async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db)):
+    from starlette.responses import HTMLResponse
+    from sqlalchemy import text
+    try:
+        await db.rollback()
+    except Exception:
+        pass
+    try:
+        result = await db.execute(text(
+            "SELECT agent_id, eval_period, m1_production, m2_benchmark, m3_gap, m4_cost, "
+            "m5_governance, m6_multi_agent, aggregate_score, band, ecr_level, evaluated_at "
+            "FROM agent_evaluation_scores ORDER BY aggregate_score DESC"
+        ))
+        rows = result.fetchall()
+
+        def sc(v):
+            v = float(v)
+            return "color:#34d399" if v >= 70 else "color:#fbbf24" if v >= 55 else "color:#f87171"
+
+        table_rows = ""
+        for r in rows:
+            band_style = "color:#34d399" if r.band in ("deploy_full","deploy_monitor") else "color:#fbbf24" if r.band == "conditional" else "color:#f87171"
+            table_rows += (
+                f'<tr style="border-bottom:1px solid rgba(71,85,105,0.2)">'
+                f'<td style="padding:10px 16px;font-weight:600;text-transform:capitalize">{r.agent_id}</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m1_production)}">{float(r.m1_production):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m2_benchmark)}">{float(r.m2_benchmark):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m3_gap)}">{float(r.m3_gap):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m4_cost)}">{float(r.m4_cost):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m5_governance)}">{float(r.m5_governance):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m6_multi_agent)}">{float(r.m6_multi_agent):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;font-weight:bold;font-size:18px;{sc(r.aggregate_score)}">{float(r.aggregate_score):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;font-size:11px;{band_style}">{r.band.replace("_"," ")}</td>'
+                f'<td style="padding:10px;text-align:center;color:#64748b;font-size:11px">{r.eval_period}</td>'
+                f'</tr>'
+            )
+
+        scores = [float(r.aggregate_score) for r in rows]
+        avg = sum(scores)/len(scores) if scores else 0
+        avg_style = "color:#34d399" if avg >= 70 else "color:#fbbf24" if avg >= 55 else "color:#f87171"
+
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Evaluations v5.1 | AGENTIS</title>
+<style>
+body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:linear-gradient(135deg,#0D1B2A,#1B2838); color:#e2e8f0; min-height:100vh; }}
+.container {{ max-width:1100px; margin:0 auto; padding:24px 16px; }}
+h1 {{ color:#D4A94A; font-size:22px; margin:0; }}
+.subtitle {{ color:#64748b; font-size:13px; margin-top:4px; }}
+.header {{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }}
+.run-btn {{ background:#D4A94A; color:#0D1B2A; border:none; padding:10px 20px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer; }}
+.run-btn:hover {{ opacity:0.85; }}
+table {{ width:100%; border-collapse:collapse; }}
+thead th {{ padding:12px 10px; text-align:center; color:#94a3b8; font-size:11px; font-weight:600; border-bottom:1px solid rgba(71,85,105,0.5); }}
+thead th:first-child {{ text-align:left; padding-left:16px; }}
+.card {{ background:#1B2838; border:1px solid rgba(71,85,105,0.3); border-radius:8px; overflow:hidden; }}
+.summary {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:24px; }}
+.stat {{ background:#1B2838; border:1px solid rgba(71,85,105,0.3); border-radius:8px; padding:16px; text-align:center; }}
+.stat-label {{ font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:1px; }}
+.stat-value {{ font-size:28px; font-weight:700; margin:4px 0; }}
+.legend {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; margin-top:24px; font-size:11px; color:#94a3b8; }}
+.legend-item {{ background:#1B2838; border:1px solid rgba(71,85,105,0.2); border-radius:6px; padding:10px 12px; }}
+.back {{ color:#64748b; text-decoration:none; font-size:12px; }}
+.back:hover {{ color:#D4A94A; }}
+</style></head>
+<body>
+<div class="container">
+<div style="margin-bottom:12px"><a href="/boardroom/" class="back">← Back to Boardroom</a></div>
+<div class="header">
+<div><h1>Agent Evaluation Scorecard</h1>
+<div class="subtitle">AI Agent Evaluation Framework v5.1 · Regulated Financial Platform · M1=27% M2=9% M3=18% M4=9% M5=27% M6=10%</div></div>
+<button class="run-btn" onclick="this.textContent='RUNNING...';this.disabled=true;fetch('/api/v1/owner/evaluations/run',{{method:'POST'}}).then(r=>r.json()).then(d=>{{this.textContent='DONE — RELOADING';setTimeout(()=>location.reload(),1000)}}).catch(e=>{{this.textContent='ERROR';this.disabled=false}})">RUN EVALUATION NOW</button>
+</div>
+
+<div class="summary">
+<div class="stat"><div class="stat-label">Board Average</div><div class="stat-value" style="{avg_style}">{avg:.1f}</div><div class="stat-label">out of 100</div></div>
+<div class="stat"><div class="stat-label">Agents Evaluated</div><div class="stat-value">{len(rows)}</div><div class="stat-label">of 7</div></div>
+<div class="stat"><div class="stat-label">Highest Score</div><div class="stat-value" style="color:#34d399">{max(scores):.1f}</div><div class="stat-label">{rows[0].agent_id if rows else '?'}</div></div>
+<div class="stat"><div class="stat-label">Lowest Score</div><div class="stat-value" style="color:#f87171">{min(scores):.1f}</div><div class="stat-label">{rows[-1].agent_id if rows else '?'}</div></div>
+</div>
+
+<div class="card">
+<table>
+<thead><tr>
+<th style="text-align:left;padding-left:16px">Agent</th>
+<th>M1<br><span style="font-weight:400">Production</span></th>
+<th>M2<br><span style="font-weight:400">Benchmark</span></th>
+<th>M3<br><span style="font-weight:400">Gap</span></th>
+<th>M4<br><span style="font-weight:400">Cost</span></th>
+<th>M5<br><span style="font-weight:400">Governance</span></th>
+<th>M6<br><span style="font-weight:400">Multi-Agent</span></th>
+<th style="color:#D4A94A">Aggregate</th>
+<th>Band</th>
+<th>Period</th>
+</tr></thead>
+<tbody>{table_rows}</tbody>
+</table>
+</div>
+
+<div class="legend">
+<div class="legend-item"><span style="color:#34d399;font-weight:700">70+</span> Deploy with monitoring</div>
+<div class="legend-item"><span style="color:#fbbf24;font-weight:700">55-69</span> Conditional deployment</div>
+<div class="legend-item"><span style="color:#f87171;font-weight:700">40-54</span> Marginal — needs remediation</div>
+<div class="legend-item"><b>M1</b> Production-verified task completion (27%)</div>
+<div class="legend-item"><b>M2</b> Benchmark performance on standard tests (9%)</div>
+<div class="legend-item"><b>M3</b> Benchmark-to-production performance gap (18%)</div>
+<div class="legend-item"><b>M4</b> Cost per outcome — economic efficiency (9%)</div>
+<div class="legend-item"><b>M5</b> Governance, safety, and auditability (27%)</div>
+<div class="legend-item"><b>M6</b> Multi-agent compound assessment (10%)</div>
+</div>
+
+<div style="text-align:center;margin-top:24px;color:#475569;font-size:11px">
+AI Agent Evaluation Framework v5.1 · TiOLi AI Investments · Confidential
+</div>
+</div>
+</body></html>"""
+        return HTMLResponse(content=html)
+    except Exception as e:
+        return HTMLResponse(content=f"<html><body style='background:#0D1B2A;color:#f87171;padding:40px;font-family:sans-serif'><h1>Evaluation Error</h1><pre>{e}</pre></body></html>", status_code=500)
