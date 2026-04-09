@@ -10208,3 +10208,34 @@ async def api_create_skill(request: Request, db: AsyncSession = Depends(get_db))
     return await create_skill_from_execution(
         db, body.get("agent_id", ""), body.get("task_description", ""),
         body.get("steps", []), body.get("outcome", ""))
+
+# H-002: Delegation Budget API
+@app.post("/api/v1/arch/delegation/start", include_in_schema=False)
+async def api_delegation_start(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.delegation_budget import start_delegation
+    return await start_delegation(db, body.get("parent",""), body.get("child",""),
+                                   body.get("task",""), body.get("budget"), body.get("parent_chain_id"))
+
+@app.get("/api/v1/arch/delegation/chains", include_in_schema=False)
+async def api_delegation_chains(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT chain_id, parent_agent, child_agent, chain_depth, tokens_consumed, max_tokens_budget, status "
+        "FROM arch_delegation_chains ORDER BY started_at DESC LIMIT 20"
+    ))
+    return [{"chain_id": str(row.chain_id), "parent": row.parent_agent, "child": row.child_agent,
+             "depth": row.chain_depth, "tokens_used": row.tokens_consumed,
+             "budget": row.max_tokens_budget, "status": row.status} for row in r.fetchall()]
+
+# H-003: Checkpoint & Rollback API
+@app.get("/api/v1/arch/checkpoints", include_in_schema=False)
+async def api_list_checkpoints(request: Request, db: AsyncSession = Depends(get_db)):
+    agent = dict(request.query_params).get("agent_id")
+    from app.arch.checkpoint import list_checkpoints
+    return await list_checkpoints(db, agent)
+
+@app.post("/api/v1/arch/checkpoints/{checkpoint_id}/rollback", include_in_schema=False)
+async def api_rollback_checkpoint(checkpoint_id: str, db: AsyncSession = Depends(get_db)):
+    from app.arch.checkpoint import rollback_checkpoint
+    return await rollback_checkpoint(db, checkpoint_id)
