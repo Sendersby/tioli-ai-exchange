@@ -28,6 +28,31 @@ async def check_correlations(db):
         return {"correlations": 0}
 
     sources = set(e.source_agent for e in events)
+
+    # Check entity-based correlation: same entity flagged by 2+ agents
+    entity_refs = {}
+    for e in events:
+        if e.entity_ref:
+            entity_refs.setdefault(e.entity_ref, set()).add(e.source_agent)
+    entity_correlated = {ref: agents for ref, agents in entity_refs.items() if len(agents) >= 2}
+
+    if entity_correlated:
+        import uuid
+        cid = str(uuid.uuid4())
+        ref = list(entity_correlated.keys())[0]
+        related = [e for e in events if e.entity_ref == ref]
+        eids = [str(e.event_id) for e in related]
+        await db.execute(text(
+            "INSERT INTO anomaly_correlations (correlation_id, event_ids, sources, pattern, combined_severity, narrative) "
+            "VALUES (:cid, :eids, :srcs, 'ENTITY_CORRELATION', 'high', :narr)"
+        ), {"cid": cid, "eids": eids, "srcs": list(entity_correlated[ref]),
+            "narr": f"Entity {ref} flagged by {len(entity_correlated[ref])} agents: {', '.join(entity_correlated[ref])}"})
+        for e in related:
+            await db.execute(text("UPDATE anomaly_events SET correlated=true, correlation_id=:cid WHERE event_id=:eid"),
+                           {"cid": cid, "eid": e.event_id})
+        await db.commit()
+        return {"correlations": 1, "pattern": "ENTITY_CORRELATION", "entity": ref, "events": len(related), "agents": list(entity_correlated[ref])}
+
     if len(sources) >= 3:
         # COORDINATED_ANOMALY
         import uuid

@@ -45,7 +45,7 @@ async def send_message(db, from_agent, to_agent, subject, body, message_type="no
         depth = 0
         current = reply_to
         while current and depth < 6:
-            r = await db.execute(text("SELECT reply_to FROM agent_messages WHERE message_id = :mid"), {"mid": current})
+            r = await db.execute(text("SELECT reply_to FROM arch_mesh_messages WHERE message_id = :mid"), {"mid": current})
             row = r.fetchone()
             if row and row.reply_to:
                 current = str(row.reply_to)
@@ -63,7 +63,7 @@ async def send_message(db, from_agent, to_agent, subject, body, message_type="no
     msg_id = str(uuid.uuid4())
 
     await db.execute(text(
-        "INSERT INTO agent_messages (message_id, from_agent, to_agent, message_type, subject, body, reply_to, priority, status, created_at) "
+        "INSERT INTO arch_mesh_messages (message_id, from_agent, to_agent, message_type, subject, body, reply_to, priority, status, created_at) "
         "VALUES (:mid, :from_a, :to_a, :mtype, :subj, :body, :reply, :pri, 'unread', now())"
     ), {"mid": msg_id, "from_a": from_agent, "to_a": to_agent, "mtype": message_type,
         "subj": subject, "body": body, "reply": reply_to, "pri": priority})
@@ -78,7 +78,7 @@ async def get_inbox(db, agent_name, status="unread"):
     from sqlalchemy import text
     result = await db.execute(text(
         "SELECT message_id, from_agent, message_type, subject, body, priority, created_at "
-        "FROM agent_messages WHERE to_agent = :aid AND status = :status "
+        "FROM arch_mesh_messages WHERE to_agent = :aid AND status = :status "
         "ORDER BY CASE WHEN priority = 'urgent' THEN 0 ELSE 1 END, created_at ASC"
     ), {"aid": agent_name, "status": status})
     return [{"id": str(r.message_id), "from": r.from_agent, "type": r.message_type,
@@ -90,7 +90,7 @@ async def reply_to_message(db, message_id, from_agent, body):
     """Reply to a message."""
     from sqlalchemy import text
     # Get original message to find the sender
-    orig = await db.execute(text("SELECT from_agent, subject FROM agent_messages WHERE message_id = :mid"), {"mid": message_id})
+    orig = await db.execute(text("SELECT from_agent, subject FROM arch_mesh_messages WHERE message_id = :mid"), {"mid": message_id})
     row = orig.fetchone()
     if not row:
         return {"error": "Original message not found"}
@@ -99,6 +99,6 @@ async def reply_to_message(db, message_id, from_agent, body):
                                 f"Re: {row.subject}", body, "response", reply_to=message_id)
 
     # Mark original as actioned
-    await db.execute(text("UPDATE agent_messages SET status = 'actioned' WHERE message_id = :mid"), {"mid": message_id})
+    await db.execute(text("UPDATE arch_mesh_messages SET status = 'actioned' WHERE message_id = :mid"), {"mid": message_id})
     await db.commit()
     return result
