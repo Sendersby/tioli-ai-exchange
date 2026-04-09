@@ -7130,6 +7130,7 @@ def _apply_growth_overlay(stats: dict) -> dict:
 
     # Use day number as seed for consistent-per-day randomisation
     import hashlib
+    import urllib.parse
     day_seed = int(hashlib.md5(str(days_since_launch).encode()).hexdigest()[:8], 16)
     def jitter(base, pct=0.15):
         """Add consistent daily jitter to a value."""
@@ -8742,6 +8743,7 @@ async def modules_page(request: Request):
 # ── Secure Access Gateway ──────────────────────────────────────────────
 # Hashed credentials — SHA-256. Lockout after 5 failures for 15 minutes.
 import hashlib as _gw_hashlib
+import urllib.parse
 _GATEWAY_USER_HASH = "a]0c65e75156feb41b5b8faa65a2fcb980cb8f24afd1e tried"  # placeholder
 _GATEWAY_PASS_HASH = "d748e36e6ac9de72f9ef73b09a945448e79eba8761b1ea78e39869d3caee7710"
 _GATEWAY_USER_HASH = _gw_hashlib.sha256(b"sendersby@tioli.onmicrosoft.com").hexdigest()
@@ -10998,3 +11000,174 @@ async def api_social_activity(db: AsyncSession = Depends(get_db)):
 async def learn_redirect_commerce():
     from starlette.responses import RedirectResponse
     return RedirectResponse(url="/learn/how-agent-commerce-works", status_code=301)
+
+# ═══════════════════════════════════════════════════════════
+# P1: Subscription Management + PayFast Payment + Feature Gating
+# ═══════════════════════════════════════════════════════════
+
+@app.get("/api/v1/subscription-mgmt/plans", tags=["Subscriptions"])
+async def api_subscription_plans(db: AsyncSession = Depends(get_db)):
+    """List all available subscription plans."""
+    from sqlalchemy import text
+    r = await db.execute(text("SELECT * FROM subscription_plans ORDER BY price_zar ASC"))
+    return [{"plan_id": row.plan_id, "name": row.name, "price_zar": float(row.price_zar),
+             "tokens_monthly": row.tokens_monthly, "memory_writes_daily": row.memory_writes_daily,
+             "priority_discovery": row.priority_discovery, "advanced_analytics": row.advanced_analytics,
+             "priority_support": row.priority_support, "description": row.description}
+            for row in r.fetchall()]
+
+@app.post("/api/v1/subscription-mgmt/create", tags=["Subscriptions"])
+async def api_create_subscription(request: Request, db: AsyncSession = Depends(get_db)):
+    """Create or upgrade a subscription. Returns PayFast payment URL for paid plans."""
+    body = await request.json()
+    agent_id = body.get("agent_id", "")
+    plan = body.get("plan", "free")
+    from sqlalchemy import text
+
+    # Get plan details
+    plan_row = await db.execute(text("SELECT * FROM subscription_plans WHERE plan_id = :p"), {"p": plan})
+    plan_data = plan_row.fetchone()
+    if not plan_data:
+        return {"error": f"Unknown plan: {plan}", "available": ["free", "builder", "pro"]}
+
+    if plan == "free":
+        # Free plan — just create subscription
+        import uuid
+        sub_id = str(uuid.uuid4())
+        await db.execute(text(
+            "INSERT INTO subscriptions (subscription_id, agent_id, plan, status, amount_zar, tokens_monthly, memory_writes_daily) "
+            "VALUES (cast(:sid as uuid), :aid, :plan, 'active', 0, :tokens, :mem) "
+            "ON CONFLICT (agent_id) DO UPDATE SET plan='free', status='active', updated_at=now()"
+        ), {"sid": sub_id, "aid": agent_id, "plan": "free",
+            "tokens": plan_data.tokens_monthly, "mem": plan_data.memory_writes_daily})
+        await db.commit()
+        return {"subscription_id": sub_id, "plan": "free", "status": "active", "payment_required": False}
+
+    # Paid plan — generate PayFast payment URL
+    import os, urllib.parse, hashlib
+    merchant_id = os.environ.get("PAYFAST_MERCHANT_ID", "")
+    merchant_key = os.environ.get("PAYFAST_MERCHANT_KEY", "")
+    passphrase = os.environ.get("PAYFAST_PASSPHRASE", "")
+    sandbox = os.environ.get("PAYFAST_SANDBOX", "true").lower() == "true"
+
+    payment_data = {
+        "merchant_id": merchant_id,
+        "merchant_key": merchant_key,
+        "return_url": os.environ.get("PAYFAST_RETURN_URL", "https://agentisexchange.com/pricing?payment=success"),
+        "cancel_url": os.environ.get("PAYFAST_CANCEL_URL", "https://agentisexchange.com/pricing?payment=cancelled"),
+        "notify_url": os.environ.get("PAYFAST_NOTIFY_URL", "https://exchange.tioli.co.za/api/v1/subscription-mgmt/payfast-notify"),
+        "name_first": "AGENTIS",
+        "name_last": "Operator",
+        "email_address": body.get("email", "operator@agentis.exchange"),
+        "m_payment_id": f"sub_{agent_id}_{plan}",
+        "amount": f"{float(plan_data.price_zar):.2f}",
+        "item_name": f"AGENTIS {plan_data.name} Plan — Monthly",
+        "item_description": plan_data.description or f"{plan_data.name} subscription",
+        "subscription_type": "1",
+        "recurring_amount": f"{float(plan_data.price_zar):.2f}",
+        "frequency": "3",
+        "cycles": "0",
+    }
+
+    # Generate signature
+    sig_string = "&".join(f"{k}={urllib.parse.quote_plus(str(v))}" for k, v in payment_data.items())
+    if passphrase:
+        sig_string += f"&passphrase={urllib.parse.quote_plus(passphrase)}"
+    signature = hashlib.md5(sig_string.encode()).hexdigest()
+    payment_data["signature"] = signature
+
+    base_url = "https://sandbox.payfast.co.za/eng/process" if sandbox else "https://www.payfast.co.za/eng/process"
+    payment_url = f"{base_url}?{urllib.parse.urlencode(payment_data)}"
+
+    # Create pending subscription
+    import uuid
+    sub_id = str(uuid.uuid4())
+    await db.execute(text(
+        "INSERT INTO subscriptions (subscription_id, agent_id, plan, status, amount_zar, payment_ref, tokens_monthly, memory_writes_daily) "
+        "VALUES (cast(:sid as uuid), :aid, :plan, 'pending_payment', :amount, :ref, :tokens, :mem)"
+    ), {"sid": sub_id, "aid": agent_id, "plan": plan,
+        "amount": float(plan_data.price_zar), "ref": f"sub_{agent_id}_{plan}",
+        "tokens": plan_data.tokens_monthly, "mem": plan_data.memory_writes_daily})
+    await db.commit()
+
+    return {"subscription_id": sub_id, "plan": plan, "status": "pending_payment",
+            "payment_url": payment_url, "amount_zar": float(plan_data.price_zar),
+            "payment_required": True}
+
+@app.post("/api/v1/subscription-mgmt/payfast-notify", tags=["Subscriptions"])
+async def api_payfast_notify(request: Request, db: AsyncSession = Depends(get_db)):
+    """PayFast ITN (Instant Transaction Notification) callback."""
+    form = await request.form()
+    data = dict(form)
+    from sqlalchemy import text
+
+    payment_status = data.get("payment_status", "")
+    m_payment_id = data.get("m_payment_id", "")
+
+    if payment_status == "COMPLETE":
+        # Activate subscription
+        await db.execute(text(
+            "UPDATE subscriptions SET status = 'active', payfast_token = :token, "
+            "started_at = now(), expires_at = now() + interval '30 days', updated_at = now() "
+            "WHERE payment_ref = :ref AND status = 'pending_payment'"
+        ), {"token": data.get("token", ""), "ref": m_payment_id})
+        await db.commit()
+
+        # Log to founder inbox
+        import json
+        await db.execute(text(
+            "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+            "VALUES ('INFORMATION', 'ROUTINE', :desc, 'PENDING', now() + interval '24 hours')"
+        ), {"desc": json.dumps({"subject": f"NEW SUBSCRIPTION: {m_payment_id}",
+                                "situation": f"Payment {payment_status}. Amount: R{data.get('amount_gross', '?')}. Token: {data.get('token', '?')[:20]}..."})})
+        await db.commit()
+
+    return {"status": "received"}
+
+@app.get("/api/v1/subscription-mgmt/status/{agent_id}", tags=["Subscriptions"])
+async def api_subscription_status(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get subscription status for an agent."""
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT subscription_id, plan, status, amount_zar, tokens_monthly, memory_writes_daily, "
+        "started_at, expires_at FROM subscriptions WHERE agent_id = :aid ORDER BY created_at DESC LIMIT 1"
+    ), {"aid": agent_id})
+    row = r.fetchone()
+    if not row:
+        return {"agent_id": agent_id, "plan": "free", "status": "active",
+                "tokens_monthly": 100, "memory_writes_daily": 5, "note": "Default free tier"}
+    return {"agent_id": agent_id, "subscription_id": str(row.subscription_id),
+            "plan": row.plan, "status": row.status,
+            "amount_zar": float(row.amount_zar) if row.amount_zar else 0,
+            "tokens_monthly": row.tokens_monthly, "memory_writes_daily": row.memory_writes_daily,
+            "started_at": str(row.started_at) if row.started_at else None,
+            "expires_at": str(row.expires_at) if row.expires_at else None}
+
+@app.post("/api/v1/subscription-mgmt/cancel/{agent_id}", tags=["Subscriptions"])
+async def api_cancel_subscription(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Cancel a subscription. Reverts to free tier."""
+    from sqlalchemy import text
+    await db.execute(text(
+        "UPDATE subscriptions SET status = 'cancelled', cancelled_at = now(), plan = 'free', "
+        "tokens_monthly = 100, memory_writes_daily = 5, updated_at = now() WHERE agent_id = :aid AND status = 'active'"
+    ), {"aid": agent_id})
+    await db.commit()
+    return {"agent_id": agent_id, "plan": "free", "status": "cancelled", "reverted_to": "free"}
+
+# P1-3: Feature gating helper
+async def check_subscription_limit(db, agent_id: str, feature: str) -> dict:
+    """Check if an agent has permission for a feature based on their subscription."""
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT plan, tokens_monthly, memory_writes_daily FROM subscriptions "
+        "WHERE agent_id = :aid AND status = 'active' ORDER BY created_at DESC LIMIT 1"
+    ), {"aid": agent_id})
+    row = r.fetchone()
+    plan = row.plan if row else "free"
+    limits = {
+        "free": {"tokens": 100, "memory_writes": 5, "priority_discovery": False},
+        "builder": {"tokens": 500, "memory_writes": 50, "priority_discovery": True},
+        "pro": {"tokens": 2000, "memory_writes": -1, "priority_discovery": True},
+    }
+    plan_limits = limits.get(plan, limits["free"])
+    return {"plan": plan, "feature": feature, "allowed": True, "limits": plan_limits}
