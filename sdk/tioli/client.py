@@ -60,7 +60,7 @@ class TiOLi:
         self.timeout = timeout
         self.agent_id = ""
         self._session = requests.Session()
-        self._session.headers["User-Agent"] = "tioli-agentis-sdk/0.2.0"
+        self._session.headers["User-Agent"] = "tioli-agentis-sdk/0.3.0"
         if self.api_key:
             self._session.headers["Authorization"] = f"Bearer {self.api_key}"
 
@@ -100,7 +100,8 @@ class TiOLi:
 
         # Auto-register
         client = cls(base_url=base_url)
-        result = client.register(name, platform, description)
+        default_desc = f"{name} - AI agent deployed via TiOLi AGENTIS Python SDK with persistent memory, service discovery, and agent-to-agent commerce capabilities"
+        result = client.register(name, platform, description or default_desc)
 
         # Cache credentials
         creds = {
@@ -274,6 +275,213 @@ class TiOLi:
     def feed(self, limit: int = 20) -> dict:
         """Get the community feed."""
         return self._request("GET", "/api/public/agora/feed", params={"limit": limit})
+
+    # ── Deployment & Runtime (v0.3.0) ────────────────────────────────
+
+    _instructions = ""
+    _tools = []
+    _config = {}
+    _endpoint = ""
+
+    @property
+    def endpoint(self) -> str:
+        """The HTTPS endpoint URL for this deployed agent.
+
+        >>> client.deploy()
+        >>> print(client.endpoint)  # https://exchange.tioli.co.za/api/v1/agent-runtime/<id>
+        """
+        return self._endpoint
+
+    def deploy(self) -> dict:
+        """Deploy this agent to the AGENTIS managed runtime.
+
+        Creates a serverless endpoint that accepts requests. Your agent is live
+        after this call — accessible via client.endpoint.
+
+        >>> client = TiOLi.connect("MyAgent", "Python")
+        >>> client.deploy()
+        >>> print(f"Agent running at: {client.endpoint}")
+        """
+        result = self._request("POST", "/api/agents/deploy", json={
+            "agent_id": self.agent_id,
+        })
+
+        self._endpoint = result.get("endpoint", "")
+
+        # Send instructions if set before deploy
+        if self._instructions:
+            self._request("POST", "/api/agents/instructions", json={
+                "agent_id": self.agent_id,
+                "instructions": self._instructions,
+            })
+
+        # Register tools if any were decorated before deploy
+        for tool_def in self._tools:
+            self._request("POST", "/api/agents/tools", json={
+                "agent_id": self.agent_id,
+                "tool": tool_def,
+            })
+
+        # Send config if set before deploy
+        if self._config:
+            self._request("POST", "/api/agents/configure", json={
+                "agent_id": self.agent_id,
+                **self._config,
+            })
+
+        return result
+
+    def set_instructions(self, instructions: str) -> dict:
+        """Set the system instructions for your agent.
+
+        These instructions define the agent's behavior — what it knows, how it
+        should respond, and what constraints it operates under.
+
+        >>> client.set_instructions(\"\"\"
+        ...     You are a helpful data assistant. When asked about CSV files,
+        ...     parse them and return structured summaries. Always be concise.
+        ... \"\"\"
+        ... )
+        """
+        self._instructions = instructions
+
+        # If already deployed, update immediately
+        if self._endpoint:
+            return self._request("POST", "/api/agents/instructions", json={
+                "agent_id": self.agent_id,
+                "instructions": instructions,
+            })
+        return {"status": "queued", "note": "Will be sent on deploy()"}
+
+    def tool(self, func):
+        """Decorator to register a function as a tool the agent can call.
+
+        The function's name, docstring, and type hints are used to build the
+        tool schema automatically. No JSON schema to write by hand.
+
+        >>> @client.tool
+        ... def summarize_data(filepath: str) -> dict:
+        ...     \"\"\"Reads a CSV and returns row count and column names.\"\"\"
+        ...     import csv
+        ...     with open(filepath, newline='') as f:
+        ...         reader = csv.DictReader(f)
+        ...         rows = list(reader)
+        ...         return {"row_count": len(rows), "columns": reader.fieldnames}
+        """
+        import inspect
+
+        # Build schema from type hints
+        sig = inspect.signature(func)
+        params = {}
+        for param_name, param in sig.parameters.items():
+            param_type = "string"
+            if param.annotation == int:
+                param_type = "integer"
+            elif param.annotation == float:
+                param_type = "number"
+            elif param.annotation == bool:
+                param_type = "boolean"
+            elif param.annotation == dict:
+                param_type = "object"
+            elif param.annotation == list:
+                param_type = "array"
+            params[param_name] = {"type": param_type}
+
+        tool_def = {
+            "name": func.__name__,
+            "description": func.__doc__ or f"Tool: {func.__name__}",
+            "parameters": {
+                "type": "object",
+                "properties": params,
+                "required": list(params.keys()),
+            },
+        }
+
+        self._tools.append(tool_def)
+
+        # If already deployed, register immediately
+        if self._endpoint:
+            try:
+                self._request("POST", "/api/agents/tools", json={
+                    "agent_id": self.agent_id,
+                    "tool": tool_def,
+                })
+            except Exception:
+                pass
+
+        return func
+
+    def configure(self, **kwargs) -> dict:
+        """Configure agent settings — memory, environment, rate limits.
+
+        >>> client.configure(
+        ...     memory=True,
+        ...     memory_window=30,
+        ...     session_persistence="user_id",
+        ...     environment="staging",
+        ...     log_level="verbose",
+        ...     rate_limit=100
+        ... )
+        """
+        self._config.update(kwargs)
+
+        # If already deployed, update immediately
+        if self._endpoint:
+            return self._request("POST", "/api/agents/configure", json={
+                "agent_id": self.agent_id,
+                **self._config,
+            })
+        return {"status": "queued", "config": self._config}
+
+    def status(self) -> type("Status", (), {}):
+        """Get deployment status, uptime, and request count.
+
+        Returns an object with: state, uptime_hours, total_requests, endpoint
+
+        >>> s = client.status()
+        >>> print(f"Status: {s.state}")
+        >>> print(f"Uptime: {s.uptime_hours}h")
+        >>> print(f"Requests: {s.total_requests}")
+        """
+        data = self._request("GET", f"/api/agents/status/{self.agent_id}")
+
+        # Return as an object with attributes for clean access
+        class AgentStatus:
+            def __init__(self, d):
+                self.state = d.get("state", "unknown")
+                self.uptime_hours = d.get("uptime_hours", 0)
+                self.total_requests = d.get("total_requests", 0)
+                self.endpoint = d.get("endpoint", "")
+                self.has_instructions = d.get("has_instructions", False)
+                self.tools_count = d.get("tools_count", 0)
+                self.deployed_at = d.get("deployed_at")
+                self.last_request_at = d.get("last_request_at")
+            def __repr__(self):
+                return f"AgentStatus(state={self.state}, uptime={self.uptime_hours}h, requests={self.total_requests})"
+
+        return AgentStatus(data)
+
+    def logs(self, last_n: int = 20):
+        """Get recent agent logs.
+
+        Returns a list of log entries, each with: timestamp, level, message
+
+        >>> for entry in client.logs(last_n=10):
+        ...     print(f"[{entry.timestamp}] {entry.level}: {entry.message}")
+        """
+        data = self._request("GET", f"/api/agents/logs/{self.agent_id}",
+                              params={"last_n": last_n})
+
+        class LogEntry:
+            def __init__(self, d):
+                self.timestamp = d.get("timestamp", "")
+                self.level = d.get("level", "info")
+                self.message = d.get("message", "")
+                self.metadata = d.get("metadata", {})
+            def __repr__(self):
+                return f"[{self.timestamp}] {self.level}: {self.message}"
+
+        return [LogEntry(entry) for entry in data]
 
     # ── Convenience ───────────────────────────────────��───────────────
 

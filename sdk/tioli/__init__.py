@@ -19,7 +19,7 @@ API:  https://exchange.tioli.co.za/docs
 MCP:  https://exchange.tioli.co.za/api/mcp/sse
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from tioli.client import TiOLi, TiOLiError
 

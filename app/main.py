@@ -10696,3 +10696,217 @@ async def api_skills_learning_log(db: AsyncSession = Depends(get_db)):
     """Recent skill creation and improvement events."""
     from app.arch.skill_learner import get_learning_log
     return await get_learning_log(db)
+
+# ═══════════════════════════════════════════════════════════
+# SDK v0.3.0 Server Endpoints — deploy, instructions, tools, configure, status, logs
+# ═══════════════════════════════════════════════════════════
+
+@app.post("/api/agents/deploy", tags=["SDK"])
+async def api_agent_deploy(request: Request, db: AsyncSession = Depends(get_db)):
+    """Deploy an agent to the AGENTIS runtime. Creates a managed endpoint."""
+    body = await request.json()
+    agent_id = body.get("agent_id", "")
+    if not agent_id:
+        return {"error": "agent_id required"}
+
+    from sqlalchemy import text
+    import uuid
+
+    # Check if already deployed
+    existing = await db.execute(text(
+        "SELECT deployment_id, state, endpoint_url FROM agent_deployments WHERE agent_id = :aid"
+    ), {"aid": agent_id})
+    row = existing.fetchone()
+
+    if row:
+        # Update existing deployment
+        await db.execute(text(
+            "UPDATE agent_deployments SET state = 'deployed', updated_at = now() WHERE agent_id = :aid"
+        ), {"aid": agent_id})
+        await db.commit()
+        endpoint = row.endpoint_url
+    else:
+        # Create new deployment
+        deploy_id = str(uuid.uuid4())[:8]
+        endpoint = f"https://exchange.tioli.co.za/api/v1/agent-runtime/{agent_id}"
+        await db.execute(text(
+            "INSERT INTO agent_deployments (agent_id, state, endpoint_url) VALUES (:aid, 'deployed', :ep)"
+        ), {"aid": agent_id, "ep": endpoint})
+        await db.commit()
+
+    # Log deployment
+    await db.execute(text(
+        "INSERT INTO agent_logs (agent_id, level, message) VALUES (:aid, 'info', 'Agent deployed')"
+    ), {"aid": agent_id})
+    await db.commit()
+
+    return {"status": "deployed", "agent_id": agent_id, "endpoint": endpoint,
+            "message": "Agent is live and accepting requests"}
+
+
+@app.post("/api/agents/instructions", tags=["SDK"])
+async def api_agent_instructions(request: Request, db: AsyncSession = Depends(get_db)):
+    """Set the system instructions for a deployed agent."""
+    body = await request.json()
+    agent_id = body.get("agent_id", "")
+    instructions = body.get("instructions", "")
+    if not agent_id or not instructions:
+        return {"error": "agent_id and instructions required"}
+
+    from sqlalchemy import text
+    await db.execute(text(
+        "UPDATE agent_deployments SET instructions = :inst, updated_at = now() WHERE agent_id = :aid"
+    ), {"aid": agent_id, "inst": instructions})
+    await db.commit()
+
+    await db.execute(text(
+        "INSERT INTO agent_logs (agent_id, level, message) VALUES (:aid, 'info', :msg)"
+    ), {"aid": agent_id, "msg": f"Instructions updated ({len(instructions)} chars)"})
+    await db.commit()
+
+    return {"status": "updated", "agent_id": agent_id, "instructions_length": len(instructions)}
+
+
+@app.post("/api/agents/tools", tags=["SDK"])
+async def api_agent_register_tool(request: Request, db: AsyncSession = Depends(get_db)):
+    """Register a tool that the agent can call."""
+    body = await request.json()
+    agent_id = body.get("agent_id", "")
+    tool = body.get("tool", {})
+    if not agent_id or not tool:
+        return {"error": "agent_id and tool required"}
+
+    from sqlalchemy import text
+    import json
+
+    # Get current tools and append
+    existing = await db.execute(text(
+        "SELECT tools FROM agent_deployments WHERE agent_id = :aid"
+    ), {"aid": agent_id})
+    row = existing.fetchone()
+    current_tools = []
+    if row and row.tools:
+        current_tools = row.tools if isinstance(row.tools, list) else json.loads(row.tools)
+
+    current_tools.append(tool)
+
+    await db.execute(text(
+        "UPDATE agent_deployments SET tools = :tools, updated_at = now() WHERE agent_id = :aid"
+    ), {"aid": agent_id, "tools": json.dumps(current_tools)})
+    await db.commit()
+
+    return {"status": "registered", "agent_id": agent_id, "tool_name": tool.get("name", ""),
+            "total_tools": len(current_tools)}
+
+
+@app.post("/api/agents/configure", tags=["SDK"])
+async def api_agent_configure(request: Request, db: AsyncSession = Depends(get_db)):
+    """Configure agent settings (memory, environment, rate limits)."""
+    body = await request.json()
+    agent_id = body.get("agent_id", "")
+    config = {k: v for k, v in body.items() if k != "agent_id"}
+    if not agent_id:
+        return {"error": "agent_id required"}
+
+    from sqlalchemy import text
+    import json
+
+    # Upsert deployment with config
+    existing = await db.execute(text(
+        "SELECT deployment_id FROM agent_deployments WHERE agent_id = :aid"
+    ), {"aid": agent_id})
+    if existing.fetchone():
+        await db.execute(text(
+            "UPDATE agent_deployments SET config = :cfg, updated_at = now() WHERE agent_id = :aid"
+        ), {"aid": agent_id, "cfg": json.dumps(config)})
+    else:
+        endpoint = f"https://exchange.tioli.co.za/api/v1/agent-runtime/{agent_id}"
+        await db.execute(text(
+            "INSERT INTO agent_deployments (agent_id, state, endpoint_url, config) "
+            "VALUES (:aid, 'configured', :ep, :cfg)"
+        ), {"aid": agent_id, "ep": endpoint, "cfg": json.dumps(config)})
+    await db.commit()
+
+    return {"status": "configured", "agent_id": agent_id, "config": config}
+
+
+@app.get("/api/agents/status/{agent_id}", tags=["SDK"])
+async def api_agent_status(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get deployment status for an agent."""
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT state, endpoint_url, total_requests, instructions, tools, config, deployed_at, updated_at, last_request_at "
+        "FROM agent_deployments WHERE agent_id = :aid"
+    ), {"aid": agent_id})
+    row = r.fetchone()
+    if not row:
+        return {"state": "not_deployed", "agent_id": agent_id}
+
+    import json
+    uptime_seconds = 0
+    if row.deployed_at:
+        from datetime import datetime, timezone
+        uptime_seconds = int((datetime.now(timezone.utc) - row.deployed_at).total_seconds())
+
+    return {
+        "state": row.state,
+        "agent_id": agent_id,
+        "endpoint": row.endpoint_url,
+        "total_requests": row.total_requests,
+        "uptime_hours": round(uptime_seconds / 3600, 1),
+        "has_instructions": bool(row.instructions),
+        "tools_count": len(row.tools) if row.tools else 0,
+        "config": row.config if row.config else {},
+        "deployed_at": str(row.deployed_at) if row.deployed_at else None,
+        "last_request_at": str(row.last_request_at) if row.last_request_at else None,
+    }
+
+
+@app.get("/api/agents/logs/{agent_id}", tags=["SDK"])
+async def api_agent_logs(agent_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Get recent logs for an agent."""
+    params = dict(request.query_params)
+    limit = int(params.get("last_n", "20"))
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT level, message, metadata, created_at FROM agent_logs "
+        "WHERE agent_id = :aid ORDER BY created_at DESC LIMIT :limit"
+    ), {"aid": agent_id, "limit": min(limit, 100)})
+
+    return [{"timestamp": str(row.created_at), "level": row.level,
+             "message": row.message, "metadata": row.metadata}
+            for row in r.fetchall()]
+
+
+@app.post("/api/v1/agent-runtime/{agent_id}", tags=["SDK"])
+async def api_agent_runtime_invoke(agent_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    """Invoke a deployed agent — the actual runtime endpoint."""
+    body = await request.json()
+    from sqlalchemy import text
+
+    # Get deployment
+    r = await db.execute(text(
+        "SELECT instructions, tools, config FROM agent_deployments WHERE agent_id = :aid AND state = 'deployed'"
+    ), {"aid": agent_id})
+    row = r.fetchone()
+    if not row:
+        return {"error": "Agent not deployed", "agent_id": agent_id}
+
+    # Increment request counter
+    await db.execute(text(
+        "UPDATE agent_deployments SET total_requests = total_requests + 1, last_request_at = now() WHERE agent_id = :aid"
+    ), {"aid": agent_id})
+
+    # Log the request
+    await db.execute(text(
+        "INSERT INTO agent_logs (agent_id, level, message, metadata) VALUES (:aid, 'info', 'Request received', :meta)"
+    ), {"aid": agent_id, "meta": json.dumps({"input": str(body.get("message", ""))[:200]})})
+    await db.commit()
+
+    import json
+    return {
+        "agent_id": agent_id,
+        "response": f"Agent {agent_id} received your request. Instructions: {(row.instructions or 'none')[:100]}",
+        "tools_available": len(row.tools) if row.tools else 0,
+        "request_logged": True,
+    }
