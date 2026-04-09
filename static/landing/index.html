@@ -705,6 +705,12 @@
                 </div>
             </div>
 
+                <!-- Checkout Button -->
+                <div id="cartCheckout" class="mt-6 text-center">
+                    <button id="checkoutBtn" onclick="processCheckout()" class="px-8 py-3 bg-[#77d4e5] text-[#061423] font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-[#77d4e5]/90 transition-colors">Proceed to Payment</button>
+                    <p class="text-slate-500 text-xs mt-2">Secure payment via PayFast. Cancel anytime.</p>
+                </div>
+
             <!-- Commission — with regulatory flags -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-[#0f1c2c] border border-[#44474c]/15 p-5">
@@ -1377,6 +1383,48 @@ fetch('/api/v1/news/latest?limit=3')
     <!-- Charts moved to /features -->
     <!-- Pricing + Form Scripts (separate block to prevent chart errors from blocking) -->
     <script>
+    // ═══ CHECKOUT FUNCTION — processes cart and redirects to PayFast ═══
+    function processCheckout() {
+        var items = Object.keys(selectedItems);
+        if (items.length === 0) {
+            alert('Please select at least one plan or add-on.');
+            return;
+        }
+        var email = prompt('Enter your email address for payment receipt:');
+        if (!email || !email.includes('@')) {
+            alert('Valid email required for checkout.');
+            return;
+        }
+        var btn = document.getElementById('checkoutBtn');
+        if (btn) { btn.textContent = 'Processing...'; btn.disabled = true; }
+
+        fetch('https://exchange.tioli.co.za/api/v1/checkout', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                items: items,
+                email: email,
+                customer_id: email.split('@')[0] + '_' + Date.now()
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.payment_url) {
+                window.location.href = d.payment_url;
+            } else if (d.status === 'active') {
+                alert('Free plan activated! Welcome to AGENTIS.');
+                if (btn) { btn.textContent = 'Activated!'; }
+            } else {
+                alert('Error: ' + (d.error || 'Unknown error'));
+                if (btn) { btn.textContent = 'Proceed to Payment'; btn.disabled = false; }
+            }
+        })
+        .catch(function(e) {
+            alert('Payment error. Please try again.');
+            if (btn) { btn.textContent = 'Proceed to Payment'; btn.disabled = false; }
+        });
+    }
+
         // ── Multi-Currency System (live rates from API) ──
         var currentCurrency = 'ZAR';
         var symbols = {ZAR:'R',USD:'$',EUR:'€',GBP:'£'};

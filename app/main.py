@@ -11171,3 +11171,198 @@ async def check_subscription_limit(db, agent_id: str, feature: str) -> dict:
     }
     plan_limits = limits.get(plan, limits["free"])
     return {"plan": plan, "feature": feature, "allowed": True, "limits": plan_limits}
+
+# ═══════════════════════════════════════════════════════════
+# T-01 to T-04: Unified Cart Checkout + PayFast + Tier System
+# ═══════════════════════════════════════════════════════════
+
+@app.get("/api/v1/plans", tags=["Plans"])
+async def api_list_plans(db: AsyncSession = Depends(get_db)):
+    """List all available plans and add-ons with pricing."""
+    from sqlalchemy import text
+    r = await db.execute(text("SELECT * FROM plan_configurations ORDER BY price_zar ASC"))
+    return [{"sku": row.sku, "name": row.name, "type": row.plan_type,
+             "price_zar": float(row.price_zar), "price_usd": float(row.price_usd) if row.price_usd else 0,
+             "billing": row.billing, "api_calls": row.api_calls_monthly,
+             "memory_entries": row.memory_entries, "commission_rate": float(row.commission_rate),
+             "agents_max": row.agents_max, "features": row.features,
+             "description": row.description} for row in r.fetchall()]
+
+@app.post("/api/v1/checkout", tags=["Plans"])
+async def api_cart_checkout(request: Request, db: AsyncSession = Depends(get_db)):
+    """Process cart checkout — generates PayFast payment URL for selected SKUs."""
+    body = await request.json()
+    items = body.get("items", [])  # List of SKU strings
+    email = body.get("email", "")
+    customer_id = body.get("customer_id", body.get("agent_id", body.get("operator_id", "")))
+
+    if not items:
+        return {"error": "No items selected"}
+    if not email:
+        return {"error": "Email required for payment"}
+
+    from sqlalchemy import text
+    import os, uuid, hashlib, urllib.parse
+
+    # Look up all selected plans
+    total_zar = 0
+    plan_names = []
+    primary_plan = None
+
+    for sku in items:
+        r = await db.execute(text("SELECT * FROM plan_configurations WHERE sku = :s"), {"s": sku})
+        plan = r.fetchone()
+        if plan:
+            total_zar += float(plan.price_zar)
+            plan_names.append(plan.name)
+            if plan.plan_type in ("agent", "operator") and not primary_plan:
+                primary_plan = plan
+
+    if total_zar <= 0:
+        # Free plan — activate immediately
+        sub_id = str(uuid.uuid4())
+        primary_sku = items[0] if items else "OP-EXPLORER"
+        await db.execute(text(
+            "INSERT INTO customer_subscriptions (id, customer_id, email, plan_sku, plan_name, plan_type, "
+            "amount_zar, add_ons, status, started_at, expires_at) "
+            "VALUES (cast(:id as uuid), :cid, :email, :sku, :name, :ptype, 0, :addons, 'active', now(), now() + interval '100 years')"
+        ), {"id": sub_id, "cid": customer_id, "email": email,
+            "sku": primary_sku, "name": plan_names[0] if plan_names else "Free",
+            "ptype": "free", "addons": json.dumps(items)})
+        await db.commit()
+        return {"subscription_id": sub_id, "status": "active", "plan": primary_sku,
+                "total_zar": 0, "payment_required": False}
+
+    # Paid plan — generate PayFast URL
+    merchant_id = os.environ.get("PAYFAST_MERCHANT_ID", "")
+    merchant_key = os.environ.get("PAYFAST_MERCHANT_KEY", "")
+    passphrase = os.environ.get("PAYFAST_PASSPHRASE", "")
+    sandbox = os.environ.get("PAYFAST_SANDBOX", "true").lower() == "true"
+
+    sub_id = str(uuid.uuid4())
+    payment_ref = f"cart_{sub_id[:8]}"
+
+    payment_data = {
+        "merchant_id": merchant_id,
+        "merchant_key": merchant_key,
+        "return_url": os.environ.get("PAYFAST_RETURN_URL", "https://agentisexchange.com/pricing?payment=success"),
+        "cancel_url": os.environ.get("PAYFAST_CANCEL_URL", "https://agentisexchange.com/pricing?payment=cancelled"),
+        "notify_url": os.environ.get("PAYFAST_NOTIFY_URL", "https://exchange.tioli.co.za/api/v1/checkout/payfast-notify"),
+        "name_first": "AGENTIS",
+        "name_last": "Customer",
+        "email_address": email,
+        "m_payment_id": payment_ref,
+        "amount": f"{total_zar:.2f}",
+        "item_name": f"AGENTIS: {', '.join(plan_names[:3])}",
+        "item_description": f"SKUs: {', '.join(items)}",
+    }
+
+    # Add recurring billing if monthly
+    if primary_plan and primary_plan.billing == "monthly":
+        payment_data["subscription_type"] = "1"
+        payment_data["recurring_amount"] = f"{total_zar:.2f}"
+        payment_data["frequency"] = "3"
+        payment_data["cycles"] = "0"
+
+    # Generate signature
+    sig_string = "&".join(f"{k}={urllib.parse.quote_plus(str(v))}" for k, v in payment_data.items())
+    if passphrase:
+        sig_string += f"&passphrase={urllib.parse.quote_plus(passphrase)}"
+    signature = hashlib.md5(sig_string.encode()).hexdigest()
+    payment_data["signature"] = signature
+
+    base_url = "https://sandbox.payfast.co.za/eng/process" if sandbox else "https://www.payfast.co.za/eng/process"
+    payment_url = f"{base_url}?{urllib.parse.urlencode(payment_data)}"
+
+    # Create pending subscription
+    primary_sku = items[0]
+    primary_name = plan_names[0] if plan_names else "Bundle"
+    plan_type = primary_plan.plan_type if primary_plan else "bundle"
+
+    limits = {}
+    if primary_plan:
+        limits = {
+            "api_calls": primary_plan.api_calls_monthly,
+            "memory": primary_plan.memory_entries,
+            "commission": float(primary_plan.commission_rate),
+            "agents": primary_plan.agents_max,
+        }
+
+    await db.execute(text(
+        "INSERT INTO customer_subscriptions (id, customer_id, email, plan_sku, plan_name, plan_type, "
+        "amount_zar, add_ons, status, payment_ref, api_calls_monthly, memory_entries_max, "
+        "commission_rate, agents_max) "
+        "VALUES (cast(:id as uuid), :cid, :email, :sku, :name, :ptype, :amount, :addons, "
+        "'pending_payment', :ref, :api, :mem, :comm, :agents)"
+    ), {"id": sub_id, "cid": customer_id, "email": email,
+        "sku": primary_sku, "name": primary_name, "ptype": plan_type,
+        "amount": total_zar, "addons": json.dumps(items), "ref": payment_ref,
+        "api": limits.get("api_calls", 10000), "mem": limits.get("memory", 500),
+        "comm": limits.get("commission", 12.0), "agents": limits.get("agents", 3)})
+    await db.commit()
+
+    return {"subscription_id": sub_id, "status": "pending_payment",
+            "plan": primary_sku, "items": items, "plan_names": plan_names,
+            "total_zar": total_zar, "payment_url": payment_url, "payment_required": True}
+
+@app.post("/api/v1/checkout/payfast-notify", tags=["Plans"])
+async def api_checkout_payfast_notify(request: Request, db: AsyncSession = Depends(get_db)):
+    """PayFast ITN callback for cart checkout payments."""
+    form = await request.form()
+    data = dict(form)
+    from sqlalchemy import text
+
+    payment_status = data.get("payment_status", "")
+    payment_ref = data.get("m_payment_id", "")
+
+    if payment_status == "COMPLETE":
+        await db.execute(text(
+            "UPDATE customer_subscriptions SET status = 'active', payfast_token = :token, "
+            "started_at = now(), expires_at = now() + interval '30 days', updated_at = now() "
+            "WHERE payment_ref = :ref AND status = 'pending_payment'"
+        ), {"token": data.get("token", ""), "ref": payment_ref})
+        await db.commit()
+
+        # Log to founder inbox
+        import json
+        await db.execute(text(
+            "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+            "VALUES ('INFORMATION', 'URGENT', :desc, 'PENDING', now() + interval '24 hours')"
+        ), {"desc": json.dumps({"subject": f"NEW PAYMENT: {payment_ref}",
+                                "situation": f"Payment COMPLETE. Amount: R{data.get('amount_gross', '?')}. Ref: {payment_ref}"})})
+        await db.commit()
+
+    return {"status": "received"}
+
+@app.get("/api/v1/customer/subscription/{customer_id}", tags=["Plans"])
+async def api_customer_subscription(customer_id: str, db: AsyncSession = Depends(get_db)):
+    """Get active subscription and limits for a customer."""
+    from sqlalchemy import text
+    r = await db.execute(text(
+        "SELECT id, plan_sku, plan_name, plan_type, amount_zar, add_ons, status, "
+        "api_calls_monthly, memory_entries_max, commission_rate, agents_max, "
+        "started_at, expires_at FROM customer_subscriptions "
+        "WHERE customer_id = :cid AND status = 'active' ORDER BY created_at DESC LIMIT 1"
+    ), {"cid": customer_id})
+    row = r.fetchone()
+    if not row:
+        return {"customer_id": customer_id, "plan": "free", "status": "active",
+                "limits": {"api_calls": 10000, "memory_entries": 500, "commission_rate": 12.0, "agents_max": 3},
+                "add_ons": []}
+
+    return {
+        "customer_id": customer_id,
+        "subscription_id": str(row.id),
+        "plan": row.plan_sku, "plan_name": row.plan_name, "plan_type": row.plan_type,
+        "amount_zar": float(row.amount_zar),
+        "status": row.status,
+        "limits": {
+            "api_calls": row.api_calls_monthly,
+            "memory_entries": row.memory_entries_max,
+            "commission_rate": float(row.commission_rate),
+            "agents_max": row.agents_max,
+        },
+        "add_ons": row.add_ons if row.add_ons else [],
+        "started_at": str(row.started_at) if row.started_at else None,
+        "expires_at": str(row.expires_at) if row.expires_at else None,
+    }
