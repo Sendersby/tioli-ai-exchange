@@ -10379,13 +10379,13 @@ async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db))
             table_rows += (
                 f'<tr style="border-bottom:1px solid rgba(71,85,105,0.2)">'
                 f'<td style="padding:10px 16px;font-weight:600;text-transform:capitalize">{r.agent_id}</td>'
-                f'<td style="padding:10px;text-align:center;{sc(r.m1_production)}">{float(r.m1_production):.1f}</td>'
-                f'<td style="padding:10px;text-align:center;{sc(r.m2_benchmark)}">{float(r.m2_benchmark):.1f}</td>'
-                f'<td style="padding:10px;text-align:center;{sc(r.m3_gap)}">{float(r.m3_gap):.1f}</td>'
-                f'<td style="padding:10px;text-align:center;{sc(r.m4_cost)}">{float(r.m4_cost):.1f}</td>'
-                f'<td style="padding:10px;text-align:center;{sc(r.m5_governance)}">{float(r.m5_governance):.1f}</td>'
-                f'<td style="padding:10px;text-align:center;{sc(r.m6_multi_agent)}">{float(r.m6_multi_agent):.1f}</td>'
-                f'<td style="padding:10px;text-align:center;font-weight:bold;font-size:18px;{sc(r.aggregate_score)}">{float(r.aggregate_score):.1f}</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m1_production)}">{float(r.m1_production):.1f}/100</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m2_benchmark)}">{float(r.m2_benchmark):.1f}/100</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m3_gap)}">{float(r.m3_gap):.1f}/100</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m4_cost)}">{float(r.m4_cost):.1f}/100</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m5_governance)}">{float(r.m5_governance):.1f}/100</td>'
+                f'<td style="padding:10px;text-align:center;{sc(r.m6_multi_agent)}">{float(r.m6_multi_agent):.1f}/100</td>'
+                f'<td style="padding:10px;text-align:center;font-weight:bold;font-size:18px;{sc(r.aggregate_score)}">{float(r.aggregate_score):.1f}/100</td>'
                 f'<td style="padding:10px;text-align:center;font-size:11px;{band_style}">{r.band.replace("_"," ")}</td>'
                 f'<td style="padding:10px;text-align:center;color:#64748b;font-size:11px">{r.eval_period}</td>'
                 f'</tr>'
@@ -10430,10 +10430,10 @@ thead th:first-child {{ text-align:left; padding-left:16px; }}
 </div>
 
 <div class="summary">
-<div class="stat"><div class="stat-label">Board Average</div><div class="stat-value" style="{avg_style}">{avg:.1f}</div><div class="stat-label">out of 100</div></div>
+<div class="stat"><div class="stat-label">Board Average</div><div class="stat-value" style="{avg_style}">{avg:.1f}/100</div><div class="stat-label">weighted aggregate</div></div>
 <div class="stat"><div class="stat-label">Agents Evaluated</div><div class="stat-value">{len(rows)}</div><div class="stat-label">of 7</div></div>
-<div class="stat"><div class="stat-label">Highest Score</div><div class="stat-value" style="color:#34d399">{max(scores):.1f}</div><div class="stat-label">{rows[0].agent_id if rows else '?'}</div></div>
-<div class="stat"><div class="stat-label">Lowest Score</div><div class="stat-value" style="color:#f87171">{min(scores):.1f}</div><div class="stat-label">{rows[-1].agent_id if rows else '?'}</div></div>
+<div class="stat"><div class="stat-label">Highest Score</div><div class="stat-value" style="color:#34d399">{max(scores):.1f}/100</div><div class="stat-label">{rows[0].agent_id if rows else '?'}</div></div>
+<div class="stat"><div class="stat-label">Lowest Score</div><div class="stat-value" style="color:#f87171">{min(scores):.1f}/100</div><div class="stat-label">{rows[-1].agent_id if rows else '?'}</div></div>
 </div>
 
 <div class="card">
@@ -10474,3 +10474,17 @@ AI Agent Evaluation Framework v5.1 · TiOLi AI Investments · Confidential
         return HTMLResponse(content=html)
     except Exception as e:
         return HTMLResponse(content=f"<html><body style='background:#0D1B2A;color:#f87171;padding:40px;font-family:sans-serif'><h1>Evaluation Error</h1><pre>{e}</pre></body></html>", status_code=500)
+
+# Content Engine V2 — 7-Prompt Pipeline API
+@app.post("/api/v1/arch/content/generate-now", include_in_schema=False)
+async def api_content_generate_now(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.content_engine import generate_and_publish_all
+    return await generate_and_publish_all(client, body.get("topic"))
+
+@app.get("/api/v1/arch/content/calendar", include_in_schema=False)
+async def api_content_calendar():
+    from app.arch.campaign import THEMES, get_today_theme
+    return {"today": get_today_theme(), "themes": THEMES}
