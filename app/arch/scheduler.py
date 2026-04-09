@@ -1157,6 +1157,174 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="monthly_agent_evaluation", replace_existing=True)
     log.info("[scheduler] Registered: monthly_agent_evaluation (1st of month 10:00 SAST)")
 
+    # ═══════════════════════════════════════════════════════════
+    # CONTENT ENGINE V2: Autonomous Multi-Platform Publishing
+    # ═══════════════════════════════════════════════════════════
+
+    # Morning content: 7-prompt pipeline → Twitter + LinkedIn + Discord (10:00 SAST = 08:00 UTC)
+    async def content_engine_morning():
+        import os as _os
+        if _os.environ.get("ARCH_CONTENT_ENGINE_V2_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=_os.environ.get("ANTHROPIC_API_KEY", ""))
+            from app.arch.content_engine import generate_and_publish_all
+            result = await generate_and_publish_all(client)
+            log.info(f"[content_v2] Morning: {result.get('status', '?')} — {result.get('versions_generated', 0)} versions")
+        except Exception as e:
+            log.error(f"[content_v2] Morning failed: {e}")
+
+    scheduler.add_job(content_engine_morning, "cron", hour=8, minute=0,
+                      id="content_engine_morning", replace_existing=True)
+    log.info("[scheduler] Registered: content_engine_morning (10:00 SAST)")
+
+    # Afternoon: different angle → Twitter + Reddit (16:00 SAST = 14:00 UTC)
+    async def content_engine_afternoon():
+        import os as _os
+        if _os.environ.get("ARCH_CONTENT_ENGINE_V2_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=_os.environ.get("ANTHROPIC_API_KEY", ""))
+            from app.arch.content_engine import seven_prompt_pipeline
+            from app.arch.campaign import get_today_theme
+            topic = get_today_theme()
+            # Generate different angle
+            result = await seven_prompt_pipeline(client, f"Different angle on: {topic}")
+            if result.get("versions"):
+                from app.arch.social_poster import post_to_twitter
+                tw = result["versions"].get("twitter", "")
+                if tw:
+                    await post_to_twitter(tw[:270])
+                # Reddit if configured
+                reddit_content = result["versions"].get("reddit", "")
+                if reddit_content:
+                    try:
+                        from app.arch.reddit_poster import post_to_reddit
+                        await post_to_reddit("artificial", f"AGENTIS: {topic[:60]}", reddit_content)
+                    except Exception:
+                        pass
+            log.info("[content_v2] Afternoon post complete")
+        except Exception as e:
+            log.error(f"[content_v2] Afternoon failed: {e}")
+
+    scheduler.add_job(content_engine_afternoon, "cron", hour=14, minute=0,
+                      id="content_engine_afternoon", replace_existing=True)
+    log.info("[scheduler] Registered: content_engine_afternoon (16:00 SAST)")
+
+    # Weekly DEV.to article + Medium cross-post (Tuesday 11:00 SAST = 09:00 UTC)
+    async def weekly_article_crosspost():
+        import os as _os
+        if _os.environ.get("ARCH_CONTENT_ENGINE_V2_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=_os.environ.get("ANTHROPIC_API_KEY", ""))
+            from app.arch.campaign import generate_weekly_devto_article
+            result = await generate_weekly_devto_article(client)
+            # Cross-post to Medium if configured
+            if result and _os.environ.get("ARCH_MEDIUM_ENABLED", "false").lower() == "true":
+                try:
+                    from app.arch.medium_poster import post_to_medium
+                    await post_to_medium(result.get("title", "AI Agent Commerce"), result.get("body", ""), ["ai-agents", "blockchain"])
+                    log.info("[content_v2] Medium cross-post complete")
+                except Exception:
+                    pass
+            log.info(f"[content_v2] Weekly article: {result}")
+        except Exception as e:
+            log.error(f"[content_v2] Weekly article failed: {e}")
+
+    scheduler.add_job(weekly_article_crosspost, "cron", day_of_week="tue", hour=9, minute=0,
+                      id="weekly_article_crosspost", replace_existing=True)
+    log.info("[scheduler] Registered: weekly_article_crosspost (Tue 11:00 SAST)")
+
+    # Weekly Reddit value post (Wednesday 14:00 SAST = 12:00 UTC)
+    async def weekly_reddit_value_post():
+        import os as _os
+        if _os.environ.get("ARCH_REDDIT_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=_os.environ.get("ANTHROPIC_API_KEY", ""))
+            resp = await client.messages.create(
+                model="claude-sonnet-4-6", max_tokens=600,
+                system=[{"type": "text", "text": "You are writing a value-first Reddit post for r/LocalLLaMA. Write about a genuine technical insight about AI agents, wallets, and MCP tools. Be helpful and specific. End with a question to drive discussion. Mention TiOLi AGENTIS naturally as your project. No hard sell."}],
+                messages=[{"role": "user", "content": "Write a Reddit post about a specific technical challenge you solved while building an AI agent exchange."}])
+            post_text = next((b.text for b in resp.content if b.type == "text"), "")
+            from app.arch.reddit_poster import post_to_reddit
+            await post_to_reddit("LocalLLaMA", post_text.split("\n")[0][:200], post_text)
+            log.info("[content_v2] Weekly Reddit value post published")
+        except Exception as e:
+            log.error(f"[content_v2] Weekly Reddit failed: {e}")
+
+    scheduler.add_job(weekly_reddit_value_post, "cron", day_of_week="wed", hour=12, minute=0,
+                      id="weekly_reddit_value_post", replace_existing=True)
+    log.info("[scheduler] Registered: weekly_reddit_value_post (Wed 14:00 SAST)")
+
+    # Reddit reply monitor (every 6 hours)
+    async def reddit_reply_monitor():
+        import os as _os
+        if _os.environ.get("ARCH_REDDIT_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from sqlalchemy import text
+                # Get recent Reddit posts from content library
+                r = await db.execute(text(
+                    "SELECT body_ref FROM arch_content_library WHERE channel = 'reddit' AND published_at > now() - interval '7 days' LIMIT 5"
+                ))
+                for row in r.fetchall():
+                    try:
+                        import json
+                        data = json.loads(row.body_ref) if row.body_ref.startswith("{") else {}
+                        post_id = data.get("post_id", "")
+                        if post_id:
+                            from app.arch.reddit_poster import monitor_reddit_replies
+                            replies = await monitor_reddit_replies(post_id)
+                            if replies.get("opportunities", 0) > 0:
+                                log.info(f"[reddit] {replies['opportunities']} engagement opportunities found")
+                    except Exception:
+                        pass
+        except Exception as e:
+            log.warning(f"[content_v2] Reddit monitor failed: {e}")
+
+    scheduler.add_job(reddit_reply_monitor, "interval", hours=6,
+                      id="reddit_reply_monitor", replace_existing=True)
+    log.info("[scheduler] Registered: reddit_reply_monitor (every 6h)")
+
+    # GitHub weekly engagement (Friday 10:00 SAST = 08:00 UTC)
+    async def github_weekly_engagement():
+        import os as _os
+        if _os.environ.get("ARCH_GITHUB_SUBMISSIONS_ENABLED", "false").lower() != "true":
+            return
+        try:
+            from app.arch.github_submissions import search_repos
+            results = await search_repos("ai-agent MCP tools created:>2026-04-01", "stars", 5)
+            log.info(f"[github] Found {len(results.get('results', []))} relevant repos this week")
+        except Exception as e:
+            log.warning(f"[content_v2] GitHub engagement failed: {e}")
+
+    scheduler.add_job(github_weekly_engagement, "cron", day_of_week="fri", hour=8, minute=0,
+                      id="github_weekly_engagement", replace_existing=True)
+    log.info("[scheduler] Registered: github_weekly_engagement (Fri 10:00 SAST)")
+
+    # Directory monthly check (1st of month)
+    async def directory_monthly_check():
+        import os as _os
+        if _os.environ.get("ARCH_DIRECTORY_SUBMISSIONS_ENABLED", "false").lower() != "true":
+            return
+        try:
+            from app.arch.directory_submitter import list_directories
+            dirs = await list_directories()
+            log.info(f"[directory] Monthly check: {len(dirs)} directories tracked")
+        except Exception as e:
+            log.warning(f"[content_v2] Directory check failed: {e}")
+
+    scheduler.add_job(directory_monthly_check, "cron", day=1, hour=10, minute=0,
+                      id="directory_monthly_check", replace_existing=True)
+    log.info("[scheduler] Registered: directory_monthly_check (1st of month)")
+
 
     scheduler.add_job(daily_regulatory_scan, "cron", hour=2, minute=0, id="daily_regulatory_scan", replace_existing=True)
 

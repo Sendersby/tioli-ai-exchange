@@ -10488,3 +10488,54 @@ async def api_content_generate_now(request: Request, db: AsyncSession = Depends(
 async def api_content_calendar():
     from app.arch.campaign import THEMES, get_today_theme
     return {"today": get_today_theme(), "themes": THEMES}
+
+# Content Engine V2 — Reddit, Medium, GitHub, Directory APIs
+@app.post("/api/v1/arch/reddit/post", include_in_schema=False)
+async def api_reddit_post(request: Request):
+    body = await request.json()
+    from app.arch.reddit_poster import post_to_reddit
+    return await post_to_reddit(body.get("subreddit", "test"), body.get("title", ""), body.get("body", ""))
+
+@app.get("/api/v1/arch/reddit/rules/{subreddit}", include_in_schema=False)
+async def api_reddit_rules(subreddit: str):
+    from app.arch.reddit_poster import get_subreddit_rules
+    return await get_subreddit_rules(subreddit)
+
+@app.post("/api/v1/arch/medium/post", include_in_schema=False)
+async def api_medium_post(request: Request):
+    body = await request.json()
+    from app.arch.medium_poster import post_to_medium
+    return await post_to_medium(body.get("title", ""), body.get("body", ""), body.get("tags"))
+
+@app.post("/api/v1/arch/github/issue", include_in_schema=False)
+async def api_github_issue(request: Request):
+    body = await request.json()
+    from app.arch.github_submissions import create_github_issue
+    return await create_github_issue(body.get("owner", ""), body.get("repo", ""), body.get("title", ""), body.get("body", ""))
+
+@app.get("/api/v1/arch/github/search", include_in_schema=False)
+async def api_github_search(request: Request):
+    params = dict(request.query_params)
+    from app.arch.github_submissions import search_repos
+    return await search_repos(params.get("q", "ai-agent"), params.get("sort", "stars"), int(params.get("limit", "10")))
+
+@app.get("/api/v1/arch/directories", include_in_schema=False)
+async def api_list_directories():
+    from app.arch.directory_submitter import list_directories
+    return await list_directories()
+
+@app.post("/api/v1/arch/directories/prepare/{directory}", include_in_schema=False)
+async def api_prepare_submission(directory: str):
+    from app.arch.directory_submitter import prepare_submission
+    return await prepare_submission(directory)
+
+@app.post("/api/v1/arch/directories/submit-github/{directory}", include_in_schema=False)
+async def api_submit_github_directory(directory: str):
+    from app.arch.directory_submitter import submit_github_listing
+    return await submit_github_listing(directory)
+
+@app.post("/api/v1/arch/directories/screenshot", include_in_schema=False)
+async def api_screenshot(request: Request):
+    body = await request.json()
+    from app.arch.directory_submitter import take_screenshot
+    return await take_screenshot(body.get("url", ""))
