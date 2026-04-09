@@ -192,49 +192,49 @@ document.addEventListener('DOMContentLoaded', function(){
 
   <!-- Widget 1: Cache Hit Rate -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">CACHE HIT RATE</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">CACHE HIT RATE<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">How often each agent reuses cached system prompts instead of resending them to the AI. Higher percentages mean lower API costs.</span></span></h3>
     <div id="w-cache" class="text-slate-400 text-xs">Loading...</div>
   </div>
 
   <!-- Widget 2: LLM Calls/Hour -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">LLM CALLS / HOUR</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">LLM CALLS / HOUR<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">Total AI model calls across all 7 agents in the last hour. During idle periods this should be under 10. Spikes indicate active work or incidents.</span></span></h3>
     <div id="w-llm" class="text-3xl font-bold text-white">--</div>
   </div>
 
   <!-- Widget 3: Scheduled Jobs -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">SCHEDULED JOBS</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">SCHEDULED JOBS<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">Recent automated tasks run by the agents. Green = executed successfully. Amber = skipped (platform was idle, saving costs). Each job logs its token usage.</span></span></h3>
     <div id="w-jobs" class="text-slate-400 text-xs max-h-32 overflow-y-auto">Loading...</div>
   </div>
 
   <!-- Widget 4: Goals -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">AGENT GOALS</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">AGENT GOALS<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">Standing objectives assigned to each agent. Progress bars show how close each goal is to completion. Goals are pursued autonomously every 30 minutes.</span></span></h3>
     <div id="w-goals" class="text-slate-400 text-xs max-h-40 overflow-y-auto">Loading...</div>
   </div>
 
   <!-- Widget 5: Today's Agenda -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">TODAY'S AGENDA</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">TODAY'S AGENDA<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">The Sovereign generates a prioritised daily plan each morning at 07:00, then delegates items to the responsible agents. Reviewed at 18:00.</span></span></h3>
     <div id="w-agenda" class="text-slate-400 text-xs">Loading...</div>
   </div>
 
   <!-- Widget 6: Social Signals -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">SOCIAL SIGNALS</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">SOCIAL SIGNALS<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">Inbound mentions, replies, and engagement detected across Twitter, LinkedIn, and DEV.to. Classified as Opportunity, Question, Complaint, or Neutral.</span></span></h3>
     <div id="w-social" class="text-slate-400 text-xs">Loading...</div>
   </div>
 
   <!-- Widget 7: Threat Correlation -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">THREAT CORRELATION</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">THREAT CORRELATION<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">Cross-agent anomaly detection. When multiple agents flag the same entity or event, the system links them into a correlated threat pattern.</span></span></h3>
     <div id="w-threats" class="text-slate-400 text-xs max-h-32 overflow-y-auto">Loading...</div>
   </div>
 
   <!-- Widget 8: Prospect Pipeline -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50">
-    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider">PROSPECT PIPELINE</h3>
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-2 tracking-wider flex items-center gap-2">PROSPECT PIPELINE<span class="relative group cursor-help"><svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg><span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">AI-identified potential operators who may benefit from the platform. All outreach requires your explicit approval before any contact is made.</span></span></h3>
     <div id="w-prospects" class="text-slate-400 text-xs">Loading...</div>
   </div>
 </div>
