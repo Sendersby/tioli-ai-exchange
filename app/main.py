@@ -9668,6 +9668,54 @@ async def api_reply_message(message_id: str, request: Request, db: AsyncSession 
     from app.arch.mesh_comms import reply_to_message
     return await reply_to_message(db, message_id, body.get("from",""), body.get("body",""))
 
+
+# Steps 9-12: Agenda, Blackboard, Rescreening, Regulatory
+@app.post("/api/v1/sovereign/agenda", include_in_schema=False)
+async def api_generate_agenda(db: AsyncSession = Depends(get_db)):
+    """Generate Sovereign daily agenda."""
+    import anthropic, os
+    client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    from app.arch.daily_agenda import generate_daily_agenda
+    return await generate_daily_agenda(db, client)
+
+@app.get("/api/v1/sovereign/agenda/today", include_in_schema=False)
+async def api_today_agenda(db: AsyncSession = Depends(get_db)):
+    """Get today's agenda."""
+    from sqlalchemy import text
+    from datetime import date
+    result = await db.execute(text("SELECT items, completion_pct FROM sovereign_agendas WHERE date = :d"), {"d": date.today()})
+    row = result.fetchone()
+    if row:
+        import json
+        return {"date": str(date.today()), "items": json.loads(row.items) if isinstance(row.items, str) else row.items, "completion": row.completion_pct}
+    return {"date": str(date.today()), "items": [], "note": "No agenda generated yet"}
+
+@app.post("/api/v1/arch/blackboard", include_in_schema=False)
+async def api_post_blackboard(request: Request, db: AsyncSession = Depends(get_db)):
+    """Post to shared blackboard."""
+    body = await request.json()
+    from app.arch.blackboard import post_to_blackboard
+    return await post_to_blackboard(db, body.get("posted_by",""), body.get("category",""),
+        body.get("key",""), body.get("value",""), body.get("confidence",1.0), body.get("visibility","all"))
+
+@app.get("/api/v1/arch/blackboard", include_in_schema=False)
+async def api_read_blackboard(agent: str = "sovereign", category: str = None, db: AsyncSession = Depends(get_db)):
+    """Read blackboard."""
+    from app.arch.blackboard import read_blackboard
+    return await read_blackboard(db, agent, category)
+
+@app.post("/api/v1/compliance/rescreening", include_in_schema=False)
+async def api_run_rescreening(db: AsyncSession = Depends(get_db)):
+    """Run rescreening batch."""
+    from app.arch.rescreening import run_rescreening_batch
+    return await run_rescreening_batch(db)
+
+@app.post("/api/v1/regulatory/scan", include_in_schema=False)
+async def api_regulatory_scan(db: AsyncSession = Depends(get_db)):
+    """Scan regulatory sources."""
+    from app.arch.regulatory_feed import scan_regulatory_sources
+    return await scan_regulatory_sources(db)
+
 @app.get("/learn", include_in_schema=False)
 async def serve_learn_page():
     from fastapi.responses import FileResponse

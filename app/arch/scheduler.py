@@ -900,3 +900,63 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
 
     scheduler.add_job(goal_pursuit_all, "interval", minutes=30,
                       id="goal_pursuit_all", replace_existing=True)
+
+
+    # ARCH-AA-002: Sovereign daily agenda at 07:00 SAST
+    async def sovereign_daily_agenda():
+        import os
+        if os.environ.get("ARCH_AA_DAILY_AGENDA_ENABLED", "false").lower() != "true":
+            return
+        try:
+            import anthropic
+            client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+            async with async_session() as db:
+                from app.arch.daily_agenda import generate_daily_agenda
+                await generate_daily_agenda(db, client)
+                log.info("[agenda] Daily agenda generated")
+        except Exception as e:
+            log.error(f"[agenda] Failed: {e}")
+
+    scheduler.add_job(sovereign_daily_agenda, "cron", hour=5, minute=0, id="sovereign_daily_agenda", replace_existing=True)
+
+    # ARCH-AA-006: Rolling rescreening at 01:00 SAST
+    async def daily_rescreening():
+        import os
+        if os.environ.get("ARCH_AA_ROLLING_RESCREENING_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.rescreening import run_rescreening_batch
+                await run_rescreening_batch(db)
+                log.info("[rescreening] Daily batch complete")
+        except Exception as e:
+            log.error(f"[rescreening] Failed: {e}")
+
+    scheduler.add_job(daily_rescreening, "cron", hour=23, minute=0, id="daily_rescreening", replace_existing=True)
+
+    # ARCH-CP-003: Regulatory scan at 04:00 SAST
+    async def daily_regulatory_scan():
+        import os
+        if os.environ.get("ARCH_CP_REGULATORY_FEED_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.regulatory_feed import scan_regulatory_sources
+                await scan_regulatory_sources(db)
+                log.info("[regulatory] Daily scan complete")
+        except Exception as e:
+            log.error(f"[regulatory] Failed: {e}")
+
+    scheduler.add_job(daily_regulatory_scan, "cron", hour=2, minute=0, id="daily_regulatory_scan", replace_existing=True)
+
+    # ARCH-AA-004: Blackboard expiry cleanup every 15 minutes
+    async def blackboard_cleanup():
+        try:
+            async with async_session() as db:
+                from sqlalchemy import text
+                await db.execute(text("DELETE FROM blackboard WHERE expires_at < now()"))
+                await db.commit()
+        except Exception:
+            pass
+
+    scheduler.add_job(blackboard_cleanup, "interval", minutes=15, id="blackboard_cleanup", replace_existing=True)
