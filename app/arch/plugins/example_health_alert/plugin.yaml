@@ -1,0 +1,10 @@
+name: health_alert
+version: "1.0.0"
+description: "Sends an alert when platform health degrades"
+author: "Architect"
+agent: sentinel
+enabled: true
+hooks:
+  - event: health_check_failed
+    action: alert_founder
+tools: []

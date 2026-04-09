@@ -10282,3 +10282,43 @@ async def api_parse_schedule(request: Request):
 async def api_credential_pool(db: AsyncSession = Depends(get_db)):
     from app.arch.credential_pool import get_pool_status
     return await get_pool_status(db)
+
+# H-009: Plugin System API
+@app.get("/api/v1/arch/plugins", include_in_schema=False)
+async def api_list_plugins():
+    from app.arch.plugin_system import discover_plugins
+    plugins = discover_plugins()
+    return {"plugins": plugins, "count": len(plugins)}
+
+# H-010: Conversation Search API
+@app.get("/api/v1/owner/search", include_in_schema=False)
+async def api_search_conversations(request: Request, db: AsyncSession = Depends(get_db)):
+    params = dict(request.query_params)
+    from app.arch.conversation_search import search_conversations
+    results = await search_conversations(db, params.get("q", ""), params.get("agent_id"), int(params.get("limit", "20")))
+    return {"query": params.get("q"), "results": results, "count": len(results)}
+
+# H-011: Event Hooks API
+@app.get("/api/v1/arch/hooks", include_in_schema=False)
+async def api_list_hooks(db: AsyncSession = Depends(get_db)):
+    from app.arch.event_hooks import list_hooks
+    return await list_hooks(db)
+
+@app.post("/api/v1/arch/hooks/trigger", include_in_schema=False)
+async def api_trigger_hook(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.event_hooks import trigger_event
+    results = await trigger_event(db, body.get("event_type", ""), body.get("data", {}))
+    return {"event_type": body.get("event_type"), "hooks_executed": len(results), "results": results}
+
+# H-012: Trajectory Export API
+@app.get("/api/v1/arch/trajectories/stats", include_in_schema=False)
+async def api_trajectory_stats(db: AsyncSession = Depends(get_db)):
+    from app.arch.trajectory import get_trajectory_stats
+    return await get_trajectory_stats(db)
+
+@app.post("/api/v1/arch/trajectories/export", include_in_schema=False)
+async def api_export_trajectories(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.trajectory import export_trajectories
+    return await export_trajectories(db, body.get("agent_id"), body.get("format", "sharegpt"), body.get("limit", 100))
