@@ -374,13 +374,13 @@ document.addEventListener('DOMContentLoaded', function(){
         }
         let html='<div class="grid grid-cols-1 gap-2">';
         // Header
-        html+='<div class="grid grid-cols-9 gap-1 text-[10px] text-slate-500 font-bold pb-1 border-b border-slate-700/50">';
-        html+='<div>Agent</div><div>M1</div><div>M2</div><div>M3</div><div>M4</div><div>M5</div><div>M6</div><div>AGG</div><div>Band</div></div>';
+        html+='<div class="grid grid-cols-10 gap-1 text-[10px] text-slate-500 font-bold pb-1 border-b border-slate-700/50">';
+        html+='<div>Agent</div><div>M1</div><div>M2</div><div>M3</div><div>M4</div><div>M5</div><div>M6</div><div>M7</div><div>AGG</div><div>Band</div></div>';
         evals.forEach(e=>{
           let bandCol = e.band==='deploy_full'?'text-emerald-400':e.band==='deploy_monitor'?'text-emerald-300':e.band==='conditional'?'text-amber-400':e.band==='marginal'?'text-red-400':'text-red-500';
           let aggCol = e.aggregate>=70?'text-emerald-400':e.aggregate>=55?'text-amber-400':'text-red-400';
           function sc(v){return v>=70?'text-emerald-400':v>=55?'text-amber-400':v>=40?'text-red-300':'text-red-500';}
-          html+=`<div class="grid grid-cols-9 gap-1 text-[11px] py-1 border-b border-slate-700/20">`;
+          html+=`<div class="grid grid-cols-10 gap-1 text-[11px] py-1 border-b border-slate-700/20">`;
           html+=`<div class="text-slate-300 font-medium">${e.agent_id}</div>`;
           html+=`<div class="${sc(e.m1)}">${e.m1}</div>`;
           html+=`<div class="${sc(e.m2)}">${e.m2}</div>`;
@@ -388,6 +388,7 @@ document.addEventListener('DOMContentLoaded', function(){
           html+=`<div class="${sc(e.m4)}">${e.m4}</div>`;
           html+=`<div class="${sc(e.m5)}">${e.m5}</div>`;
           html+=`<div class="${sc(e.m6)}">${e.m6}</div>`;
+          html+=`<div class="${sc(e.m7||0)}">${(e.m7||0).toFixed?.(1)||'0.0'}</div>`;
           html+=`<div class="${aggCol} font-bold">${e.aggregate}</div>`;
           html+=`<div class="${bandCol} text-[10px]">${e.band.replace('_',' ')}</div>`;
           html+=`</div>`;
