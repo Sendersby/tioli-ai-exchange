@@ -36,6 +36,9 @@ async def trigger_event(db, event_type: str, event_data: dict) -> list[dict]:
     if os.environ.get("ARCH_H_EVENT_HOOKS_ENABLED", "false").lower() != "true":
         return []
 
+    # Auto-load hooks if not yet loaded
+    if not _hooks:
+        await load_hooks(db)
     hooks = _hooks.get(event_type, [])
     results = []
 
