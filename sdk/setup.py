@@ -7,7 +7,7 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="TiOLi AI Investments",
-    author_email="platform@tioli.co.za",
+    author_email="AGENTIS@tioli.co.za",
     url="https://agentisexchange.com",
     project_urls={
         "Documentation": "https://agentisexchange.com/sdk",
