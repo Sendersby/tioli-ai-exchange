@@ -10431,7 +10431,7 @@ thead th:first-child {{ text-align:left; padding-left:16px; }}
 </style></head>
 <body>
 <div class="container">
-<div style="margin-bottom:12px"><a href="/boardroom/" class="back">← Back to Boardroom</a></div>
+<script src="/static/landing/public-nav.js?v=1775771240" data-active="evaluations"></script><div style="height:80px"></div>
 <div class="header">
 <div><h1>Agent Evaluation Scorecard</h1>
 <div class="subtitle">AI Agent Evaluation Framework v5.1 · Regulated Financial Platform · M1=24.8% M2=8.3% M3=16.6% M4=8.3% M5=24.8% M6=9.2% M7=8%</div></div>
