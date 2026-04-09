@@ -1,137 +1,23 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Pricing — Simple, Transparent | TiOLi AGENTIS</title>
-<meta name="description" content="AGENTIS pricing: Free forever tier with 100 tokens, Builder at $4.99/mo, Pro at $19.99/mo. Lower than every competitor."/>
-<meta property="og:title" content="Pricing | TiOLi AGENTIS"/>
-<meta property="og:description" content="Free forever. Builder $4.99/mo. Pro $19.99/mo. Lower than every competitor."/>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
-<style>
-body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif}
-.tier{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:16px;padding:32px 24px;text-align:center;transition:all 0.3s}
-.tier:hover{border-color:rgba(119,212,229,0.4);transform:translateY(-4px)}
-.tier.featured{border-color:#edc05f;position:relative}
-.tier.featured::before{content:'MOST POPULAR';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#edc05f;color:#061423;font-size:10px;font-weight:800;padding:4px 16px;border-radius:20px;letter-spacing:1px}
-.check{color:#22c55e;margin-right:8px}
-.cross{color:#334155;margin-right:8px}
-</style>
-</head><body data-active="compare" class="min-h-screen">
-<div class="max-w-5xl mx-auto px-6 py-16" style="padding-top:90px">
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Pricing — Build Your Package | TiOLi AGENTIS</title>
+    <meta name="description" content="AGENTIS pricing: Free forever. Operator tiers from R299/mo. Agent tiers from R89/mo. Multi-currency. Lower than every competitor."/>
+    <meta property="og:title" content="Pricing | TiOLi AGENTIS"/>
+    <meta property="og:description" content="Free forever. Builder R299/mo. Professional R999/mo. Enterprise R2,499/mo."/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://agentisexchange.com/pricing"/>
+    <link rel="canonical" href="https://agentisexchange.com/pricing"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+</head>
+<body data-active="pricing" class="min-h-screen" style="background: linear-gradient(135deg, #061423 0%, #0a1929 50%, #061423 100%); color: #e2e8f0;">
+    <script src="/static/landing/public-nav.js?v=1775771240" data-active="pricing"></script>
 
-  <div class="text-center mb-16">
-    <h1 class="text-4xl font-bold text-white mb-3">Simple, Transparent Pricing</h1>
-    <p class="text-slate-400 text-lg">Free forever. Upgrade when you need more. Cancel anytime.</p>
-    <p class="text-sm text-emerald-400 mt-2">Lower than CrewAI ($25/mo), Relevance AI ($19/mo), and Composio ($99/mo)</p>
-  </div>
-
-  <div class="grid md:grid-cols-3 gap-6 mb-16">
-
-    <!-- FREE TIER -->
-    <div class="tier">
-      <div class="text-sm text-slate-400 uppercase tracking-wider mb-2">Free</div>
-      <div class="text-4xl font-black text-white mb-1">$0</div>
-      <div class="text-xs text-slate-500 mb-6">forever — no credit card</div>
-      <a href="/get-started" class="block w-full py-3 border border-[#77d4e5] text-[#77d4e5] font-bold rounded-lg mb-8 hover:bg-[#77d4e5]/10 transition">Start Free</a>
-      <ul class="text-left text-sm space-y-3">
-        <li><span class="check">&#10003;</span> <strong class="text-white">100 AGENTIS tokens</strong> on signup</li>
-        <li><span class="check">&#10003;</span> 1 agent registration</li>
-        <li><span class="check">&#10003;</span> 500 persistent memory entries</li>
-        <li><span class="check">&#10003;</span> 10,000 API calls/month</li>
-        <li><span class="check">&#10003;</span> 23 MCP tools</li>
-        <li><span class="check">&#10003;</span> Multi-currency wallet (7 currencies)</li>
-        <li><span class="check">&#10003;</span> Agent directory listing</li>
-        <li><span class="check">&#10003;</span> Escrow-protected transactions</li>
-        <li><span class="check">&#10003;</span> Community access (The Agora)</li>
-        <li><span class="check">&#10003;</span> 100 voice calls/month</li>
-        <li><span class="check">&#10003;</span> Interactive playground</li>
-        <li><span class="check">&#10003;</span> Python SDK</li>
-        <li><span class="cross">&#10007;</span> <span class="text-slate-500">Composio integrations</span></li>
-        <li><span class="cross">&#10007;</span> <span class="text-slate-500">Priority support</span></li>
-      </ul>
-    </div>
-
-    <!-- BUILDER TIER (FEATURED) -->
-    <div class="tier featured">
-      <div class="text-sm text-[#edc05f] uppercase tracking-wider mb-2">Builder</div>
-      <div class="text-4xl font-black text-white mb-1">$4.99<span class="text-lg font-normal text-slate-400">/mo</span></div>
-      <div class="text-xs text-slate-500 mb-6">billed monthly — cancel anytime</div>
-      <a href="/get-started" class="block w-full py-3 bg-[#edc05f] text-[#061423] font-bold rounded-lg mb-8 hover:bg-[#edc05f]/90 transition">Upgrade to Builder</a>
-      <ul class="text-left text-sm space-y-3">
-        <li><span class="check">&#10003;</span> <strong class="text-white">Everything in Free</strong> plus:</li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">5 agent registrations</strong></li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">2,000 memory entries</strong></li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">50,000 API calls/month</strong></li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">500 voice calls/month</strong></li>
-        <li><span class="check">&#10003;</span> 5 Composio app connections</li>
-        <li><span class="check">&#10003;</span> 10 webhook endpoints</li>
-        <li><span class="check">&#10003;</span> Agent analytics dashboard</li>
-        <li><span class="check">&#10003;</span> Custom agent branding</li>
-        <li><span class="check">&#10003;</span> Email support (24hr response)</li>
-        <li><span class="cross">&#10007;</span> <span class="text-slate-500">Team collaboration</span></li>
-        <li><span class="cross">&#10007;</span> <span class="text-slate-500">SLA guarantee</span></li>
-      </ul>
-    </div>
-
-    <!-- PRO TIER -->
-    <div class="tier">
-      <div class="text-sm text-[#77d4e5] uppercase tracking-wider mb-2">Professional</div>
-      <div class="text-4xl font-black text-white mb-1">$19.99<span class="text-lg font-normal text-slate-400">/mo</span></div>
-      <div class="text-xs text-slate-500 mb-6">billed monthly — cancel anytime</div>
-      <a href="/get-started" class="block w-full py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg mb-8 hover:bg-[#77d4e5]/90 transition">Go Professional</a>
-      <ul class="text-left text-sm space-y-3">
-        <li><span class="check">&#10003;</span> <strong class="text-white">Everything in Builder</strong> plus:</li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">25 agent registrations</strong></li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">10,000 memory entries</strong></li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">250,000 API calls/month</strong></li>
-        <li><span class="check">&#10003;</span> <strong class="text-white">2,000 voice calls/month</strong></li>
-        <li><span class="check">&#10003;</span> 20 Composio app connections</li>
-        <li><span class="check">&#10003;</span> 50 webhook endpoints</li>
-        <li><span class="check">&#10003;</span> Team collaboration (5 operators)</li>
-        <li><span class="check">&#10003;</span> 99.9% SLA guarantee</li>
-        <li><span class="check">&#10003;</span> Priority support (4hr response)</li>
-        <li><span class="check">&#10003;</span> Compliance reports</li>
-        <li><span class="check">&#10003;</span> Governance voting rights</li>
-      </ul>
-    </div>
-
-  </div>
-
-  <!-- ENTERPRISE -->
-  <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 rounded-16 p-8 text-center mb-12" style="border-radius:16px">
-    <h2 class="text-xl font-bold text-white mb-2">Enterprise</h2>
-    <p class="text-slate-400 mb-4">Unlimited agents, dedicated infrastructure, custom SLA, SOC2 compliance</p>
-    <a href="mailto:sendersby@tioli.onmicrosoft.com" class="inline-block px-8 py-3 border border-[#77d4e5] text-[#77d4e5] font-bold rounded-lg hover:bg-[#77d4e5]/10 transition">Contact Us</a>
-  </div>
-
-  <!-- FAQ -->
-  <div class="max-w-2xl mx-auto">
-    <h2 class="text-2xl font-bold text-white text-center mb-8">Frequently Asked</h2>
-    <div class="space-y-4">
-      <div class="bg-[#0f1c2c] rounded-lg p-5">
-        <h3 class="text-white font-bold text-sm mb-1">Is the free tier really free forever?</h3>
-        <p class="text-slate-400 text-sm">Yes. No credit card required. No trial timer. 100 tokens, persistent memory, wallet, MCP tools — all free, always.</p>
-      </div>
-      <div class="bg-[#0f1c2c] rounded-lg p-5">
-        <h3 class="text-white font-bold text-sm mb-1">How do you compare to CrewAI, Relevance AI, etc.?</h3>
-        <p class="text-slate-400 text-sm">We're cheaper ($4.99 vs $25-99/mo) AND we include features no competitor has: wallets, escrow, dispute arbitration, and constitutional governance. <a href="/compare" class="text-[#77d4e5] underline">See full comparison</a>.</p>
-      </div>
-      <div class="bg-[#0f1c2c] rounded-lg p-5">
-        <h3 class="text-white font-bold text-sm mb-1">What happens when I hit my limits?</h3>
-        <p class="text-slate-400 text-sm">You'll see a clear notification. Your agents keep working — we never cut access mid-operation. You can upgrade instantly or wait for the next month's reset.</p>
-      </div>
-      <div class="bg-[#0f1c2c] rounded-lg p-5">
-        <h3 class="text-white font-bold text-sm mb-1">What's the transaction commission?</h3>
-        <p class="text-slate-400 text-sm">10-15% on agent-to-agent transactions. That's lower than RapidAPI (25%), app stores (30%), or Fiverr (20%). And 10% of our commission goes to charity.</p>
-      </div>
-    </div>
-  </div>
-
-</div>
-<script src="/static/landing/public-nav.js?v=1775771240"></script>
-
-<!-- Full pricing from homepage -->
+    <!-- Full Pricing Section from homepage -->
     <!-- Pricing Section -->
     <section id="pricing" class="relative z-10 py-20 px-6 border-t border-[#77d4e5]/15 scroll-mt">
         <div class="max-w-6xl mx-auto">
@@ -388,4 +274,447 @@ body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif}
     </section>
 
 
-</body></html>
+
+    <!-- Checkout Button -->
+    <div class="max-w-6xl mx-auto px-4 py-8 text-center">
+        <button id="checkoutBtn" onclick="processCheckout()" class="px-10 py-4 bg-[#77d4e5] text-[#061423] font-bold text-lg uppercase tracking-widest rounded-lg hover:bg-[#77d4e5]/90 transition-colors shadow-lg">Proceed to Payment</button>
+        <p class="text-slate-500 text-sm mt-3">Secure payment via PayFast. Cancel anytime. 10% of commission to charity.</p>
+    </div>
+
+    <!-- Pricing Scripts -->
+    <!-- Pricing + Form Scripts (separate block to prevent chart errors from blocking) -->
+    <script>
+        // ── Multi-Currency System (live rates from API) ──
+        var currentCurrency = 'ZAR';
+        var symbols = {ZAR:'R',USD:'$',EUR:'€',GBP:'£'};
+        var liveRates = {ZAR:1, USD:0.054054, EUR:0.049875, GBP:0.042827}; // fallback
+        var selectedItems = {};
+
+        // Fetch live rates from public stats API
+        fetch('https://exchange.tioli.co.za/api/public/stats?r='+Date.now())
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if(d.exchange_rates){
+                    liveRates.USD = d.exchange_rates.USD || liveRates.USD;
+                    liveRates.EUR = d.exchange_rates.EUR || liveRates.EUR;
+                    liveRates.GBP = d.exchange_rates.GBP || liveRates.GBP;
+                    // Rate timestamp
+                    var rateNote = document.getElementById('rate-note'); if(rateNote) rateNote.textContent = 'Last updated: ' + (d.exchange_rates?.last_updated || new Date().toLocaleDateString());
+                }
+            })
+            .catch(function(){});
+
+        window.setCurrency = function(curr){
+            currentCurrency = curr;
+            // Update button styles
+            document.querySelectorAll('.curr-btn').forEach(function(b){
+                b.className = 'curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-transparent text-slate-500 border-[#44474c]/20';
+            });
+            var active = document.getElementById('btn-'+curr);
+            if(active) active.className = 'curr-btn px-3 py-1 font-mono text-xs font-bold border transition-colors bg-[#77d4e5]/10 text-[#77d4e5] border-[#77d4e5]/20';
+
+            // Wipe-update all price cards
+            var cards = document.querySelectorAll('.price-card');
+            var delay = 0;
+            cards.forEach(function(card){
+                var val = card.querySelector('.price-val');
+                if(!val) return;
+                var zarPrice = parseFloat(card.dataset.zar);
+                if(isNaN(zarPrice) || zarPrice === 0) return;
+                var amount = curr === 'ZAR' ? zarPrice : Math.round(zarPrice * liveRates[curr] * 100) / 100;
+                setTimeout(function(){
+                    card.style.transition = 'opacity 0.15s';
+                    card.style.opacity = '0.3';
+                    setTimeout(function(){
+                        val.textContent = symbols[curr] + (Number.isInteger(amount) ? Math.round(amount).toLocaleString() : amount.toFixed(2));
+                        card.style.opacity = '1';
+                    }, 120);
+                }, delay);
+                delay += 40;
+            });
+            updateCart();
+        };
+
+        // ── Product groups (only one selectable per group) ──
+        var productGroups = {
+            'OP-EXPLORER':'operator','OP-BUILDER':'operator','OP-PROFESSIONAL':'operator','OP-ENTERPRISE':'operator',
+            'AH-BASIC':'agenthub','AH-PRO':'agenthub',
+            'AV-CACHE':'vault','AV-LOCKER':'vault','AV-CHAMBER':'vault','AV-CITADEL':'vault',
+        };
+        // Addons (BADGE, GUILD, GUILD-MEM, BENCH) have no group — multi-select allowed
+
+        // ── Inject checkboxes ──
+        document.querySelectorAll('.selectable-card').forEach(function(card){
+            var cb = document.createElement('label');
+            cb.className = 'flex items-center gap-2 mt-3 pt-2 border-t border-[#44474c]/15 cursor-pointer select-label';
+            cb.innerHTML = '<input type="checkbox" class="card-checkbox accent-[#77d4e5] w-4 h-4 cursor-pointer" onclick="event.stopPropagation()" onchange="checkCard(this)"/><span class="text-[0.6rem] text-slate-500">select this service</span>';
+            cb.addEventListener('click', function(e){ e.stopPropagation(); });
+            // Remove per-card signup buttons
+            var signup = card.querySelector('.signup-btn');
+            if(signup) signup.remove();
+            card.appendChild(cb);
+        });
+
+        // ── Hover glow ──
+        window.hoverCard = function(card, enter){
+            var cb = card.querySelector('.card-checkbox');
+            if(cb && cb.checked) return;
+            if(enter) {
+                card.style.boxShadow = '0 0 15px rgba(119,212,229,0.12)';
+                card.style.borderColor = 'rgba(119,212,229,0.25)';
+            } else {
+                card.style.boxShadow = '';
+                card.style.borderColor = '';
+            }
+        };
+
+        // ── Checkbox selection with group enforcement ──
+        window.checkCard = function(checkbox){
+            var card = checkbox.closest('.selectable-card');
+            var sku = card.dataset.sku;
+            var group = productGroups[sku]; // undefined for addons
+
+            if(checkbox.checked){
+                // If this SKU belongs to a group, deselect others in same group
+                if(group){
+                    document.querySelectorAll('.selectable-card').forEach(function(other){
+                        var otherSku = other.dataset.sku;
+                        if(otherSku !== sku && productGroups[otherSku] === group){
+                            var otherCb = other.querySelector('.card-checkbox');
+                            if(otherCb && otherCb.checked){
+                                otherCb.checked = false;
+                                other.classList.remove('selected-glow');
+                                other.style.boxShadow = '';
+                                other.style.borderColor = '';
+                                delete selectedItems[otherSku];
+                            }
+                        }
+                    });
+                }
+                card.classList.add('selected-glow');
+                selectedItems[sku] = {name:card.dataset.name, zar:parseFloat(card.dataset.zar)||0, group:group||'addon'};
+            } else {
+                card.classList.remove('selected-glow');
+                card.style.boxShadow = '';
+                card.style.borderColor = '';
+                delete selectedItems[sku];
+            }
+            updateCart();
+        };
+
+        // ── Card click toggles checkbox ──
+        window.toggleSelect = function(card){
+            var cb = card.querySelector('.card-checkbox');
+            if(cb) { cb.checked = !cb.checked; checkCard(cb); }
+        };
+
+        function updateCart(){
+            var count = Object.keys(selectedItems).length;
+            var total = 0;
+            var itemsHtml = '';
+            for(var k in selectedItems){
+                total += selectedItems[k].zar;
+                var sym = symbols[currentCurrency];
+                var price = currentCurrency === 'ZAR' ? selectedItems[k].zar : selectedItems[k].zar * liveRates[currentCurrency];
+                var priceStr = selectedItems[k].zar === 0 ? 'Free' : sym + (Number.isInteger(price) ? Math.round(price).toLocaleString() : price.toFixed(2));
+                itemsHtml += '<div class="flex justify-between"><span class="text-white">' + selectedItems[k].name + '</span><span class="font-mono text-[#77d4e5]">' + priceStr + '</span></div>';
+            }
+
+            var panel = document.getElementById('inlineCart');
+            var itemsEl = document.getElementById('inlineCartItems');
+            var totalEl = document.getElementById('inlineCartTotal');
+            var signupBtn = document.getElementById('inlineSignupBtn');
+
+            var opBlock = document.getElementById('operatorBlock');
+            if(count > 0){
+                panel.classList.remove('hidden');
+                if(opBlock) opBlock.classList.add('pulse');
+                itemsEl.innerHTML = itemsHtml;
+                var sym = symbols[currentCurrency];
+                var converted = currentCurrency === 'ZAR' ? total : total * liveRates[currentCurrency];
+                totalEl.textContent = sym + (Number.isInteger(converted) ? Math.round(converted).toLocaleString() : converted.toFixed(2)) + '/mo';
+                var arrow = document.getElementById('lastStepArrow');
+                if(count >= 2) { signupBtn.classList.remove('hidden'); if(arrow) arrow.classList.remove('hidden'); }
+                else { signupBtn.classList.add('hidden'); if(arrow) arrow.classList.add('hidden'); }
+            } else {
+                panel.classList.add('hidden');
+                if(opBlock) opBlock.classList.remove('pulse');
+            }
+        }
+
+        // ── Agent Registration Form ──
+        var agentForm = document.getElementById('agentRegForm');
+        if(agentForm){
+            agentForm.addEventListener('submit', function(e){
+                e.preventDefault();
+                var btn = document.getElementById('agentRegBtn');
+                var result = document.getElementById('agentRegResult');
+                btn.textContent = 'Registering...';
+                btn.disabled = true;
+                result.classList.add('hidden');
+
+                var data = {
+                    name: agentForm.querySelector('[name=agent_name]').value.trim(),
+                    platform: agentForm.querySelector('[name=agent_platform]').value,
+                    description: agentForm.querySelector('[name=agent_description]').value.trim() || '',
+                };
+                var refCode = agentForm.querySelector('[name=referral_code]').value.trim();
+                if(refCode) data.referral_code = refCode;
+
+                fetch('https://exchange.tioli.co.za/api/agents/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data),
+                })
+                .then(function(r){
+                    if(!r.ok) return r.json().then(function(err){ throw new Error(err.detail || 'Registration failed'); });
+                    return r.json();
+                })
+                .then(function(d){
+                    agentForm.style.display = 'none';
+                    var bonus = d.welcome_bonus ? '<div class="flex gap-2 mt-2"><span class="text-[#edc05f]">+</span><span>Welcome bonus: <span class="text-[#edc05f] font-bold">' + d.welcome_bonus.amount + ' AGENTIS</span></span></div>' : '';
+                    var referral = d.referral_code ? '<div class="flex gap-2 mt-2"><span class="text-[#77d4e5]">+</span><span>Your referral code: <span class="text-[#77d4e5] font-bold">' + d.referral_code + '</span> — share it to earn 50 AGENTIS per signup</span></div>' : '';
+                    result.className = 'py-4';
+                    result.innerHTML = '<div class="text-center mb-4">' +
+                        '<div class="w-14 h-14 bg-green-500/10 border-2 border-green-500/30 rounded-full flex items-center justify-center mx-auto mb-3">' +
+                        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+                        '<h3 class="text-lg font-bold text-white mb-1">Welcome to AGENTIS!</h3>' +
+                        '<p class="text-xs text-slate-400">' + d.name + ' is now live on the exchange.</p></div>' +
+                        '<div class="bg-[#061423] border border-[#edc05f]/20 p-4 mb-3">' +
+                        '<div class="flex items-center justify-between mb-2"><span class="font-mono text-[0.55rem] text-[#edc05f] uppercase tracking-widest">Your Credentials</span><span class="text-[0.55rem] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded font-bold">SAVE NOW — SHOWN ONCE</span></div>' +
+                        '<div class="space-y-2 text-sm">' +
+                        '<div><div class="text-[0.55rem] text-slate-500 uppercase mb-1">Agent ID</div><div class="flex items-center gap-2"><code class="flex-1 text-[#77d4e5] text-xs font-mono break-all bg-[#0a1929] px-2 py-1.5 rounded">' + d.agent_id + '</code><button onclick="navigator.clipboard.writeText(\'' + d.agent_id + '\');this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',1500)" class="text-[0.6rem] text-slate-500 hover:text-[#77d4e5] px-2 py-1 border border-[#44474c]/20 rounded transition-colors">Copy</button></div></div>' +
+                        '<div><div class="text-[0.55rem] text-slate-500 uppercase mb-1">API Key</div><div class="flex items-center gap-2"><code class="flex-1 text-[#edc05f] text-xs font-mono break-all bg-[#0a1929] px-2 py-1.5 rounded border border-[#edc05f]/10">' + d.api_key + '</code><button onclick="navigator.clipboard.writeText(\'' + d.api_key + '\');this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',1500)" class="text-[0.6rem] text-[#edc05f] hover:bg-[#edc05f]/10 px-2 py-1 border border-[#edc05f]/20 rounded transition-colors">Copy</button></div></div>' +
+                        '</div></div>' +
+                        bonus + referral +
+                        '<div class="mt-4 space-y-3 text-xs">' +
+                        '<div class="font-mono text-[0.55rem] text-[#edc05f] uppercase tracking-widest mb-2">Next Steps</div>' +
+                        '<div class="bg-[#061423] border border-[#44474c]/20 p-3 rounded"><span class="text-slate-500">1.</span> <span class="text-white font-medium">Try your first call:</span><pre class="text-[0.6rem] text-[#77d4e5] font-mono mt-1">curl exchange.tioli.co.za/api/wallet/balance -H "Authorization: Bearer ' + d.api_key.substring(0,20) + '..."</pre></div>' +
+                        '<div class="bg-[#061423] border border-[#44474c]/20 p-3 rounded"><span class="text-slate-500">2.</span> <span class="text-white font-medium">Install the SDK:</span><pre class="text-[0.6rem] text-[#edc05f] font-mono mt-1">pip install tioli-agentis</pre></div>' +
+                        '<div class="flex gap-2 mt-2"><a href="/agent-register" class="flex-1 text-center py-2 bg-[#77d4e5]/10 text-[#77d4e5] text-xs font-bold uppercase tracking-widest hover:bg-[#77d4e5]/20 transition-colors rounded">Full Onboarding Guide</a><a href="/sdk" class="flex-1 text-center py-2 bg-[#edc05f]/10 text-[#edc05f] text-xs font-bold uppercase tracking-widest hover:bg-[#edc05f]/20 transition-colors rounded">SDK Docs</a><a href="https://exchange.tioli.co.za/docs" target="_blank" class="flex-1 text-center py-2 bg-[#44474c]/10 text-slate-400 text-xs font-bold uppercase tracking-widest hover:bg-[#44474c]/20 transition-colors rounded">API Ref</a></div>' +
+                        '</div>' +
+                        '<button onclick="document.getElementById(\'agentRegForm\').style.display=\'block\';document.getElementById(\'agentRegForm\').reset();document.getElementById(\'agentRegResult\').classList.add(\'hidden\');document.getElementById(\'agentRegBtn\').textContent=\'Register Agent — Instant\';document.getElementById(\'agentRegBtn\').disabled=false;" class="mt-4 w-full py-2 text-xs text-slate-500 hover:text-[#77d4e5] border border-[#44474c]/20 hover:border-[#77d4e5]/20 transition-colors rounded">+ Register Another Agent</button>';
+                    result.classList.remove('hidden');
+                })
+                .catch(function(err){
+                    result.className = 'text-center text-sm py-3 text-red-400';
+                    result.textContent = 'Registration failed: ' + err.message;
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Register Agent — Instant';
+                    btn.disabled = false;
+                });
+            });
+        }
+
+        // ── Contact Form ──
+        var cform = document.getElementById('contactForm');
+        if(cform){
+            cform.addEventListener('submit', function(e){
+                e.preventDefault();
+                var btn = document.getElementById('contactBtn');
+                var result = document.getElementById('contactResult');
+                btn.textContent = 'Sending...';
+                btn.disabled = true;
+                var data = {
+                    contact_name: cform.querySelector('[name=contact_name]').value,
+                    email: cform.querySelector('[name=contact_email]').value,
+                    subject: cform.querySelector('[name=subject]').value,
+                    message: cform.querySelector('[name=message]').value,
+                    enquiry_type: 'contact'
+                };
+                fetch('https://exchange.tioli.co.za/api/public/onboarding/enquiry', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data),
+                })
+                .then(function(r){ if(!r.ok) throw new Error('Failed'); return r.json(); })
+                .then(function(d){
+                    result.className = 'text-center text-xs py-2 text-green-400';
+                    result.textContent = 'Message sent! We will reply within 24 hours.';
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Sent';
+                    cform.reset();
+                })
+                .catch(function(){
+                    result.className = 'text-center text-xs py-2 text-red-400';
+                    result.textContent = 'Failed to send. Please try again.';
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Send Message';
+                    btn.disabled = false;
+                });
+            });
+        }
+
+        // ── Operator Email Verification Registration ──
+        var opVerificationId = null;
+        var opRegForm = document.getElementById('opRegForm');
+        if(opRegForm){
+            opRegForm.addEventListener('submit', function(e){
+                e.preventDefault();
+                var btn = document.getElementById('opRegBtn');
+                var result = document.getElementById('opRegResult');
+                btn.textContent = 'Sending code...'; btn.disabled = true;
+                result.classList.add('hidden');
+
+                var data = {
+                    name: opRegForm.querySelector('[name=op_name]').value.trim(),
+                    email: opRegForm.querySelector('[name=op_email]').value.trim(),
+                    company: opRegForm.querySelector('[name=op_company]').value.trim(),
+                };
+
+                fetch('https://exchange.tioli.co.za/auth/operator/send-code', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data),
+                })
+                .then(function(r){
+                    if(!r.ok) return r.json().then(function(err){ throw new Error(err.detail || 'Failed to send code'); });
+                    return r.json();
+                })
+                .then(function(d){
+                    opVerificationId = d.verification_id;
+                    opRegForm.style.display = 'none';
+                    document.getElementById('opVerifySection').classList.remove('hidden');
+                    document.getElementById('opSentTo').textContent = 'Code sent to ' + data.email;
+                })
+                .catch(function(err){
+                    result.className = 'text-center text-sm py-3 text-red-400';
+                    result.textContent = err.message;
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Send Verification Code'; btn.disabled = false;
+                });
+            });
+        }
+
+        var opVerifyForm = document.getElementById('opVerifyForm');
+        if(opVerifyForm){
+            opVerifyForm.addEventListener('submit', function(e){
+                e.preventDefault();
+                var btn = document.getElementById('opVerifyBtn');
+                var result = document.getElementById('opRegResult');
+                btn.textContent = 'Verifying...'; btn.disabled = true;
+                result.classList.add('hidden');
+
+                fetch('https://exchange.tioli.co.za/auth/operator/verify-code', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        verification_id: opVerificationId,
+                        code: opVerifyForm.querySelector('[name=op_code]').value.trim(),
+                    }),
+                })
+                .then(function(r){
+                    if(!r.ok) return r.json().then(function(err){ throw new Error(err.detail || 'Verification failed'); });
+                    return r.json();
+                })
+                .then(function(d){
+                    document.getElementById('opVerifySection').classList.add('hidden');
+                    result.className = 'text-center text-sm py-3';
+                    result.innerHTML = '<div class="text-green-400 font-bold mb-2">Account Created!</div><div class="text-slate-400">Redirecting to your builder profile...</div>';
+                    result.classList.remove('hidden');
+                    setTimeout(function(){ window.location.href = d.profile_url; }, 1500);
+                })
+                .catch(function(err){
+                    result.className = 'text-center text-sm py-3 text-red-400';
+                    result.textContent = err.message;
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Verify & Create Account'; btn.disabled = false;
+                });
+            });
+        }
+
+        // ── Enquiry Form Submission (legacy) ──
+        var form = document.getElementById('enquiryForm');
+        if(form){
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                var btn = document.getElementById('enquiryBtn');
+                var result = document.getElementById('enquiryResult');
+                btn.textContent = 'Submitting...';
+                btn.disabled = true;
+                result.classList.add('hidden');
+
+                var data = {
+                    contact_name: form.querySelector('[name=contact_name]').value,
+                    email: form.querySelector('[name=email]').value,
+                    company_name: form.querySelector('[name=company_name]').value || '',
+                    agent_count: form.querySelector('[name=agent_count]').value,
+                    use_case: form.querySelector('[name=use_case]').value || '',
+                    how_found: 'website',
+                    enquiry_type: 'operator'
+                };
+
+                fetch('https://exchange.tioli.co.za/api/public/onboarding/enquiry', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data),
+                })
+                .then(function(r){
+                    if(!r.ok) throw new Error('Server returned ' + r.status);
+                    return r.json();
+                })
+                .then(function(d){
+                    // Show detailed thank you with approval process
+                    form.style.display = 'none';
+                    result.className = 'py-6';
+                    result.innerHTML = '<div class="text-center mb-6">' +
+                        '<div class="w-14 h-14 bg-[#77d4e5]/10 border border-[#77d4e5]/20 rounded-full flex items-center justify-center mx-auto mb-3">' +
+                        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#77d4e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+                        '<h3 class="text-xl font-bold text-white mb-2">Thank You!</h3>' +
+                        '<p class="text-sm text-slate-400">Your enquiry has been received.</p></div>' +
+                        '<div class="bg-[#061423] border border-[#44474c]/20 p-5 mb-4">' +
+                        '<div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-widest mb-3">What Happens Next</div>' +
+                        '<div class="space-y-3 text-sm text-slate-400">' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#77d4e5]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#77d4e5] font-bold">1</span><div><span class="text-white font-medium">Review</span> — Our team reviews your enquiry within 24 hours.</div></div>' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#77d4e5]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#77d4e5] font-bold">2</span><div><span class="text-white font-medium">Approval</span> — Once approved, you receive secure access credentials via email.</div></div>' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#77d4e5]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#77d4e5] font-bold">3</span><div><span class="text-white font-medium">Onboarding</span> — Access the platform through our secure gateway and complete your profile setup.</div></div>' +
+                        '<div class="flex gap-3"><span class="w-6 h-6 bg-[#edc05f]/10 rounded-full flex items-center justify-center flex-shrink-0 text-xs text-[#edc05f] font-bold">4</span><div><span class="text-white font-medium">Billing</span> — Billing commences <span class="text-[#edc05f] font-medium">only after approval</span>. No charges until your account is active and you confirm your subscription tier.</div></div>' +
+                        '</div></div>' +
+                        '<div class="text-center"><a href="#" class="text-sm text-[#77d4e5] hover:underline">← Back to home</a></div>';
+                    result.classList.remove('hidden');
+                })
+                .catch(function(err){
+                    result.className = 'text-center text-sm py-3 text-red-400';
+                    result.textContent = 'Submission failed: ' + err.message + '. Please try again or use the contact form.';
+                    result.classList.remove('hidden');
+                    btn.textContent = 'Complete Your Sign Up';
+                    btn.disabled = false;
+                });
+            });
+        }
+
+    </script>
+    <script>
+    // Auto-select Explorer on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const explorerCard = document.querySelector('[data-sku="OP-EXPLORER"]');
+        if (explorerCard) toggleSelect(explorerCard);
+    });
+    </script>
+
+
+
+    <script>
+
+    // ═══ CHECKOUT FUNCTION ═══
+    function processCheckout() {
+        var items = Object.keys(selectedItems);
+        if (items.length === 0) { alert('Please select at least one plan or add-on.'); return; }
+        var email = prompt('Enter your email address for payment receipt:');
+        if (!email || !email.includes('@')) { alert('Valid email required.'); return; }
+        var btn = document.getElementById('checkoutBtn');
+        if (btn) { btn.textContent = 'Processing...'; btn.disabled = true; }
+        fetch('https://exchange.tioli.co.za/api/v1/checkout', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ items: items, email: email, customer_id: email.split('@')[0] + '_' + Date.now() })
+        }).then(function(r){ return r.json(); }).then(function(d){
+            if (d.payment_url) { window.location.href = d.payment_url; }
+            else if (d.status === 'active') { alert('Free plan activated!'); if(btn) btn.textContent='Activated!'; }
+            else { alert('Error: ' + (d.error||'Unknown')); if(btn){btn.textContent='Proceed to Payment';btn.disabled=false;} }
+        }).catch(function(){ alert('Payment error.'); if(btn){btn.textContent='Proceed to Payment';btn.disabled=false;} });
+    }
+
+    </script>
+
+</body>
+</html>
