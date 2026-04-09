@@ -10173,3 +10173,38 @@ async def api_memory_stats(db: AsyncSession = Depends(get_db)):
         "by_scope": {r.agent_scope or "global": r.count for r in by_scope.fetchall()},
         "by_source": {r.source_type or "unknown": r.count for r in by_source.fetchall()},
     }
+
+# H-001: Skill System API Endpoints
+@app.get("/api/v1/arch/skills", include_in_schema=False)
+async def api_list_skills(request: Request, db: AsyncSession = Depends(get_db)):
+    """List all agent skills."""
+    agent = dict(request.query_params).get("agent_id")
+    from app.arch.skill_engine import list_skills
+    skills = await list_skills(db, agent)
+    return {"skills": skills, "count": len(skills)}
+
+@app.get("/api/v1/arch/skills/{agent_id}", include_in_schema=False)
+async def api_agent_skills(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """List skills for a specific agent."""
+    from app.arch.skill_engine import list_skills
+    skills = await list_skills(db, agent_id)
+    return {"agent_id": agent_id, "skills": skills, "count": len(skills)}
+
+@app.post("/api/v1/arch/skills/match", include_in_schema=False)
+async def api_match_skill(request: Request, db: AsyncSession = Depends(get_db)):
+    """Find a matching skill for a task description."""
+    body = await request.json()
+    from app.arch.skill_engine import find_matching_skill
+    skill = await find_matching_skill(db, body.get("agent_id", ""), body.get("task_description", ""))
+    if skill:
+        return {"matched": True, **skill}
+    return {"matched": False, "message": "No matching skill found"}
+
+@app.post("/api/v1/arch/skills/create", include_in_schema=False)
+async def api_create_skill(request: Request, db: AsyncSession = Depends(get_db)):
+    """Manually create a skill from a described procedure."""
+    body = await request.json()
+    from app.arch.skill_engine import create_skill_from_execution
+    return await create_skill_from_execution(
+        db, body.get("agent_id", ""), body.get("task_description", ""),
+        body.get("steps", []), body.get("outcome", ""))
