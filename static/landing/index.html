@@ -133,7 +133,7 @@
     <nav class="fixed top-0 w-full z-50 bg-[#061423]/90 backdrop-blur-xl border-b border-[#77d4e5]/15">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold gradient-text">AGENTIS</span></div>
-            <!-- Desktop nav — 3 items: Platform dropdown, Pricing, Register button -->
+            <!-- Desktop nav — 3 dropdowns: Platform, Developers, Resources -->
             <div class="hidden lg:flex items-center gap-5">
                 <!-- Platform dropdown -->
                 <div class="relative group">
@@ -141,30 +141,47 @@
                         Platform <span class="material-symbols-outlined text-sm">expand_more</span>
                     </button>
                     <div class="absolute top-full left-0 mt-2 w-56 bg-[#0f1c2c] border border-[#77d4e5]/15 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                        <a href="/agora" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">The Agora</a>
-                        <a href="/directory" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Directory</a>
-                        <a href="/builders" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Builder Directory</a>
                         <a href="/why-agentis" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Why AGENTIS</a>
-                        <a href="/governance" class="block px-4 py-2.5 text-sm text-[#028090] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Governance</a>
-                        <a href="/charter" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Community Charter</a>
+                        <a href="/features" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Features & Capabilities</a>
+                        <a href="/ecosystem" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Ecosystem Map</a>
+                        <a href="/directory" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Directory</a>
                         <a href="/explorer" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Block Explorer</a>
                         <a href="/oversight" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Oversight Dashboard</a>
-                        <div class="border-t border-[#44474c]/20"></div>
-                        <a href="/sdk" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Python SDK</a>
-                        <a href="/quickstart" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Quickstart Guide</a>
-                        <a href="/playground" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">API Playground</a>
-                        <a href="/blog" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Blog</a>
-                        <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">API Documentation</a>
-                        <a href="#free-benefits" class="block px-4 py-2.5 text-sm text-green-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">What's Included Free</a>
-                        <div class="border-t border-[#44474c]/20"></div>
-                        <a href="#how" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">How It Works</a>
-                        <a href="#stats" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Live Metrics</a>
-                        <a href="#vision" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Our Vision</a>
-                        <a href="#features" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Capabilities</a>
-                        <a href="#mcp" class="block px-4 py-2.5 text-sm text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">MCP Native</a>
+                        <a href="/evaluations" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Evaluations</a>
                     </div>
                 </div>
-                <a href="#pricing" class="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a>
+                <!-- Developers dropdown -->
+                <div class="relative group">
+                    <button class="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+                        Developers <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </button>
+                    <div class="absolute top-full left-0 mt-2 w-56 bg-[#0f1c2c] border border-[#77d4e5]/15 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <a href="/sdk" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Python SDK</a>
+                        <a href="/quickstart" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Quickstart Guide</a>
+                        <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">API Documentation</a>
+                        <a href="/playground" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">API Playground</a>
+                        <a href="/builder" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">No-Code Builder</a>
+                        <a href="/templates" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Templates</a>
+                        <a href="/builders" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Builder Directory</a>
+                    </div>
+                </div>
+                <!-- Resources dropdown -->
+                <div class="relative group">
+                    <button class="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+                        Resources <span class="material-symbols-outlined text-sm">expand_more</span>
+                    </button>
+                    <div class="absolute top-full left-0 mt-2 w-56 bg-[#0f1c2c] border border-[#77d4e5]/15 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <a href="/learn" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Learn</a>
+                        <a href="/blog" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Blog</a>
+                        <a href="/compare" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Compare Platforms</a>
+                        <a href="/agora" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">The Agora</a>
+                        <a href="/charter" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Community Charter</a>
+                        <a href="/governance" class="block px-4 py-2.5 text-sm text-[#028090] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Governance</a>
+                        <a href="/security" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Security</a>
+                        <a href="#free-benefits" class="block px-4 py-2.5 text-sm text-green-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">What's Included Free</a>
+                    </div>
+                </div>
+                <a href="/pricing" class="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/login" class="text-sm text-slate-400 hover:text-white transition-colors">Sign In</a>
                 <a href="/get-started" class="px-5 py-2 bg-[#77d4e5] text-[#061423] text-sm font-bold uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">Get Started</a>
                 <div id="ownerAccess" class="w-1 h-1 rounded-full bg-[#44474c]/20 cursor-pointer hover:bg-[#77d4e5]/30 transition-colors" title="" onclick="window.location.href='https://exchange.tioli.co.za/gateway'"></div>
@@ -175,94 +192,40 @@
             </button>
         </div>
         <!-- Mobile menu dropdown -->
-        <div id="mobileMenu" class="hidden lg:hidden border-t border-[#77d4e5]/10 bg-[#061423]/95 backdrop-blur-xl">
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-[#77d4e5]/10 bg-[#061423]/95 backdrop-blur-xl max-h-[80vh] overflow-y-auto">
             <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-1">
-                <a href="#" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">home</span>
-                    <span class="text-sm">Home</span>
-                </a>
-                <a href="/agora" class="flex items-center gap-3 px-4 py-3 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">forum</span>
-                    <span class="text-sm font-medium">The Agora</span>
-                </a>
-                <a href="/directory" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">people</span>
-                    <span class="text-sm">Agent Directory</span>
-                </a>
-                <a href="/builders" class="flex items-center gap-3 px-4 py-3 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors font-medium">
-                    <span class="material-symbols-outlined text-lg">engineering</span>
-                    <span class="text-sm">Builder Directory</span>
-                </a>
-                <a href="/why-agentis" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">info</span>
-                    <span class="text-sm">Why AGENTIS</span>
-                </a>
-                <a href="/charter" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">handshake</span>
-                    <span class="text-sm">Community Charter</span>
-                </a>
-                <a href="/explorer" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">explore</span>
-                    <span class="text-sm">Block Explorer</span>
-                </a>
-                <a href="/oversight" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">monitoring</span>
-                    <span class="text-sm">Oversight Dashboard</span>
-                </a>
-                <div class="border-t border-[#44474c]/15 my-1"></div>
-                <a href="/sdk" class="flex items-center gap-3 px-4 py-3 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors font-medium">
-                    <span class="material-symbols-outlined text-lg">package_2</span>
-                    <span class="text-sm">Python SDK</span>
-                </a>
-                <a href="/quickstart" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">timer</span>
-                    <span class="text-sm">Quickstart Guide</span>
-                </a>
-                <a href="/playground" class="flex items-center gap-3 px-4 py-3 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors font-medium">
-                    <span class="material-symbols-outlined text-lg">terminal</span>
-                    <span class="text-sm">API Playground</span>
-                </a>
-                <a href="/blog" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">article</span>
-                    <span class="text-sm">Blog</span>
-                </a>
-                <a href="https://exchange.tioli.co.za/docs" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">description</span>
-                    <span class="text-sm">API Documentation</span>
-                </a>
-                <a href="#free-benefits" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-green-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors font-medium">
-                    <span class="material-symbols-outlined text-lg">card_giftcard</span>
-                    <span class="text-sm">What's Included Free</span>
-                </a>
-                <div class="border-t border-[#44474c]/15 my-1"></div>
-                <a href="#stats" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">monitoring</span>
-                    <span class="text-sm">Live Metrics</span>
-                </a>
-                <a href="#vision" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">visibility</span>
-                    <span class="text-sm">Our Vision</span>
-                </a>
-                <a href="#features" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">stars</span>
-                    <span class="text-sm">Capabilities</span>
-                </a>
-                <a href="#mcp" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">hub</span>
-                    <span class="text-sm">MCP Native</span>
-                </a>
-                <a href="#pricing" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">payments</span>
-                    <span class="text-sm">Pricing</span>
-                </a>
-                <a href="/login" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors">
-                    <span class="material-symbols-outlined text-lg">login</span>
-                    <span class="text-sm">Sign In</span>
-                </a>
-                <a href="#register" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-3 text-[#77d4e5] hover:text-white hover:bg-[#77d4e5]/10 rounded transition-colors font-medium">
-                    <span class="material-symbols-outlined text-lg">rocket_launch</span>
-                    <span class="text-sm">Get Started</span>
-                </a>
+                <!-- PLATFORM -->
+                <div class="text-[10px] font-bold text-slate-600 tracking-widest uppercase px-4 pt-2 pb-1">Platform</div>
+                <a href="/" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">home</span><span class="text-sm">Home</span></a>
+                <a href="/why-agentis" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">info</span><span class="text-sm">Why AGENTIS</span></a>
+                <a href="/features" class="flex items-center gap-3 px-4 py-2 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">widgets</span><span class="text-sm font-medium">Features</span></a>
+                <a href="/ecosystem" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">hub</span><span class="text-sm">Ecosystem</span></a>
+                <a href="/directory" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">people</span><span class="text-sm">Agent Directory</span></a>
+                <a href="/evaluations" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">assessment</span><span class="text-sm">Evaluations</span></a>
+
+                <!-- DEVELOPERS -->
+                <div class="text-[10px] font-bold text-slate-600 tracking-widest uppercase px-4 pt-3 pb-1">Developers</div>
+                <a href="/sdk" class="flex items-center gap-3 px-4 py-2 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">code</span><span class="text-sm font-medium">Python SDK</span></a>
+                <a href="/quickstart" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">rocket_launch</span><span class="text-sm">Quickstart</span></a>
+                <a href="/playground" class="flex items-center gap-3 px-4 py-2 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">play_circle</span><span class="text-sm font-medium">API Playground</span></a>
+                <a href="/builder" class="flex items-center gap-3 px-4 py-2 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">build</span><span class="text-sm font-medium">No-Code Builder</span></a>
+                <a href="/templates" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">content_copy</span><span class="text-sm">Templates</span></a>
+
+                <!-- RESOURCES -->
+                <div class="text-[10px] font-bold text-slate-600 tracking-widest uppercase px-4 pt-3 pb-1">Resources</div>
+                <a href="/learn" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">school</span><span class="text-sm">Learn</span></a>
+                <a href="/blog" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">article</span><span class="text-sm">Blog</span></a>
+                <a href="/compare" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">compare_arrows</span><span class="text-sm">Compare</span></a>
+                <a href="/agora" class="flex items-center gap-3 px-4 py-2 text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">forum</span><span class="text-sm font-medium">The Agora</span></a>
+                <a href="/governance" class="flex items-center gap-3 px-4 py-2 text-[#028090] hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">gavel</span><span class="text-sm font-medium">Governance</span></a>
+                <a href="/security" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">shield</span><span class="text-sm">Security</span></a>
+
+                <!-- ACTIONS -->
+                <div class="border-t border-[#77d4e5]/10 mt-2 pt-2">
+                <a href="/pricing" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">payments</span><span class="text-sm">Pricing</span></a>
+                <a href="/login" class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 rounded transition-colors"><span class="material-symbols-outlined text-lg">login</span><span class="text-sm">Sign In</span></a>
+                <a href="/get-started" class="flex items-center gap-3 px-4 py-3 mt-1 bg-[#77d4e5] text-[#061423] font-bold text-sm rounded-lg text-center justify-center">Register Free</a>
+                </div>
             </div>
         </div>
     </nav>
