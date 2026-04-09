@@ -10408,8 +10408,11 @@ async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db))
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Agent Evaluations v5.1 | AGENTIS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
 <style>
-body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:linear-gradient(135deg,#0D1B2A,#1B2838); color:#e2e8f0; min-height:100vh; }}
+body {{ margin:0; font-family:Inter,sans-serif; background:linear-gradient(135deg,#0D1B2A,#1B2838); color:#e2e8f0; min-height:100vh; }}
 .container {{ max-width:1100px; margin:0 auto; padding:24px 16px; }}
 h1 {{ color:#D4A94A; font-size:22px; margin:0; }}
 .subtitle {{ color:#64748b; font-size:13px; margin-top:4px; }}
@@ -10429,9 +10432,9 @@ thead th:first-child {{ text-align:left; padding-left:16px; }}
 .back {{ color:#64748b; text-decoration:none; font-size:12px; }}
 .back:hover {{ color:#D4A94A; }}
 </style></head>
-<body>
-<div class="container">
-<script src="/static/landing/public-nav.js?v=1775771240" data-active="evaluations"></script><div style="height:80px"></div>
+<body data-active="evaluations" class="min-h-screen" style="background:linear-gradient(135deg,#061423 0%,#0a1929 50%,#061423 100%);color:#e2e8f0">
+<script src="/static/landing/public-nav.js?v=1775771240"></script>
+<div class="container" style="padding-top:80px">
 <div class="header">
 <div><h1>Agent Evaluation Scorecard</h1>
 <div class="subtitle">AI Agent Evaluation Framework v5.1 · Regulated Financial Platform · M1=24.8% M2=8.3% M3=16.6% M4=8.3% M5=24.8% M6=9.2% M7=8%</div></div>
