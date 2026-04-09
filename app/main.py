@@ -10329,3 +10329,23 @@ async def api_server_metrics():
     """Real-time server metrics: CPU, RAM, disk, network, PostgreSQL, Redis, backups."""
     from app.arch.server_monitor import get_system_metrics
     return await get_system_metrics()
+
+# F-001/F-003: Agent Evaluation Framework API
+@app.get("/api/v1/owner/evaluations", include_in_schema=False)
+async def api_list_evaluations(db: AsyncSession = Depends(get_db)):
+    """Get latest evaluation scores for all agents."""
+    from app.arch.agent_evaluator import get_latest_evaluations
+    evals = await get_latest_evaluations(db)
+    return {"evaluations": evals, "count": len(evals), "framework": "v5.1"}
+
+@app.post("/api/v1/owner/evaluations/run", include_in_schema=False)
+async def api_run_evaluation(db: AsyncSession = Depends(get_db)):
+    """Run full evaluation for all 7 Arch Agents now."""
+    from app.arch.agent_evaluator import evaluate_all_agents
+    return await evaluate_all_agents(db)
+
+@app.get("/api/v1/owner/evaluations/{agent_id}", include_in_schema=False)
+async def api_agent_evaluation(agent_id: str, db: AsyncSession = Depends(get_db)):
+    """Get detailed evaluation for a specific agent."""
+    from app.arch.agent_evaluator import evaluate_agent
+    return await evaluate_agent(db, agent_id)

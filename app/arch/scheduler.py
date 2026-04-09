@@ -1130,6 +1130,33 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="goal_progress_evaluation", replace_existing=True)
     log.info("[scheduler] Registered: goal_progress_evaluation (hourly)")
 
+    # F-005: Monthly Agent Evaluation — 1st of month 10:00 SAST (08:00 UTC)
+    async def monthly_agent_evaluation():
+        import os as _os
+        if _os.environ.get("ARCH_EVALUATION_ENGINE_ENABLED", "false").lower() != "true":
+            return
+        try:
+            async with async_session() as db:
+                from app.arch.agent_evaluator import evaluate_all_agents
+                result = await evaluate_all_agents(db)
+                log.info(f"[evaluator] Monthly evaluation complete: board avg={result.get('board_average', '?')}")
+                # Deliver to founder inbox
+                import json
+                from sqlalchemy import text
+                await db.execute(text(
+                    "INSERT INTO arch_founder_inbox (item_type, priority, description, status, due_at) "
+                    "VALUES ('INFORMATION', 'ROUTINE', :desc, 'PENDING', now() + interval '7 days')"
+                ), {"desc": json.dumps({"subject": "Monthly Agent Evaluation Report",
+                                        "situation": f"Board average: {result.get('board_average', '?')}/100. Band: {result.get('board_band', '?')}. "
+                                                     f"View full report at /boardroom"})})
+                await db.commit()
+        except Exception as e:
+            log.error(f"[evaluator] Monthly evaluation failed: {e}")
+
+    scheduler.add_job(monthly_agent_evaluation, "cron", day=1, hour=8, minute=0,
+                      id="monthly_agent_evaluation", replace_existing=True)
+    log.info("[scheduler] Registered: monthly_agent_evaluation (1st of month 10:00 SAST)")
+
 
     scheduler.add_job(daily_regulatory_scan, "cron", hour=2, minute=0, id="daily_regulatory_scan", replace_existing=True)
 

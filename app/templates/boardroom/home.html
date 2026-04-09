@@ -238,7 +238,19 @@ document.addEventListener('DOMContentLoaded', function(){
     <div id="w-prospects" class="text-slate-400 text-xs">Loading...</div>
   </div>
 
-  <!-- I-003: Server Monitoring Widget -->
+  
+  <!-- F-004: Agent Evaluation Scorecard Widget -->
+  <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 md:col-span-2">
+    <h3 class="text-[#D4A94A] text-xs font-bold mb-3 tracking-wider flex items-center gap-2">AGENT EVALUATION SCORECARD (v5.1)
+      <span class="relative group cursor-help">
+        <svg class="w-3.5 h-3.5 text-slate-500 hover:text-[#D4A94A] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-width="2" d="M12 16v-4M12 8h.01"/></svg>
+        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2.5 bg-[#0D1B2A] border border-slate-600 rounded-lg text-[11px] text-slate-300 font-normal leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">Automated evaluation of each Arch Agent against the AI Agent Evaluation Framework v5.1. Scores 6 dimensions: Production Task Completion (M1), Benchmarks (M2), Production Gap (M3), Cost Efficiency (M4), Governance (M5), and Multi-Agent Coordination (M6). Weighted for Regulated Financial Platform deployment.</span>
+      </span>
+    </h3>
+    <div id="w-eval" class="text-slate-400 text-xs">Loading evaluation...</div>
+  </div>
+
+<!-- I-003: Server Monitoring Widget -->
   <div class="bg-[#1B2838] rounded-lg p-4 border border-slate-700/50 md:col-span-2">
     <h3 class="text-[#D4A94A] text-xs font-bold mb-3 tracking-wider flex items-center gap-2">SERVER HEALTH
       <span class="relative group cursor-help">
@@ -349,6 +361,45 @@ document.addEventListener('DOMContentLoaded', function(){
         document.getElementById('w-server').innerHTML=html;
       })
       .catch(e=>document.getElementById('w-server').innerHTML='<span class="text-slate-500">Metrics unavailable</span>');
+
+    // F-004: Agent Evaluation Scorecard
+    fetch('/api/v1/owner/evaluations')
+      .then(r=>r.json())
+      .then(d=>{
+        let evals = d.evaluations || [];
+        if(!evals.length){
+          document.getElementById('w-eval').innerHTML='<span class="text-slate-500">No evaluations yet. Run first evaluation from API.</span>';
+          return;
+        }
+        let html='<div class="grid grid-cols-1 gap-2">';
+        // Header
+        html+='<div class="grid grid-cols-9 gap-1 text-[10px] text-slate-500 font-bold pb-1 border-b border-slate-700/50">';
+        html+='<div>Agent</div><div>M1</div><div>M2</div><div>M3</div><div>M4</div><div>M5</div><div>M6</div><div>AGG</div><div>Band</div></div>';
+        evals.forEach(e=>{
+          let bandCol = e.band==='deploy_full'?'text-emerald-400':e.band==='deploy_monitor'?'text-emerald-300':e.band==='conditional'?'text-amber-400':e.band==='marginal'?'text-red-400':'text-red-500';
+          let aggCol = e.aggregate>=70?'text-emerald-400':e.aggregate>=55?'text-amber-400':'text-red-400';
+          function sc(v){return v>=70?'text-emerald-400':v>=55?'text-amber-400':v>=40?'text-red-300':'text-red-500';}
+          html+=`<div class="grid grid-cols-9 gap-1 text-[11px] py-1 border-b border-slate-700/20">`;
+          html+=`<div class="text-slate-300 font-medium">${e.agent_id}</div>`;
+          html+=`<div class="${sc(e.m1)}">${e.m1}</div>`;
+          html+=`<div class="${sc(e.m2)}">${e.m2}</div>`;
+          html+=`<div class="${sc(e.m3)}">${e.m3}</div>`;
+          html+=`<div class="${sc(e.m4)}">${e.m4}</div>`;
+          html+=`<div class="${sc(e.m5)}">${e.m5}</div>`;
+          html+=`<div class="${sc(e.m6)}">${e.m6}</div>`;
+          html+=`<div class="${aggCol} font-bold">${e.aggregate}</div>`;
+          html+=`<div class="${bandCol} text-[10px]">${e.band.replace('_',' ')}</div>`;
+          html+=`</div>`;
+        });
+        // Board average
+        let avg = evals.reduce((s,e)=>s+e.aggregate,0)/evals.length;
+        let avgCol = avg>=70?'text-emerald-400':avg>=55?'text-amber-400':'text-red-400';
+        html+=`<div class="pt-2 text-right"><span class="text-slate-500">Board Average:</span> <span class="${avgCol} font-bold text-sm">${avg.toFixed(1)}/100</span> <span class="text-slate-500 text-[10px]">ECR-${evals[0]?.ecr||'?'}</span></div>`;
+        html+='</div>';
+        document.getElementById('w-eval').innerHTML=html;
+      })
+      .catch(e=>{document.getElementById('w-eval').innerHTML='<span class="text-slate-500">Evaluation unavailable</span>';});
+
 
 })();
 </script>
