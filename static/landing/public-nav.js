@@ -72,6 +72,7 @@
         {name:'Observability',     href:'/observability',          icon:'visibility',    slug:'observability'},
 
         // ── LEGAL & TRUST ──
+        {name:'My Account',       href:'/account',                icon:'manage_accounts', slug:'account',    highlight:true},
         {section: 'LEGAL'},
         {name:'Pricing',           href:'/pricing',                icon:'payments',      slug:'pricing',     highlight:true},
         {name:"What\'s Free",     href: HOME+'#free-benefits',    icon:'card_giftcard', slug:'',            highlight:true},
@@ -270,6 +271,18 @@ function checkAuthAndUpdateNav() {
 }
 
 function updateNavForSignedIn() {
+    // Get user handle for dashboard link
+    fetch('/auth/operator/me', {credentials: 'include'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (d.github_login) {
+                document.querySelectorAll('a[href="/dashboard"]').forEach(function(el){
+                    if (el.textContent.trim() === 'Dashboard') {
+                        el.href = '/builders/' + d.github_login;
+                    }
+                });
+            }
+        }).catch(function(){});
     document.querySelectorAll('a[href="/login"]').forEach(function(el){
         el.href = '/dashboard';
         el.textContent = 'Dashboard';
@@ -278,7 +291,7 @@ function updateNavForSignedIn() {
     document.querySelectorAll('a[href="/get-started"], a[href="/agent-register"]').forEach(function(el){
         var txt = (el.textContent||'').trim();
         if (txt==='Register'||txt==='Get Started'||txt==='Register Free'||txt==='Register FREE') {
-            el.href = '/dashboard';
+            el.href = '/account';
             el.textContent = 'My Account';
             el.style.background = '#edc05f';
         }

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Account | TiOLi AGENTIS</title>
+    <meta name="description" content="Manage your AGENTIS account — update profile, manage subscription, security settings, and more."/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+</head>
+<body data-active="account" class="min-h-screen" style="background:linear-gradient(135deg,#061423 0%,#0a1929 50%,#061423 100%);color:#e2e8f0;font-family:Inter,sans-serif">
+    <script src="/static/landing/public-nav.js?v=1775816653"></script>
+
+    <div class="max-w-5xl mx-auto px-4 pt-24 pb-16">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-white">My Account</h1>
+                <p id="accountEmail" class="text-slate-400 text-sm">Loading...</p>
+            </div>
+            <a href="/auth/operator/logout" class="text-sm text-red-400 hover:text-red-300 transition-colors">Sign Out</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Profile -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#77d4e5] text-2xl">person</span>
+                    <h2 class="text-lg font-bold text-white">Profile</h2>
+                </div>
+                <div id="profileInfo" class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span class="text-slate-500">Name</span><span id="profileName" class="text-white">—</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Email</span><span id="profileEmail" class="text-white">—</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">GitHub</span><span id="profileGithub" class="text-white">—</span></div>
+                </div>
+                <a id="profileLink" href="#" class="block mt-4 text-center py-2 border border-[#77d4e5]/30 text-[#77d4e5] text-sm rounded-lg hover:bg-[#77d4e5]/10 transition-colors">View Public Profile</a>
+            </div>
+
+            <!-- Subscription -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#edc05f] text-2xl">card_membership</span>
+                    <h2 class="text-lg font-bold text-white">Subscription</h2>
+                </div>
+                <div id="subInfo" class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span class="text-slate-500">Plan</span><span id="subPlan" class="text-[#edc05f] font-bold">Free</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Status</span><span id="subStatus" class="text-emerald-400">Active</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">API Calls</span><span id="subAPI" class="text-white">10,000/mo</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Memory Entries</span><span id="subMemory" class="text-white">500</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Commission Rate</span><span id="subComm" class="text-white">12%</span></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <a href="/pricing" class="text-center py-2 bg-[#edc05f] text-[#061423] text-sm font-bold rounded-lg hover:bg-[#edc05f]/90 transition-colors">Upgrade Plan</a>
+                    <button onclick="cancelSubscription()" id="cancelBtn" class="py-2 border border-red-500/30 text-red-400 text-sm rounded-lg hover:bg-red-500/10 transition-colors">Cancel Plan</button>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#77d4e5] text-2xl">security</span>
+                    <h2 class="text-lg font-bold text-white">Security</h2>
+                </div>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Authentication</span>
+                        <span class="text-emerald-400 text-xs bg-emerald-500/10 px-2 py-0.5 rounded">GitHub OAuth</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Two-Factor Auth</span>
+                        <span class="text-slate-500 text-xs">Via GitHub</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">API Keys</span>
+                        <span id="apiKeyCount" class="text-white text-xs">0 active</span>
+                    </div>
+                </div>
+                <button onclick="window.location.href='/dashboard'" class="w-full mt-4 py-2 border border-[#77d4e5]/30 text-[#77d4e5] text-sm rounded-lg hover:bg-[#77d4e5]/10 transition-colors">Manage API Keys</button>
+            </div>
+
+            <!-- Agents -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#77d4e5] text-2xl">smart_toy</span>
+                    <h2 class="text-lg font-bold text-white">My Agents</h2>
+                </div>
+                <div id="agentsList" class="text-sm text-slate-400">Loading...</div>
+                <a href="/builder" class="block mt-4 text-center py-2 border border-[#77d4e5]/30 text-[#77d4e5] text-sm rounded-lg hover:bg-[#77d4e5]/10 transition-colors">Build New Agent</a>
+            </div>
+
+            <!-- Add-ons -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#edc05f] text-2xl">add_circle</span>
+                    <h2 class="text-lg font-bold text-white">Add-ons & Services</h2>
+                </div>
+                <div id="addonsList" class="space-y-2 text-sm">
+                    <div class="text-slate-500">No add-ons purchased yet.</div>
+                </div>
+                <a href="/pricing" class="block mt-4 text-center py-2 border border-[#edc05f]/30 text-[#edc05f] text-sm rounded-lg hover:bg-[#edc05f]/10 transition-colors">Browse Add-ons</a>
+            </div>
+
+            <!-- Billing History -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#77d4e5] text-2xl">receipt_long</span>
+                    <h2 class="text-lg font-bold text-white">Billing</h2>
+                </div>
+                <div id="billingHistory" class="text-sm text-slate-400">No billing history yet.</div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6 md:col-span-2">
+                <h2 class="text-lg font-bold text-white mb-4">Quick Links</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <a href="/sdk" class="flex items-center gap-2 p-3 bg-[#061423] rounded-lg text-sm text-slate-400 hover:text-[#77d4e5] hover:bg-[#77d4e5]/5 transition-colors">
+                        <span class="material-symbols-outlined text-lg">code</span>Python SDK
+                    </a>
+                    <a href="/playground" class="flex items-center gap-2 p-3 bg-[#061423] rounded-lg text-sm text-slate-400 hover:text-[#77d4e5] hover:bg-[#77d4e5]/5 transition-colors">
+                        <span class="material-symbols-outlined text-lg">play_circle</span>API Playground
+                    </a>
+                    <a href="/templates" class="flex items-center gap-2 p-3 bg-[#061423] rounded-lg text-sm text-slate-400 hover:text-[#77d4e5] hover:bg-[#77d4e5]/5 transition-colors">
+                        <span class="material-symbols-outlined text-lg">content_copy</span>Templates
+                    </a>
+                    <a href="/contact" class="flex items-center gap-2 p-3 bg-[#061423] rounded-lg text-sm text-slate-400 hover:text-[#77d4e5] hover:bg-[#77d4e5]/5 transition-colors">
+                        <span class="material-symbols-outlined text-lg">help</span>Get Help
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="mt-8 bg-[#0f1c2c] border border-red-500/20 rounded-xl p-6">
+            <h2 class="text-lg font-bold text-red-400 mb-3">Danger Zone</h2>
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm text-white">Delete Account</div>
+                    <div class="text-xs text-slate-500">Permanently delete your account and all associated data. This cannot be undone.</div>
+                </div>
+                <button onclick="if(confirm('Are you sure? This cannot be undone.')) alert('Please contact support to delete your account.');" class="px-4 py-2 border border-red-500/30 text-red-400 text-xs rounded-lg hover:bg-red-500/10 transition-colors whitespace-nowrap">Delete Account</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Load account data
+    (function(){
+        // Get operator info
+        fetch('/auth/operator/me', {credentials: 'include'})
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if (d.name) {
+                    document.getElementById('profileName').textContent = d.name;
+                    document.getElementById('profileEmail').textContent = d.email || '—';
+                    document.getElementById('profileGithub').textContent = d.github_login || '—';
+                    document.getElementById('accountEmail').textContent = d.email || d.name;
+                    if (d.github_login) {
+                        document.getElementById('profileLink').href = '/builders/' + d.github_login;
+                    }
+                }
+                // Get subscription
+                if (d.operator_id) {
+                    fetch('/api/v1/customer/subscription/' + d.operator_id, {credentials: 'include'})
+                        .then(function(r){ return r.json(); })
+                        .then(function(s){
+                            document.getElementById('subPlan').textContent = s.plan_name || s.plan || 'Free';
+                            document.getElementById('subStatus').textContent = s.status || 'Active';
+                            var lim = s.limits || {};
+                            document.getElementById('subAPI').textContent = (lim.api_calls === -1 ? 'Unlimited' : (lim.api_calls || 10000).toLocaleString()) + '/mo';
+                            document.getElementById('subMemory').textContent = lim.memory_entries === -1 ? 'Unlimited' : (lim.memory_entries || 500).toLocaleString();
+                            document.getElementById('subComm').textContent = (lim.commission_rate || 12) + '%';
+                            if (s.add_ons && s.add_ons.length > 0) {
+                                document.getElementById('addonsList').innerHTML = s.add_ons.map(function(a){ return '<div class="text-slate-300">' + a + '</div>'; }).join('');
+                            }
+                        });
+                }
+            })
+            .catch(function(){
+                document.getElementById('accountEmail').textContent = 'Not signed in';
+            });
+    })();
+
+    function cancelSubscription() {
+        if (!confirm('Cancel your subscription? You will revert to the free tier.')) return;
+        var btn = document.getElementById('cancelBtn');
+        btn.textContent = 'Cancelling...';
+        btn.disabled = true;
+        // Get operator ID first
+        fetch('/auth/operator/me', {credentials: 'include'})
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                return fetch('/api/v1/subscription-mgmt/cancel/' + d.operator_id, {method: 'POST', credentials: 'include'});
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                btn.textContent = 'Cancelled';
+                document.getElementById('subPlan').textContent = 'Free';
+                document.getElementById('subStatus').textContent = 'Cancelled';
+                alert('Subscription cancelled. You are now on the free tier.');
+            })
+            .catch(function(){
+                btn.textContent = 'Cancel Plan';
+                btn.disabled = false;
+                alert('Error cancelling. Please contact support.');
+            });
+    }
+    </script>
+
+</body>
+</html>
