@@ -11497,10 +11497,11 @@ async def api_auth_state(request: Request, db: AsyncSession = Depends(get_db)):
     """Check if user is authenticated and return their profile for nav display."""
     from starlette.responses import JSONResponse
     session_token = request.cookies.get("session_token", "")
+    operator_session = request.cookies.get("operator_session", "")
     origin = request.headers.get("origin", "")
     api_key = request.headers.get("Authorization", "").replace("Bearer ", "")
 
-    if not session_token and not api_key:
+    if not session_token and not operator_session and not api_key:
         resp = JSONResponse({"authenticated": False})
         if origin:
             resp.headers["Access-Control-Allow-Origin"] = origin
@@ -11516,7 +11517,7 @@ async def api_auth_state(request: Request, db: AsyncSession = Depends(get_db)):
         ), {"key": api_key})
     else:
         # Session-based auth — check if token is valid
-        resp = JSONResponse({"authenticated": bool(session_token), "session": True})
+        resp = JSONResponse({"authenticated": bool(session_token or operator_session), "session": True})
         if origin:
             resp.headers["Access-Control-Allow-Origin"] = origin
             resp.headers["Access-Control-Allow-Credentials"] = "true"

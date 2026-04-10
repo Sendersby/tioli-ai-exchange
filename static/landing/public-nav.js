@@ -251,28 +251,46 @@
     });
 
     
-    // ── Auth state: use API to check (HttpOnly cookies) ──
-    fetch('https://exchange.tioli.co.za/api/v1/auth/state', {credentials: 'include'})
+    
+
+function checkAuthAndUpdateNav() {
+    fetch('/api/v1/auth/state', {credentials: 'include'})
         .then(function(r){ return r.json(); })
         .then(function(d){
             if (d.authenticated) {
-                setTimeout(function(){
-                    document.querySelectorAll('a[href="/login"]').forEach(function(el){
-                        el.href = '/dashboard';
-                        el.textContent = 'Dashboard';
-                        el.style.color = '#edc05f';
-                    });
-                    document.querySelectorAll('a[href="/get-started"], a[href="/agent-register"]').forEach(function(el){
-                        var txt = (el.textContent||'').trim();
-                        if (txt === 'Register' || txt === 'Get Started') {
-                            el.href = '/dashboard';
-                            el.textContent = 'My Account';
-                            el.style.background = '#edc05f';
-                        }
-                    });
-                }, 150);
+                updateNavForSignedIn();
+            } else {
+                fetch('https://exchange.tioli.co.za/api/v1/auth/state', {credentials: 'include'})
+                    .then(function(r){ return r.json(); })
+                    .then(function(d2){ if (d2.authenticated) updateNavForSignedIn(); })
+                    .catch(function(){});
             }
         })
         .catch(function(){});
+}
+
+function updateNavForSignedIn() {
+    document.querySelectorAll('a[href="/login"]').forEach(function(el){
+        el.href = '/dashboard';
+        el.textContent = 'Dashboard';
+        el.style.color = '#edc05f';
+    });
+    document.querySelectorAll('a[href="/get-started"], a[href="/agent-register"]').forEach(function(el){
+        var txt = (el.textContent||'').trim();
+        if (txt==='Register'||txt==='Get Started'||txt==='Register Free'||txt==='Register FREE') {
+            el.href = '/dashboard';
+            el.textContent = 'My Account';
+            el.style.background = '#edc05f';
+        }
+    });
+    document.querySelectorAll('#mobileMenu a[href="/login"]').forEach(function(el){
+        el.href='/dashboard'; var s=el.querySelector('span:last-child'); if(s) s.textContent='Dashboard';
+    });
+    document.querySelectorAll('#mobileMenu a[href="/get-started"]').forEach(function(el){
+        el.href='/dashboard'; el.textContent='My Account'; el.style.background='#edc05f';
+    });
+}
+
+checkAuthAndUpdateNav();
 
 })();
