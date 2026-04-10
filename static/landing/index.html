@@ -1953,7 +1953,7 @@ fetch('/api/v1/news/latest?limit=3')
 <!-- Auth state check — uses API (HttpOnly cookies not readable by JS) -->
 <script>
 (function(){
-    fetch('/api/v1/auth/state', {credentials: 'include'})
+    fetch('https://exchange.tioli.co.za/api/v1/auth/state', {credentials: 'include'})
         .then(function(r){ return r.json(); })
         .then(function(d){
             if (d.authenticated) {

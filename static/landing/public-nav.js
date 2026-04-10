@@ -252,7 +252,7 @@
 
     
     // ── Auth state: use API to check (HttpOnly cookies) ──
-    fetch('/api/v1/auth/state', {credentials: 'include'})
+    fetch('https://exchange.tioli.co.za/api/v1/auth/state', {credentials: 'include'})
         .then(function(r){ return r.json(); })
         .then(function(d){
             if (d.authenticated) {
