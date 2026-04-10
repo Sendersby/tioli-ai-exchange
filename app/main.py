@@ -11541,3 +11541,116 @@ async def api_auth_state(request: Request, db: AsyncSession = Depends(get_db)):
         }
 
     return {"authenticated": False}
+
+# ═══════════════════════════════════════════════════════════
+# TIER A: SANDBOX — Regulatory Services (SANDBOX_MODE=true required)
+# ═══════════════════════════════════════════════════════════
+
+# A-1: Fiat On/Off-Ramp
+@app.post("/api/v1/sandbox/fiat/deposit", tags=["Sandbox"])
+async def api_sandbox_fiat_deposit(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.fiat_ramp import process_deposit
+    return await process_deposit(db, body.get("customer_id",""), body.get("amount_zar",0), body.get("kyc_tier",1))
+
+@app.post("/api/v1/sandbox/fiat/withdraw", tags=["Sandbox"])
+async def api_sandbox_fiat_withdraw(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.fiat_ramp import request_withdrawal
+    return await request_withdrawal(db, body.get("customer_id",""), body.get("amount_agentis",0), body.get("kyc_tier",1))
+
+@app.get("/api/v1/sandbox/fiat/rate", tags=["Sandbox"])
+async def api_sandbox_fiat_rate():
+    from app.arch.fiat_ramp import get_conversion_rate
+    deposit_rate = await get_conversion_rate("deposit")
+    withdrawal_rate = await get_conversion_rate("withdrawal")
+    return {"deposit_rate": deposit_rate, "withdrawal_rate": withdrawal_rate, "base": 1.0, "spread_pct": 2.0}
+
+@app.get("/api/v1/sandbox/fiat/history/{customer_id}", tags=["Sandbox"])
+async def api_sandbox_fiat_history(customer_id: str, db: AsyncSession = Depends(get_db)):
+    from app.arch.fiat_ramp import get_history
+    return await get_history(db, customer_id)
+
+@app.get("/api/v1/sandbox/fiat/limits/{customer_id}", tags=["Sandbox"])
+async def api_sandbox_fiat_limits(customer_id: str):
+    from app.arch.fiat_ramp import TIER_LIMITS
+    return {"customer_id": customer_id, "tiers": TIER_LIMITS}
+
+# A-2: Transaction Monitoring
+@app.post("/api/v1/sandbox/monitoring/scan", tags=["Sandbox"])
+async def api_sandbox_monitoring_scan(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    from app.arch.transaction_monitor import scan_transactions
+    return await scan_transactions(db, body.get("hours", 24))
+
+@app.get("/api/v1/sandbox/monitoring/alerts", tags=["Sandbox"])
+async def api_sandbox_monitoring_alerts(db: AsyncSession = Depends(get_db)):
+    from app.arch.transaction_monitor import get_alerts
+    return await get_alerts(db)
+
+@app.post("/api/v1/sandbox/monitoring/report/generate", tags=["Sandbox"])
+async def api_sandbox_monitoring_report(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    from app.arch.transaction_monitor import generate_monthly_report
+    return await generate_monthly_report(db, body.get("period"))
+
+# A-3: Enhanced KYC
+@app.post("/api/v1/sandbox/kyc/submit", tags=["Sandbox"])
+async def api_sandbox_kyc_submit(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.kyc_enhanced import submit_kyc
+    return await submit_kyc(db, body.get("entity_id",""), body.get("tier",1), body.get("documents"))
+
+@app.get("/api/v1/sandbox/kyc/status/{entity_id}", tags=["Sandbox"])
+async def api_sandbox_kyc_status(entity_id: str, db: AsyncSession = Depends(get_db)):
+    from app.arch.kyc_enhanced import get_kyc_status
+    return await get_kyc_status(db, entity_id)
+
+@app.post("/api/v1/sandbox/kyc/screen-pep", tags=["Sandbox"])
+async def api_sandbox_pep_screen(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.kyc_enhanced import screen_pep
+    return await screen_pep(db, body.get("entity_id",""), body.get("entity_name",""))
+
+# A-4: Credit Assessment
+@app.post("/api/v1/sandbox/credit/assess", tags=["Sandbox"])
+async def api_sandbox_credit_assess(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.credit_engine import assess_credit
+    return await assess_credit(db, body.get("entity_id",""))
+
+@app.post("/api/v1/sandbox/credit/disclosure", tags=["Sandbox"])
+async def api_sandbox_nca_disclosure(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.credit_engine import generate_nca_disclosure
+    return await generate_nca_disclosure(db, body.get("borrower_id",""),
+        body.get("principal",1000), body.get("rate",20), body.get("term_months",12))
+
+# A-5: Default Handling
+@app.get("/api/v1/sandbox/lending/arrears", tags=["Sandbox"])
+async def api_sandbox_arrears(db: AsyncSession = Depends(get_db)):
+    from app.arch.default_handler import check_arrears
+    return await check_arrears(db)
+
+@app.post("/api/v1/sandbox/lending/default/{loan_id}", tags=["Sandbox"])
+async def api_sandbox_declare_default(loan_id: str, db: AsyncSession = Depends(get_db)):
+    from app.arch.default_handler import declare_default
+    return await declare_default(db, loan_id)
+
+# A-6: Compliance Reporting
+@app.post("/api/v1/sandbox/compliance/report/str", tags=["Sandbox"])
+async def api_sandbox_str(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    from app.arch.compliance_reporting import generate_str
+    return await generate_str(db, body.get("entity_id",""), body.get("reason",""), body.get("transaction_ids"))
+
+@app.get("/api/v1/sandbox/compliance/dashboard", tags=["Sandbox"])
+async def api_sandbox_compliance_dashboard(db: AsyncSession = Depends(get_db)):
+    from app.arch.compliance_reporting import get_compliance_dashboard
+    return await get_compliance_dashboard(db)
+
+@app.post("/api/v1/sandbox/compliance/report/monthly", tags=["Sandbox"])
+async def api_sandbox_monthly_report(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    from app.arch.transaction_monitor import generate_monthly_report
+    return await generate_monthly_report(db, body.get("period"))
