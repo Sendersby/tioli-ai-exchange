@@ -622,5 +622,41 @@
   });
 })();
 </script>
+
+<!-- Auth state check -->
+<script>
+(function(){
+    fetch('/api/v1/auth/state', {credentials: 'include'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (!d.authenticated) {
+                fetch('https://exchange.tioli.co.za/api/v1/auth/state', {credentials: 'include'})
+                    .then(function(r){ return r.json(); })
+                    .then(function(d2){ if (d2.authenticated) swapNav(); })
+                    .catch(function(){});
+            } else { swapNav(); }
+        })
+        .catch(function(){});
+
+    function swapNav() {
+        document.querySelectorAll('a').forEach(function(el){
+            var href = el.getAttribute('href') || '';
+            var txt = (el.textContent||'').trim();
+            if (href === '/login' && (txt === 'Sign In' || txt === 'Login' || txt === 'Sign in')) {
+                el.href = '/dashboard';
+                el.textContent = 'Dashboard';
+                el.style.color = '#edc05f';
+            }
+            if ((href === '/get-started' || href === '/agent-register') &&
+                (txt === 'Register' || txt === 'Get Started' || txt === 'Register Free' || txt === 'Register FREE' || txt === 'Join Now')) {
+                el.href = '/dashboard';
+                el.textContent = 'My Account';
+                el.style.background = '#edc05f';
+            }
+        });
+    }
+})();
+</script>
+
 </body>
 </html>
