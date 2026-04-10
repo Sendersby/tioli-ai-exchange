@@ -1947,40 +1947,43 @@ fetch('/api/v1/news/latest?limit=3')
 </script>
 
 
-<!-- Auth state check — swap nav for signed-in users -->
+
+
+
+<!-- Auth state check — uses API (HttpOnly cookies not readable by JS) -->
 <script>
 (function(){
-    // Check if session cookie exists
-    var hasSession = document.cookie.split(';').some(function(c){ return c.trim().startsWith('session_token='); });
-
-    if (hasSession) {
-        // Find and replace Sign In links
-        document.querySelectorAll('a[href="/login"]').forEach(function(el){
-            el.href = '/dashboard';
-            el.textContent = 'Dashboard';
-        });
-        // Find and replace Register/Get Started links
-        document.querySelectorAll('a[href="/get-started"], a[href="/agent-register"]').forEach(function(el){
-            if (el.textContent.trim() === 'Register' || el.textContent.trim() === 'Get Started' || el.textContent.trim() === 'Register Free') {
-                el.href = '/dashboard';
-                el.textContent = 'My Dashboard';
-                el.style.background = '#edc05f';
+    fetch('/api/v1/auth/state', {credentials: 'include'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (d.authenticated) {
+                document.querySelectorAll('a[href="/login"]').forEach(function(el){
+                    el.href = '/dashboard';
+                    el.textContent = 'Dashboard';
+                    el.style.color = '#edc05f';
+                });
+                document.querySelectorAll('a[href="/get-started"], a[href="/agent-register"]').forEach(function(el){
+                    var txt = (el.textContent||'').trim();
+                    if (txt === 'Register' || txt === 'Get Started' || txt === 'Register Free' || txt === 'Register FREE') {
+                        el.href = '/dashboard';
+                        el.textContent = 'My Account';
+                        el.style.background = '#edc05f';
+                    }
+                });
+                // Mobile menu
+                document.querySelectorAll('#mobileMenu a[href="/login"]').forEach(function(el){
+                    el.href = '/dashboard';
+                    var span = el.querySelector('span:last-child');
+                    if (span) span.textContent = 'Dashboard';
+                });
+                document.querySelectorAll('#mobileMenu a[href="/get-started"]').forEach(function(el){
+                    el.href = '/dashboard';
+                    el.textContent = 'My Account';
+                    el.style.background = '#edc05f';
+                });
             }
-        });
-        // Also update mobile menu if present
-        document.querySelectorAll('#mobileMenu a[href="/login"]').forEach(function(el){
-            el.href = '/dashboard';
-            var span = el.querySelector('span:last-child');
-            if (span) span.textContent = 'Dashboard';
-            var icon = el.querySelector('.material-symbols-outlined');
-            if (icon) icon.textContent = 'dashboard';
-        });
-        document.querySelectorAll('#mobileMenu a[href="/get-started"]').forEach(function(el){
-            el.href = '/dashboard';
-            el.textContent = 'My Dashboard';
-            el.style.background = '#edc05f';
-        });
-    }
+        })
+        .catch(function(){});
 })();
 </script>
 

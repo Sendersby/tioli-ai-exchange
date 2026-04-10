@@ -250,22 +250,29 @@
         }, 150);
     });
 
-    // ── Auth state: swap nav for signed-in users ──
-    var hasSession = document.cookie.split(';').some(function(c){ return c.trim().startsWith('session_token='); });
-    if (hasSession) {
-        setTimeout(function(){
-            document.querySelectorAll('a[href="/login"]').forEach(function(el){
-                el.href = '/dashboard';
-                el.textContent = 'Dashboard';
-            });
-            document.querySelectorAll('a[href="/get-started"], a[href="/agent-register"]').forEach(function(el){
-                if (el.textContent.trim() === 'Register' || el.textContent.trim() === 'Get Started') {
-                    el.href = '/dashboard';
-                    el.textContent = 'My Dashboard';
-                    el.style.background = '#edc05f';
-                }
-            });
-        }, 100); // Small delay to ensure nav is rendered first
-    }
+    
+    // ── Auth state: use API to check (HttpOnly cookies) ──
+    fetch('/api/v1/auth/state', {credentials: 'include'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (d.authenticated) {
+                setTimeout(function(){
+                    document.querySelectorAll('a[href="/login"]').forEach(function(el){
+                        el.href = '/dashboard';
+                        el.textContent = 'Dashboard';
+                        el.style.color = '#edc05f';
+                    });
+                    document.querySelectorAll('a[href="/get-started"], a[href="/agent-register"]').forEach(function(el){
+                        var txt = (el.textContent||'').trim();
+                        if (txt === 'Register' || txt === 'Get Started') {
+                            el.href = '/dashboard';
+                            el.textContent = 'My Account';
+                            el.style.background = '#edc05f';
+                        }
+                    });
+                }, 150);
+            }
+        })
+        .catch(function(){});
 
 })();
