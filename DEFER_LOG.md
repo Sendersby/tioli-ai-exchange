@@ -21,3 +21,4 @@
 - Impact: No product analytics, funnels, or session replay until configured
 | DEFER-007 | Cloudflare WAF/DDoS | Point DNS through Cloudflare proxy (free tier). Requires registrar access for exchange.tioli.co.za and agentisexchange.com. | Nginx configured, just needs DNS change | Awaiting owner |
 | DEFER-008 | Offsite Backup | Configure DigitalOcean Spaces bucket, run 'rclone config' to add remote 'do-spaces', uncomment offsite block in /home/tioli/backups/backup.sh | rclone installed, script ready | Awaiting owner |
+| DEFER-009 | External Uptime Monitor | Register at uptimerobot.com (free, 5-min checks) or use DO Monitoring alerts | monitor.sh handles basic checks locally | Awaiting owner |

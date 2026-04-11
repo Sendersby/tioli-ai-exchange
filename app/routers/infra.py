@@ -155,8 +155,74 @@ async def api_mcp_sse_head():
 
 
 @router.get("/api/v1/health")
-async def api_v1_health():
-    return await get_cached("health", 10, lambda: {"status": "operational", "platform": "TiOLi AGENTIS", "version": "1.0.0"})
+async def api_v1_health(db: AsyncSession = Depends(get_db)):
+    """Deep health check -- verifies DB, Redis, disk, memory, exchange rates."""
+    import shutil
+
+    async def _deep_health():
+        checks = {}
+        overall = "operational"
+
+        # Database check
+        try:
+            await db.execute(text("SELECT 1"))
+            checks["database"] = "ok"
+        except Exception as e:
+            checks["database"] = "error: " + str(e)[:100]
+            overall = "degraded"
+
+        # Redis check
+        try:
+            import redis.asyncio as aioredis
+            r = aioredis.from_url("redis://localhost:6379/0")
+            await r.ping()
+            checks["redis"] = "ok"
+            await r.aclose()
+        except Exception as e:
+            checks["redis"] = "error: " + str(e)[:100]
+            overall = "degraded"
+
+        # Disk check
+        try:
+            disk = shutil.disk_usage("/")
+            disk_pct = disk.used / disk.total * 100
+            checks["disk"] = {"used_pct": round(disk_pct, 1), "status": "ok" if disk_pct < 80 else "warning"}
+            if disk_pct > 90:
+                overall = "degraded"
+        except Exception:
+            checks["disk"] = "unknown"
+
+        # Memory check
+        try:
+            with open("/proc/meminfo") as f:
+                lines = f.readlines()
+            total_kb = int(lines[0].split()[1])
+            available_kb = int(lines[2].split()[1])
+            used_pct = (1 - available_kb / total_kb) * 100
+            checks["memory"] = {"used_pct": round(used_pct, 1), "status": "ok" if used_pct < 85 else "warning"}
+        except Exception:
+            checks["memory"] = "unknown"
+
+        # Exchange rates freshness
+        try:
+            result = await db.execute(text("SELECT MAX(timestamp) FROM exchange_rates"))
+            latest = result.scalar()
+            if latest:
+                age_hours = (datetime.now(timezone.utc) - latest.replace(tzinfo=timezone.utc)).total_seconds() / 3600
+                checks["exchange_rates"] = {"age_hours": round(age_hours, 1), "status": "ok" if age_hours < 6 else "stale"}
+            else:
+                checks["exchange_rates"] = "no data"
+        except Exception:
+            checks["exchange_rates"] = "unknown"
+
+        return {
+            "status": overall,
+            "platform": "TiOLi AGENTIS",
+            "version": "1.0.0",
+            "checks": checks,
+        }
+
+    return await get_cached("health", 10, _deep_health)
 
 @router.get("/api/v1/churn/at-risk", include_in_schema=False)
 async def at_risk_agents(db: AsyncSession = Depends(get_db)):

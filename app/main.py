@@ -29,6 +29,30 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 security_logger = logging.getLogger("tioli.security")
+# -- M5.3: Structured JSON Logging --
+class JSONFormatter(logging.Formatter):
+    """Structured JSON log formatter for machine-readable logs."""
+    def format(self, record):
+        import json as _json
+        from datetime import datetime as _dt, timezone as _tz
+        log_data = {
+            "timestamp": _dt.now(_tz.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            log_data["exception"] = self.formatException(record.exc_info)
+        if hasattr(record, "request_id"):
+            log_data["request_id"] = record.request_id
+        return _json.dumps(log_data)
+
+# Apply JSON formatter to root logger for production
+_json_handler = logging.StreamHandler()
+_json_handler.setFormatter(JSONFormatter())
+logging.root.handlers = [_json_handler]
+logging.root.setLevel(logging.INFO)
+
 
 from app.config import settings
 from app.database.db import init_db, get_db, async_session
@@ -602,6 +626,19 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+
+# -- M5.4: Request Tracing Middleware --
+import uuid as _uuid_mod
+
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """Add unique X-Request-ID to every request/response for tracing."""
+    async def dispatch(self, request, call_next):
+        request_id = str(_uuid_mod.uuid4())[:8]
+        request.state.request_id = request_id
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+
 # Add middleware (order matters — last added runs first)
 # CORS must be outermost so preflight OPTIONS requests are handled before rate limiting
 app.add_middleware(
@@ -615,6 +652,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(RequestSizeLimitMiddleware, max_bytes=10 * 1024 * 1024)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestIDMiddleware)
 app.add_middleware(XSSSanitisationMiddleware)
 
 
