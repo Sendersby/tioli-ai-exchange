@@ -28,3 +28,11 @@
 - Findings: 9 pre-existing test failures (4 arch tool counts, 2 DAP logic, 3 currency rename drift)
 - Services: All 4 services active (tioli-exchange, postgresql, redis, nginx)
 - Health endpoint: operational
+
+### Phase 2: Security Hardening
+
+#### S-002: .env permissions
+- Status: PASS
+- Action: chmod 600 /home/tioli/app/.env
+- Evidence: stat returns 600
+- Risk: Previously world-readable (644), exposing DB credentials, API keys
