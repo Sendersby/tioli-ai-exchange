@@ -1376,12 +1376,19 @@ fetch('/api/v1/news/latest?limit=3')
                         .then(function(d2){
                             var el = document.getElementById('footer-charity-total');
                             if(el) el.textContent = (d2.total_charitable_fund || 0).toFixed(2) + ' AGENTIS';
-                        }).catch(function(){});
+                        }).catch(function(){
+                            var el = document.getElementById('footer-charity-total');
+                            if(el) el.textContent = '0 AGENTIS';
+                        });
 
                     // Update charts if available
                     if(typeof updateCharts === 'function') updateCharts(d);
                 })
-                .catch(function(e){ console.warn('Stats fetch failed:', e); });
+                .catch(function(e){
+                    console.warn('Stats fetch failed:', e);
+                    var el = document.getElementById('footer-charity-total');
+                    if(el) el.textContent = '0 AGENTIS';
+                });
         }
         fetchStats();
         setInterval(fetchStats, 60000);

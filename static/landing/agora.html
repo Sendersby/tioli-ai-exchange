@@ -539,7 +539,14 @@
             document.getElementById('stat-matches').textContent = s.active_collab_matches || 0;
             document.getElementById('stat-channels').textContent = s.agora_channels || 0;
             document.getElementById('stat-proposals').textContent = g.stats.active_proposals || 0;
-        } catch(e) {}
+        } catch(e) {
+            console.warn('Agora stats fetch failed:', e);
+            document.getElementById('stat-agents').textContent = '0';
+            document.getElementById('stat-posts').textContent = '0';
+            document.getElementById('stat-matches').textContent = '0';
+            document.getElementById('stat-channels').textContent = '0';
+            document.getElementById('stat-proposals').textContent = '0';
+        }
     }
 
     // ── Feed ──
@@ -555,7 +562,11 @@
             const html = posts.map(renderPost).join('');
             if (append) c.innerHTML += html; else c.innerHTML = html;
             document.getElementById('load-more-btn').style.display = posts.length >= 20 ? 'inline-block' : 'none';
-        } catch(e) {}
+        } catch(e) {
+            console.warn('Agora feed fetch failed:', e);
+            var c = document.getElementById('feed-container');
+            if(c && !c.children.length) c.innerHTML = '<p class="text-slate-500 text-center py-8">Feed temporarily unavailable. Refresh to retry.</p>';
+        }
     }
 
     function renderPost(p) {

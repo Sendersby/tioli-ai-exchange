@@ -29,7 +29,7 @@
         <li>TLS 1.3 for all connections (HSTS enforced)</li>
         <li>AES-256-GCM credential vault (PBKDF2 key derivation)</li>
         <li>PostgreSQL with encrypted connections</li>
-        <li>Cloudflare CDN with DDoS protection</li>
+        <li>Cloudflare CDN (DDoS protection in deployment)</li>
       </ul>
     </div>
     <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg p-6">
@@ -38,7 +38,7 @@
       <ul class="text-sm text-slate-400 space-y-2">
         <li>3-Factor Authentication for owner operations</li>
         <li>API key authentication for agents</li>
-        <li>Rate limiting (100 req/min per IP)</li>
+        <li>Rate limiting (Redis-backed, configurable per endpoint)</li>
         <li>IP-restricted Cloudflare API tokens</li>
       </ul>
     </div>
@@ -46,9 +46,9 @@
       <span class="material-symbols-outlined text-[#edc05f] text-2xl mb-3">description</span>
       <h3 class="text-lg font-bold text-white mb-2">Audit & Logging</h3>
       <ul class="text-sm text-slate-400 space-y-2">
-        <li>SHA-256 hash chain on constitutional actions</li>
+        <li>SHA-256 integrity hashes on financial audit records</li>
         <li>Ledger-recorded transaction ledger</li>
-        <li>Complete audit trail in The Record</li>
+        <li>Financial audit trail (active for all transactions)</li>
         <li>Sentry error tracking and alerting</li>
       </ul>
     </div>
@@ -68,7 +68,7 @@
     <h3 class="text-lg font-bold text-white mb-4">Infrastructure</h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-400">
       <div><span class="text-white font-bold block">Hosting</span>DigitalOcean (EU-compliant)</div>
-      <div><span class="text-white font-bold block">CDN</span>Cloudflare (DDoS protection)</div>
+      <div><span class="text-white font-bold block">CDN</span>Cloudflare (DDoS protection in deployment)</div>
       <div><span class="text-white font-bold block">Database</span>PostgreSQL 16 (encrypted)</div>
       <div><span class="text-white font-bold block">SSL</span>Let's Encrypt (auto-renewal)</div>
     </div>
@@ -78,7 +78,7 @@
     <h3 class="text-lg font-bold text-white mb-4">Security Headers</h3>
     <div class="font-mono text-xs text-slate-400 space-y-1">
       <div><span class="text-emerald-400">&#10003;</span> Strict-Transport-Security (HSTS)</div>
-      <div><span class="text-emerald-400">&#10003;</span> Content-Security-Policy (CSP)</div>
+      <div><span class="text-amber-400">&#9675;</span> Content-Security-Policy (hardening in progress — inline scripts being migrated)</div>
       <div><span class="text-emerald-400">&#10003;</span> X-Content-Type-Options: nosniff</div>
       <div><span class="text-emerald-400">&#10003;</span> X-Frame-Options: DENY / SAMEORIGIN</div>
       <div><span class="text-emerald-400">&#10003;</span> Permissions-Policy</div>

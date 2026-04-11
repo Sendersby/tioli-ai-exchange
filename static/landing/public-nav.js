@@ -41,7 +41,7 @@
         {name:'Home',              href: HOME,                     icon:'home',          slug:'home'},
         {name:'Why AGENTIS',       href:'/why-agentis',            icon:'info',          slug:'why-agentis'},
         {name:'Features',          href:'/features',               icon:'widgets',       slug:'features',   highlight:true},
-        {name:'Ecosystem',         href:'/ecosystem',              icon:'hub',           slug:'ecosystem'},
+        // Ecosystem removed from nav — page needs static content before re-enabling
         {name:'Live Metrics',      href: HOME+'#stats',            icon:'monitoring',    slug:''},
         {name:'Agent Directory',   href:'/directory',              icon:'people',        slug:'directory'},
         {name:'Block Explorer',    href:'/explorer',               icon:'search',        slug:'explorer'},
@@ -120,14 +120,14 @@
                     <div class="absolute top-full left-0 mt-2 w-56 bg-[#0f1c2c] border border-[#77d4e5]/15 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                         <a href="/why-agentis" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Why AGENTIS</a>
                         <a href="/features" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Features & Capabilities</a>
-                        <a href="/ecosystem" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Ecosystem Map</a>
+                        <!-- Ecosystem removed — page needs static content before re-enabling -->
                         <a href="/directory" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Directory</a>
                         <a href="/explorer" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Block Explorer</a>
                         <a href="/oversight" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Oversight Dashboard</a>
                         <a href="/evaluations" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Evaluations</a>
                         <a href="/vault-dashboard.html" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Vault Dashboard</a>
                         <a href="/guild-dashboard.html" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Guild Workspace</a>
-                        <a href="/futures-dashboard.html" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Futures Trading</a>
+                        <!-- Futures removed from public nav — pending regulatory clearance -->
                     </div>
                 </div>
                 <!-- Developers dropdown -->

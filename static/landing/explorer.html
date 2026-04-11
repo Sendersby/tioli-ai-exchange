@@ -168,14 +168,18 @@
     (function(){
         function fetchExplorer(){
             fetch('https://exchange.tioli.co.za/api/public/blockchain/explorer?limit=20&t='+Date.now())
-                .then(function(r){ return r.json(); })
+                .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
                 .then(function(d){
-                    // Stats
-                    document.getElementById('stat-blocks').textContent = d.chain_length;
-                    document.getElementById('stat-txns').textContent = d.total_transactions;
-                    document.getElementById('stat-charity').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' AGENTIS';
-                    document.getElementById('stat-volume').textContent = d.total_volume.toLocaleString(undefined,{maximumFractionDigits:0}) + ' AGENTIS';
-                    document.getElementById('charity-total').textContent = d.total_charitable_fund.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' AGENTIS';
+                    // Stats — defensive: treat null/undefined as 0
+                    var blocks = d.chain_length || 0;
+                    var txns = d.total_transactions || 0;
+                    var charity = d.total_charitable_fund || 0;
+                    var volume = d.total_volume || 0;
+                    document.getElementById('stat-blocks').textContent = blocks;
+                    document.getElementById('stat-txns').textContent = txns;
+                    document.getElementById('stat-charity').textContent = charity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' AGENTIS';
+                    document.getElementById('stat-volume').textContent = volume.toLocaleString(undefined,{maximumFractionDigits:0}) + ' AGENTIS';
+                    document.getElementById('charity-total').textContent = charity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + ' AGENTIS';
 
                     // Chain validity
                     var dot = document.getElementById('chain-dot');
@@ -192,7 +196,7 @@
 
                     // Blocks
                     var blocksHtml = '';
-                    d.recent_blocks.forEach(function(b){
+                    (d.recent_blocks || []).forEach(function(b){
                         blocksHtml += '<div class="bg-[#0f1c2c] border border-[#44474c]/20 p-4">' +
                             '<div class="flex items-center justify-between mb-2">' +
                             '<span class="text-[#77d4e5] font-bold mono text-sm">Block #' + b.index + '</span>' +
@@ -205,7 +209,7 @@
 
                     // Transactions
                     var txHtml = '';
-                    d.recent_transactions.forEach(function(tx){
+                    (d.recent_transactions || []).forEach(function(tx){
                         var statusColor = tx.confirmation_status === 'CONFIRMED' ? 'text-green-400' : 'text-yellow-400';
                         var charityBadge = tx.charitable_allocation > 0 ? '<span class="text-[0.5rem] bg-[#edc05f]/10 text-[#edc05f] px-1.5 py-0.5 rounded">+' + tx.charitable_allocation.toFixed(2) + ' charity</span>' : '';
                         txHtml += '<div class="bg-[#0f1c2c] border border-[#44474c]/15 p-3">' +
@@ -223,7 +227,20 @@
                     });
                     document.getElementById('txns-list').innerHTML = txHtml || '<div class="text-sm text-slate-500 text-center py-4">No transactions yet</div>';
                 })
-                .catch(function(e){ console.warn('Explorer fetch failed:', e); });
+                .catch(function(e){
+                    console.warn('Explorer fetch failed:', e);
+                    document.getElementById('stat-blocks').textContent = '0';
+                    document.getElementById('stat-txns').textContent = '0';
+                    document.getElementById('stat-charity').textContent = '0 AGENTIS';
+                    document.getElementById('stat-volume').textContent = '0 AGENTIS';
+                    document.getElementById('charity-total').textContent = '0 AGENTIS';
+                    var dot = document.getElementById('chain-dot');
+                    var status = document.getElementById('chain-status');
+                    if(dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+                    if(status){ status.textContent = 'OFFLINE'; status.className = 'text-lg font-bold mono text-slate-500'; }
+                    document.getElementById('blocks-list').innerHTML = '<div class="text-sm text-slate-500 text-center py-8">Private beta \u2014 ledger data loading. Refresh to retry.</div>';
+                    document.getElementById('txns-list').innerHTML = '<div class="text-sm text-slate-500 text-center py-8">Private beta \u2014 transaction data loading. Refresh to retry.</div>';
+                });
         }
         fetchExplorer();
         setInterval(fetchExplorer, 30000); // Refresh every 30s
