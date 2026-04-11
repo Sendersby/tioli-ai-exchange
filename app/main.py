@@ -1526,8 +1526,9 @@ async def api_market_summary(
 
 @app.get("/api/exchange/rates")
 async def api_all_rates(db: AsyncSession = Depends(get_db)):
-    """All current exchange rates."""
-    return await pricing_engine.get_all_rates(db)
+    """All current exchange rates (cached 60s)."""
+    return await _cached_response("cache:exchange:rates", 60,
+        lambda: pricing_engine.get_all_rates(db))
 
 
 @app.get("/api/exchange/my-orders")
