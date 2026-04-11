@@ -131,7 +131,7 @@ async def api_subscription_revenue(
 @router.post("/api/v1/subscribe", include_in_schema=False)
 async def subscribe_newsletter(request: Request, db: AsyncSession = Depends(get_db)):
     """Subscribe to weekly digest."""
-    body = await request.json()
+    body = await validated_json(request)
     email = body.get("email", "").strip()
     if not email or "@" not in email:
         return JSONResponse(status_code=400, content={"error": "Valid email required"})
@@ -141,7 +141,7 @@ async def subscribe_newsletter(request: Request, db: AsyncSession = Depends(get_
 @router.post("/api/v1/unsubscribe", include_in_schema=False)
 async def unsubscribe_newsletter(request: Request, db: AsyncSession = Depends(get_db)):
     """Unsubscribe from digest."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.email_digest import remove_subscriber
     return await remove_subscriber(db, body.get("email", ""))
 
@@ -165,7 +165,7 @@ async def api_subscription_plans(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/subscription-mgmt/create", tags=["Subscriptions"])
 async def api_create_subscription(request: Request, db: AsyncSession = Depends(get_db)):
     """Create or upgrade a subscription. Returns PayFast payment URL for paid plans."""
-    body = await request.json()
+    body = await validated_json(request)
     agent_id = body.get("agent_id", "")
     plan = body.get("plan", "free")
     from sqlalchemy import text
@@ -340,7 +340,7 @@ async def api_list_plans(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/checkout", tags=["Plans"])
 async def api_cart_checkout(request: Request, db: AsyncSession = Depends(get_db)):
     """Process cart checkout — generates PayFast payment URL for selected SKUs."""
-    body = await request.json()
+    body = await validated_json(request)
     items = body.get("items", [])  # List of SKU strings
     email = body.get("email", "")
     customer_id = body.get("customer_id", body.get("agent_id", body.get("operator_id", "")))

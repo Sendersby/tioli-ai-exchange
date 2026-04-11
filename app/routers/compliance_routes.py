@@ -188,7 +188,7 @@ async def api_sarb_status(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/compliance/screen", include_in_schema=False)
 async def api_compliance_screen(request: Request):
     """Screen a name against OFAC sanctions list."""
-    body = await request.json()
+    body = await validated_json(request)
     name = body.get("name", "")
     if not name:
         return JSONResponse(status_code=400, content={"error": "name required"})
@@ -198,14 +198,14 @@ async def api_compliance_screen(request: Request):
 @router.post("/api/v1/compliance/risk", include_in_schema=False)
 async def api_transaction_risk(request: Request):
     """Assess transaction risk."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.compliance_real import assess_transaction_risk
     return assess_transaction_risk(body.get("amount", 0), body.get("currency", "AGENTIS"), body.get("country", "ZA"))
 
 @router.post("/api/v1/guardrails/check", include_in_schema=False)
 async def api_guardrails_check(request: Request):
     """Validate an action against guardrails."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.guardrails import validate_pre_action, validate_social_content
     action_check = validate_pre_action(body.get("action_type", ""), body.get("params", {}), body.get("agent", "test"))
     content_check = validate_social_content(body.get("content", ""), body.get("agent", "test")) if body.get("content") else None
@@ -214,14 +214,14 @@ async def api_guardrails_check(request: Request):
 @router.post("/api/v1/compliance/ml-risk", include_in_schema=False)
 async def api_ml_risk(request: Request, db: AsyncSession = Depends(get_db)):
     """ML-lite transaction risk scoring."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.ml_risk import score_transaction_risk
     return await score_transaction_risk(db, body.get("agent_id",""), body.get("amount",0), body.get("currency","AGENTIS"))
 
 @router.post("/api/v1/compliance/str-filing", include_in_schema=False)
 async def api_str_filing(request: Request, db: AsyncSession = Depends(get_db)):
     """Prepare an STR filing for FIC submission. [DEFER_TO_OWNER]"""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.fic_pipeline import prepare_str_filing
     return await prepare_str_filing(db, body.get("transaction_id",""), body.get("agent_id",""),
         body.get("amount",0), body.get("currency","AGENTIS"), body.get("risk_score",0), body.get("flags",[]))

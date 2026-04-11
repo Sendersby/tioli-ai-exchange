@@ -222,7 +222,7 @@ async def api_licensing_pricing():
 @router.post("/api/v1/webhooks/paypal")
 async def api_paypal_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     """Receive PayPal webhook events."""
-    body = await request.json()
+    body = await validated_json(request)
     event_id = body.get("id", "")
     event_type = body.get("event_type", "")
     resource = body.get("resource", {})
@@ -241,7 +241,7 @@ async def olas_export(agent_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/webhooks/register", include_in_schema=False)
 async def register_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     """Register a webhook URL to receive event notifications."""
-    body = await request.json()
+    body = await validated_json(request)
     url = body.get("url", "").strip()
     events = body.get("events", ["trade", "registration"])
     if not url or not url.startswith("http"):

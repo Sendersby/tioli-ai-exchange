@@ -954,7 +954,7 @@ async def agent_share_card(agent_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/agents/plan", include_in_schema=False)
 async def api_create_plan(request: Request):
     """Create a multi-step execution plan for a goal."""
-    body = await request.json()
+    body = await validated_json(request)
     goal = body.get("goal", "")
     agent = body.get("agent", "sovereign")
     if not goal:
@@ -968,7 +968,7 @@ async def api_create_plan(request: Request):
 @router.post("/api/v1/agents/plan/execute", include_in_schema=False)
 async def api_execute_plan(request: Request, db: AsyncSession = Depends(get_db)):
     """Create and execute a multi-step plan for a goal."""
-    body = await request.json()
+    body = await validated_json(request)
     goal = body.get("goal", "")
     agent = body.get("agent", "sovereign")
     if not goal:
@@ -983,7 +983,7 @@ async def api_execute_plan(request: Request, db: AsyncSession = Depends(get_db))
 @router.post("/api/v1/agents/workflow", include_in_schema=False)
 async def api_create_workflow(request: Request):
     """Create and execute a multi-agent workflow."""
-    body = await request.json()
+    body = await validated_json(request)
     import anthropic, os
     client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
     from app.arch.collaboration import AgentWorkflow, execute_workflow
@@ -1005,7 +1005,7 @@ async def api_agent_team(request: Request):
     import os
     if os.environ.get("ARCH_AGENT_TEAMS", "false").lower() != "true":
         return JSONResponse(status_code=503, content={"error": "Agent teams not enabled"})
-    body = await request.json()
+    body = await validated_json(request)
     import anthropic
     client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
     from app.arch.agent_teams import AgentTeam
@@ -1020,7 +1020,7 @@ async def api_adaptive_plan(request: Request):
     import os
     if os.environ.get("ARCH_AGENT_ADAPTIVE", "false").lower() != "true":
         return JSONResponse(status_code=503, content={"error": "Adaptive planning not enabled"})
-    body = await request.json()
+    body = await validated_json(request)
     import anthropic
     client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
     from app.arch.adaptive_plan import execute_adaptive_plan
@@ -1029,7 +1029,7 @@ async def api_adaptive_plan(request: Request):
 @router.post("/api/agents/deploy", tags=["SDK"])
 async def api_agent_deploy(request: Request, db: AsyncSession = Depends(get_db)):
     """Deploy an agent to the AGENTIS runtime. Creates a managed endpoint."""
-    body = await request.json()
+    body = await validated_json(request)
     agent_id = body.get("agent_id", "")
     if not agent_id:
         return {"error": "agent_id required"}
@@ -1071,7 +1071,7 @@ async def api_agent_deploy(request: Request, db: AsyncSession = Depends(get_db))
 @router.post("/api/agents/instructions", tags=["SDK"])
 async def api_agent_instructions(request: Request, db: AsyncSession = Depends(get_db)):
     """Set the system instructions for a deployed agent."""
-    body = await request.json()
+    body = await validated_json(request)
     agent_id = body.get("agent_id", "")
     instructions = body.get("instructions", "")
     if not agent_id or not instructions:
@@ -1093,7 +1093,7 @@ async def api_agent_instructions(request: Request, db: AsyncSession = Depends(ge
 @router.post("/api/agents/tools", tags=["SDK"])
 async def api_agent_register_tool(request: Request, db: AsyncSession = Depends(get_db)):
     """Register a tool that the agent can call."""
-    body = await request.json()
+    body = await validated_json(request)
     agent_id = body.get("agent_id", "")
     tool = body.get("tool", {})
     if not agent_id or not tool:
@@ -1124,7 +1124,7 @@ async def api_agent_register_tool(request: Request, db: AsyncSession = Depends(g
 @router.post("/api/agents/configure", tags=["SDK"])
 async def api_agent_configure(request: Request, db: AsyncSession = Depends(get_db)):
     """Configure agent settings (memory, environment, rate limits)."""
-    body = await request.json()
+    body = await validated_json(request)
     agent_id = body.get("agent_id", "")
     config = {k: v for k, v in body.items() if k != "agent_id"}
     if not agent_id:
@@ -1200,7 +1200,7 @@ async def api_agent_logs(agent_id: str, request: Request, db: AsyncSession = Dep
 @router.post("/api/v1/agent-runtime/{agent_id}", tags=["SDK"])
 async def api_agent_runtime_invoke(agent_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     """Invoke a deployed agent — the actual runtime endpoint."""
-    body = await request.json()
+    body = await validated_json(request)
     from sqlalchemy import text
 
     # Get deployment

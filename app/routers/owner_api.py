@@ -652,7 +652,7 @@ async def api_tax_report_csv(request: Request, db: AsyncSession = Depends(get_db
 @router.post("/api/v1/owner/goals", include_in_schema=False)
 async def api_create_goal(request: Request, db: AsyncSession = Depends(get_db)):
     """Create a standing goal for an agent."""
-    body = await request.json()
+    body = await validated_json(request)
     from sqlalchemy import text
     import uuid
     goal_id = str(uuid.uuid4())
@@ -707,7 +707,7 @@ async def api_risk_profiles(db: AsyncSession = Depends(get_db)):
 @router.patch("/api/v1/owner/goals/{goal_id}", include_in_schema=False)
 async def api_owner_update_goal(goal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     """Update goal status, priority, or description."""
-    body = await request.json()
+    body = await validated_json(request)
     from sqlalchemy import text
     sets = []
     params = {"gid": goal_id}
@@ -874,7 +874,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/v1/owner/schedule", include_in_schema=False)
 async def api_nl_schedule(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.nl_scheduler import create_nl_job
     return await create_nl_job(db, body.get("instruction", ""), body.get("task", ""))
 

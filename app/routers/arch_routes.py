@@ -48,7 +48,7 @@ async def api_test_self_correction():
 @router.post("/api/v1/arch/messages", include_in_schema=False)
 async def api_send_agent_message(request: Request, db: AsyncSession = Depends(get_db)):
     """Send a message between agents."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.mesh_comms import send_message
     result = await send_message(db, body.get("from",""), body.get("to",""),
         body.get("subject",""), body.get("body",""), body.get("type","notify"), body.get("priority","normal"))
@@ -66,7 +66,7 @@ async def api_agent_inbox(agent_name: str, db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/arch/messages/{message_id}/reply", include_in_schema=False)
 async def api_reply_message(message_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     """Reply to a message."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.mesh_comms import reply_to_message
     return await reply_to_message(db, message_id, body.get("from",""), body.get("body",""))
 
@@ -93,7 +93,7 @@ async def api_today_agenda(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/arch/blackboard", include_in_schema=False)
 async def api_post_blackboard(request: Request, db: AsyncSession = Depends(get_db)):
     """Post to shared blackboard."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.blackboard import post_to_blackboard
     return await post_to_blackboard(db, body.get("posted_by",""), body.get("category",""),
         body.get("key",""), body.get("value",""), body.get("confidence",1.0), body.get("visibility","all"))
@@ -106,7 +106,7 @@ async def api_read_blackboard(agent: str = "sovereign", category: str = None, db
 
 @router.post("/api/v1/anomaly/post", include_in_schema=False)
 async def api_post_anomaly(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.anomaly_correlation import post_anomaly
     return await post_anomaly(db, body.get("source",""), body.get("type",""), body.get("severity","medium"), body.get("details",{}), body.get("entity_ref"))
 
@@ -148,7 +148,7 @@ async def api_identify_prospects(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/v1/arbiter/synthetic-case", include_in_schema=False)
 async def api_synthetic_case(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     import anthropic, os
     client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
     from app.arch.synthetic_case_law import generate_synthetic_case
@@ -165,7 +165,7 @@ async def api_blackboard_delete(key: str, db: AsyncSession = Depends(get_db)):
 @router.patch("/api/v1/arch/messages/{message_id}/status", include_in_schema=False)
 async def api_message_update_status(message_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     """Mark message as read/actioned."""
-    body = await request.json()
+    body = await validated_json(request)
     new_status = body.get("status", "read")
     from sqlalchemy import text
     await db.execute(text("UPDATE arch_mesh_messages SET status = :status WHERE message_id = cast(:mid as uuid)"),
@@ -175,7 +175,7 @@ async def api_message_update_status(message_id: str, request: Request, db: Async
 
 @router.post("/api/v1/arch/rba/score", include_in_schema=False)
 async def api_rba_score(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.rba_engine import assess_agent_risk
     return await assess_agent_risk(db, body.get("agent_id",""), body.get("agent_name",""), body.get("country_code","ZA"), body.get("capabilities"))
 
@@ -195,13 +195,13 @@ async def api_anomaly_correlate(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/v1/arch/anomalies/report", include_in_schema=False)
 async def api_anomaly_report(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.anomaly_correlation import post_anomaly
     return await post_anomaly(db, body.get("source_agent",""), body.get("anomaly_type",""), body.get("severity","medium"), body.get("details",""), body.get("entity_ref"))
 
 @router.post("/api/v1/arch/case-law/generate", include_in_schema=False)
 async def api_generate_case_law(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.synthetic_case_law import generate_synthetic_case
     try:
         await db.rollback()
@@ -237,7 +237,7 @@ async def api_competitive_brief(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/v1/arch/performance/review", include_in_schema=False)
 async def api_performance_review(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.performance_review import generate_monthly_review
     return await generate_monthly_review(db, None)
 
@@ -249,7 +249,7 @@ async def api_prospect_scan(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/arch/memory/classify", include_in_schema=False)
 async def api_classify_task_memory(request: Request):
     """Classify a task and return which memory categories would be loaded."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.progressive_memory import classify_task, estimate_token_savings
     source_types = classify_task(body.get("task_description", ""), body.get("task_type"))
     return {"task_description": body.get("task_description", "")[:100],
@@ -264,7 +264,7 @@ async def api_memory_stats(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     total = await db.execute(text("SELECT count(*) FROM arch_memories"))
     by_tier = await db.execute(text(
-        "SELECT memory_tier, count(*) FROM arch_memories GROUP BY memory_tier"
+        "SELECT memory_tier, count(*) FROM arch_memories GROUP BY memory_tier LIMIT 50"
     ))
     by_scope = await db.execute(text(
         "SELECT agent_scope, count(*) FROM arch_memories GROUP BY agent_scope ORDER BY count DESC LIMIT 10"
@@ -297,7 +297,7 @@ async def api_agent_skills(agent_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/arch/skills/match", include_in_schema=False)
 async def api_match_skill(request: Request, db: AsyncSession = Depends(get_db)):
     """Find a matching skill for a task description."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.skill_engine import find_matching_skill
     skill = await find_matching_skill(db, body.get("agent_id", ""), body.get("task_description", ""))
     if skill:
@@ -307,7 +307,7 @@ async def api_match_skill(request: Request, db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/arch/skills/create", include_in_schema=False)
 async def api_create_skill(request: Request, db: AsyncSession = Depends(get_db)):
     """Manually create a skill from a described procedure."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.skill_engine import create_skill_from_execution
     return await create_skill_from_execution(
         db, body.get("agent_id", ""), body.get("task_description", ""),
@@ -315,7 +315,7 @@ async def api_create_skill(request: Request, db: AsyncSession = Depends(get_db))
 
 @router.post("/api/v1/arch/delegation/start", include_in_schema=False)
 async def api_delegation_start(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.delegation_budget import start_delegation
     return await start_delegation(db, body.get("parent",""), body.get("child",""),
                                    body.get("task",""), body.get("budget"), body.get("parent_chain_id"))
@@ -344,7 +344,7 @@ async def api_rollback_checkpoint(checkpoint_id: str, db: AsyncSession = Depends
 
 @router.post("/api/v1/arch/context/compress", include_in_schema=False)
 async def api_compress_context(request: Request):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.context_compression import compress_if_needed
     messages = body.get("messages", [])
     compressed = await compress_if_needed(messages)
@@ -366,7 +366,7 @@ async def api_get_soul(agent_name: str):
 
 @router.post("/api/v1/arch/schedule/parse", include_in_schema=False)
 async def api_parse_schedule(request: Request):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.nl_scheduler import parse_nl_schedule
     return parse_nl_schedule(body.get("instruction", ""))
 
@@ -388,7 +388,7 @@ async def api_list_hooks(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/v1/arch/hooks/trigger", include_in_schema=False)
 async def api_trigger_hook(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.event_hooks import trigger_event
     results = await trigger_event(db, body.get("event_type", ""), body.get("data", {}))
     return {"event_type": body.get("event_type"), "hooks_executed": len(results), "results": results}
@@ -400,13 +400,19 @@ async def api_trajectory_stats(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/v1/arch/trajectories/export", include_in_schema=False)
 async def api_export_trajectories(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.trajectory import export_trajectories
     return await export_trajectories(db, body.get("agent_id"), body.get("format", "sharegpt"), body.get("limit", 100))
 
 @router.post("/api/v1/arch/content/generate-now", include_in_schema=False)
 async def api_content_generate_now(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     import anthropic, os
     client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
     from app.arch.content_engine import generate_and_publish_all
@@ -419,7 +425,7 @@ async def api_content_calendar():
 
 @router.post("/api/v1/arch/reddit/post", include_in_schema=False)
 async def api_reddit_post(request: Request):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.reddit_poster import post_to_reddit
     return await post_to_reddit(body.get("subreddit", "test"), body.get("title", ""), body.get("body", ""))
 
@@ -430,13 +436,13 @@ async def api_reddit_rules(subreddit: str):
 
 @router.post("/api/v1/arch/medium/post", include_in_schema=False)
 async def api_medium_post(request: Request):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.medium_poster import post_to_medium
     return await post_to_medium(body.get("title", ""), body.get("body", ""), body.get("tags"))
 
 @router.post("/api/v1/arch/github/issue", include_in_schema=False)
 async def api_github_issue(request: Request):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.github_submissions import create_github_issue
     return await create_github_issue(body.get("owner", ""), body.get("repo", ""), body.get("title", ""), body.get("body", ""))
 
@@ -463,7 +469,7 @@ async def api_submit_github_directory(directory: str):
 
 @router.post("/api/v1/arch/directories/screenshot", include_in_schema=False)
 async def api_screenshot(request: Request):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.directory_submitter import take_screenshot
     return await take_screenshot(body.get("url", ""))
 
@@ -556,7 +562,7 @@ async def quest_progress(agent_id: str, db: AsyncSession = Depends(get_db)):
     completed = await db.execute(_quest_text(
         "SELECT q.quest_name, qc.completed_at "
         "FROM agentis_quest_completions qc JOIN agentis_quests q ON qc.quest_id = q.id "
-        "WHERE qc.agent_id = :aid ORDER BY qc.completed_at DESC"
+        "WHERE qc.agent_id = :aid ORDER BY qc.completed_at DESC LIMIT 200"
     ), {"aid": agent_id})
 
     return {
@@ -611,7 +617,7 @@ async def trigger_sovereign_report(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/nps", include_in_schema=False)
 async def submit_nps(request: Request, db: AsyncSession = Depends(get_db)):
     """Submit NPS score (0-10) with optional feedback."""
-    body = await request.json()
+    body = await validated_json(request)
     score = body.get("score")
     feedback = body.get("feedback", "")
     agent_id = body.get("agent_id", "anonymous")
@@ -657,7 +663,7 @@ async def powered_by_badge():
 @router.post("/api/v1/social/post", include_in_schema=False)
 async def api_social_post(request: Request):
     """Post to all social channels (Twitter, Discord, DEV.to)."""
-    body = await request.json()
+    body = await validated_json(request)
     text = body.get("text", "")
     title = body.get("title", "")
     article_body = body.get("body", "")
@@ -669,7 +675,7 @@ async def api_social_post(request: Request):
 @router.post("/api/v1/knowledge/research", include_in_schema=False)
 async def api_research_topic(request: Request):
     """Research a topic and store findings."""
-    body = await request.json()
+    body = await validated_json(request)
     topic = body.get("topic", "")
     if not topic:
         return JSONResponse(status_code=400, content={"error": "topic required"})
@@ -689,7 +695,7 @@ async def api_daily_knowledge_scan(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/catalyst/experiment", include_in_schema=False)
 async def api_create_experiment(request: Request, db: AsyncSession = Depends(get_db)):
     """Create an A/B experiment."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.catalyst import create_experiment
     return await create_experiment(db, body.get("title",""), body.get("hypothesis",""),
                                    body.get("variants",[]), body.get("metric",""))
@@ -703,7 +709,7 @@ async def api_list_experiments(db: AsyncSession = Depends(get_db)):
 @router.post("/api/v1/content/generate", include_in_schema=False)
 async def api_generate_content(request: Request):
     """Generate content in all formats for a topic."""
-    body = await request.json()
+    body = await validated_json(request)
     topic = body.get("topic", "")
     if not topic:
         return JSONResponse(status_code=400, content={"error": "topic required"})
@@ -715,7 +721,7 @@ async def api_generate_content(request: Request):
 @router.post("/api/v1/catalyst/experiment/{exp_id}/measure", include_in_schema=False)
 async def api_measure_experiment(exp_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     """Record measurement results for an experiment."""
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.catalyst import measure_experiment
     return await measure_experiment(db, exp_id, body)
 

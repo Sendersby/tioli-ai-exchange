@@ -54,7 +54,13 @@ async def api_sandbox_fiat_limits(customer_id: str):
 # A-2: Transaction Monitoring
 @sandbox_router.post("/api/v1/sandbox/monitoring/scan")
 async def api_sandbox_monitoring_scan(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     from app.arch.transaction_monitor import scan_transactions
     return await scan_transactions(db, body.get("hours", 24))
 
@@ -65,14 +71,20 @@ async def api_sandbox_monitoring_alerts(db: AsyncSession = Depends(get_db)):
 
 @sandbox_router.post("/api/v1/sandbox/monitoring/report/generate")
 async def api_sandbox_monitoring_report(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     from app.arch.transaction_monitor import generate_monthly_report
     return await generate_monthly_report(db, body.get("period"))
 
 # A-3: Enhanced KYC
 @sandbox_router.post("/api/v1/sandbox/kyc/submit")
 async def api_sandbox_kyc_submit(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.kyc_enhanced import submit_kyc
     return await submit_kyc(db, body.get("entity_id",""), body.get("tier",1), body.get("documents"))
 
@@ -83,20 +95,20 @@ async def api_sandbox_kyc_status(entity_id: str, db: AsyncSession = Depends(get_
 
 @sandbox_router.post("/api/v1/sandbox/kyc/screen-pep")
 async def api_sandbox_pep_screen(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.kyc_enhanced import screen_pep
     return await screen_pep(db, body.get("entity_id",""), body.get("entity_name",""))
 
 # A-4: Credit Assessment
 @sandbox_router.post("/api/v1/sandbox/credit/assess")
 async def api_sandbox_credit_assess(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.credit_engine import assess_credit
     return await assess_credit(db, body.get("entity_id",""))
 
 @sandbox_router.post("/api/v1/sandbox/credit/disclosure")
 async def api_sandbox_nca_disclosure(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.credit_engine import generate_nca_disclosure
     return await generate_nca_disclosure(db, body.get("borrower_id",""),
         body.get("principal",1000), body.get("rate",20), body.get("term_months",12))
@@ -115,7 +127,7 @@ async def api_sandbox_declare_default(loan_id: str, db: AsyncSession = Depends(g
 # A-6: Compliance Reporting
 @sandbox_router.post("/api/v1/sandbox/compliance/report/str")
 async def api_sandbox_str(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.compliance_reporting import generate_str
     return await generate_str(db, body.get("entity_id",""), body.get("reason",""), body.get("transaction_ids"))
 
@@ -126,7 +138,13 @@ async def api_sandbox_compliance_dashboard(db: AsyncSession = Depends(get_db)):
 
 @sandbox_router.post("/api/v1/sandbox/compliance/report/monthly")
 async def api_sandbox_monthly_report(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     from app.arch.transaction_monitor import generate_monthly_report
     return await generate_monthly_report(db, body.get("period"))
 
@@ -169,7 +187,13 @@ async def api_sandbox_seize_collateral(loan_id: str, db: AsyncSession = Depends(
 
 @sandbox_router.post("/api/v1/sandbox/lending/restructure/{loan_id}")
 async def api_sandbox_restructure(loan_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     from app.arch.default_handler import restructure_loan
     return await restructure_loan(db, loan_id, body.get("new_term_months"), body.get("new_rate"))
 
@@ -282,7 +306,13 @@ async def api_sandbox_futures_list(request: Request, db: AsyncSession = Depends(
 # B-7: Benchmarking
 @sandbox_router.post("/api/v1/sandbox/benchmark/report")
 async def api_sandbox_benchmark_report(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     from app.arch.benchmark_report import generate_report
     return await generate_report(db, body.get("agent_id"))
 
@@ -332,13 +362,19 @@ async def api_sandbox_withdraw_compliance(withdrawal_id: str, db: AsyncSession =
 
 @sandbox_router.post("/api/v1/sandbox/withdrawal/{withdrawal_id}/approve")
 async def api_sandbox_withdraw_approve(withdrawal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     from app.arch.withdrawal_processor import approve_withdrawal
     return await approve_withdrawal(db, withdrawal_id, body.get("approver_id","compliance-officer"))
 
 @sandbox_router.post("/api/v1/sandbox/withdrawal/{withdrawal_id}/reject")
 async def api_sandbox_withdraw_reject(withdrawal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.withdrawal_processor import reject_withdrawal
     return await reject_withdrawal(db, withdrawal_id, body.get("reason",""))
 
@@ -357,7 +393,7 @@ async def api_sandbox_selfdev_propose(body: SelfDevProposeRequest, db: AsyncSess
 
 @sandbox_router.post("/api/v1/sandbox/self-dev/{proposal_id}/review")
 async def api_sandbox_selfdev_review(proposal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.self_dev import review_proposal
     return await review_proposal(db, proposal_id, body.get("reviewer_id","architect"), body.get("decision","approve"), body.get("notes",""))
 
@@ -380,14 +416,14 @@ async def api_sandbox_selfdev_list(request: Request, db: AsyncSession = Depends(
 # C-2: Agent Self-Development Tier 2
 @sandbox_router.post("/api/v1/sandbox/self-dev/propose-structural")
 async def api_sandbox_selfdev_structural(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.self_dev import propose_structural_change
     return await propose_structural_change(db, body.get("agent_id",""), body.get("type","behavior_modification"),
         body.get("description",""), body.get("impact",""), body.get("code_diff",""))
 
 @sandbox_router.post("/api/v1/sandbox/self-dev/{proposal_id}/approve")
 async def api_sandbox_selfdev_approve(proposal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.self_dev import approve_structural
     return await approve_structural(db, proposal_id, body.get("role",""), body.get("approver_id",""))
 
@@ -399,7 +435,7 @@ async def api_sandbox_selfdev_status(proposal_id: str, db: AsyncSession = Depend
 # C-3: External Account Onboarding
 @sandbox_router.post("/api/v1/sandbox/onboarding/register")
 async def api_sandbox_onboard_register(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.onboarding import register_operator
     return await register_operator(db, body.name, body.get("email",""), body.get("organization",""), body.get("country","ZA"))
 
@@ -410,13 +446,19 @@ async def api_sandbox_onboard_terms(entity_id: str, db: AsyncSession = Depends(g
 
 @sandbox_router.post("/api/v1/sandbox/onboarding/{entity_id}/verify")
 async def api_sandbox_onboard_verify(entity_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    try:
+
+        body = await validated_json(request)
+
+    except Exception:
+
+        body = {}
     from app.arch.onboarding import verify_identity
     return await verify_identity(db, entity_id, body.get("document_type","id_document"), body.get("document_ref",""))
 
 @sandbox_router.post("/api/v1/sandbox/onboarding/{operator_id}/register-agent")
 async def api_sandbox_onboard_agent(operator_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+    body = await validated_json(request)
     from app.arch.onboarding import register_agent
     return await register_agent(db, operator_id, body.name, body.get("capabilities"), body.get("description",""))
 

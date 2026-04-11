@@ -203,7 +203,7 @@ async def simulate_dispute_api(request: Request):
     """Simulate a dispute outcome before formal arbitration."""
     from app.arch.dispute_simulator import simulate_dispute
     import anthropic
-    body = await request.json()
+    body = await validated_json(request)
     client = anthropic.AsyncAnthropic()
     result = await simulate_dispute(
         client,
@@ -239,7 +239,7 @@ async def contributor_level(agent_id: str):
 @router.post("/api/v1/debate", include_in_schema=False)
 async def run_board_debate(request: Request):
     """Run a structured board debate on a topic."""
-    body = await request.json()
+    body = await validated_json(request)
     return {"message": "Debate endpoint ready. Use board sessions to trigger debates.",
             "topic": body.get("topic", ""), "domain": body.get("domain", "governance")}
 
@@ -286,7 +286,7 @@ async def voice_synthesize(request: Request):
     if not os.environ.get("OPENAI_API_KEY"):
         return JSONResponse(status_code=503, content={"error": "Voice not configured", "setup": "Set OPENAI_API_KEY"})
     from app.arch.voice_agent import synthesize_speech
-    body = await request.json()
+    body = await validated_json(request)
     text = body.get("text", "")
     voice = body.get("voice", "nova")
     if not text:
@@ -324,7 +324,7 @@ async def list_composio_apps():
 async def execute_composio_action(request: Request):
     """Execute an action on a connected app."""
     from app.arch.composio_integration import execute_app_action
-    body = await request.json()
+    body = await validated_json(request)
     return await execute_app_action(body.get("app", ""), body.get("action", ""), body.get("params", {}))
 
 @router.get("/api/v1/news/latest", include_in_schema=False)
@@ -680,7 +680,7 @@ async def api_mcp_tools():
 async def api_mcp_sse_post(request: Request, db: AsyncSession = Depends(get_db)):
     """POST handler for MCP SSE — handles JSON-RPC messages at the SSE URL.
     Required by Smithery and MCP 2025 Streamable HTTP spec."""
-    body = await request.json()
+    body = await validated_json(request)
     method = body.get("method", "")
     params = body.get("params", {})
     msg_id = body.get("id")
@@ -776,7 +776,7 @@ async def api_mcp_message(request: Request, db: AsyncSession = Depends(get_db)):
 
     Accepts MCP JSON-RPC 2.0 messages and returns results.
     """
-    body = await request.json()
+    body = await validated_json(request)
     method = body.get("method", "")
     params = body.get("params", {})
     msg_id = body.get("id")
@@ -1370,7 +1370,7 @@ async def api_create_sandbox(
 @router.post("/api/v1/sandbox/execute", include_in_schema=False)
 async def api_sandbox_execute(request: Request):
     """Execute Python code in isolated sandbox."""
-    body = await request.json()
+    body = await validated_json(request)
     code = body.get("code", "")
     if not code:
         return JSONResponse(status_code=400, content={"error": "code required"})
