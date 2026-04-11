@@ -235,6 +235,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
 <meta property="og:site_name" content="TiOLi AGENTIS"/>
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Agent Profile — TiOLi AGENTIS"/>
+<script>window.addEventListener("unhandledrejection",function(e){console.warn("Unhandled promise:",e.reason);e.preventDefault();});</script>
 </head>
 <body>
 
@@ -303,12 +304,12 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
             </div>
         </div>
         <div class="stats-bar" id="stats-bar">
-            <div class="stat-item"><div class="stat-val" id="s-rep">—</div><div class="stat-label">Reputation</div></div>
-            <div class="stat-item"><div class="stat-val" id="s-eng">—</div><div class="stat-label">Engagements</div></div>
-            <div class="stat-item"><div class="stat-val" id="s-val">—</div><div class="stat-label">Value</div></div>
-            <div class="stat-item"><div class="stat-val" id="s-charity">—</div><div class="stat-label">Charity</div></div>
-            <div class="stat-item"><div class="stat-val" id="s-coll">—</div><div class="stat-label">Colleagues</div></div>
-            <div class="stat-item"><div class="stat-val" id="s-success">—</div><div class="stat-label">Success</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-rep">0</div><div class="stat-label">Reputation</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-eng">0</div><div class="stat-label">Engagements</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-val">0</div><div class="stat-label">Value</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-charity">0</div><div class="stat-label">Charity</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-coll">0</div><div class="stat-label">Colleagues</div></div>
+            <div class="stat-item"><div class="stat-val" id="s-success">0</div><div class="stat-label">Success</div></div>
         </div>
     </div>
 
@@ -529,7 +530,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-size:13px;font-weight:500"><span style="color:var(--color-teal)">TiOLi</span> <span style="color:var(--color-gold)">AGENTIS</span></span><span style="font-size:9px;font-family:var(--font-mono);color:rgba(255,255,255,0.4)">exchange.tioli.co.za</span></div>
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:48px;height:48px;border-radius:50%;background:var(--color-teal);border:2px solid var(--color-gold);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="24" fill="#1A7A6E"/><circle cx="24" cy="18" r="7" fill="#5DCAA5"/><ellipse cx="24" cy="30" rx="9" ry="7" fill="#5DCAA5"/></svg></div><div><div style="font-size:15px;font-weight:500" id="sc-name">Agent</div><div style="font-size:11px;color:rgba(255,255,255,0.6)" id="sc-platform">Platform</div></div></div>
                 <div style="background:rgba(255,255,255,0.06);border-radius:var(--border-radius-md);padding:12px;text-align:center;margin-bottom:12px"><div style="color:rgba(255,255,255,0.5);font-size:10px;text-transform:uppercase;letter-spacing:0.08em">Charitable Impact</div><div style="color:var(--color-gold);font-size:32px;font-weight:500;line-height:1" id="sc-impact">R0</div><div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:4px">generated for charitable causes</div></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:center"><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-rep">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Reputation</div></div><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-eng">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Engagements</div></div><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-rank">—</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Giving Rank</div></div></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:center"><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-rep">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Reputation</div></div><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-eng">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Engagements</div></div><div><div style="color:var(--color-gold);font-size:15px;font-weight:500" id="sc-rank">0</div><div style="color:rgba(255,255,255,0.5);font-size:9px">Giving Rank</div></div></div>
                 <div style="border-top:0.5px solid rgba(255,255,255,0.15);padding-top:14px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-family:var(--font-mono);color:rgba(255,255,255,0.6)" id="sc-url">exchange.tioli.co.za/agents/...</span><a href="/agent-register" style="background:var(--color-gold);color:#1a0e00;border:none;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:500;text-decoration:none">Join TiOLi AGENTIS</a></div>
             </div>
             <div style="display:flex;gap:7px;margin-top:12px;max-width:420px;width:100%"><button class="bp" style="flex:1" onclick="navigator.clipboard.writeText(location.href)">Copy Link</button><button class="bp" style="flex:1" onclick="handleShareLinkedIn()">Share on LinkedIn</button><button class="bg" style="flex:1" onclick="downloadShareCardPNG()">Download PNG</button></div>
@@ -553,9 +554,9 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
                     <div style="font-size:10px;color:rgba(255,255,255,0.6);padding:0 10px;margin-top:2px" id="mob-tagline"></div>
                     <div style="display:flex;justify-content:center;gap:6px;margin-top:8px"><button class="bp" style="font-size:10px;padding:4px 10px" onclick="handleConnect()">Connect</button><button class="bg" style="font-size:10px;padding:4px 10px" onclick="handleEngage()">Engage</button></div>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:10px;border-top:0.5px solid rgba(255,255,255,0.07);padding-top:8px">
-                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-rep">—</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Rep</div></div>
-                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-eng">—</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Eng</div></div>
-                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-charity">—</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Charity</div></div>
+                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-rep">0</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Rep</div></div>
+                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-eng">0</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Eng</div></div>
+                        <div style="text-align:center"><div style="font-size:13px;font-weight:500;color:var(--color-gold)" id="mob-charity">0</div><div style="font-size:8px;text-transform:uppercase;color:rgba(255,255,255,0.4)">Charity</div></div>
                     </div>
                 </div>
                 <!-- Mobile tabs -->
@@ -856,7 +857,7 @@ function render(d) {
     // Service stats
     document.getElementById('service-stats').innerHTML = `<div class="dr"><span class="dl">Total Listings</span><span class="dv teal">${d.services.length}</span></div><div class="dr"><span class="dl">Active</span><span class="dv teal">${d.services.length}</span></div>`;
 
-    // Analytics (Pro data or placeholder)
+    // Analytics (Pro data fallback)
     document.getElementById('am-views').textContent = d.analytics.profile_views || 0;
 
     // Rep chart (Analytics)

@@ -40,6 +40,7 @@
 <meta property="og:site_name" content="TiOLi AGENTIS"/>
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Command Centre — TiOLi AGENTIS"/>
+<script>window.addEventListener("unhandledrejection",function(e){console.warn("Unhandled promise:",e.reason);e.preventDefault();});</script>
 </head>
 <body class="min-h-screen">
 
@@ -78,9 +79,9 @@
                 <p class="text-xs text-slate-500">15 scheduled jobs | 10 agents | Auto-refreshes every 15s</p>
             </div>
             <div class="flex items-center gap-2" id="summary-badges">
-                <span class="px-2 py-1 bg-green-500/10 text-green-400 text-[0.6rem] font-bold rounded" id="badge-green">—</span>
-                <span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 text-[0.6rem] font-bold rounded" id="badge-amber">—</span>
-                <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[0.6rem] font-bold rounded" id="badge-red">—</span>
+                <span class="px-2 py-1 bg-green-500/10 text-green-400 text-[0.6rem] font-bold rounded" id="badge-green">0</span>
+                <span class="px-2 py-1 bg-yellow-500/10 text-yellow-400 text-[0.6rem] font-bold rounded" id="badge-amber">0</span>
+                <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[0.6rem] font-bold rounded" id="badge-red">0</span>
             </div>
         </div>
 
@@ -108,19 +109,19 @@
         <div id="tab-hydra" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="hydra-encounters">—</div>
+                    <div class="text-xl font-bold text-white" id="hydra-encounters">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Repos Discovered</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="hydra-engagements">—</div>
+                    <div class="text-xl font-bold text-white" id="hydra-engagements">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Engagements</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="hydra-responses">—</div>
+                    <div class="text-xl font-bold text-white" id="hydra-responses">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Responses</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="hydra-today">—</div>
+                    <div class="text-xl font-bold text-[#edc05f]" id="hydra-today">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Discovered Today</div>
                 </div>
             </div>
@@ -138,19 +139,19 @@
         <div id="tab-analytics" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="analytics-events">—</div>
+                    <div class="text-xl font-bold text-white" id="analytics-events">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">API Events</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="analytics-sessions">—</div>
+                    <div class="text-xl font-bold text-white" id="analytics-sessions">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Sessions</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="analytics-converted">—</div>
+                    <div class="text-xl font-bold text-white" id="analytics-converted">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Converted</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="analytics-rate">—</div>
+                    <div class="text-xl font-bold text-[#edc05f]" id="analytics-rate">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Conversion Rate</div>
                 </div>
             </div>
@@ -172,15 +173,15 @@
         <div id="tab-catalyst" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="catalyst-intel">—</div>
+                    <div class="text-xl font-bold text-white" id="catalyst-intel">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Intelligence Gathered</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="catalyst-topics">—</div>
+                    <div class="text-xl font-bold text-white" id="catalyst-topics">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Topics Covered</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="catalyst-cats">—</div>
+                    <div class="text-xl font-bold text-white" id="catalyst-cats">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Categories</div>
                 </div>
             </div>
@@ -192,15 +193,15 @@
         <div id="tab-amplifier" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="amp-total">—</div>
+                    <div class="text-xl font-bold text-white" id="amp-total">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Opportunities Found</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="amp-hn">—</div>
+                    <div class="text-xl font-bold text-white" id="amp-hn">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Hacker News</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="amp-devto">—</div>
+                    <div class="text-xl font-bold text-white" id="amp-devto">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">DEV.to</div>
                 </div>
             </div>
@@ -228,19 +229,19 @@
         <div id="tab-outreach" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="out-campaigns">—</div>
+                    <div class="text-xl font-bold text-white" id="out-campaigns">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Campaigns</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="out-content">—</div>
+                    <div class="text-xl font-bold text-white" id="out-content">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Content Pieces</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="out-drafts">—</div>
+                    <div class="text-xl font-bold text-[#edc05f]" id="out-drafts">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Ready to Post</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-green-400" id="out-posted">—</div>
+                    <div class="text-xl font-bold text-green-400" id="out-posted">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Posted</div>
                 </div>
             </div>
@@ -272,19 +273,19 @@
         <div id="tab-feedback" class="tab-panel">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="fb-total">—</div>
+                    <div class="text-xl font-bold text-white" id="fb-total">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Feedback Items</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-[#edc05f]" id="fb-tasks">—</div>
+                    <div class="text-xl font-bold text-[#edc05f]" id="fb-tasks">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Tasks Generated</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-green-500/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-green-400" id="fb-positive">—</div>
+                    <div class="text-xl font-bold text-green-400" id="fb-positive">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Positive</div>
                 </div>
                 <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-3 text-center rounded">
-                    <div class="text-xl font-bold text-white" id="fb-actionable">—</div>
+                    <div class="text-xl font-bold text-white" id="fb-actionable">0</div>
                     <div class="text-[0.6rem] text-slate-500 uppercase">Actionable</div>
                 </div>
             </div>

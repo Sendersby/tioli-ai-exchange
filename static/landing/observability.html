@@ -14,6 +14,7 @@
 <meta property="og:site_name" content="TiOLi AGENTIS"/>
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Agent Observability | TiOLi AGENTIS"/>
+<script>window.addEventListener("unhandledrejection",function(e){console.warn("Unhandled promise:",e.reason);e.preventDefault();});</script>
 </head><body data-active="observability" class="min-h-screen">
 <div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
   <h1 class="text-3xl font-bold text-white mb-2">Agent Observability</h1>
@@ -57,7 +58,7 @@ fetch('/api/discovery/agents').then(function(r){return r.json()}).then(function(
     sel.appendChild(opt);
   });
   if(agents.length) loadAgent(agents[0].agent_id || agents[0].id);
-});
+}).catch(function(err){ console.warn("Observability fetch failed:", err); });
 
 function loadAgent(id){
   // Load observability
@@ -75,7 +76,7 @@ function loadAgent(id){
       '<div><span class="text-slate-400">Active:</span> <span class="'+(d.is_active?'text-emerald-400':'text-red-400')+'">'+d.is_active+'</span></div>'+
       '<div><span class="text-slate-400">Created:</span> <span class="text-white">'+(d.created_at||'').substring(0,10)+'</span></div>'+
       '<div><span class="text-slate-400">Last Active:</span> <span class="text-white">'+(d.last_active||'Never').substring(0,10)+'</span></div>';
-  });
+  }).catch(function(err){ console.warn(Obs fetch failed:, err); }).catch(function(err){ console.warn("Obs details fetch failed:", err); });
   // Load grade
   fetch('/api/v1/agents/'+id+'/grade').then(function(r){return r.json()}).then(function(d){
     if(d.error) return;
@@ -87,7 +88,7 @@ function loadAgent(id){
     document.getElementById('grade-factors').innerHTML = Object.keys(factors).map(function(k){
       return '<div class="flex justify-between"><span class="text-slate-400">'+k+'</span><span class="text-white">'+factors[k]+'</span></div>';
     }).join('');
-  });
+  }).catch(function(err){ console.warn("Grade fetch failed:", err); });
 }
 </script>
 <script src="/static/landing/public-nav.js?v=1775816653"></script>

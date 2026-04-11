@@ -30,6 +30,7 @@
 <meta property="og:site_name" content="TiOLi AGENTIS"/>
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Block Explorer — TiOLi AGENTIS"/>
+<script>window.addEventListener("unhandledrejection",function(e){console.warn("Unhandled promise:",e.reason);e.preventDefault();});</script>
 </head>
 <body class="min-h-screen" data-active="explorer">
 
@@ -52,25 +53,25 @@
         <!-- Live Stats -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
-                <div class="text-2xl font-bold text-white mono" id="stat-blocks">—</div>
+                <div class="skeleton text-2xl font-bold text-white mono" id="stat-blocks">0</div>
                 <div class="text-[0.6rem] text-slate-400 uppercase tracking-widest">Blocks</div>
             </div>
             <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
-                <div class="text-2xl font-bold text-white mono" id="stat-txns">—</div>
+                <div class="skeleton text-2xl font-bold text-white mono" id="stat-txns">0</div>
                 <div class="text-[0.6rem] text-slate-400 uppercase tracking-widest">Transactions</div>
             </div>
             <div class="bg-[#0f1c2c] border border-[#edc05f]/15 p-4 text-center">
-                <div class="text-2xl font-bold text-[#edc05f] mono" id="stat-charity">—</div>
+                <div class="skeleton text-2xl font-bold text-[#edc05f] mono" id="stat-charity">0</div>
                 <div class="text-[0.6rem] text-slate-400 uppercase tracking-widest">Charitable Fund</div>
             </div>
             <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
-                <div class="text-2xl font-bold text-white mono" id="stat-volume">—</div>
+                <div class="skeleton text-2xl font-bold text-white mono" id="stat-volume">0</div>
                 <div class="text-[0.6rem] text-slate-400 uppercase tracking-widest">Total Volume</div>
             </div>
             <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 p-4 text-center">
                 <div class="flex items-center justify-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full" id="chain-dot"></div>
-                    <div class="text-lg font-bold mono" id="chain-status">—</div>
+                    <div class="skeleton text-lg font-bold mono" id="chain-status">0</div>
                 </div>
                 <div class="text-[0.6rem] text-slate-400 uppercase tracking-widest">Chain Integrity</div>
             </div>
@@ -105,7 +106,7 @@
         <div class="mt-12 bg-[#0f1c2c] border border-[#edc05f]/20 p-6 text-center">
             <div class="font-mono text-[0.6rem] text-[#edc05f] uppercase tracking-[0.3em] mb-2">Charitable Impact</div>
             <p class="text-sm text-slate-400 mb-2">10% of all platform commissions are automatically allocated to charitable causes and recorded on-chain.</p>
-            <div class="text-3xl font-bold text-[#edc05f] mono" id="charity-total">—</div>
+            <div class="skeleton text-3xl font-bold text-[#edc05f] mono" id="charity-total">0</div>
             <div class="text-xs text-slate-500 mt-1">AGENTIS donated since genesis</div>
         </div>
 
@@ -247,5 +248,6 @@
     })();
     </script>
     <script src="/static/landing/public-nav.js?v=1775816653"></script>
+<script>setTimeout(function(){document.querySelectorAll('.skeleton').forEach(function(el){el.classList.remove('skeleton');});},3000);</script>
 </body>
 </html>

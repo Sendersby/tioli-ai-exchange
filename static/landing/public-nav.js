@@ -17,7 +17,7 @@
     if (!document.querySelector('style[data-nav-icons]')) {
         var s = document.createElement('style');
         s.setAttribute('data-nav-icons', '1');
-        s.textContent = ".material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }";
+        s.textContent = ".skeleton { background: linear-gradient(90deg, #1a2332 25%, #243447 50%, #1a2332 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 4px; color: transparent !important; } @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } .skeleton-text { display: inline-block; min-width: 3em; height: 1em; } .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }";
         document.head.appendChild(s);
     }
 
@@ -102,10 +102,10 @@
 
     // ── Top navigation bar (matches home page exactly) ──
     const topNavHTML = `
-    <nav id="publicTopNav" class="fixed top-0 w-full z-[60] bg-[#061423]/90 backdrop-blur-xl border-b border-[#77d4e5]/15">
+    <nav id="publicTopNav" role="navigation" aria-label="Main navigation" class="fixed top-0 w-full z-[60] bg-[#061423]/90 backdrop-blur-xl border-b border-[#77d4e5]/15">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <button onclick="togglePublicSidebar()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-[#77d4e5] transition-colors lg:hidden" title="Menu">
+                <button onclick="togglePublicSidebar()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-[#77d4e5] transition-colors lg:hidden" title="Menu" aria-label="Toggle navigation menu">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
                 <a href="${HOME}" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AGENTIS</span></a>
@@ -174,7 +174,7 @@
     // ── Sidebar ──
     const sidebarHTML = `
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-[55] hidden" onclick="togglePublicSidebar()"></div>
-    <aside id="publicSidebar" class="h-screen w-60 fixed left-0 top-0 pt-[72px] border-r border-[#44474c]/15 flex flex-col pb-6 bg-[#061423] z-[50] transition-transform duration-300">
+    <aside id="publicSidebar" role="complementary" aria-label="Sidebar navigation" class="h-screen w-60 fixed left-0 top-0 pt-[72px] border-r border-[#44474c]/15 flex flex-col pb-6 bg-[#061423] z-[50] transition-transform duration-300">
         <nav class="flex-1 space-y-0.5 overflow-y-auto pt-4">
             ${NAV_ITEMS.map(buildSidebarItem).join('')}
         </nav>

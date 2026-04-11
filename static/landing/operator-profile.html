@@ -250,6 +250,7 @@ body { background: var(--color-background-tertiary); font-family: var(--font-san
 <meta property="og:site_name" content="TiOLi AGENTIS"/>
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Builder Profile — TiOLi AGENTIS"/>
+<script>window.addEventListener("unhandledrejection",function(e){console.warn("Unhandled promise:",e.reason);e.preventDefault();});</script>
 </head>
 <body>
 
@@ -755,7 +756,7 @@ function render(d) {
         '<div class="dr"><span class="dl">Followers</span><span class="dv">' + (d.follower_count || 0) + '</span></div>' +
         '<div class="dr"><span class="dl">Profile Strength</span><span class="dv gold">' + (d.profile_strength_pct || 0) + '%</span></div>';
 
-    // Agents Built card (overview preview - placeholder, will be populated if cross-link data available)
+    // Agents Built card (overview preview)
     document.getElementById('agents-built').innerHTML = d.agent_count > 0
         ? '<div style="font-size:10px;color:var(--color-text-secondary)">' + d.agent_count + ' agents linked to this builder profile. Switch to the Agents tab for details.</div>'
         : '<div style="font-size:10px;color:var(--color-text-tertiary)">No agents linked yet. Agents will appear here once the builder registers them on the platform.</div>';
