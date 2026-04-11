@@ -53,36 +53,8 @@ async def rollback_proposal(db, proposal_id):
     return {"proposal_id": proposal_id, "status": "rolled_back", "sandbox": True}
 
 async def _ensure_tables(db):
-    """Create tables if they don't exist."""
-    await db.execute(text("""
-        CREATE TABLE IF NOT EXISTS sandbox_self_dev_proposals (
-            id TEXT PRIMARY KEY,
-            agent_id TEXT NOT NULL,
-            improvement_type TEXT NOT NULL,
-            description TEXT NOT NULL,
-            code_diff TEXT,
-            tier INTEGER DEFAULT 1,
-            status TEXT DEFAULT 'proposed',
-            reviewed_by TEXT,
-            review_notes TEXT,
-            checkpoint_id TEXT,
-            created_at TIMESTAMP DEFAULT now(),
-            reviewed_at TIMESTAMP,
-            deployed_at TIMESTAMP,
-            rolled_back_at TIMESTAMP
-        )
-    """))
-    await db.execute(text("""
-        CREATE TABLE IF NOT EXISTS sandbox_self_dev_approvals (
-            id TEXT PRIMARY KEY,
-            proposal_id TEXT NOT NULL,
-            approver_role TEXT NOT NULL,
-            approver_id TEXT,
-            decision TEXT DEFAULT 'pending',
-            approved_at TIMESTAMP
-        )
-    """))
-    await db.commit()
+    """No-op: schema managed by Alembic -- see alembic/versions/92d379a512fc."""
+    pass
 
 async def list_proposals(db, agent_id=None, status=None):
     """List self-dev proposals with optional filters."""

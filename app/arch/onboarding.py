@@ -9,25 +9,7 @@ async def register_operator(db, name, email, organization="", country="ZA"):
     api_key = f"tioli_{secrets.token_hex(32)}"
     api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
     
-    await db.execute(text("""
-        CREATE TABLE IF NOT EXISTS sandbox_onboarding (
-            id TEXT PRIMARY KEY,
-            entity_type TEXT NOT NULL,
-            name TEXT NOT NULL,
-            email TEXT,
-            organization TEXT,
-            country TEXT DEFAULT 'ZA',
-            api_key_hash TEXT,
-            kyc_tier INTEGER DEFAULT 0,
-            terms_accepted BOOLEAN DEFAULT false,
-            terms_accepted_at TIMESTAMP,
-            identity_verified BOOLEAN DEFAULT false,
-            status TEXT DEFAULT 'pending',
-            parent_operator_id TEXT,
-            created_at TIMESTAMP DEFAULT now()
-        )
-    """))
-    
+    # Schema managed by Alembic — see alembic/versions/92d379a512fc
     await db.execute(text(
         "INSERT INTO sandbox_onboarding (id, entity_type, name, email, organization, country, api_key_hash, status) "
         "VALUES (:id, 'operator', :name, :email, :org, :country, :hash, 'pending')"

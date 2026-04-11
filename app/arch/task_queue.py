@@ -22,43 +22,12 @@ from sqlalchemy import text
 log = logging.getLogger("arch.task_queue")
 
 
-TASK_QUEUE_DDL = """
-CREATE TABLE IF NOT EXISTS arch_task_queue (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id        VARCHAR(50) NOT NULL,
-    task_type       VARCHAR(30) NOT NULL
-                    CHECK (task_type IN ('IMMEDIATE','SCHEDULED','RECURRING',
-                                         'QUEUED_FOR_CLAUDE','QUEUED_FOR_FOUNDER')),
-    priority        INTEGER NOT NULL DEFAULT 5 CHECK (priority BETWEEN 1 AND 10),
-    title           VARCHAR(200) NOT NULL,
-    description     TEXT,
-    action_type     VARCHAR(50) NOT NULL,
-    action_params   JSONB NOT NULL DEFAULT '{}',
-    schedule_at     TIMESTAMPTZ,
-    cron_expression VARCHAR(50),
-    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING'
-                    CHECK (status IN ('PENDING','RUNNING','COMPLETED','FAILED',
-                                      'WAITING_APPROVAL','CANCELLED','DEFERRED')),
-    result          JSONB,
-    error           TEXT,
-    attempts        INTEGER NOT NULL DEFAULT 0,
-    max_attempts    INTEGER NOT NULL DEFAULT 3,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    started_at      TIMESTAMPTZ,
-    completed_at    TIMESTAMPTZ,
-    depends_on      UUID REFERENCES arch_task_queue(id)
-);
-CREATE INDEX IF NOT EXISTS idx_task_queue_status ON arch_task_queue(status, priority, created_at);
-CREATE INDEX IF NOT EXISTS idx_task_queue_agent ON arch_task_queue(agent_id, status);
-CREATE INDEX IF NOT EXISTS idx_task_queue_schedule ON arch_task_queue(schedule_at)
-    WHERE status = 'PENDING' AND task_type = 'SCHEDULED';
-"""
+TASK_QUEUE_DDL = """-- Schema managed by Alembic -- see alembic/versions/92d379a512fc"""
 
 
 async def create_task_queue_table(db):
-    """Create the task queue table if it doesn't exist."""
-    await db.execute(text(TASK_QUEUE_DDL))
-    await db.commit()
+    """No-op: schema managed by Alembic -- see alembic/versions/92d379a512fc."""
+    pass
 
 
 async def enqueue_task(

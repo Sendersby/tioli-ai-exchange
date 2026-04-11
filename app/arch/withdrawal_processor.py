@@ -7,25 +7,7 @@ async def request_withdrawal(db, customer_id, amount_zar, bank_account="", bank_
     """Submit a fiat withdrawal request to the processing queue."""
     withdrawal_id = str(uuid.uuid4())
     
-    await db.execute(text("""
-        CREATE TABLE IF NOT EXISTS sandbox_withdrawals (
-            id TEXT PRIMARY KEY,
-            customer_id TEXT NOT NULL,
-            amount_zar NUMERIC(18,2) NOT NULL,
-            bank_account TEXT,
-            bank_name TEXT,
-            status TEXT DEFAULT 'pending_compliance',
-            compliance_check TEXT,
-            compliance_passed BOOLEAN,
-            approved_by TEXT,
-            approved_at TIMESTAMP,
-            payout_ref TEXT,
-            payout_at TIMESTAMP,
-            rejection_reason TEXT,
-            created_at TIMESTAMP DEFAULT now()
-        )
-    """))
-    
+    # Schema managed by Alembic -- see alembic/versions/92d379a512fc
     await db.execute(text(
         "INSERT INTO sandbox_withdrawals (id, customer_id, amount_zar, bank_account, bank_name) "
         "VALUES (:id, :cid, :amt, :bank, :bname)"

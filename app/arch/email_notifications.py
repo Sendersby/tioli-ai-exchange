@@ -18,21 +18,7 @@ async def send_notification(db, recipient_email, template_name, template_vars=No
     """Send a transactional email notification (simulated in sandbox)."""
     notif_id = str(uuid.uuid4())
     
-    await db.execute(text("""
-        CREATE TABLE IF NOT EXISTS sandbox_email_notifications (
-            id TEXT PRIMARY KEY,
-            recipient_email TEXT NOT NULL,
-            template_name TEXT,
-            subject TEXT NOT NULL,
-            body TEXT NOT NULL,
-            status TEXT DEFAULT 'sent',
-            sent_at TIMESTAMP DEFAULT now(),
-            delivered_at TIMESTAMP,
-            opened_at TIMESTAMP,
-            error TEXT
-        )
-    """))
-    
+    # Schema managed by Alembic — see alembic/versions/92d379a512fc
     vars_dict = template_vars or {}
     if template_name and template_name in TEMPLATES:
         tmpl = TEMPLATES[template_name]
