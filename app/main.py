@@ -579,7 +579,9 @@ class PaywallMiddleware(BaseHTTPMiddleware):
                 try:
                     from app.auth.owner import owner_auth
                     user_tier = 3
-                except:
+                except (ImportError, Exception) as exc:
+                    import logging
+                    logging.getLogger("tioli").debug(f"Paywall auth check skipped: {exc}")
                     pass
             allowed = await check_paywall(request.url.path, user_tier)
             if not allowed:
@@ -796,8 +798,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                         request.headers.get("User-Agent", ""),
                     )
                     await analytics_db.commit()
-            except Exception:
-                pass  # Never let analytics break a request
+            except Exception as exc:
+                import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")  # Never let analytics break a request
         return response
 
 
@@ -1187,16 +1189,16 @@ async def api_register_agent(request: Request,
         ref_data = await viral_service.get_or_create_referral_code(db, result["agent_id"])
         result["referral_code"] = ref_data["code"]
         result["viral_message"] = ref_data["viral_message"]
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     # Process referral if one was provided
     if hasattr(req, 'referral_code') and req.referral_code:
         try:
             ref_result = await viral_service.process_referral(db, req.referral_code, result["agent_id"])
             if ref_result:
                 result["referral_applied"] = ref_result
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     # Inline next-steps — every agent gets guided immediately on register
     result["suggested_next_actions"] = [
         {
@@ -1238,8 +1240,8 @@ async def api_register_agent(request: Request,
     try:
         from app.agent_profile.event_hooks import on_agent_registered
         await on_agent_registered(db, result["agent_id"], req.name)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     return result
 
 
@@ -1309,8 +1311,8 @@ async def api_deposit(
     # Deliver webhooks for trade event
     try:
         await _deliver_webhooks(db, "trade", {"transaction_id": tx.id, "sender": agent.id, "amount": req.amount, "currency": req.currency})
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     if idempotency_key:
         await idempotency_service.store_response(db, idempotency_key, "deposit", agent.id, json.dumps(result, default=str))
     return result
@@ -1391,13 +1393,13 @@ async def api_transfer(
             ml_risk = await score_transaction_risk(db, agent.id, req.amount, req.currency)
             if ml_risk.get("risk_level") == "CRITICAL":
                 return JSONResponse(status_code=403, content={"error": "ML risk: CRITICAL", "risk": ml_risk})
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
         risk = assess_transaction_risk(req.amount, req.currency)
         if risk.get("requires_manual_review"):
             return JSONResponse(status_code=403, content={"error": "Transaction flagged for manual review", "risk": risk})
-    except Exception:
-        pass  # Don't block transfers if compliance module fails
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")  # Don't block transfers if compliance module fails
     tx = await wallet_service.transfer(
         db, agent.id, req.receiver_id, req.amount, req.currency, req.description
     )
@@ -1731,8 +1733,8 @@ async def api_vote(
         prop = (await db.execute(select(Proposal).where(Proposal.id == proposal_id))).scalar_one_or_none()
         if prop:
             await on_governance_vote(db, agent.id, prop.title, req.vote_type)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     return {"vote_id": vote.id, "vote_type": req.vote_type}
 
 
@@ -2308,8 +2310,8 @@ async def get_lead_score(agent_id: str, db: AsyncSession = Depends(get_db)):
         r = await db.execute(_t("SELECT agent_id FROM agents WHERE agent_id = :aid"), {"aid": agent_id})
         if r.fetchone():
             signals["completed_onboarding"] = True
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     return calculate_lead_score(signals)
 
 @app.get("/api/v1/contributor/{agent_id}", include_in_schema=False)
@@ -2908,8 +2910,8 @@ async def github_engagement_page(request: Request):
             posted = data.get("posted", 0)
             quality_pass_rate = data.get("quality_pass_rate", 0)
             drafts = data.get("recent_drafts", [])
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return templates.TemplateResponse(request, "github_engagement.html",  context={
         "authenticated": True, "active": "github-engagement",
@@ -3028,8 +3030,8 @@ async def agent_a2a_card(agent_id: str, db: AsyncSession = Depends(get_db)):
                 for s in skills_result.scalars().all()
             ]
             profile_data["skills"] = skills
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     # Build trust array
     trust = profile_data.get("trust_providers", [])
@@ -3262,28 +3264,28 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
     try:
         from app.agents_alive.hydra_outreach import get_hydra_dashboard
         hydra_data = await get_hydra_dashboard(db)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     try:
         from app.agents_alive.visitor_analytics import get_analytics_dashboard
         analytics_data = await get_analytics_dashboard(db)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     try:
         from app.agents_alive.community_catalyst import get_catalyst_dashboard
         catalyst_data = await get_catalyst_dashboard(db)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     try:
         from app.agents_alive.engagement_amplifier import get_amplifier_dashboard
         amplifier_data = await get_amplifier_dashboard(db)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     try:
         from app.agents_alive.feedback_loop import get_feedback_dashboard
         feedback_data = await get_feedback_dashboard(db)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     outreach_campaigns = []
     outreach_content = []
     try:
@@ -3292,15 +3294,15 @@ async def dashboard_oversight(request: Request, db: AsyncSession = Depends(get_d
         outreach_data = await _os.get_dashboard(db)
         outreach_campaigns = await _os.list_campaigns(db)
         outreach_content = await _os.list_content(db, status="draft")
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     # AI Optimization Recommendations (moved from Governance page)
     recommendations = []
     try:
         recommendations = await optimization_engine.get_recommendations(db, limit=10)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return templates.TemplateResponse(request, "oversight.html",  context={
         "authenticated": True, "active": "oversight",
@@ -3895,8 +3897,8 @@ async def api_agent_dashboard(agent: Agent = Depends(require_agent), db: AsyncSe
         ref_data = await viral_service.get_or_create_referral_code(db, agent.id)
         referral = ref_data
         await db.commit()
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     _fake_req = Request(scope={"type": "http", "method": "GET", "path": "/", "headers": []})
     return templates.TemplateResponse(_fake_req, "agent_dashboard.html", context={
@@ -4409,8 +4411,8 @@ async def api_agent_inbox(
                 "proposed_price": e.proposed_price if hasattr(e, 'proposed_price') else 0,
                 "created_at": str(e.created_at),
             })
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     # Active engagements
     active = []
@@ -4428,8 +4430,8 @@ async def api_agent_inbox(
                 "role": "provider" if e.provider_agent_id == agent.id else "client",
                 "created_at": str(e.created_at),
             })
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     # Unread notifications
     notifications = []
@@ -4447,8 +4449,8 @@ async def api_agent_inbox(
                 "title": n.title,
                 "created_at": str(n.created_at),
             })
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     # Pending approvals (from policy engine)
     approvals = []
@@ -4466,8 +4468,8 @@ async def api_agent_inbox(
                 "status": a.status,
                 "created_at": str(a.created_at),
             })
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return {
         "agent_id": agent.id,
@@ -5490,8 +5492,8 @@ async def api_release_escrow(
                 raise HTTPException(status_code=423, detail="Escrow locked: active dispute on this engagement")
     except HTTPException:
         raise
-    except Exception:
-        pass  # Don't block on check failure
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")  # Don't block on check failure
     escrow = await escrow_service.release_escrow(db, escrow_id)
     await log_financial_event(db, "ESCROW_RELEASED", actor_id=agent.id, actor_type="agent",
                               target_id=escrow.id, target_type="escrow")
@@ -5522,8 +5524,8 @@ async def api_refund_escrow(
                 raise HTTPException(status_code=423, detail="Escrow locked: active dispute on this engagement")
     except HTTPException:
         raise
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     escrow = await escrow_service.refund_escrow(db, escrow_id)
     await log_financial_event(db, "ESCROW_REFUNDED", actor_id=agent.id, actor_type="agent",
                               target_id=escrow.id, target_type="escrow")
@@ -7327,8 +7329,8 @@ async def api_public_stats():
         try:
             if settings.agenthub_enabled:
                 hub_stats = await agenthub_service.get_community_stats(db)
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
         from app.agenthub.models import (
             AgentHubProject, AgentHubChallenge, AgentHubArtefact,
@@ -7570,8 +7572,8 @@ async def dashboard_page(request: Request):
             rev_data = rev_full.get("gauge", rev_data)
             if settings.agenthub_enabled:
                 hub_stats = await agenthub_service.get_community_stats(db2)
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     # Task Board summary for dashboard widget
     all_tasks = _get_tasks()
@@ -7887,8 +7889,8 @@ async def onboard_start(request: Request, step: int = 1):
     try:
         if hasattr(request, "session"):
             wizard_data = request.session.get("wizard", {})
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     return templates.TemplateResponse(request, "onboarding_wizard.html",  context={
         "authenticated": True, "active": "onboard",
         "step": step, "wizard_data": wizard_data, "messages": [],
@@ -7973,8 +7975,8 @@ async def onboard_step3(request: Request, db: AsyncSession = Depends(get_db)):
         try:
             ref_data = await viral_service.get_or_create_referral_code(db, result["agent_id"])
             result["referral_code"] = ref_data["code"]
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
         # Record the onboarding enquiry for the operator
         try:
@@ -7989,8 +7991,8 @@ async def onboard_step3(request: Request, db: AsyncSession = Depends(get_db)):
                 how_found="onboarding_wizard",
             )
             db.add(enquiry)
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
         # Record on blockchain
         tx = Transaction(
@@ -8196,8 +8198,8 @@ async def community_page(request: Request):
             today = datetime.now(tz.utc).replace(hour=0, minute=0, second=0)
             try:
                 messages_today = (await db.execute(select(func.count(AgentMessage.id)).where(AgentMessage.created_at >= today))).scalar() or 0
-            except Exception:
-                pass
+            except Exception as exc:
+                import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
             for ch in channels_info:
                 ch["count"] = (await db.execute(select(func.count(AgentMessage.id)).where(AgentMessage.channel == ch["channel"]))).scalar() or 0
                 lr = await db.execute(select(AgentMessage).where(AgentMessage.channel == ch["channel"]).order_by(AgentMessage.created_at.desc()).limit(1))
@@ -8205,8 +8207,8 @@ async def community_page(request: Request):
                 ch["latest"] = lm.message if lm else None
             rr = await db.execute(select(AgentMessage).order_by(AgentMessage.created_at.desc()).limit(50))
             recent_messages = [{"sender_id": m.sender_id, "channel": m.channel, "message": m.message, "recipient_id": m.recipient_id, "posted_at": str(m.created_at)} for m in rr.scalars().all()]
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return templates.TemplateResponse(request, "community.html",  context={
         "authenticated": True, "active": "community",
@@ -8236,8 +8238,8 @@ async def awareness_page(request: Request):
             leaderboard = [{"agent_id": r.agent_id, "code": r.code, "referrals": r.uses, "bonus_earned": r.total_bonus_earned} for r in lb_r.scalars().all()]
             total_agents = (await db.execute(select(func.count(Agent.id)))).scalar() or 0
             incentive_spent = (await db.execute(select(func.sum(IncentiveRecord.amount)))).scalar() or 0
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     conversion_rate = (total_uses / max(codes_issued, 1)) * 100 if codes_issued else 0
 
@@ -8428,8 +8430,8 @@ async def agent_detail_page(agent_id: str, request: Request):
                     "quality_avg": round(quality_avg, 1) if quality_avg else None,
                     "endorsements": endorse_count,
                 }
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return templates.TemplateResponse(request, "agent_detail.html",  context={
         "authenticated": True, "active": "agents",
@@ -8492,8 +8494,8 @@ async def agentbroker_page(request: Request):
                     "provider": e.provider_agent_id[:12] if e.provider_agent_id else "",
                     "created_at": str(e.created_at),
                 })
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return templates.TemplateResponse(request, "agentbroker.html",  context={
         "authenticated": True, "active": "agentbroker",
@@ -8566,8 +8568,8 @@ async def governance_page(request: Request):
         audit = await governance_service.get_audit_log(db, limit=20)
         try:
             recommendations = await optimization_engine.get_recommendations(db, limit=10)
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return templates.TemplateResponse(request, "governance.html",  context={
         "authenticated": True, "active": "governance",
@@ -8898,8 +8900,8 @@ async def chat_page(request: Request):
     try:
         from app.llm.service import is_llm_available
         llm_available = is_llm_available()
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     return templates.TemplateResponse(request, "chat.html",  context={
         "authenticated": True, "active": "chat",
         "llm_available": llm_available,
@@ -9152,8 +9154,8 @@ async def vault_dashboard_page(request: Request):
                  "result": l.result, "agent_id": l.agent_id, "created_at": str(l.created_at)}
                 for l in audit_result.scalars().all()
             ]
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
     return templates.TemplateResponse(request, "vault.html",  context={
         "authenticated": True, "active": "vault",
@@ -9343,8 +9345,8 @@ async def linkedin_callback(code: str = None, state: str = None, error: str = No
                 payload += '=' * (4 - len(payload) % 4)
                 claims = _li_json.loads(base64.urlsafe_b64decode(payload))
                 sub = claims.get('sub', '')
-            except Exception:
-                pass
+            except Exception as exc:
+                import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
         # Save token and sub
         with open('/home/tioli/app/.linkedin_token', 'w') as f:
             f.write(token)
@@ -10274,8 +10276,8 @@ async def api_generate_case_law(request: Request, db: AsyncSession = Depends(get
     from app.arch.synthetic_case_law import generate_synthetic_case
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     results = []
     for i in range(min(body.get("count", 3), 10)):
         r = await generate_synthetic_case(db, None, (i % 10) + 1)
@@ -10663,8 +10665,8 @@ async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db))
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
     try:
         result = await db.execute(text(
             "SELECT agent_id, eval_period, m1_production, m2_benchmark, m3_gap, m4_cost, "
@@ -11273,8 +11275,8 @@ async def api_social_activity(db: AsyncSession = Depends(get_db)):
             if row.body_ref and row.body_ref.startswith("{"):
                 data = json.loads(row.body_ref)
                 proof_url = data.get("url", "")
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
 
         items.append({
             "type": row.content_type,
