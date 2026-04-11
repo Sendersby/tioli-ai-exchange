@@ -105,7 +105,7 @@ async def api_adoption_digest(request: Request, db: AsyncSession = Depends(get_d
 
     try:
         total_trades = (await db.execute(select(func.count(Trade.id)).where(Trade.trade_type == "real"))).scalar() or 0
-    except Exception:
+    except Exception as e:
         total_trades = 0
 
     # Wallet totals
@@ -772,7 +772,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
             rate = round((row.hits or 0) / total * 100, 1) if total > 0 else 0
             cache[agent] = {"hits": row.hits or 0, "misses": row.misses or 0, "rate": rate}
         widgets["cache_hit_rate"] = cache
-    except Exception:
+    except Exception as e:
         widgets["cache_hit_rate"] = {}
 
     # Widget 2: LLM Calls Per Hour
@@ -782,7 +782,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
             "AND status IN ('CACHE_HIT', 'CACHE_MISS', 'EXECUTED')"
         ))
         widgets["llm_calls_per_hour"] = r.scalar() or 0
-    except Exception:
+    except Exception as e:
         widgets["llm_calls_per_hour"] = 0
 
     # Widget 3: Scheduled Jobs status
@@ -794,7 +794,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
         jobs = [{"job": row.job_id, "status": row.status, "tokens": row.tokens_consumed or 0,
                  "at": str(row.executed_at) if row.executed_at else None} for row in r.fetchall()]
         widgets["scheduled_jobs"] = jobs
-    except Exception:
+    except Exception as e:
         widgets["scheduled_jobs"] = []
 
     # Widget 4: Goals
@@ -808,7 +808,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
                   "last_actioned": str(row.last_actioned) if row.last_actioned else None}
                  for row in r.fetchall()]
         widgets["goals"] = goals
-    except Exception:
+    except Exception as e:
         widgets["goals"] = []
 
     # Widget 5: Today's Agenda
@@ -823,7 +823,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
             widgets["todays_agenda"] = {"items": items, "completion": row.completion_pct or 0}
         else:
             widgets["todays_agenda"] = {"items": [], "completion": 0}
-    except Exception:
+    except Exception as e:
         widgets["todays_agenda"] = {"items": [], "completion": 0}
 
     # Widget 6: Social Signals
@@ -837,7 +837,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
                     "classification": row.classification}
                    for row in r.fetchall()]
         widgets["social_signals"] = signals
-    except Exception:
+    except Exception as e:
         widgets["social_signals"] = []
 
     # Widget 7: Threat Correlation
@@ -854,7 +854,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
                         "narrative": (row.narrative or "")[:200], "at": str(row.created_at)}
                        for row in corr.fetchall()]
         widgets["threat_correlation"] = {"events": events, "correlations": correlations}
-    except Exception:
+    except Exception as e:
         widgets["threat_correlation"] = {"events": [], "correlations": []}
 
     # Widget 8: Prospect Pipeline
@@ -867,7 +867,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
                      "score": row.qualification_score, "status": row.status,
                      "draft": (row.outreach_draft or "")[:150]} for row in r.fetchall()]
         widgets["prospect_pipeline"] = prospects
-    except Exception:
+    except Exception as e:
         widgets["prospect_pipeline"] = []
 
     return widgets

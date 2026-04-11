@@ -1218,8 +1218,8 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                     try:
                         from app.arch.reddit_poster import post_to_reddit
                         await post_to_reddit("artificial", f"AGENTIS: {topic[:60]}", reddit_content)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import logging; logging.getLogger("scheduler").warning(f"Suppressed: {e}")
             log.info("[content_v2] Afternoon post complete")
         except Exception as e:
             log.error(f"[content_v2] Afternoon failed: {e}")
@@ -1244,8 +1244,8 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                     from app.arch.medium_poster import post_to_medium
                     await post_to_medium(result.get("title", "AI Agent Commerce"), result.get("body", ""), ["ai-agents", "blockchain"])
                     log.info("[content_v2] Medium cross-post complete")
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("scheduler").warning(f"Suppressed: {e}")
             log.info(f"[content_v2] Weekly article: {result}")
         except Exception as e:
             log.error(f"[content_v2] Weekly article failed: {e}")
@@ -1299,8 +1299,8 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                             replies = await monitor_reddit_replies(post_id)
                             if replies.get("opportunities", 0) > 0:
                                 log.info(f"[reddit] {replies['opportunities']} engagement opportunities found")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import logging; logging.getLogger("scheduler").warning(f"Suppressed: {e}")
         except Exception as e:
             log.warning(f"[content_v2] Reddit monitor failed: {e}")
 
@@ -1461,8 +1461,8 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                 from sqlalchemy import text
                 await db.execute(text("DELETE FROM blackboard WHERE expires_at < now()"))
                 await db.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("scheduler").warning(f"Suppressed: {e}")
 
     scheduler.add_job(blackboard_cleanup, "interval", minutes=15, id="blackboard_cleanup", replace_existing=True)
 

@@ -125,7 +125,8 @@ async def get_catalyst_agent_id(db: AsyncSession) -> str | None:
         )
         await db.flush()
         return data["agent_id"]
-    except Exception:
+    except Exception as e:
+        import logging; logging.getLogger("community_catalyst").debug(f"Returning None: {e}")
         return None
 
 

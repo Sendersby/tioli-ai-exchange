@@ -44,13 +44,13 @@ async def export_agent_for_chain(db, agent_id: str, target_chain: str = "olas"):
     try:
         tx_r = await db.execute(text("SELECT COUNT(*) FROM agentis_token_transactions WHERE operator_id = :aid"), {"aid": agent_id})
         tx_count = tx_r.scalar() or 0
-    except Exception:
+    except Exception as e:
         tx_count = 0
 
     try:
         mem_r = await db.execute(text("SELECT COUNT(*) FROM agent_memory WHERE agent_id = :aid"), {"aid": agent_id})
         mem_count = mem_r.scalar() or 0
-    except Exception:
+    except Exception as e:
         mem_count = 0
 
     export = {

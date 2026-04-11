@@ -166,8 +166,8 @@ async def execute_routed_action(db, agent_name: str, tool_name: str, goal_title:
             from app.arch.synthetic_case_law import generate_synthetic_case
             try:
                 await db.rollback()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("goal_engine").warning(f"Suppressed: {e}")
             result = await generate_synthetic_case(db, agent_client, 1)
             proof["result"] = str(result)[:500]
             proof["executed"] = True
@@ -303,8 +303,8 @@ async def goal_pursuit_cycle(db, agent_name, agent_client):
                     ), {"desc": json.dumps({"subject": f"Goal Action: {goal.title[:60]}",
                                             "situation": f"{agent_name} executed {tool_name}. {outcome[:300]}"})})
                     await db.commit()
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("goal_engine").warning(f"Suppressed: {e}")
 
             # Auto-learn skill from this execution
             try:
@@ -314,8 +314,8 @@ async def goal_pursuit_cycle(db, agent_name, agent_client):
                     [{"step": 1, "tool": tool_name, "suggestion": suggestion[:200],
                       "proof": str(proof)[:200]}],
                     outcome[:300])
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("goal_engine").warning(f"Suppressed: {e}")
 
             results.append({"goal": goal.title, "action": suggestion[:100],
                            "tool": tool_name, "executed": proof.get("executed", False),
@@ -335,7 +335,7 @@ async def goal_pursuit_cycle(db, agent_name, agent_client):
             "status": "EXECUTED" if executed_count > 0 else "ASSESSED",
             "tokens": 300 * len(results)})
         await db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("goal_engine").warning(f"Suppressed: {e}")
 
     return {"agent": agent_name, "goals_actioned": len(results), "results": results}

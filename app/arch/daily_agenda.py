@@ -52,7 +52,7 @@ async def generate_daily_agenda(db, agent_client):
             "ON CONFLICT (date) DO UPDATE SET items = :items, updated_at = now()"
         ), {"d": today, "items": json.dumps(items)})
         await db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("daily_agenda").warning(f"Suppressed: {e}")
 
     return {"date": str(today), "items": len(items), "agenda": items}

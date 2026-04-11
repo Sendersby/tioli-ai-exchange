@@ -49,8 +49,8 @@ async def run_rescreening_batch(db, batch_size=50):
                     from app.arch.blackboard import post_to_blackboard
                     await post_to_blackboard(db, "auditor", "compliance",
                         f"OFAC_RESCREENING_HIT:{agent.id}", f"Agent {agent.name} flagged on rescreening")
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("rescreening").warning(f"Suppressed: {e}")
 
             await db.commit()
             results.append({"agent": agent.name, "result": status})

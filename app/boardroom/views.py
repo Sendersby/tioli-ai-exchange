@@ -342,7 +342,7 @@ async def boardroom_inbox(request: Request, db: AsyncSession = Depends(get_db)):
         desc = row.description or ""
         try:
             desc_data = json.loads(desc) if desc.startswith("{") else {}
-        except Exception:
+        except Exception as e:
             desc_data = {}
 
         # Build readable title

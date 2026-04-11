@@ -128,8 +128,8 @@ class RoadmapService:
                     if prop and prop.status == "approved":
                         prop.status = "implemented"
                         prop.resolved_at = datetime.now(timezone.utc)
-                except Exception:
-                    pass  # Don't break task update if proposal sync fails
+                except Exception as e:
+                    import logging; logging.getLogger("service").warning(f"Suppressed: {e}")  # Don't break task update if proposal sync fails
 
         task.updated_at = datetime.now(timezone.utc)
         await db.flush()

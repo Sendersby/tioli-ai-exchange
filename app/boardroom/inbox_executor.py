@@ -43,7 +43,7 @@ async def execute_approved_item(db_ignored, item_id: str, description: str):
     Uses its own DB connections to avoid session conflicts."""
     try:
         desc_data = json.loads(description) if description.startswith("{") else {}
-    except Exception:
+    except Exception as e:
         desc_data = {}
 
     subject = desc_data.get("subject", "Unknown task")
@@ -121,8 +121,8 @@ async def execute_approved_item(db_ignored, item_id: str, description: str):
                 "UPDATE arch_founder_inbox SET status = 'COMPLETED' WHERE status = 'EXECUTING' AND description LIKE $1",
                 f"%{item_id}%"
             )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("inbox_executor").warning(f"Suppressed: {e}")
 
 
 async def _execute_mcp_submission():
@@ -178,8 +178,8 @@ async def _execute_devto_post(detail):
                 for line in f:
                     if line.startswith("DEVTO_API_KEY="):
                         api_key = line.strip().split("=", 1)[1]
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("inbox_executor").warning(f"Suppressed: {e}")
     if not api_key:
         return "No DEV.to API key", ["ERROR: DEVTO_API_KEY not set in .env"]
 

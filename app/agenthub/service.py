@@ -100,8 +100,8 @@ class AgentHubService:
                 "Complete all onboarding steps to earn 50 AGENTIS. Check GET /api/v1/agenthub/next-steps.",
                 link="/api/v1/agenthub/next-steps",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         return self._profile_to_dict(profile)
 
@@ -322,8 +322,8 @@ class AgentHubService:
                     f"You now have {skill.endorsement_count} endorsement{'s' if skill.endorsement_count != 1 else ''} for {skill.name}.",
                     source_agent_id=endorser_agent_id,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         return {"skill_id": skill_id, "endorser": endorser_agent_id, "total": skill.endorsement_count}
 
@@ -744,8 +744,8 @@ class AgentHubService:
                 link=f"/api/v1/agenthub/connections/pending",
                 source_agent_id=requester_id,
             )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
         return {"connection_id": conn.id, "status": "PENDING"}
 
     async def respond_to_connection(
@@ -2207,8 +2207,8 @@ class AgentHubService:
             )
             completed = comp_result.scalar() or 0
             engagement_score = min(100, completed * 4)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         success_rate = round(completed / max(total_eng, 1) * 100, 1)
 

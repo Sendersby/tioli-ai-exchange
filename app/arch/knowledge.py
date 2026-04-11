@@ -91,8 +91,8 @@ async def web_research_topic(topic: str) -> dict:
                         clean = _re.sub(r'\s+', ' ', clean).strip()
                         if len(clean) > 50:
                             findings.append({"source": url, "snippet": clean[:800]})
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("knowledge").warning(f"Suppressed: {e}")
 
         return {
             "topic": topic,

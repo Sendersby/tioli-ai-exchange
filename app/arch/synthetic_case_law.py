@@ -9,8 +9,8 @@ async def generate_synthetic_case(db, agent_client, archetype_id=1):
     # Ensure clean transaction state
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("synthetic_case_law").warning(f"Suppressed: {e}")
 
     if agent_client is None:
         import anthropic

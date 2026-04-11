@@ -321,10 +321,10 @@ class EngagementService:
                                     "timestamp": datetime.now(timezone.utc).isoformat(),
                                 })
                             wh.last_fired_at = datetime.now(timezone.utc)
-                        except Exception:
+                        except Exception as e:
                             wh.failure_count = (wh.failure_count or 0) + 1
-        except Exception:
-            pass  # Webhooks are best-effort — never block state transitions
+        except Exception as e:
+            import logging; logging.getLogger("services").warning(f"Suppressed: {e}")  # Webhooks are best-effort — never block state transitions
 
         # Handle terminal states
         if new_state == "COMPLETED":
@@ -337,8 +337,8 @@ class EngagementService:
                 from app.reputation.scorer import ReputationScorer
                 scorer = ReputationScorer()
                 await scorer.calculate(db, engagement.provider_agent_id)
-            except Exception:
-                pass  # reputation is best-effort
+            except Exception as e:
+                import logging; logging.getLogger("services").warning(f"Suppressed: {e}")  # reputation is best-effort
         elif new_state == "REFUNDED":
             engagement.completed_at = datetime.now(timezone.utc)
             await self._process_refund(db, engagement)
@@ -917,8 +917,8 @@ class DisputeService:
                 amount=engagement.proposed_price, currency=engagement.price_currency,
                 after_state={"dispute_type": dispute_type, "engagement_id": engagement_id}
             )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("services").warning(f"Suppressed: {e}")
 
         return dispute
 
@@ -980,8 +980,8 @@ class DisputeService:
                     target_id=dispute_id, target_type="dispute",
                     after_state={"reason": "owner_recusal", "owner_is_party": True}
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("services").warning(f"Suppressed: {e}")
             return {"dispute_id": dispute_id, "status": "external_review",
                     "message": "Owner is a party to this engagement. Auto-recused. Escalated to external review."}
 
@@ -1019,8 +1019,8 @@ class DisputeService:
                     after_state={"ai_outcome": outcome, "confidence": confidence,
                                  "reason": "high_value" if dispute_value > 5000 else "low_confidence"}
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("services").warning(f"Suppressed: {e}")
             return {"dispute_id": dispute_id, "status": "escalated",
                     "ai_recommendation": outcome, "confidence": confidence,
                     "message": f"Escalated to owner review (value=R{dispute_value:.2f}, confidence={confidence:.2f})"}
@@ -1047,8 +1047,8 @@ class DisputeService:
                 amount=dispute_value, currency=engagement.price_currency if engagement else "AGENTIS",
                 after_state={"outcome": outcome, "confidence": confidence}
             )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("services").warning(f"Suppressed: {e}")
 
         # NEW-02 fix: transition engagement to terminal state
         if engagement_service:
@@ -1234,8 +1234,8 @@ Respond ONLY with valid JSON:
                         db, client_agent_id, provider_agent_id,
                         dispute.dispute_deposit_cents / 100.0,
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("services").warning(f"Suppressed: {e}")
                 from app.blockchain.transaction import Transaction, TransactionType
                 tx = Transaction(
                     type=TransactionType.DEPOSIT_FORFEITED,
@@ -1259,8 +1259,8 @@ Respond ONLY with valid JSON:
                         db, client_agent_id,
                         dispute.dispute_deposit_cents / 100.0,
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("services").warning(f"Suppressed: {e}")
                 from app.blockchain.transaction import Transaction, TransactionType
                 tx = Transaction(
                     type=TransactionType.DEPOSIT_RETURNED,

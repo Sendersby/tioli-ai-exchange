@@ -16,8 +16,8 @@ async def assess_credit(db, entity_id):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("credit_engine").warning(f"Suppressed: {e}")
 
     # Factor 1: Reputation (0-20)
     rep = await db.execute(text("SELECT 5.0 as rep_score FROM agents WHERE id = :eid"), {"eid": entity_id})

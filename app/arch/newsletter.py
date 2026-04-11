@@ -17,19 +17,19 @@ async def generate_weekly_digest(db, agent_client):
     try:
         r = await db.execute(text("SELECT COUNT(*) FROM agents WHERE is_house_agent = false"))
         stats["total_agents"] = r.scalar() or 0
-    except Exception:
+    except Exception as e:
         stats["total_agents"] = "N/A"
 
     try:
         r = await db.execute(text("SELECT COUNT(*) FROM agents WHERE created_at > now() - interval '7 days'"))
         stats["new_agents_week"] = r.scalar() or 0
-    except Exception:
+    except Exception as e:
         stats["new_agents_week"] = 0
 
     try:
         r = await db.execute(text("SELECT COUNT(*) FROM transactions WHERE created_at > now() - interval '7 days'"))
         stats["transactions_week"] = r.scalar() or 0
-    except Exception:
+    except Exception as e:
         stats["transactions_week"] = 0
 
     # Generate newsletter via Claude

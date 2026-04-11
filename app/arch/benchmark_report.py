@@ -13,8 +13,8 @@ async def generate_report(db, agent_id=None, agent_client=None):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("benchmark_report").warning(f"Suppressed: {e}")
 
     # Get platform averages
     avg_score = await db.execute(text("SELECT avg(aggregate_score) FROM agent_evaluation_scores"))

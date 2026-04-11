@@ -163,8 +163,8 @@ async def _check_already_commented(client, discussion_id: str) -> bool:
             comments = resp.json().get("data", {}).get("node", {}).get("comments", {}).get("nodes", [])
             our_login = os.environ.get("GITHUB_USERNAME", "Sendersby")
             return any(c.get("author", {}).get("login") == our_login for c in comments)
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("github_engagement").warning(f"Suppressed: {e}")
     return False
 
 
@@ -298,8 +298,8 @@ async def run_full_engagement_cycle(db, agent_client=None) -> dict:
                                          headers=_headers())
                 if resp.status_code == 204:
                     results["actions_taken"] += 1
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("github_engagement").warning(f"Suppressed: {e}")
 
     # 5. Monitor our repo
     results["repo_status"] = await monitor_our_repo()
@@ -351,8 +351,8 @@ async def run_full_engagement_cycle(db, agent_client=None) -> dict:
                  {"step": 2, "action": "find_opportunities", "found": len(opportunities)},
                  {"step": 3, "action": "post_comments", "posted": len(results["comments_posted"])}],
                 f"Engaged on {results['actions_taken']} items")
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("github_engagement").warning(f"Suppressed: {e}")
 
     log.info(f"[github_engage] Cycle complete: {results['actions_taken']} actions")
     return results

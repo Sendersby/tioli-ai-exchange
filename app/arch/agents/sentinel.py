@@ -107,14 +107,14 @@ class SentinelAgent(ArchAgentBase):
         try:
             result = await self.db.execute(text("SELECT 1"))
             checks["database"] = "UP"
-        except Exception:
+        except Exception as e:
             checks["database"] = "DOWN"
 
         # Redis connectivity
         try:
             pong = await self.redis.ping()
             checks["redis"] = "UP" if pong else "DOWN"
-        except Exception:
+        except Exception as e:
             checks["redis"] = "DOWN"
 
         # Agent heartbeats

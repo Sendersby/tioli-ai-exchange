@@ -221,6 +221,6 @@ class AgentMemoryService:
                 # For now, return builder quota for all registered agents
                 # (proper tier lookup when subscription billing is live)
                 return MEMORY_QUOTAS.get("builder", 1000)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
         return MEMORY_QUOTAS.get("explorer", 100)

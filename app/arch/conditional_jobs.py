@@ -42,8 +42,8 @@ async def should_run(db, job_id):
                         "VALUES (:jid, 'SKIPPED', :reason, 0, now())"
                     ), {"jid": job_id, "reason": reason})
                     await db.commit()
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("conditional_jobs").warning(f"Suppressed: {e}")
 
                 return False, reason
 

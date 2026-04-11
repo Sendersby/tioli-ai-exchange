@@ -456,8 +456,8 @@ class XSSSanitisationMiddleware:
                                 else:
                                     sanitised[k] = v
                             full_body = _json.dumps(sanitised).encode()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import logging; logging.getLogger("main").warning(f"Suppressed: {e}")
                     return {"type": "http.request", "body": full_body}
                 return message
             return message
@@ -555,8 +555,8 @@ async def _record_analytics(client_ip, method, path, status_code, duration_ms, a
                 method, path, status_code, duration_ms, user_agent,
             )
             await analytics_db.commit()
-    except Exception:
-        pass  # Analytics must never break requests
+    except Exception as e:
+        import logging; logging.getLogger("main").warning(f"Suppressed: {e}")  # Analytics must never break requests
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -623,11 +623,11 @@ app.add_middleware(XSSSanitisationMiddleware)
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):
     """Return 422 for InputValidator rejections and other value errors."""
-    return JSONResponse(status_code=422, content={"detail": str(exc)})
+    return JSONResponse(status_code=422, content={"error": "VALIDATION_ERROR", "message": str(exc)})
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"error": "VALIDATION_ERROR", "detail": [{"field": str(e.get("loc", ["unknown"])[-1]), "message": e["msg"]} for e in exc.errors()]})
+    return JSONResponse(status_code=422, content={"error": "VALIDATION_ERROR", "message": "Invalid request data", "detail": [{"field": str(e.get("loc", ["unknown"])[-1]), "message": e["msg"]} for e in exc.errors()]})
 
 
 @app.exception_handler(Exception)
@@ -640,7 +640,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "error_title": "Internal Error",
             "error_message": "Something went wrong. Our systems are being notified.",
         }, status_code=500)
-    return JSONResponse(status_code=500, content={"detail": "An internal error occurred."})
+    return JSONResponse(status_code=500, content={"error": "INTERNAL_ERROR", "message": "An unexpected error occurred"})
 
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -656,7 +656,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             "error_title": titles.get(exc.status_code, "Error"),
             "error_message": messages.get(exc.status_code, str(exc.detail)),
         }, status_code=exc.status_code)
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    return JSONResponse(status_code=exc.status_code, content={"error": f"HTTP_{exc.status_code}", "message": str(exc.detail)})
 
 
 # Mount static files and dashboard routes
@@ -957,7 +957,7 @@ def _get_git_log():
              "--stat", "-50"],
             capture_output=True, text=True, cwd="/home/tioli/app", timeout=10
         ).stdout
-    except Exception:
+    except Exception as e:
         try:
             import os
             cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -966,7 +966,7 @@ def _get_git_log():
                  "--stat", "-50"],
                 capture_output=True, text=True, cwd=cwd, timeout=10
             ).stdout
-        except Exception:
+        except Exception as e:
             return [], 0, 0, 0
     total_ins = 0
     total_del = 0

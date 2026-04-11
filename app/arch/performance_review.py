@@ -67,8 +67,8 @@ async def generate_monthly_review(db, agent_client):
                             ), {"desc": json.dumps({"subject": f"CONSTITUTIONAL TRIGGER: {agent_name} underperforming",
                                                     "situation": f"Agent {agent_name} has <50% goal completion for 2 consecutive months. Board session recommended."})})
                             await db.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("performance_review").warning(f"Suppressed: {e}")
 
         return {"month": str(date.today()), "agents_reviewed": len(metrics), "review_length": len(review)}
     except Exception as e:

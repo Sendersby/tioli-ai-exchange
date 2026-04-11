@@ -393,7 +393,7 @@ async def security_audit():
                 "found": len(found), "expected": len(headers_expected),
                 "headers": found
             }
-    except Exception:
+    except Exception as e:
         checks["security_headers"] = {"status": "PASS", "detail": "Headers configured in nginx (verified at deploy)"}
 
     # 3. Database encryption
@@ -438,7 +438,7 @@ async def security_audit():
             "known_cves": 6,
             "mitigation": "Input validation, rate limiting, no untrusted DER parsing, no user-uploaded image processing"
         }
-    except Exception:
+    except Exception as e:
         checks["dependencies"] = {"status": "INFO", "detail": "6 CVEs in transitive deps (litellm, pillow) — cannot upgrade without breaking dependency chains",
             "known_cves": 6,
             "mitigation": "Input validation + rate limiting + WAF"}
@@ -614,7 +614,7 @@ async def embed_landing(db: AsyncSession = Depends(get_db)):
             "SELECT COUNT(*) as trades FROM trades WHERE trade_type = 'real'"
         ))
         trade_count = trow.scalar() or 0
-    except Exception:
+    except Exception as e:
         agent_count, trade_count = 0, 0
     html = f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
@@ -1140,7 +1140,7 @@ async def api_public_stats():
                 "url": "/agora",
                 "charter": "/charter",
             }
-    except Exception:
+    except Exception as e:
         stats["agora"] = {"channels": 10, "url": "/agora"}
 
     return _apply_growth_overlay(stats)

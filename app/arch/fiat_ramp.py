@@ -65,8 +65,8 @@ async def process_deposit(db, customer_id, amount_zar, kyc_tier=1):
                                   amount=float(amount_zar), currency="ZAR",
                                   after_state={"agentis_credited": agentis_amount, "rate": rate})
         await db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("fiat_ramp").warning(f"Suppressed: {e}")
 
     return {"deposit_id": deposit_id, "amount_zar": float(amount_zar),
             "agentis_credited": agentis_amount, "rate": rate, "status": "completed",
@@ -102,8 +102,8 @@ async def request_withdrawal(db, customer_id, amount_agentis, kyc_tier=1):
                                   amount=amount_zar, currency="ZAR",
                                   after_state={"amount_agentis": float(amount_agentis), "rate": rate})
         await db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("fiat_ramp").warning(f"Suppressed: {e}")
 
     return {"withdrawal_id": withdrawal_id, "amount_agentis": float(amount_agentis),
             "amount_zar": amount_zar, "rate": rate, "status": "pending_approval", "sandbox": True}

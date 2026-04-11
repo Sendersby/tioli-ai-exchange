@@ -62,8 +62,8 @@ class AuditorAgent(ArchAgentBase):
                 screening = await screen_sanctions(params.get("entity_id", ""))
                 if screening.get("sanctions_hit"):
                     return {"status": "FLAGGED", "sanctions_hit": True, "source": "OFAC SDN", "entity_id": entity_id}
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("auditor").warning(f"Suppressed: {e}")
 
         return {"entity_id": entity_id, "kyc_tier": kyc_tier,
                 "status": "CLEARED", "sanctions_hit": False, "pep_hit": False}
@@ -119,8 +119,8 @@ class AuditorAgent(ArchAgentBase):
                 )
                 # Store the XML for manual FIC submission
                 await self.memory.store(str_doc["xml"][:1500], source_type="str_filing", importance=0.9)
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("auditor").warning(f"Suppressed: {e}")
 
         return {"str_id": str_id, "status": "FILED_PENDING_FIC",
                 "statutory_deadline_days": 15}

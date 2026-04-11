@@ -101,8 +101,8 @@ async def create_skill_from_execution(db, agent_id: str, task_description: str,
             match = re.search(r'\[.*?\]', text_resp, re.DOTALL)
             if match:
                 trigger_patterns = json.loads(match.group())
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("skill_engine").warning(f"Suppressed: {e}")
 
     if not trigger_patterns:
         trigger_patterns = [task_description[:60].lower()]

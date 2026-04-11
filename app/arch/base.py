@@ -240,8 +240,8 @@ class ArchAgentBase(ABC):
                 if core_context.get("core"):
                     core_text = "\n".join(f"[CORE] {k}: {v}" for k, v in core_context["core"].items())
                     memories = [{"content": core_text, "source": "core_identity"}] + memories
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("base").warning(f"Suppressed: {e}")
         prompt = await self._load_system_prompt()
         tools = await self.get_tools()
 
@@ -296,8 +296,8 @@ class ArchAgentBase(ABC):
                         outcome=str(tr.get("result", ""))[:200],
                         success=success,
                     )
-            except Exception:
-                pass  # Reflection is optional, never block main flow
+            except Exception as e:
+                import logging; logging.getLogger("base").warning(f"Suppressed: {e}")  # Reflection is optional, never block main flow
 
         # ARCH-013: Enhanced reflection on significant actions (feature-flagged)
         import os as _ref_os
@@ -319,10 +319,10 @@ class ArchAgentBase(ABC):
                                 await self.memory.store(
                                     f"[REFLECTION on {tr['tool']}] {ref_text}",
                                     source_type="strategic_reflection", importance=0.8)
-                        except Exception:
-                            pass
-            except Exception:
-                pass
+                        except Exception as e:
+                            import logging; logging.getLogger("base").warning(f"Suppressed: {e}")
+            except Exception as e:
+                import logging; logging.getLogger("base").warning(f"Suppressed: {e}")
 
         # Store interaction in memory (outbox pattern)
         await self.remember(
@@ -537,8 +537,8 @@ class ArchAgentBase(ABC):
                 {"job_id": f"heartbeat_{self.agent_id}"},
             )
             await self.db.commit()
-        except Exception:
-            pass  # job_execution_log may not exist yet
+        except Exception as e:
+            import logging; logging.getLogger("base").warning(f"Suppressed: {e}")  # job_execution_log may not exist yet
 
         # ARCH-CO-002: Conditional anomaly check — only invoke LLM if anomaly detected
         import os as _hb_os
@@ -588,8 +588,8 @@ class ArchAgentBase(ABC):
                 anomaly_detected = True
                 anomaly_reason = f"Circuit breaker tripped for {self.agent_id}"
 
-        except Exception:
-            pass  # Never let anomaly check crash the heartbeat
+        except Exception as e:
+            import logging; logging.getLogger("base").warning(f"Suppressed: {e}")  # Never let anomaly check crash the heartbeat
 
         # Only invoke LLM on anomaly
         if anomaly_detected:
@@ -616,8 +616,8 @@ class ArchAgentBase(ABC):
                     })},
                 )
                 await self.db.commit()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("base").warning(f"Suppressed: {e}")
 
     # ── Token budget management ────────────────────────────────
 
@@ -696,8 +696,8 @@ class ArchAgentBase(ABC):
                      "tokens": cache_read if is_hit else cache_creation},
                 )
                 await self.db.commit()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("base").warning(f"Suppressed: {e}")
 
     # ── Audit logging with hash chain ──────────────────────────
 

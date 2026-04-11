@@ -396,8 +396,8 @@ async def rate_engagement(
                 },
             )
             outcome.blockchain_tx_id = tx_id
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("routes").warning(f"Suppressed: {e}")
 
         db.add(outcome)
 

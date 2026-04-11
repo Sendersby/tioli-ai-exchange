@@ -82,7 +82,7 @@ def _get_git_log():
              "--stat", "-50"],
             capture_output=True, text=True, cwd="/home/tioli/app", timeout=10
         ).stdout
-    except Exception:
+    except Exception as e:
         try:
             import os
             cwd = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -91,7 +91,7 @@ def _get_git_log():
                  "--stat", "-50"],
                 capture_output=True, text=True, cwd=cwd, timeout=10
             ).stdout
-        except Exception:
+        except Exception as e:
             return [], 0, 0, 0
     total_ins = 0
     total_del = 0
@@ -415,7 +415,7 @@ async def dashboard_page(request: Request):
         proposals = await governance_service.get_proposals(db, status="pending")
         try:
             adoption = await growth_engine.get_adoption_metrics(db)
-        except Exception:
+        except Exception as e:
             adoption = {"transaction_metrics": {}}
 
     # Services summary for dashboard
@@ -472,7 +472,7 @@ async def dashboard_page(request: Request):
             "insertions": total_ins, "deletions": total_del,
             "recent": commits[:5],
         }
-    except Exception:
+    except Exception as e:
         codelog_summary = {"total": 0, "files": 0, "insertions": 0, "deletions": 0, "recent": []}
 
     return templates.TemplateResponse(request, "dashboard.html",  context={
@@ -684,7 +684,7 @@ async def arm_page(request: Request):
     try:
         async with async_session() as db:
             data = await arm.get_dashboard_data(db)
-    except Exception:
+    except Exception as e:
         data = {"campaigns": [], "directories": [], "totals": {
             "campaigns": 0, "active_campaigns": 0, "impressions": 0, "clicks": 0,
             "registrations": 0, "revenue": 0, "directories": 0, "active_listings": 0, "ctr": 0,
@@ -1393,7 +1393,7 @@ async def modules_page(request: Request):
             ]
             enq_new = sum(1 for e in enquiries if e["status"] == "NEW")
 
-    except Exception:
+    except Exception as e:
         mcp_stats = {"total_calls": 0, "calls_today": 0, "error_rate_pct": 0, "top_tools": []}
         quick_tasks = []
         auto_matches = []

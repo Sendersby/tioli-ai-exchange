@@ -111,8 +111,8 @@ async def post_to_linkedin(text: str) -> dict:
     try:
         with open("/home/tioli/app/.linkedin_sub") as _f:
             person_sub = _f.read().strip()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("social_poster").warning(f"Suppressed: {e}")
 
     if not access_token or not company_id:
         return {"error": "LinkedIn credentials not configured"}

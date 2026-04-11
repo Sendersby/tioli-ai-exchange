@@ -25,7 +25,7 @@ async def execute_adaptive_plan(agent_client, goal, agent_name="sovereign", max_
         start = plan_text.find("[")
         end = plan_text.rfind("]") + 1
         steps = json.loads(plan_text[start:end]) if start >= 0 else [{"step": 1, "action": goal, "success_criteria": "completed"}]
-    except Exception:
+    except Exception as e:
         steps = [{"step": 1, "action": goal, "success_criteria": "completed"}]
 
     results = []
@@ -65,10 +65,10 @@ async def execute_adaptive_plan(agent_client, goal, agent_name="sovereign", max_
                         steps = steps[:i+1] + new_steps
                         adaptations += 1
                         log.info(f"[adaptive] Plan adapted after step {i+1} failure — {len(new_steps)} new steps")
-                except Exception:
-                    pass
-            except Exception:
-                pass
+                except Exception as e:
+                    import logging; logging.getLogger("adaptive_plan").warning(f"Suppressed: {e}")
+            except Exception as e:
+                import logging; logging.getLogger("adaptive_plan").warning(f"Suppressed: {e}")
 
     return {
         "goal": goal,

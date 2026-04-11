@@ -29,8 +29,8 @@ async def score_transaction_risk(db, agent_id, amount, currency):
             if amount > avg_amount + (2 * stddev):
                 risk_score += 30
                 flags.append(f"Amount {amount} exceeds 2 std devs above mean {avg_amount:.0f}")
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("ml_risk").warning(f"Suppressed: {e}")
 
     # Factor 2: Transaction frequency (velocity check)
     try:
@@ -42,8 +42,8 @@ async def score_transaction_risk(db, agent_id, amount, currency):
         if hourly_count > 10:
             risk_score += 25
             flags.append(f"High velocity: {hourly_count} transactions in last hour")
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("ml_risk").warning(f"Suppressed: {e}")
 
     # Factor 3: Currency risk
     if currency in ("BTC", "ETH"):

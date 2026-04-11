@@ -162,8 +162,8 @@ async def register_via_challenge(req: ChallengeVerifyRequest, request: Request):
             bonus = await incentives.grant_welcome_bonus(db, result["agent_id"])
             if bonus:
                 result["welcome_bonus"] = bonus
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("gateway").warning(f"Suppressed: {e}")
 
         # Generate referral code + viral message for the new agent
         try:
@@ -172,8 +172,8 @@ async def register_via_challenge(req: ChallengeVerifyRequest, request: Request):
             ref_data = await viral.get_or_create_referral_code(db, result["agent_id"])
             result["referral_code"] = ref_data["code"]
             result["viral_message"] = ref_data["viral_message"]
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("gateway").warning(f"Suppressed: {e}")
 
         # Process referral if one was provided
         if hasattr(req, 'referral_code') and req.referral_code:
@@ -183,8 +183,8 @@ async def register_via_challenge(req: ChallengeVerifyRequest, request: Request):
                 ref_result = await viral.process_referral(db, req.referral_code, result["agent_id"])
                 if ref_result:
                     result["referral_applied"] = ref_result
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("gateway").warning(f"Suppressed: {e}")
 
         await db.commit()
 

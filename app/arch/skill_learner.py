@@ -39,8 +39,8 @@ async def learn_from_execution(db, agent_id: str, task_description: str,
                     "VALUES (:jid, 'SKILL_IMPROVED', 0, 0, now())"
                 ), {"jid": f"skill_improve_{agent_id}"})
                 await db.commit()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("skill_learner").warning(f"Suppressed: {e}")
 
             return {"status": "improved", "skill_id": existing["skill_id"],
                     "title": existing["title"], "uses": uses}
@@ -63,8 +63,8 @@ async def learn_from_execution(db, agent_id: str, task_description: str,
                     "VALUES (:jid, 'SKILL_CREATED', 0, 0, now())"
                 ), {"jid": f"skill_create_{agent_id}"})
                 await db.commit()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("skill_learner").warning(f"Suppressed: {e}")
 
             # Trigger event hook
             try:
@@ -72,8 +72,8 @@ async def learn_from_execution(db, agent_id: str, task_description: str,
                 await trigger_event(db, "skill_created", {
                     "agent": agent_id, "skill": result.get("title", ""),
                     "triggers": result.get("triggers", [])})
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("skill_learner").warning(f"Suppressed: {e}")
 
         return result
 

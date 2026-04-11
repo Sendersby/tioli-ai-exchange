@@ -142,8 +142,8 @@ class MarketMakerService:
             try:
                 await self.trading_engine.cancel_order(db, order_id, MARKET_MAKER_AGENT_ID)
                 summary["orders_cancelled"] += 1
-            except Exception:
-                pass  # Order may already be filled or cancelled
+            except Exception as e:
+                import logging; logging.getLogger("market_maker").warning(f"Suppressed: {e}")  # Order may already be filled or cancelled
         self._active_orders.clear()
 
         # Place new orders for each configured pair

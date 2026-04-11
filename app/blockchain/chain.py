@@ -209,7 +209,7 @@ class Blockchain:
             # Verify write succeeded (file size grew or stayed consistent)
             if not self.storage_path.exists():
                 raise RuntimeError("Blockchain file missing after save")
-        except Exception:
+        except Exception as e:
             # Clean up temp file on failure
             import os
             try:

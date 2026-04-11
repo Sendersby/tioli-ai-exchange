@@ -55,8 +55,8 @@ async def assess_agent_risk(db, agent_id, agent_name="", country="ZA", capabilit
             ), {"desc": json.dumps({"subject": f"PROHIBITED RISK: Agent {agent_id} auto-suspended",
                                     "situation": f"Risk score {total}/100 exceeds prohibited threshold (86). Agent suspended pending review."})})
             await db.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("rba_engine").warning(f"Suppressed: {e}")
         return {"agent_id": agent_id, "risk_tier": tier, "risk_score": total,
             "geographic": geo_risk, "capability": cap_risk, "transaction": tx_risk,
             "history": hist_risk, "edd_required": edd}

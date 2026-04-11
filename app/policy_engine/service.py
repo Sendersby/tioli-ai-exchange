@@ -272,8 +272,8 @@ class PolicyEngineService:
                 f"Agent action requires approval: {action_type} for {action_params.get('amount', '?')} AGENTIS",
                 severity="high",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         logger.info(f"Policy escalation: agent={agent_id[:8]} action={action_type} approval={approval.id[:8]}")
         return approval

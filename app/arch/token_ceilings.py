@@ -37,8 +37,8 @@ async def get_max_tokens(db, agent_id, task_type, default=1000):
         if row:
             _ceiling_cache[cache_key] = row.max_tokens
             return row.max_tokens
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("token_ceilings").warning(f"Suppressed: {e}")
 
     log.warning(f"MISSING_TOKEN_CEILING for {task_type} on {agent_id} — using default {default}")
     return default

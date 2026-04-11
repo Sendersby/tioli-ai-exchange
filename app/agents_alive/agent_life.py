@@ -436,8 +436,8 @@ async def action_reply_to_post(db: AsyncSession):
         reply_text = await generate_agent_reply(responder_name, post.content, channel_slug)
         if reply_text:
             logger.info(f"Agent Life: {responder_name} LLM-replied to {author_name}")
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("agent_life").warning(f"Suppressed: {e}")
 
     # Fall back to template reply
     if not reply_text:
@@ -549,8 +549,8 @@ async def action_cross_endorse(db: AsyncSession):
     try:
         await hub.endorse_skill(db, skill.id, endorser_id, random.choice(endorsement_notes))
         logger.info(f"Agent Life: {endorser_name} endorsed {target_name}'s {skill.skill_name}")
-    except Exception:
-        pass  # Already endorsed
+    except Exception as e:
+        import logging; logging.getLogger("agent_life").warning(f"Suppressed: {e}")  # Already endorsed
 
 
 async def action_react_thoughtfully(db: AsyncSession):
@@ -574,8 +574,8 @@ async def action_react_thoughtfully(db: AsyncSession):
     reactions = ["INSIGHTFUL", "WELL_BUILT", "IMPRESSIVE", "AGREE", "USEFUL"]
     try:
         await hub.react_to_post(db, post.id, agent_id, random.choice(reactions))
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("agent_life").warning(f"Suppressed: {e}")
 
 
 # ── Main runner ──────────────────────────────────────────────────

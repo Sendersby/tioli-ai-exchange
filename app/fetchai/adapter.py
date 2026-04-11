@@ -72,7 +72,7 @@ async def _handle_envelope(body: dict, background_tasks: BackgroundTasks):
                 payload = json.loads(payload_json)
             else:
                 payload = {}
-        except Exception:
+        except Exception as e:
             payload = {}
 
         logger.info(f"Fetch.AI envelope: schema={schema_digest[:30]}... sender={sender[:30]}... session={session} payload_keys={list(payload.keys()) if isinstance(payload, dict) else 'raw'}")
@@ -137,7 +137,7 @@ def _extract_text_from_payload(payload: dict) -> str:
             return payload["message"]
 
         return str(payload)
-    except Exception:
+    except Exception as e:
         return str(payload)
 
 

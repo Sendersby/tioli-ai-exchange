@@ -444,8 +444,8 @@ async def job_agentis_auto_finalize():
                     try:
                         from app.main import blockchain
                         blockchain.add_transaction(tx)
-                    except Exception:
-                        pass  # Blockchain recording is best-effort in scheduler
+                    except Exception as e:
+                        import logging; logging.getLogger("jobs").warning(f"Suppressed: {e}")  # Blockchain recording is best-effort in scheduler
 
                     # Check epoch unlocks
                     await check_epoch_unlocks(db)

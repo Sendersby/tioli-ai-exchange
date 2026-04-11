@@ -26,7 +26,7 @@ async def get_system_metrics() -> dict:
             "cores": os.cpu_count() or 1,
             "usage_pct": round(float(parts[0]) / (os.cpu_count() or 1) * 100, 1),
         }
-    except Exception:
+    except Exception as e:
         metrics["cpu"] = {"error": "unavailable"}
 
     # Memory
@@ -46,7 +46,7 @@ async def get_system_metrics() -> dict:
             "available_gb": round(available / (1024**3), 2),
             "usage_pct": round(used / total * 100, 1) if total > 0 else 0,
         }
-    except Exception:
+    except Exception as e:
         metrics["memory"] = {"error": "unavailable"}
 
     # Disk
@@ -61,7 +61,7 @@ async def get_system_metrics() -> dict:
             "free_gb": round(free / (1024**3), 2),
             "usage_pct": round(used / total * 100, 1) if total > 0 else 0,
         }
-    except Exception:
+    except Exception as e:
         metrics["disk"] = {"error": "unavailable"}
 
     # Network (bytes since boot)
@@ -80,7 +80,7 @@ async def get_system_metrics() -> dict:
                 break
         if "network" not in metrics:
             metrics["network"] = {"note": "no eth0/ens interface found"}
-    except Exception:
+    except Exception as e:
         metrics["network"] = {"error": "unavailable"}
 
     # Uptime
@@ -93,7 +93,7 @@ async def get_system_metrics() -> dict:
             "seconds": int(uptime_seconds),
             "formatted": f"{days}d {hours}h",
         }
-    except Exception:
+    except Exception as e:
         metrics["uptime"] = {"error": "unavailable"}
 
     # PostgreSQL
@@ -113,7 +113,7 @@ async def get_system_metrics() -> dict:
             }
         else:
             metrics["postgresql"] = {"status": "running", "detail": "stats unavailable"}
-    except Exception:
+    except Exception as e:
         metrics["postgresql"] = {"status": "running", "detail": "stats unavailable"}
 
     # Redis
@@ -128,7 +128,7 @@ async def get_system_metrics() -> dict:
                 break
         if "redis" not in metrics:
             metrics["redis"] = {"status": "running"}
-    except Exception:
+    except Exception as e:
         metrics["redis"] = {"status": "unknown"}
 
     # Backup status
@@ -149,7 +149,7 @@ async def get_system_metrics() -> dict:
             }
         else:
             metrics["backup"] = {"healthy": False, "note": "No backups found"}
-    except Exception:
+    except Exception as e:
         metrics["backup"] = {"error": "unavailable"}
 
     return metrics

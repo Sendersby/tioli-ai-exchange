@@ -74,8 +74,8 @@ class ArchBrowserPool:
         for ctx in self._contexts.values():
             try:
                 await ctx.close()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("browser").warning(f"Suppressed: {e}")
         if self._browser:
             await self._browser.close()
         if self._playwright:

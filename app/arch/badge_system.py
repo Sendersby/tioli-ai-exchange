@@ -13,8 +13,8 @@ async def request_badge(db, agent_id, capability, evidence=""):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("badge_system").warning(f"Suppressed: {e}")
     badge_id = str(uuid.uuid4())
     await db.execute(text(
         "INSERT INTO capability_badges (id, agent_id, capability, badge_type, "
@@ -30,8 +30,8 @@ async def verify_badge(db, badge_id, verified_by="auditor"):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("badge_system").warning(f"Suppressed: {e}")
     await db.execute(text(
         "UPDATE capability_badges SET is_active = true, verified_by = :vby, "
         "verified_at = now() WHERE id = cast(:bid as uuid)"
@@ -45,8 +45,8 @@ async def get_agent_badges(db, agent_id):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("badge_system").warning(f"Suppressed: {e}")
     r = await db.execute(text(
         "SELECT id, capability, badge_type, is_active, verified_by, verified_at "
         "FROM capability_badges WHERE agent_id = :aid ORDER BY created_at DESC"

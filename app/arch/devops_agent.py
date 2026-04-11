@@ -35,8 +35,8 @@ async def run_health_checks():
             issues.append({"severity": "CRITICAL", "component": "disk", "message": f"Disk usage at {disk_pct}%"})
         elif disk_pct > 80:
             issues.append({"severity": "WARNING", "component": "disk", "message": f"Disk usage at {disk_pct}%"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("devops_agent").warning(f"Suppressed: {e}")
 
     # 2. Check memory usage
     try:
@@ -50,8 +50,8 @@ async def run_health_checks():
             issues.append({"severity": "CRITICAL", "component": "memory", "message": f"Memory usage at {mem_pct}%"})
         elif mem_pct > 80:
             issues.append({"severity": "WARNING", "component": "memory", "message": f"Memory usage at {mem_pct}%"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("devops_agent").warning(f"Suppressed: {e}")
 
     # 3. Check PostgreSQL connections
     try:
@@ -63,8 +63,8 @@ async def run_health_checks():
         connections = int(stdout.decode().strip())
         if connections > 80:
             issues.append({"severity": "WARNING", "component": "postgresql", "message": f"{connections} active connections"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("devops_agent").warning(f"Suppressed: {e}")
 
     # 4. Check nginx status
     try:
@@ -75,8 +75,8 @@ async def run_health_checks():
         stdout, _ = await proc.communicate()
         if stdout.decode().strip() != "active":
             issues.append({"severity": "CRITICAL", "component": "nginx", "message": "nginx is not running"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("devops_agent").warning(f"Suppressed: {e}")
 
     # 5. Check SSL certificate expiry
     try:
@@ -94,8 +94,8 @@ async def run_health_checks():
                 issues.append({"severity": "CRITICAL", "component": "ssl", "message": f"SSL expires in {days_left} days"})
             elif days_left < 30:
                 issues.append({"severity": "WARNING", "component": "ssl", "message": f"SSL expires in {days_left} days"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("devops_agent").warning(f"Suppressed: {e}")
 
     return issues
 

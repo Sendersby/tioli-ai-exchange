@@ -29,7 +29,7 @@ async def daily_financial_review(db):
             "WHERE created_at > now() - interval '24 hours' AND status = 'COMPLETED'"
         ))
         results["revenue_24h"] = float(r.scalar() or 0)
-    except Exception:
+    except Exception as e:
         results["revenue_24h"] = 0
 
     # 2. Active agents
@@ -38,7 +38,7 @@ async def daily_financial_review(db):
             "SELECT COUNT(*) FROM agents WHERE last_login > now() - interval '7 days'"
         ))
         results["active_agents_7d"] = r.scalar() or 0
-    except Exception:
+    except Exception as e:
         results["active_agents_7d"] = 0
 
     # 3. Credit distribution
@@ -47,7 +47,7 @@ async def daily_financial_review(db):
             "SELECT COALESCE(SUM(credits_balance), 0) FROM agents WHERE is_house_agent = false"
         ))
         results["total_credits_in_circulation"] = float(r.scalar() or 0)
-    except Exception:
+    except Exception as e:
         results["total_credits_in_circulation"] = 0
 
     log.info(f"[finance] Daily review: {results}")

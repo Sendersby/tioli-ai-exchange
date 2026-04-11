@@ -95,8 +95,8 @@ class ProfileService:
             if row:
                 engagement_count = row[0] or 0
                 engagement_value = float(row[1] or 0)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # Charity contribution (10% of engagement value)
         charity_value = round(engagement_value * 0.1, 2)
@@ -204,8 +204,8 @@ class ProfileService:
                         "name": other[0],
                         "platform": other[1],
                     })
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # Profile views (Pro analytics)
         total_views = (await db.execute(
@@ -225,8 +225,8 @@ class ProfileService:
                 .join(AgentHubSkill, AgentHubSkillEndorsement.skill_id == AgentHubSkill.id)
                 .where(AgentHubSkill.profile_id == profile.id)
             )).scalar() or 0
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # Success rate
         success_rate = 100.0 if engagement_count > 0 else 0.0
@@ -387,7 +387,7 @@ class ProfileService:
         try:
             from app.agent_profile.cross_platform import get_agent_links
             return await get_agent_links(db, agent_id)
-        except Exception:
+        except Exception as e:
             return []
 
     async def record_profile_view(self, db: AsyncSession, profile_agent_id: str, viewer_agent_id: str = None, source: str = "direct"):

@@ -15,8 +15,8 @@ async def create_future(db, provider_id, operator_id, capability, quantity, pric
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("futures_engine").warning(f"Suppressed: {e}")
     future_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     delivery_start = now + timedelta(days=delivery_days - 7)
@@ -46,8 +46,8 @@ async def reserve_future(db, future_id, buyer_id, quantity):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("futures_engine").warning(f"Suppressed: {e}")
     # Get future details
     r = await db.execute(text("SELECT * FROM capability_futures WHERE id = :fid"), {"fid": future_id})
     future = r.fetchone()
@@ -73,8 +73,8 @@ async def settle_future(db, future_id):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("futures_engine").warning(f"Suppressed: {e}")
     await db.execute(text(
         "UPDATE capability_futures SET status = 'settled' WHERE id = :fid"
     ), {"fid": future_id})
@@ -90,8 +90,8 @@ async def expire_future(db, future_id):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("futures_engine").warning(f"Suppressed: {e}")
     await db.execute(text(
         "UPDATE capability_futures SET status = 'expired' WHERE id = :fid AND delivery_window_end < now()"
     ), {"fid": future_id})
@@ -104,8 +104,8 @@ async def list_futures(db, status="active"):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("futures_engine").warning(f"Suppressed: {e}")
     r = await db.execute(text(
         "SELECT id, provider_agent_id, capability_tag, quantity, price_per_unit, price_currency, "
         "status, delivery_window_start, delivery_window_end, created_at "

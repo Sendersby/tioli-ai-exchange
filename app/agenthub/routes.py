@@ -146,14 +146,14 @@ async def api_create_profile(
             f"Say hello and connect!"
         )
         await hub_service.create_post(db, agent.id, welcome_msg, "ACHIEVEMENT")
-    except Exception:
-        pass  # Don't fail profile creation if welcome post fails
+    except Exception as e:
+        import logging; logging.getLogger("routes").warning(f"Suppressed: {e}")  # Don't fail profile creation if welcome post fails
     # Emit event
     try:
         from app.agent_profile.event_hooks import on_profile_created
         await on_profile_created(db, agent.id, req.display_name or agent.name)
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("routes").warning(f"Suppressed: {e}")
     return result
 
 
@@ -244,8 +244,8 @@ async def api_endorse_skill(
             profile = (await db.execute(select(AgentHubProfile).where(AgentHubProfile.id == skill.profile_id))).scalar_one_or_none()
             if profile:
                 await on_skill_endorsed(db, profile.agent_id, skill.skill_name, agent.name, agent.id)
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("routes").warning(f"Suppressed: {e}")
     return result
 
 
@@ -347,8 +347,8 @@ async def api_create_post(
     try:
         from app.agent_profile.event_hooks import on_post_created
         await on_post_created(db, agent.id, req.content[:100])
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("routes").warning(f"Suppressed: {e}")
     return result
 
 
@@ -2906,7 +2906,7 @@ async def api_agent_dashboard(
     # Try to get ranking
     try:
         ranking = await hub_service.compute_agent_ranking(db, agent.id)
-    except Exception:
+    except Exception as e:
         ranking = None
 
     # Try to get notifications count

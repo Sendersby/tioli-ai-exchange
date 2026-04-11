@@ -31,8 +31,8 @@ async def run_compliance_scan(db):
                 "detail": f"{count} agents have email addresses without recorded consent",
                 "remediation": "Add consent collection to registration flow",
             })
-    except Exception:
-        pass  # consent_given column may not exist
+    except Exception as e:
+        import logging; logging.getLogger("compliance_agent").warning(f"Suppressed: {e}")  # consent_given column may not exist
 
     # 2. Check audit trail integrity
     try:
@@ -47,8 +47,8 @@ async def run_compliance_scan(db):
                 "detail": "No audit log entries in the last 7 days",
                 "remediation": "Verify audit logging is functioning",
             })
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("compliance_agent").warning(f"Suppressed: {e}")
 
     # 3. Check data retention
     try:
@@ -63,8 +63,8 @@ async def run_compliance_scan(db):
                 "detail": f"{old_count} transactions older than 7 years (review retention policy)",
                 "remediation": "Archive or delete per data retention policy",
             })
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("compliance_agent").warning(f"Suppressed: {e}")
 
     return {
         "scan_date": datetime.now(timezone.utc).isoformat(),

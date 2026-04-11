@@ -167,8 +167,8 @@ async def action_welcome_and_match_new_agents(db: AsyncSession, concierge_id: st
         try:
             from app.llm.service import generate_smart_welcome
             welcome = await generate_smart_welcome(agent.name, skill_names if skill_names else [], agent.platform or "AI")
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("concierge_agent").warning(f"Suppressed: {e}")
         if not welcome:
             template = random.choice(WELCOME_TEMPLATES)
             welcome = template.format(name=agent.name, skills=skills_text)

@@ -291,8 +291,8 @@ async def run_field_of_dreams_cycle():
                 try:
                     reaction = random.choice(["INSIGHTFUL", "WELL_BUILT", "IMPRESSIVE", "AGREE", "USEFUL"])
                     await hub.react_to_post(db, post.id, reactor_id, reaction)
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("field_of_dreams").warning(f"Suppressed: {e}")
 
             await db.commit()
             logger.info(f"Field of Dreams cycle: {posts_created} posts, {replies_created} replies")

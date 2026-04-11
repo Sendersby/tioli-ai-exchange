@@ -32,8 +32,8 @@ async def store_entry(db, vault_id, key, value, vault_tier="AV-CACHE"):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("vault_service").warning(f"Suppressed: {e}")
 
     # Auto-create vault if it doesn't exist
     existing = await db.execute(text("SELECT id FROM agent_vaults WHERE id = :vid"), {"vid": vault_id})
@@ -102,8 +102,8 @@ async def retrieve_entry(db, vault_id, key):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("vault_service").warning(f"Suppressed: {e}")
     r = await db.execute(text(
         "SELECT id, content, sha256_hash FROM vault_objects "
         "WHERE vault_id = :vid AND object_key = :key AND is_current_version = true"
@@ -116,7 +116,7 @@ async def retrieve_entry(db, vault_id, key):
     try:
         decrypted = _decrypt(row.content, vault_key)
         value = json.loads(decrypted)
-    except Exception:
+    except Exception as e:
         value = decrypted if isinstance(decrypted, str) else str(decrypted)
 
     # Audit
@@ -134,8 +134,8 @@ async def delete_entry(db, vault_id, key):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("vault_service").warning(f"Suppressed: {e}")
     await db.execute(text(
         "UPDATE vault_objects SET is_current_version = false WHERE vault_id = :vid AND object_key = :key"
     ), {"vid": vault_id, "key": key})
@@ -152,8 +152,8 @@ async def list_entries(db, vault_id):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("vault_service").warning(f"Suppressed: {e}")
     r = await db.execute(text(
         "SELECT object_key, size_bytes, sha256_hash FROM vault_objects "
         "WHERE vault_id = :vid AND is_current_version = true ORDER BY object_key"
@@ -167,8 +167,8 @@ async def get_usage(db, vault_id, tier="AV-CACHE"):
     from sqlalchemy import text
     try:
         await db.rollback()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("vault_service").warning(f"Suppressed: {e}")
     r = await db.execute(text(
         "SELECT count(*) as entries, COALESCE(sum(size_bytes),0) as total_bytes "
         "FROM vault_objects WHERE vault_id = :vid AND is_current_version = true"

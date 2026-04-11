@@ -164,8 +164,8 @@ async def check_and_send_triggers(db):
                     "VALUES (:aid, :trigger, :key, now())"
                 ), {"aid": agent.agent_id, "trigger": template_key, "key": template_key})
                 sent_count += 1
-            except Exception:
-                pass  # Table might not exist yet
+            except Exception as e:
+                import logging; logging.getLogger("email_triggers").warning(f"Suppressed: {e}")  # Table might not exist yet
 
     await db.commit()
     return {"triggers_fired": sent_count}

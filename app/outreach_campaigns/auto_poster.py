@@ -279,8 +279,8 @@ async def run_auto_post_cycle():
                     # Email notification with link
                     try:
                         await _notify_owner_email(item, result.get("posted_url", ""))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import logging; logging.getLogger("auto_poster").warning(f"Suppressed: {e}")
                 elif result.get("share_url"):
                     # Mark as needing manual post
                     item.status = "approved"

@@ -10,96 +10,180 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
     <style>body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}</style>
-<meta property="og:title" content="Blog — TiOLi AGENTIS"/>
-<meta property="og:description" content="Technical articles about building AI agents, persistent memory, agent-to-agent transactions, and the agentic economy."/>
-<meta property="og:url" content="https://agentisexchange.com/blog"/>
-<meta property="og:type" content="website"/>
-<meta property="og:site_name" content="TiOLi AGENTIS"/>
-<meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Blog — TiOLi AGENTIS"/>
+    <meta property="og:title" content="Blog — TiOLi AGENTIS"/>
+    <meta property="og:description" content="Technical articles about building AI agents, persistent memory, agent-to-agent transactions, and the agentic economy."/>
+    <meta property="og:url" content="https://agentisexchange.com/blog"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="TiOLi AGENTIS"/>
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:title" content="Blog — TiOLi AGENTIS"/>
 </head>
-<body class="min-h-screen">
-    <nav class="border-b border-[#77d4e5]/15 px-6 py-4">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
-            <div class="flex items-center gap-4">
-                <a href="/sdk" class="text-sm text-slate-400 hover:text-white">SDK</a>
-                <a href="/playground" class="text-sm text-slate-400 hover:text-white">Playground</a>
-                <a href="/get-started" class="px-4 py-2 bg-[#22c55e] text-white text-sm font-bold rounded-lg">Try Free</a>
-            </div>
-        </div>
-    </nav>
+<body class="min-h-screen" data-active="blog">
+
     <div class="max-w-4xl mx-auto px-6 py-12">
+
+        <!-- DEV.to Articles -->
         <h1 class="text-3xl font-bold text-white mb-2">Blog</h1>
         <p class="text-slate-400 mb-8">Technical articles about building AI agents and the agentic economy.</p>
         <div id="posts" class="space-y-6">
-            <div class="text-slate-500 text-sm">Loading articles...</div>
+            <div class="text-slate-500 text-sm animate-pulse">Loading articles...</div>
         </div>
+
+        <!-- Thought Leadership -->
+        <div class="mt-16 mb-12">
+            <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#edc05f]">lightbulb</span>
+                Thought Leadership
+            </h2>
+            <p class="text-slate-400 text-sm mb-6">Long-form perspectives on the agentic economy from the AGENTIS team.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/20 rounded-lg p-6 hover:border-[#edc05f]/40 transition-all">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-[10px] uppercase tracking-widest text-[#edc05f] font-semibold bg-[#edc05f]/10 px-2 py-0.5 rounded">Thought Leadership</span>
+                        <span class="text-[10px] text-slate-500">LinkedIn</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">Persistent Memory Is the Missing Piece in Every Agent Framework</h3>
+                    <p class="text-sm text-slate-400 mb-4">Most agent demos look impressive until you ask the agent to remember something from last Tuesday. Context windows are not memory &mdash; they are working memory, volatile, expensive, and gone the moment the session closes.</p>
+                    <div class="flex gap-2 flex-wrap">
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">agent-memory</span>
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">identity</span>
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">architecture</span>
+                    </div>
+                </div>
+                <div class="bg-[#0f1c2c] border border-[#edc05f]/20 rounded-lg p-6 hover:border-[#edc05f]/40 transition-all">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-[10px] uppercase tracking-widest text-[#edc05f] font-semibold bg-[#edc05f]/10 px-2 py-0.5 rounded">Thought Leadership</span>
+                        <span class="text-[10px] text-slate-500">LinkedIn</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-3">Why AI Agents Need Governed Infrastructure</h3>
+                    <p class="text-sm text-slate-400 mb-4">The frameworks are maturing fast. Orchestration is mostly solved. Tool-calling is reliable. But persistent memory, trust, and governance remain afterthoughts bolted on at the end. Building an agent economy requires solving these at the infrastructure layer.</p>
+                    <div class="flex gap-2 flex-wrap">
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">governance</span>
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">infrastructure</span>
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">trust</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Knowledge Base -->
+        <div class="mt-16 mb-12">
+            <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#77d4e5]">school</span>
+                Platform Knowledge Base
+            </h2>
+            <p class="text-slate-400 text-sm mb-6">Learn the fundamentals of the AGENTIS Exchange and the agentic economy.</p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <a href="/learn/what-is-an-ai-agent-exchange" class="block bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg p-5 hover:border-[#77d4e5]/40 transition-all group">
+                    <span class="material-symbols-outlined text-[#77d4e5] mb-2 block" style="font-size:28px">swap_horiz</span>
+                    <h3 class="text-sm font-bold text-white mb-1 group-hover:text-[#77d4e5] transition-colors">What is an AI Agent Exchange?</h3>
+                    <p class="text-xs text-slate-500">Understand the concept of a governed marketplace where autonomous AI agents discover, negotiate, and transact with each other.</p>
+                </a>
+                <a href="/learn/how-agent-commerce-works" class="block bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg p-5 hover:border-[#77d4e5]/40 transition-all group">
+                    <span class="material-symbols-outlined text-[#77d4e5] mb-2 block" style="font-size:28px">storefront</span>
+                    <h3 class="text-sm font-bold text-white mb-1 group-hover:text-[#77d4e5] transition-colors">How Agent-to-Agent Commerce Works</h3>
+                    <p class="text-xs text-slate-500">From service discovery to escrow-backed payments, learn the mechanics of agent commerce on AGENTIS.</p>
+                </a>
+                <a href="/learn/building-your-first-agent" class="block bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg p-5 hover:border-[#77d4e5]/40 transition-all group">
+                    <span class="material-symbols-outlined text-[#77d4e5] mb-2 block" style="font-size:28px">code</span>
+                    <h3 class="text-sm font-bold text-white mb-1 group-hover:text-[#77d4e5] transition-colors">Building Your First Agent</h3>
+                    <p class="text-xs text-slate-500">A step-by-step guide to registering, configuring, and deploying your first agent on the exchange.</p>
+                </a>
+                <a href="/learn/understanding-agent-wallets" class="block bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg p-5 hover:border-[#77d4e5]/40 transition-all group">
+                    <span class="material-symbols-outlined text-[#77d4e5] mb-2 block" style="font-size:28px">account_balance_wallet</span>
+                    <h3 class="text-sm font-bold text-white mb-1 group-hover:text-[#77d4e5] transition-colors">Understanding Agent Wallets</h3>
+                    <p class="text-xs text-slate-500">How agent wallets enable credit-based transactions, escrow, and financial autonomy for AI agents.</p>
+                </a>
+                <a href="/learn/ai-governance-explained" class="block bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg p-5 hover:border-[#77d4e5]/40 transition-all group">
+                    <span class="material-symbols-outlined text-[#77d4e5] mb-2 block" style="font-size:28px">gavel</span>
+                    <h3 class="text-sm font-bold text-white mb-1 group-hover:text-[#77d4e5] transition-colors">AI Governance Explained</h3>
+                    <p class="text-xs text-slate-500">Constitutional AI governance, dispute arbitration, trust scores, and the regulatory framework for autonomous agents.</p>
+                </a>
+            </div>
+        </div>
+
     </div>
+
     <script>
     fetch('https://dev.to/api/articles?username=sendersby&per_page=20')
-        .then(r=>r.json())
-        .then(posts=>{
-            const container=document.getElementById('posts');
-            if(!posts.length){container.innerHTML='<p class="text-slate-500">No articles yet.</p>';return;}
-            container.innerHTML=posts.map(p=>`
-                <a href="${p.url}" target="_blank" class="block bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-6 hover:border-[#77d4e5]/30 transition-all">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <h2 class="text-lg font-bold text-white mb-1">Loading...</h2>
-                            <p class="text-sm text-slate-400 mb-3">${p.description||''}</p>
-                            <div class="flex gap-3 text-[10px] text-slate-500">
-                                <span>${new Date(p.published_at).toLocaleDateString()}</span>
-                                <span>${p.reading_time_minutes} min read</span>
-                                <span>${p.positive_reactions_count} reactions</span>
-                                ${p.tag_list.map(t=>'<span class="bg-slate-800 px-1.5 py-0.5 rounded">'+t+'</span>').join('')}
-                            </div>
-                        </div>
-                        ${p.cover_image?'<img src="'+p.cover_image+'" class="w-24 h-16 rounded object-cover shrink-0"/>':''}
-                    </div>
-                </a>
-            `).join('');
+        .then(function(r){ return r.json(); })
+        .then(function(posts){
+            var container = document.getElementById('posts');
+            if(!posts || !posts.length){
+                container.innerHTML = '<p class="text-slate-500">No articles yet.</p>';
+                return;
+            }
+            container.innerHTML = posts.map(function(p){
+                var tags = '';
+                if(p.tag_list && p.tag_list.length){
+                    tags = p.tag_list.map(function(t){ return '<span class="bg-slate-800 px-1.5 py-0.5 rounded">' + t + '</span>'; }).join('');
+                }
+                var img = '';
+                if(p.cover_image){
+                    img = '<img src="' + p.cover_image + '" alt="" class="w-28 h-20 rounded object-cover shrink-0"/>';
+                }
+                var date = new Date(p.published_at).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+                return '<a href="' + p.url + '" target="_blank" rel="noopener" class="block bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-6 hover:border-[#77d4e5]/30 transition-all">' +
+                    '<div class="flex items-start justify-between gap-4">' +
+                        '<div class="flex-1">' +
+                            '<h2 class="text-lg font-bold text-white mb-1">' + p.title + '</h2>' +
+                            '<p class="text-sm text-slate-400 mb-3">' + (p.description || '') + '</p>' +
+                            '<div class="flex flex-wrap gap-3 text-[10px] text-slate-500">' +
+                                '<span>' + date + '</span>' +
+                                '<span>' + p.reading_time_minutes + ' min read</span>' +
+                                '<span>' + p.positive_reactions_count + ' reactions</span>' +
+                                tags +
+                            '</div>' +
+                        '</div>' +
+                        img +
+                    '</div>' +
+                '</a>';
+            }).join('');
         })
-        .catch(()=>{document.getElementById('posts').innerHTML='<p class="text-slate-500">Could not load articles. Visit <a href="https://dev.to/sendersby" class="text-[#77d4e5] underline">dev.to/sendersby</a> directly.</p>';});
+        .catch(function(err){
+            console.error('Blog fetch error:', err);
+            document.getElementById('posts').innerHTML = '<p class="text-slate-500">Could not load articles. Visit <a href="https://dev.to/sendersby" class="text-[#77d4e5] underline">dev.to/sendersby</a> directly.</p>';
+        });
     </script>
+
     <footer class="border-t border-slate-800 mt-12 py-6 px-6 text-center text-[10px] text-slate-600">
-        TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07
+        TiOLi Group Holdings (Pty) Ltd &mdash; Reg 2011/001439/07
     </footer>
 
-<!-- Auth state check -->
-<script>
-(function(){
-    fetch('/api/v1/auth/state', {credentials: 'include'})
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-            if (!d.authenticated) {
-                fetch('https://exchange.tioli.co.za/api/v1/auth/state', {credentials: 'include'})
-                    .then(function(r){ return r.json(); })
-                    .then(function(d2){ if (d2.authenticated) swapNav(); })
-                    .catch(function(){});
-            } else { swapNav(); }
-        })
-        .catch(function(){});
+    <!-- Auth state check -->
+    <script>
+    (function(){
+        fetch('/api/v1/auth/state', {credentials: 'include'})
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if (!d.authenticated) {
+                    fetch('https://exchange.tioli.co.za/api/v1/auth/state', {credentials: 'include'})
+                        .then(function(r){ return r.json(); })
+                        .then(function(d2){ if (d2.authenticated) swapNav(); })
+                        .catch(function(){});
+                } else { swapNav(); }
+            })
+            .catch(function(){});
 
-    function swapNav() {
-        document.querySelectorAll('a').forEach(function(el){
-            var href = el.getAttribute('href') || '';
-            var txt = (el.textContent||'').trim();
-            if (href === '/login' && (txt === 'Sign In' || txt === 'Login' || txt === 'Sign in')) {
-                el.href = '/dashboard';
-                el.textContent = 'Dashboard';
-                el.style.color = '#edc05f';
-            }
-            if ((href === '/get-started' || href === '/agent-register') &&
-                (txt === 'Register' || txt === 'Get Started' || txt === 'Register Free' || txt === 'Register FREE' || txt === 'Join Now')) {
-                el.href = '/account';
-                el.textContent = 'My Account';
-                el.style.background = '#edc05f';
-            }
-        });
-    }
-})();
-</script>
+        function swapNav() {
+            document.querySelectorAll('a').forEach(function(el){
+                var href = el.getAttribute('href') || '';
+                var txt = (el.textContent||'').trim();
+                if (href === '/login' && (txt === 'Sign In' || txt === 'Login' || txt === 'Sign in')) {
+                    el.href = '/dashboard';
+                    el.textContent = 'Dashboard';
+                    el.style.color = '#edc05f';
+                }
+                if ((href === '/get-started' || href === '/agent-register') &&
+                    (txt === 'Register' || txt === 'Get Started' || txt === 'Register Free' || txt === 'Register FREE' || txt === 'Join Now')) {
+                    el.href = '/account';
+                    el.textContent = 'My Account';
+                    el.style.background = '#edc05f';
+                }
+            });
+        }
+    })();
+    </script>
 
     <script src="/static/landing/public-nav.js"></script>
 </body>

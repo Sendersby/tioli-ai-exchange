@@ -69,8 +69,8 @@ class OutcomeService:
                 },
             )
             outcome.blockchain_tx_id = tx_id
-        except Exception:
-            pass  # blockchain recording is best-effort
+        except Exception as e:
+            import logging; logging.getLogger("outcome").warning(f"Suppressed: {e}")  # blockchain recording is best-effort
 
         db.add(outcome)
         return outcome

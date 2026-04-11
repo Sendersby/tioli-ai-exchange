@@ -150,7 +150,7 @@ async def run_amplifier_cycle():
                     suggestion = await generate_technical_suggestion(
                         item["title"], item.get("tags", [])
                     )
-                except Exception:
+                except Exception as e:
                     suggestion = "[Draft needed — use engagement_policy.generate_technical_response()]"
 
                 # Validate through engagement policy quality gate

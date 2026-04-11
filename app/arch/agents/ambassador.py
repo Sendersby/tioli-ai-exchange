@@ -61,8 +61,8 @@ class AmbassadorAgent(ArchAgentBase):
                 await self.memory.store(
                     f"Published content: {params.get('title', 'untitled')} on {params.get('channel', 'unknown')}",
                     source_type="content_published", importance=0.6)
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("ambassador").warning(f"Suppressed: {e}")
 
         return {"content_id": content_id, "platform": platform,
                 "status": "PUBLISHED", "content_type": content_type}

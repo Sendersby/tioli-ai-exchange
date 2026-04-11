@@ -23,5 +23,5 @@ def get_db_password():
         from urllib.parse import urlparse
         parsed = urlparse(url.replace("postgresql+asyncpg://", "postgresql://"))
         return parsed.password or ""
-    except Exception:
+    except Exception as e:
         return ""

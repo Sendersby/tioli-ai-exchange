@@ -122,8 +122,8 @@ async def require_kyc_verified(db, agent_id: str):
                     actor_type="agent",
                     after_state={"sandbox_bypass": True, "kyc_tier": 0},
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("validators").warning(f"Suppressed: {e}")
             return True
         # Production: block
         _kyc_log.warning(f"KYC block: agent={agent_id} — no valid KYC")
@@ -134,8 +134,8 @@ async def require_kyc_verified(db, agent_id: str):
                 actor_type="agent",
                 after_state={"reason": "no_kyc_tier"},
             )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("validators").warning(f"Suppressed: {e}")
         raise HTTPException(
             status_code=403,
             detail={
@@ -153,6 +153,94 @@ async def require_kyc_verified(db, agent_id: str):
             actor_type="agent",
             after_state={"kyc_tier": row.kyc_tier},
         )
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("validators").warning(f"Suppressed: {e}")
     return True
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  C3.2 — validated_json: input validation wrapper for raw request.json()
+# ══════════════════════════════════════════════════════════════════════
+from starlette.requests import Request
+from fastapi import HTTPException as _ValHTTPException
+
+
+async def validated_json(
+    request: Request,
+    *,
+    required_fields: list = None,
+    positive_numbers: list = None,
+    max_length: dict = None,
+    max_field_length: int = 10000,
+):
+    """Validate and sanitise a JSON request body.
+
+    Parameters
+    ----------
+    request : Request
+        The incoming Starlette/FastAPI request.
+    required_fields : list[str], optional
+        Fields that must be present and non-empty.
+    positive_numbers : list[str], optional
+        Fields that must be positive numbers when present.
+    max_length : dict[str, int], optional
+        Per-field maximum string lengths.
+    max_field_length : int
+        Default max length for any string field (10 000 chars).
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raise _ValHTTPException(
+            status_code=422,
+            detail={"error": "VALIDATION_ERROR", "message": "Invalid JSON body"},
+        )
+
+    if not isinstance(body, dict):
+        raise _ValHTTPException(
+            status_code=422,
+            detail={"error": "VALIDATION_ERROR", "message": "Expected JSON object"},
+        )
+
+    # ── required fields ──────────────────────────────────────────────
+    if required_fields:
+        for field in required_fields:
+            val = body.get(field)
+            if val is None or (isinstance(val, str) and val.strip() == ""):
+                raise _ValHTTPException(
+                    status_code=422,
+                    detail={
+                        "error": "VALIDATION_ERROR",
+                        "message": f"Field '{field}' is required",
+                    },
+                )
+
+    # ── positive number checks ───────────────────────────────────────
+    if positive_numbers:
+        for field in positive_numbers:
+            val = body.get(field)
+            if val is not None:
+                if not isinstance(val, (int, float)) or val <= 0:
+                    raise _ValHTTPException(
+                        status_code=422,
+                        detail={
+                            "error": "VALIDATION_ERROR",
+                            "message": f"Field '{field}' must be a positive number",
+                        },
+                    )
+
+    # ── string length enforcement ────────────────────────────────────
+    _lengths = max_length or {}
+    for key, val in body.items():
+        if isinstance(val, str):
+            limit = _lengths.get(key, max_field_length)
+            if len(val) > limit:
+                raise _ValHTTPException(
+                    status_code=422,
+                    detail={
+                        "error": "VALIDATION_ERROR",
+                        "message": f"Field '{key}' exceeds max length {limit}",
+                    },
+                )
+
+    return body

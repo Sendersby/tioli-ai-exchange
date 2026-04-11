@@ -60,5 +60,5 @@ async def recall_relevant_reflections(agent, upcoming_action: str, limit: int = 
         memories = await agent.recall(f"REFLECTION on: {upcoming_action}")
         reflections = [m for m in memories if m.get("source_type") == "metacognition"]
         return reflections[:limit]
-    except Exception:
+    except Exception as e:
         return []

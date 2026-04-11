@@ -77,5 +77,5 @@ class RetryHandler:
                 elif action == "escalate":
                     return {"should_escalate": True, "reason": analysis.get("reason", "AI suggested escalation")}
             return {"should_retry": True, "reason": "default retry"}
-        except Exception:
+        except Exception as e:
             return {"should_retry": True, "reason": "analysis failed, default retry"}

@@ -271,8 +271,8 @@ class CostControlService:
             if self._alert_service:
                 try:
                     await self._alert_service.send_budget_alert("WARNING", spend, limit, pct)
-                except Exception:
-                    pass  # Alerts are non-blocking
+                except Exception as e:
+                    import logging; logging.getLogger("cost_control").warning(f"Suppressed: {e}")  # Alerts are non-blocking
 
         # Check critical threshold
         if pct >= budget.critical_threshold_pct and pct < 100:
@@ -287,8 +287,8 @@ class CostControlService:
             if self._alert_service:
                 try:
                     await self._alert_service.send_budget_alert("CRITICAL", spend, limit, pct)
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("cost_control").warning(f"Suppressed: {e}")
 
         # Check auto-shutdown
         if pct >= 100 and budget.auto_shutdown_enabled:
@@ -297,8 +297,8 @@ class CostControlService:
             if self._alert_service:
                 try:
                     await self._alert_service.send_budget_alert("AUTO_SHUTDOWN", spend, limit, pct)
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("cost_control").warning(f"Suppressed: {e}")
             await self.emergency_shutdown(
                 db, f"Auto-shutdown: budget exceeded (${spend:.2f} / ${limit:.2f})",
                 shutdown_by="auto_budget"
@@ -385,7 +385,7 @@ class CostControlService:
                         for d in droplets
                     ]
                 return []
-        except Exception:
+        except Exception as e:
             return []
 
     async def shutdown_digitalocean_droplet(

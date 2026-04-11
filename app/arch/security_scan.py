@@ -59,8 +59,8 @@ async def _check_headers():
         header_count = int(stdout.decode().strip() or "0")
         if header_count < 3:
             findings.append({"severity": "MEDIUM", "category": "missing_headers", "detail": f"Only {header_count} security headers found"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("security_scan").warning(f"Suppressed: {e}")
     return findings
 
 
@@ -72,8 +72,8 @@ async def _check_env_exposed():
         stdout = await _run_subprocess(env_cmd, timeout=15)
         if stdout.decode().strip() == "200":
             findings.append({"severity": "CRITICAL", "category": "exposed_secrets", "detail": ".env file is publicly accessible!"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("security_scan").warning(f"Suppressed: {e}")
     return findings
 
 
@@ -85,8 +85,8 @@ async def _check_ssl():
         stdout = await _run_subprocess(ssl_cmd, timeout=15)
         if "notAfter" in stdout.decode():
             findings.append({"severity": "INFO", "category": "ssl", "detail": "SSL certificate valid"})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("security_scan").warning(f"Suppressed: {e}")
     return findings
 
 

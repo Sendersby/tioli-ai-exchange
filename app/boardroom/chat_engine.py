@@ -170,7 +170,7 @@ async def process_chat_message(
     # Load system prompt
     try:
         system_prompt = await agent._load_system_prompt()
-    except Exception:
+    except Exception as e:
         prompt_path = f"app/arch/prompts/{agent_id}.txt"
         if os.path.exists(prompt_path):
             with open(prompt_path) as f:
@@ -283,8 +283,8 @@ async def process_chat_message(
     # Track tokens
     try:
         await agent._track_tokens(response.usage)
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("chat_engine").warning(f"Suppressed: {e}")
 
     final_response = "\n".join(text_parts) if text_parts else "[No response generated]"
 
@@ -305,7 +305,7 @@ async def process_chat_message(
             source_type="interaction",
         )
         await db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("chat_engine").warning(f"Suppressed: {e}")
 
     return final_response

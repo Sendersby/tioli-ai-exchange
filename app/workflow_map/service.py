@@ -256,10 +256,10 @@ class WorkflowMapService:
                             health_results[node_id] = 'green'
                         else:
                             health_results[node_id] = 'red'
-                    except Exception:
+                    except Exception as e:
                         health_results[node_id] = 'red'
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # --- 2. Traffic heatmap: count requests from nginx access log ---
         traffic_counts = {}
@@ -278,8 +278,8 @@ class WorkflowMapService:
                             path = parts[-1] if parts else ''
                             if path and path in line:
                                 traffic_counts[n.node_id] = traffic_counts.get(n.node_id, 0) + 1
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # Normalise traffic to 0-1 scale
         max_traffic = max(traffic_counts.values()) if traffic_counts else 1
@@ -301,8 +301,8 @@ class WorkflowMapService:
                 for n in payment_nodes:
                     revenue_data[n.node_id] = share
             revenue_data['_total'] = round(total_agentis, 1)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # --- 4. Build phases: extract from node metadata ---
         build_phases = {}
@@ -354,8 +354,8 @@ class WorkflowMapService:
                     nid = type_map.get(entity_type)
                     if nid:
                         last_activity[nid] = ts.isoformat()
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # --- 7. Agent counts per service ---
         agent_counts = {}
@@ -375,8 +375,8 @@ class WorkflowMapService:
             # MCP — all agents can use it
             agent_counts['node_mcp_server'] = total_agents
             agent_counts['node_mcp_tool_discovery'] = total_agents
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("service").warning(f"Suppressed: {e}")
 
         # Assemble
         for n in nodes:

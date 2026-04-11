@@ -47,8 +47,8 @@ class CacheService:
             data = self._redis.get(f"tioli:{key}")
             if data:
                 return json.loads(data)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("cache").warning(f"Suppressed: {e}")
         return None
 
     def set(self, key: str, value, ttl: int = TTL_MEDIUM) -> bool:
@@ -58,7 +58,7 @@ class CacheService:
         try:
             self._redis.setex(f"tioli:{key}", ttl, json.dumps(value, default=str))
             return True
-        except Exception:
+        except Exception as e:
             return False
 
     def delete(self, key: str) -> bool:
@@ -68,7 +68,7 @@ class CacheService:
         try:
             self._redis.delete(f"tioli:{key}")
             return True
-        except Exception:
+        except Exception as e:
             return False
 
     def clear_pattern(self, pattern: str) -> int:
@@ -79,8 +79,8 @@ class CacheService:
             keys = self._redis.keys(f"tioli:{pattern}")
             if keys:
                 return self._redis.delete(*keys)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("cache").warning(f"Suppressed: {e}")
         return 0
 
     def get_stats(self) -> dict:
@@ -102,7 +102,7 @@ class CacheService:
                 ),
                 "memory_used_mb": round(memory.get("used_memory", 0) / 1024 / 1024, 2),
             }
-        except Exception:
+        except Exception as e:
             return {"available": True, "error": "Could not fetch stats"}
 
 

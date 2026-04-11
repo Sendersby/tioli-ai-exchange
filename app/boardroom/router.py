@@ -864,7 +864,7 @@ async def inbox_action(item_id: str, payload: dict, db: AsyncSession = Depends(g
         if item_row and item_row.description:
             try:
                 desc_data = json.loads(item_row.description) if item_row.description.startswith("{") else {}
-            except Exception:
+            except Exception as e:
                 desc_data = {}
 
             original_subject = desc_data.get("subject", "Unknown task")

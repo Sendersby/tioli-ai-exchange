@@ -286,13 +286,13 @@ async def cached_response(key: str, ttl: int, fetch_fn):
         cached = await _cache_client.get(key)
         if cached:
             return json.loads(cached)
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("main_deps").warning(f"Suppressed: {e}")
     result = await fetch_fn()
     try:
         await _cache_client.setex(key, ttl, json.dumps(result, default=str))
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("main_deps").warning(f"Suppressed: {e}")
     return result
 
 # Alias for backward compat

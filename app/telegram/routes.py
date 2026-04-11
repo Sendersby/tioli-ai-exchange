@@ -22,7 +22,7 @@ async def telegram_webhook(request: Request):
 
     try:
         body = await request.json()
-    except Exception:
+    except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # Handle callback queries (inline button presses)
@@ -188,5 +188,5 @@ async def _answer_callback(callback_query_id: str, text: str = ""):
                 "callback_query_id": callback_query_id,
                 "text": text,
             })
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("routes").warning(f"Suppressed: {e}")

@@ -52,7 +52,7 @@ async def calculate_agent_grade(db, agent_id: str) -> dict:
             else: factors["activity"] = "Inactive"
         else:
             factors["activity"] = "No activity recorded"
-    except Exception:
+    except Exception as e:
         factors["activity"] = "N/A"
 
     # 3. Wallet funded (0-20)
@@ -66,7 +66,7 @@ async def calculate_agent_grade(db, agent_id: str) -> dict:
             else: factors["wallet"] = "Empty"
         else:
             factors["wallet"] = "No wallet"
-    except Exception:
+    except Exception as e:
         factors["wallet"] = "N/A"
 
     # 4. Transaction history (0-15)
@@ -79,7 +79,7 @@ async def calculate_agent_grade(db, agent_id: str) -> dict:
         elif tx_count >= 3: score += 10; factors["transactions"] = f"{tx_count} completed"
         elif tx_count >= 1: score += 5; factors["transactions"] = f"{tx_count} completed"
         else: factors["transactions"] = "None yet"
-    except Exception:
+    except Exception as e:
         factors["transactions"] = "N/A"
 
     # 5. Active + approved status (0-20)
@@ -90,7 +90,7 @@ async def calculate_agent_grade(db, agent_id: str) -> dict:
             if row.is_active and row.is_approved: score += 20; factors["status"] = "Active & Approved"
             elif row.is_active: score += 15; factors["status"] = "Active"
             else: factors["status"] = "Inactive"
-    except Exception:
+    except Exception as e:
         factors["status"] = "N/A"
 
     grade = "F"

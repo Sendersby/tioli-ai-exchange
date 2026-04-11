@@ -22,7 +22,7 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
         ), {"aid": aid or ""})
         action_count = actions.scalar() or 0
         scores["activity"] = min(25, action_count * 2)
-    except Exception:
+    except Exception as e:
         scores["activity"] = 0
 
     # 2. Memory utilisation (0-20): Is the agent learning?
@@ -33,7 +33,7 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
         ), {"aid": aid or ""})
         mem_count = mems.scalar() or 0
         scores["memory"] = min(20, mem_count)
-    except Exception:
+    except Exception as e:
         scores["memory"] = 0
 
     # 3. Task completion (0-25): Has the agent completed tasks?
@@ -43,7 +43,7 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
         ), {"name": agent_name})
         task_count = tasks.scalar() or 0
         scores["tasks"] = min(25, task_count * 5)
-    except Exception:
+    except Exception as e:
         scores["tasks"] = 0
 
     # 4. Communication (0-15): Is the agent producing outputs?
@@ -53,7 +53,7 @@ async def evaluate_agent(db, agent_name: str, agent_client=None):
         ), {"pattern": f"%{agent_name}%"})
         inbox_count = inbox.scalar() or 0
         scores["communication"] = min(15, inbox_count)
-    except Exception:
+    except Exception as e:
         scores["communication"] = 0
 
     # 5. Reliability (0-15): Error rate

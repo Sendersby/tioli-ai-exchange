@@ -111,8 +111,8 @@ async def run_proactive_scan(db) -> dict:
                 from app.arch.rescreening import run_rescreening_batch
                 await run_rescreening_batch(db)
                 actions_taken.append(f"Triggered rescreening batch for {overdue} overdue agents")
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("proactive_scanner").warning(f"Suppressed: {e}")
 
         # Check: regulatory scan
         r = await db.execute(text(
@@ -228,8 +228,8 @@ async def run_proactive_scan(db) -> dict:
             "VALUES ('proactive_scan', :status, 0, 0, now())"
         ), {"status": f"FOUND_{len(opportunities)}" if opportunities else "ALL_CLEAR"})
         await db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("proactive_scanner").warning(f"Suppressed: {e}")
 
     log.info(f"[proactive] Scan complete: {len(opportunities)} opportunities, {len(actions_taken)} actions taken")
 

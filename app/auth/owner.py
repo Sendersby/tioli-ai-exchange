@@ -192,15 +192,15 @@ class OwnerAuth:
                 try:
                     result = send_verification_email(challenge_id, email_code)
                     self._challenges[challenge_id]["email_sent"] = result
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("owner").warning(f"Suppressed: {e}")
 
             def _send_sms():
                 try:
                     result = send_sms_code(phone_code)
                     self._challenges[challenge_id]["sms_sent"] = result
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("owner").warning(f"Suppressed: {e}")
 
             threading.Thread(target=_send_email, daemon=True).start()
             threading.Thread(target=_send_sms, daemon=True).start()
@@ -208,8 +208,8 @@ class OwnerAuth:
             sms_sent = True
             self._challenges[challenge_id]["email_sent"] = True
             self._challenges[challenge_id]["sms_sent"] = True
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("owner").warning(f"Suppressed: {e}")
 
         return {
             "challenge_id": challenge_id,
@@ -368,7 +368,8 @@ class OwnerAuth:
             if payload.get("role") != "platform_owner":
                 return None
             return payload
-        except Exception:
+        except Exception as e:
+            import logging; logging.getLogger("owner").debug(f"Returning None: {e}")
             return None
 
 

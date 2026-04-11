@@ -53,8 +53,8 @@ async def create_nl_job(db, instruction: str, task_description: str,
             cron_text = next((b.text for b in resp.content if b.type == "text"), "").strip()
             if re.match(r"^[\d\*/,-]+\s+[\d\*/,-]+\s+[\d\*/,-]+\s+[\d\*/,-]+\s+[\d\*/,-]+$", cron_text):
                 schedule = {"cron": cron_text, "parsed": True, "method": "llm"}
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("nl_scheduler").warning(f"Suppressed: {e}")
 
     if not schedule.get("parsed"):
         return {"error": "Could not parse schedule", "instruction": instruction,

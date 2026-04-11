@@ -162,8 +162,8 @@ async def resolve_inbox_items(db) -> dict:
                         db, classification["agent"], desc_text,
                         [{"step": 1, "action": classification["tool"], "result": str(exec_result)[:200]}],
                         str(exec_result)[:300])
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging; logging.getLogger("inbox_resolver").warning(f"Suppressed: {e}")
 
             except Exception as e:
                 log.warning(f"[inbox_resolver] Execution failed for {item.id}: {e}")
@@ -187,8 +187,8 @@ async def resolve_inbox_items(db) -> dict:
                 f"INBOX_RESOLVED_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M')}",
                 f"Auto-resolved {results['auto_completed']} confirmations, executed {results['executed']} actions, skipped {results['skipped']}",
                 confidence=1.0, ttl_minutes=120)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("inbox_resolver").warning(f"Suppressed: {e}")
 
     # Log to job_execution_log
     try:
@@ -197,8 +197,8 @@ async def resolve_inbox_items(db) -> dict:
             "VALUES ('inbox_auto_resolve', :status, 0, 0, now())"
         ), {"status": "EXECUTED" if results["executed"] > 0 else "CHECKED"})
         await db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging; logging.getLogger("inbox_resolver").warning(f"Suppressed: {e}")
 
     log.info(f"[inbox_resolver] Completed: {results['auto_completed']} auto, {results['executed']} exec, {results['skipped']} skip")
     return results
@@ -238,8 +238,8 @@ async def _execute_action(db, action_name: str, agent: str, description: str) ->
         from app.arch.synthetic_case_law import generate_synthetic_case
         try:
             await db.rollback()
-        except Exception:
-            pass
+        except Exception as e:
+            import logging; logging.getLogger("inbox_resolver").warning(f"Suppressed: {e}")
         return await generate_synthetic_case(db, None, 1)
 
     elif action_name == "goal_tracking":
@@ -262,8 +262,8 @@ async def get_resolvable_items(db) -> list:
             try:
                 d = json.loads(row.preview + "}")  # May be truncated
                 desc_text = f"{d.get('subject', '')} {d.get('detail', '')}"
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger("inbox_resolver").warning(f"Suppressed: {e}")
         classification = classify_inbox_item(row.item_type, desc_text)
         items.append({
             "id": str(row.id), "type": row.item_type, "priority": row.priority,
