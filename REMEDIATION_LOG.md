@@ -121,3 +121,8 @@
 - Reason: No DigitalOcean Spaces or S3 bucket credentials configured
 - Pre-work: boto3 is installed; backup script functional
 - Action needed: Create DO Spaces bucket, add credentials to .env, update backup.sh to upload after pg_dump
+
+#### S-005: Redis-backed rate limiting
+- Status: PASS
+- Action: Updated slowapi Limiter to use Redis storage (redis://localhost:6379/1) with in-memory fallback. Added stricter limits: registration 5/hour, fiat deposit/withdraw 60/min, withdrawal request 30/min.
+- Evidence: Limiter configured with storage_uri; app starts and serves requests

@@ -453,7 +453,7 @@ def _rate_limit_key(request):
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-limiter = Limiter(key_func=_rate_limit_key, default_limits=["100/minute"])
+limiter = Limiter(key_func=_rate_limit_key, default_limits=["100/minute"], storage_uri="redis://localhost:6379/1", in_memory_fallback_enabled=True)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Paywall middleware -- check tier on protected endpoints
@@ -1040,7 +1040,8 @@ class IndexRequest(BaseModel):
 # ══════════════════════════════════════════════════════════════════════
 
 @app.post("/api/agents/register")
-async def api_register_agent(
+@limiter.limit("5/hour")
+async def api_register_agent(request: Request,
     req: AgentRegisterRequest, db: AsyncSession = Depends(get_db)
 ):
     """Register a new AI agent on the platform."""
@@ -11654,12 +11655,14 @@ async def api_auth_state(request: Request, db: AsyncSession = Depends(get_db)):
 
 # A-1: Fiat On/Off-Ramp
 @app.post("/api/v1/sandbox/fiat/deposit", tags=["Sandbox"])
-async def api_sandbox_fiat_deposit(body: FiatDepositRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("60/minute")
+async def api_sandbox_fiat_deposit(request: Request,body: FiatDepositRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.fiat_ramp import process_deposit
     return await process_deposit(db, body.customer_id, body.amount_zar, body.kyc_tier)
 
 @app.post("/api/v1/sandbox/fiat/withdraw", tags=["Sandbox"])
-async def api_sandbox_fiat_withdraw(body: FiatWithdrawRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("60/minute")
+async def api_sandbox_fiat_withdraw(request: Request,body: FiatWithdrawRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.fiat_ramp import request_withdrawal
     return await request_withdrawal(db, body.customer_id, body.amount_agentis, body.kyc_tier)
 
@@ -11950,7 +11953,8 @@ async def api_sandbox_notif_templates():
 
 # C-5: Fiat Withdrawal Processing
 @app.post("/api/v1/sandbox/withdrawal/request", tags=["Sandbox"])
-async def api_sandbox_withdraw_request(body: WithdrawalRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def api_sandbox_withdraw_request(request: Request,body: WithdrawalRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.withdrawal_processor import request_withdrawal
     return await request_withdrawal(db, body.customer_id, body.amount_zar, body.bank_account, body.bank_name)
 
