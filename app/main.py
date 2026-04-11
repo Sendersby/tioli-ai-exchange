@@ -491,7 +491,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "img-src 'self' data: https://lh3.googleusercontent.com; "
             "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; "
-            "connect-src 'self'; "
+            "connect-src 'self' https://exchange.tioli.co.za https://agentisexchange.com; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
             "frame-ancestors 'none'"
         )
         return response

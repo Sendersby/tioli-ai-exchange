@@ -19,3 +19,5 @@
 - Action required: Owner creates PostHog account at https://app.posthog.com, gets project API key
 - Implementation: Set phKey value in static/landing/index.html line ~124
 - Impact: No product analytics, funnels, or session replay until configured
+| DEFER-007 | Cloudflare WAF/DDoS | Point DNS through Cloudflare proxy (free tier). Requires registrar access for exchange.tioli.co.za and agentisexchange.com. | Nginx configured, just needs DNS change | Awaiting owner |
+| DEFER-008 | Offsite Backup | Configure DigitalOcean Spaces bucket, run 'rclone config' to add remote 'do-spaces', uncomment offsite block in /home/tioli/backups/backup.sh | rclone installed, script ready | Awaiting owner |
