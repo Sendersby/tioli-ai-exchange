@@ -809,7 +809,7 @@ async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db))
             "m5_governance, m6_multi_agent, m7_proactivity, aggregate_score, band, ecr_level, evaluated_at "
             "FROM agent_evaluation_scores ORDER BY aggregate_score DESC LIMIT 100"
         ))
-        rows = result.fetchall()
+        rows = result.fetchall()  # LIMIT applied
 
         def sc(v):
             v = float(v)

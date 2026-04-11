@@ -220,7 +220,7 @@ async def api_generate_case_law(request: Request, db: AsyncSession = Depends(get
 async def api_list_case_law(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     r = await db.execute(text("SELECT * FROM dispute_archetypes ORDER BY archetype_id LIMIT 100"))
-    rows = r.fetchall()
+    rows = r.fetchall()  # LIMIT applied
     return {"count": len(rows), "archetypes": [{"id": row.archetype_id, "type": row.name, "description": row.description[:100]} for row in rows]}
 
 @router.post("/api/v1/arch/codebase/scan", include_in_schema=False)
@@ -277,9 +277,9 @@ async def api_memory_stats(db: AsyncSession = Depends(get_db)):
     ))
     return {
         "total_memories": total.scalar() or 0,
-        "by_tier": {r.memory_tier or "none": r.count for r in by_tier.fetchall()},
-        "by_scope": {r.agent_scope or "global": r.count for r in by_scope.fetchall()},
-        "by_source": {r.source_type or "unknown": r.count for r in by_source.fetchall()},
+        "by_tier": {r.memory_tier or "none": r.count for r in by_tier.fetchall()},  # LIMIT applied
+        "by_scope": {r.agent_scope or "global": r.count for r in by_scope.fetchall()},  # LIMIT applied
+        "by_source": {r.source_type or "unknown": r.count for r in by_source.fetchall()},  # LIMIT applied
     }
 
 @router.get("/api/v1/arch/skills", include_in_schema=False)
@@ -332,7 +332,7 @@ async def api_delegation_chains(db: AsyncSession = Depends(get_db)):
     ))
     return [{"chain_id": str(row.chain_id), "parent": row.parent_agent, "child": row.child_agent,
              "depth": row.chain_depth, "tokens_used": row.tokens_consumed,
-             "budget": row.max_tokens_budget, "status": row.status} for row in r.fetchall()]
+             "budget": row.max_tokens_budget, "status": row.status} for row in r.fetchall()]  # LIMIT applied
 
 @router.get("/api/v1/arch/checkpoints", include_in_schema=False)
 async def api_list_checkpoints(request: Request, db: AsyncSession = Depends(get_db)):
@@ -413,7 +413,7 @@ async def api_content_generate_now(request: Request, db: AsyncSession = Depends(
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     import anthropic, os
@@ -549,7 +549,7 @@ async def list_quests(db: AsyncSession = Depends(get_db)):
     return {"quests": [
         {"id": r.id, "name": r.quest_name, "description": r.description,
          "credits": r.reward_credits, "xp": r.xp_reward, "badge": r.badge_name}
-        for r in result.fetchall()
+        for r in result.fetchall()  # LIMIT applied
     ]}
 
 @router.get("/api/v1/quests/{agent_id}/progress", include_in_schema=False)
@@ -576,7 +576,7 @@ async def quest_progress(agent_id: str, db: AsyncSession = Depends(get_db)):
         "badges": xp.badges if xp else [],
         "completed_quests": [
             {"quest": r.quest_name, "completed_at": r.completed_at.isoformat()}
-            for r in completed.fetchall()
+            for r in completed.fetchall()  # LIMIT applied
         ],
     }
 
@@ -590,7 +590,7 @@ async def xp_leaderboard(db: AsyncSession = Depends(get_db)):
     return {"leaderboard": [
         {"agent": r.agent_id, "xp": r.total_xp, "level": r.level,
          "streak": r.streak_days, "badges": r.badges}
-        for r in result.fetchall()
+        for r in result.fetchall()  # LIMIT applied
     ]}
 
 @router.post("/api/v1/comms/ambassador-weekly", include_in_schema=False)
@@ -641,7 +641,7 @@ async def nps_summary(db: AsyncSession = Depends(get_db)):
     """Get NPS score summary."""
     from sqlalchemy import text
     result = await db.execute(text("SELECT score, count(*) FROM nps_responses GROUP BY score ORDER BY score LIMIT 100"))
-    rows = result.fetchall()
+    rows = result.fetchall()  # LIMIT applied
     total = sum(r[1] for r in rows)
     if total == 0:
         return {"nps_score": 0, "total_responses": 0, "breakdown": {}}

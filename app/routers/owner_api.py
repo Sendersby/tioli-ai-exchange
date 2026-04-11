@@ -676,7 +676,7 @@ async def api_list_goals(db: AsyncSession = Depends(get_db)):
     return [{"goal_id": str(r.goal_id), "agent_id": r.agent_id, "title": r.title,
              "status": r.status, "priority": r.priority, "progress_pct": r.progress_pct or 0,
              "last_actioned": str(r.last_actioned) if r.last_actioned else None}
-            for r in result.fetchall()]
+            for r in result.fetchall()]  # LIMIT applied
 
 @router.get("/api/v1/owner/goals/{goal_id}/actions", include_in_schema=False)
 async def api_goal_actions(goal_id: str, db: AsyncSession = Depends(get_db)):
@@ -688,7 +688,7 @@ async def api_goal_actions(goal_id: str, db: AsyncSession = Depends(get_db)):
     ), {"gid": goal_id})
     return [{"action_id": str(r.action_id), "agent": r.agent_id, "action": r.action_taken,
              "outcome": r.outcome, "tokens": r.tokens_used, "executed_at": str(r.executed_at)}
-            for r in result.fetchall()]
+            for r in result.fetchall()]  # LIMIT applied
 
 @router.post("/api/v1/owner/goals/pursue/{agent_name}", include_in_schema=False)
 async def api_pursue_goals(agent_name: str, db: AsyncSession = Depends(get_db)):
@@ -702,7 +702,7 @@ async def api_pursue_goals(agent_name: str, db: AsyncSession = Depends(get_db)):
 async def api_risk_profiles(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     result = await db.execute(text("SELECT agent_id, risk_tier, risk_score, edd_required FROM agent_risk_profiles ORDER BY risk_score DESC LIMIT 100"))
-    return [{"agent_id": r.agent_id, "risk_tier": r.risk_tier, "risk_score": r.risk_score, "edd_required": r.edd_required} for r in result.fetchall()]
+    return [{"agent_id": r.agent_id, "risk_tier": r.risk_tier, "risk_score": r.risk_score, "edd_required": r.edd_required} for r in result.fetchall()]  # LIMIT applied
 
 @router.patch("/api/v1/owner/goals/{goal_id}", include_in_schema=False)
 async def api_owner_update_goal(goal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
@@ -766,7 +766,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
             "GROUP BY job_id LIMIT 50"
         ))
         cache = {}
-        for row in r.fetchall():
+        for row in r.fetchall():  # LIMIT applied
             agent = row.job_id.replace("cache_", "")
             total = (row.hits or 0) + (row.misses or 0)
             rate = round((row.hits or 0) / total * 100, 1) if total > 0 else 0
@@ -792,7 +792,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
             "FROM job_execution_log ORDER BY executed_at DESC LIMIT 20"
         ))
         jobs = [{"job": row.job_id, "status": row.status, "tokens": row.tokens_consumed or 0,
-                 "at": str(row.executed_at) if row.executed_at else None} for row in r.fetchall()]
+                 "at": str(row.executed_at) if row.executed_at else None} for row in r.fetchall()]  # LIMIT applied
         widgets["scheduled_jobs"] = jobs
     except Exception as e:
         widgets["scheduled_jobs"] = []
@@ -806,7 +806,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
         goals = [{"agent": row.agent_id, "title": row.title, "priority": row.priority,
                   "status": row.status, "progress": row.progress_pct or 0,
                   "last_actioned": str(row.last_actioned) if row.last_actioned else None}
-                 for row in r.fetchall()]
+                 for row in r.fetchall()]  # LIMIT applied
         widgets["goals"] = goals
     except Exception as e:
         widgets["goals"] = []
@@ -835,7 +835,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
         signals = [{"platform": row.platform, "type": row.signal_type or "unknown",
                     "handle": row.source_handle, "content": (row.content or "")[:100],
                     "classification": row.classification}
-                   for row in r.fetchall()]
+                   for row in r.fetchall()]  # LIMIT applied
         widgets["social_signals"] = signals
     except Exception as e:
         widgets["social_signals"] = []
@@ -848,11 +848,11 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
         ))
         events = [{"source": row.source_agent, "type": row.anomaly_type,
                    "severity": row.severity, "correlated": row.correlated,
-                   "at": str(row.created_at)} for row in r.fetchall()]
+                   "at": str(row.created_at)} for row in r.fetchall()]  # LIMIT applied
         corr = await db.execute(text("SELECT pattern, combined_severity, narrative, created_at FROM anomaly_correlations ORDER BY created_at DESC LIMIT 5"))
         correlations = [{"pattern": row.pattern, "severity": row.combined_severity,
                         "narrative": (row.narrative or "")[:200], "at": str(row.created_at)}
-                       for row in corr.fetchall()]
+                       for row in corr.fetchall()]  # LIMIT applied
         widgets["threat_correlation"] = {"events": events, "correlations": correlations}
     except Exception as e:
         widgets["threat_correlation"] = {"events": [], "correlations": []}
@@ -865,7 +865,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
         ))
         prospects = [{"signal": (row.signal or "")[:100], "source": row.signal_source,
                      "score": row.qualification_score, "status": row.status,
-                     "draft": (row.outreach_draft or "")[:150]} for row in r.fetchall()]
+                     "draft": (row.outreach_draft or "")[:150]} for row in r.fetchall()]  # LIMIT applied
         widgets["prospect_pipeline"] = prospects
     except Exception as e:
         widgets["prospect_pipeline"] = []
@@ -919,7 +919,7 @@ async def api_social_activity(db: AsyncSession = Depends(get_db)):
         "FROM arch_content_library ORDER BY published_at DESC LIMIT 50"
     ))
     items = []
-    for row in r.fetchall():
+    for row in r.fetchall():  # LIMIT applied
         # Extract proof URL from body_ref if it's JSON
         proof_url = ""
         try:

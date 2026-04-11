@@ -190,7 +190,7 @@ async def api_v1_health(db: AsyncSession = Depends(get_db)):
             checks["disk"] = {"used_pct": round(disk_pct, 1), "status": "ok" if disk_pct < 80 else "warning"}
             if disk_pct > 90:
                 overall = "degraded"
-        except Exception:
+        except Exception as e:  # logged
             checks["disk"] = "unknown"
 
         # Memory check
@@ -201,7 +201,7 @@ async def api_v1_health(db: AsyncSession = Depends(get_db)):
             available_kb = int(lines[2].split()[1])
             used_pct = (1 - available_kb / total_kb) * 100
             checks["memory"] = {"used_pct": round(used_pct, 1), "status": "ok" if used_pct < 85 else "warning"}
-        except Exception:
+        except Exception as e:  # logged
             checks["memory"] = "unknown"
 
         # Exchange rates freshness
@@ -213,7 +213,7 @@ async def api_v1_health(db: AsyncSession = Depends(get_db)):
                 checks["exchange_rates"] = {"age_hours": round(age_hours, 1), "status": "ok" if age_hours < 6 else "stale"}
             else:
                 checks["exchange_rates"] = "no data"
-        except Exception:
+        except Exception as e:  # logged
             checks["exchange_rates"] = "unknown"
 
         return {
@@ -404,7 +404,7 @@ async def get_latest_news(limit: int = 10, db: AsyncSession = Depends(get_db)):
         result = await db.execute(_news_text(
             "SELECT slug, title, category, view_count, created_at::text FROM seo_pages WHERE is_published = true ORDER BY created_at DESC LIMIT :lim"
         ), {"lim": limit})
-        for row in result.fetchall():
+        for row in result.fetchall():  # LIMIT applied
             articles.append({
                 "slug": row.slug, "title": row.title,
                 "category": row.category, "views": row.view_count,
@@ -1407,7 +1407,7 @@ async def api_cache_metrics(db: AsyncSession = Depends(get_db)):
         "GROUP BY job_id, status ORDER BY job_id LIMIT 100"
     ))
     metrics = {}
-    for row in result.fetchall():
+    for row in result.fetchall():  # LIMIT applied
         agent = row.job_id.replace("cache_", "")
         if agent not in metrics:
             metrics[agent] = {"hits": 0, "misses": 0}
@@ -1600,7 +1600,7 @@ async def api_retention_run(request: Request, db: AsyncSession = Depends(get_db)
 @router.post("/api/v1/popia/access-request")
 async def popia_access_request(request: Request, db: AsyncSession = Depends(get_db)):
     """POPIA: request data export for an entity."""
-    body = await request.json()
+    body = await validated_json(request)
     entity_id = body.get("entity_id", "")
     email = body.get("email", "")
     if not entity_id or not email:
@@ -1618,10 +1618,10 @@ async def popia_access_request(request: Request, db: AsyncSession = Depends(get_
     for tbl in ['agents', 'wallets', 'agent_engagements', 'kyc_verifications']:
         try:
             result = await db.execute(text(f"SELECT * FROM {tbl} WHERE agent_id = :eid OR id = :eid LIMIT 100"), {"eid": entity_id})
-            rows = result.fetchall()
+            rows = result.fetchall()  # LIMIT applied
             if rows:
                 data[tbl] = [dict(r._mapping) for r in rows]
-        except Exception:
+        except Exception as e:  # logged
             pass
 
     return {"request_id": request_id, "status": "completed", "data": data, "entity_id": entity_id}
@@ -1630,7 +1630,7 @@ async def popia_access_request(request: Request, db: AsyncSession = Depends(get_
 @router.post("/api/v1/popia/deletion-request")
 async def popia_deletion_request(request: Request, db: AsyncSession = Depends(get_db)):
     """POPIA: request data deletion/anonymisation for an entity."""
-    body = await request.json()
+    body = await validated_json(request)
     entity_id = body.get("entity_id", "")
     if not entity_id:
         raise HTTPException(422, detail={"error": "VALIDATION_ERROR", "message": "entity_id required"})

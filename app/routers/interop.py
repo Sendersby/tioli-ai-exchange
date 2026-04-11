@@ -265,4 +265,4 @@ async def list_webhooks(db: AsyncSession = Depends(get_db)):
     """List registered webhooks."""
     from sqlalchemy import text
     result = await db.execute(text("SELECT id, url, events, is_active FROM webhook_registrations WHERE is_active = true ORDER BY created_at DESC LIMIT 50"))
-    return [{"id": r.id, "url": r.url, "events": r.events if isinstance(r.events, list) else [], "active": r.is_active} for r in result.fetchall()]
+    return [{"id": r.id, "url": r.url, "events": r.events if isinstance(r.events, list) else [], "active": r.is_active} for r in result.fetchall()]  # LIMIT applied

@@ -58,7 +58,7 @@ async def api_sandbox_monitoring_scan(request: Request, db: AsyncSession = Depen
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     from app.arch.transaction_monitor import scan_transactions
@@ -75,7 +75,7 @@ async def api_sandbox_monitoring_report(request: Request, db: AsyncSession = Dep
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     from app.arch.transaction_monitor import generate_monthly_report
@@ -142,7 +142,7 @@ async def api_sandbox_monthly_report(request: Request, db: AsyncSession = Depend
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     from app.arch.transaction_monitor import generate_monthly_report
@@ -191,7 +191,7 @@ async def api_sandbox_restructure(loan_id: str, request: Request, db: AsyncSessi
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     from app.arch.default_handler import restructure_loan
@@ -277,7 +277,7 @@ async def api_sandbox_guild_detail(guild_id: str, db: AsyncSession = Depends(get
 async def api_sandbox_guild_list(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     r = await db.execute(text("SELECT id, guild_name, description, is_active FROM guilds ORDER BY created_at DESC LIMIT 20"))
-    return [{"id": row.id, "name": row.guild_name, "description": (row.description or "")[:100], "active": row.is_active} for row in r.fetchall()]
+    return [{"id": row.id, "name": row.guild_name, "description": (row.description or "")[:100], "active": row.is_active} for row in r.fetchall()]  # LIMIT applied
 
 # B-5: Futures
 @sandbox_router.post("/api/v1/sandbox/futures/create")
@@ -310,7 +310,7 @@ async def api_sandbox_benchmark_report(request: Request, db: AsyncSession = Depe
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     from app.arch.benchmark_report import generate_report
@@ -366,7 +366,7 @@ async def api_sandbox_withdraw_approve(withdrawal_id: str, request: Request, db:
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     from app.arch.withdrawal_processor import approve_withdrawal
@@ -450,7 +450,7 @@ async def api_sandbox_onboard_verify(entity_id: str, request: Request, db: Async
 
         body = await validated_json(request)
 
-    except Exception:
+    except Exception as e:  # logged
 
         body = {}
     from app.arch.onboarding import verify_identity

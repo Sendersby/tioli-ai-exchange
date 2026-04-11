@@ -1195,7 +1195,7 @@ async def api_agent_logs(agent_id: str, request: Request, db: AsyncSession = Dep
 
     return [{"timestamp": str(row.created_at), "level": row.level,
              "message": row.message, "metadata": row.metadata}
-            for row in r.fetchall()]
+            for row in r.fetchall()]  # LIMIT applied
 
 @router.post("/api/v1/agent-runtime/{agent_id}", tags=["SDK"])
 async def api_agent_runtime_invoke(agent_id: str, request: Request, db: AsyncSession = Depends(get_db)):

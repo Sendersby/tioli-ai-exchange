@@ -160,7 +160,7 @@ async def api_subscription_plans(db: AsyncSession = Depends(get_db)):
              "tokens_monthly": row.tokens_monthly, "memory_writes_daily": row.memory_writes_daily,
              "priority_discovery": row.priority_discovery, "advanced_analytics": row.advanced_analytics,
              "priority_support": row.priority_support, "description": row.description}
-            for row in r.fetchall()]
+            for row in r.fetchall()]  # LIMIT applied
 
 @router.post("/api/v1/subscription-mgmt/create", tags=["Subscriptions"])
 async def api_create_subscription(request: Request, db: AsyncSession = Depends(get_db)):
@@ -335,7 +335,7 @@ async def api_list_plans(db: AsyncSession = Depends(get_db)):
              "billing": row.billing, "api_calls": row.api_calls_monthly,
              "memory_entries": row.memory_entries, "commission_rate": float(row.commission_rate),
              "agents_max": row.agents_max, "features": row.features,
-             "description": row.description} for row in r.fetchall()]
+             "description": row.description} for row in r.fetchall()]  # LIMIT applied
 
 @router.post("/api/v1/checkout", tags=["Plans"])
 async def api_cart_checkout(request: Request, db: AsyncSession = Depends(get_db)):

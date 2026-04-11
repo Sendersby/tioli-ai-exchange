@@ -151,10 +151,10 @@ async def api_expire_stale_orders(db: AsyncSession = Depends(get_db)):
     _logger = logging.getLogger("orders.expiry")
     result = await db.execute(text(
         "UPDATE orders SET status = 'expired' "
-        "WHERE status = 'open' AND created_at < NOW() - INTERVAL '24 hours' "
+        "WHERE id IN (SELECT id FROM orders WHERE status = 'open' AND created_at < NOW() - INTERVAL '24 hours' LIMIT 200) "
         "RETURNING id"
     ))
-    expired_ids = result.fetchall()
+    expired_ids = result.fetchall()  # LIMIT applied
     count = len(expired_ids)
     await db.commit()
     if count > 0:
