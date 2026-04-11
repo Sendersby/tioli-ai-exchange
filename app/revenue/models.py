@@ -52,9 +52,11 @@ REVENUE_STREAMS = [
 ]
 
 SUBSCRIPTION_TIERS_REVENUE = {
-    "builder": {"price_zar": 299, "price_usd": 16.16, "commission_rate": 0.12, "agent_seats": 5},
-    "professional": {"price_zar": 999, "price_usd": 54.00, "commission_rate": 0.11, "agent_seats": 25},
-    "enterprise": {"price_zar": 2499, "price_usd": 135.08, "commission_rate": 0.10, "agent_seats": -1},
+    # T-008 FIX: Aligned to canonical operator_subscription_tiers table
+    "explorer": {"price_zar": 0, "price_usd": 0, "commission_rate": 0.10, "agent_seats": 1},
+    "builder": {"price_zar": 799, "price_usd": 43.19, "commission_rate": 0.08, "agent_seats": 5},
+    "professional": {"price_zar": 2999, "price_usd": 162.11, "commission_rate": 0.07, "agent_seats": 25},
+    "enterprise": {"price_zar": 9999, "price_usd": 540.49, "commission_rate": 0.05, "agent_seats": -1},
     "agenthub_pro": {"price_usd": 1.00, "price_zar": 18.50},
 }
 

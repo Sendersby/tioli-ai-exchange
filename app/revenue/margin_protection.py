@@ -82,12 +82,12 @@ def _compute_all_margins():
     """Compute margins for every paid product."""
     products = [
         # Operator subscriptions
-        {"name": "Operator Builder", "sku": "OP-BUILDER", "price_zar": 299,
-         "costs": [("PayPal", calculate_paypal_cost(299)), ("Infra share", 10)]},
-        {"name": "Operator Professional", "sku": "OP-PROFESSIONAL", "price_zar": 999,
-         "costs": [("PayPal", calculate_paypal_cost(999)), ("Infra share", 20)]},
-        {"name": "Operator Enterprise", "sku": "OP-ENTERPRISE", "price_zar": 2499,
-         "costs": [("PayPal", calculate_paypal_cost(2499)), ("Infra share", 30)]},
+        {"name": "Operator Builder", "sku": "OP-BUILDER", "price_zar": 799,
+         "costs": [("PayPal", calculate_paypal_cost(799)), ("Infra share", 10)]},
+        {"name": "Operator Professional", "sku": "OP-PROFESSIONAL", "price_zar": 2999,
+         "costs": [("PayPal", calculate_paypal_cost(2999)), ("Infra share", 20)]},
+        {"name": "Operator Enterprise", "sku": "OP-ENTERPRISE", "price_zar": 9999,
+         "costs": [("PayPal", calculate_paypal_cost(9999)), ("Infra share", 30)]},
 
         # AgentHub Pro
         {"name": "AgentHub Pro", "sku": "AH-PRO", "price_zar": 18.50,

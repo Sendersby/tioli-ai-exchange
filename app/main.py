@@ -36,6 +36,8 @@ from app.blockchain.chain import Blockchain
 from app.blockchain.transaction import Transaction, TransactionType
 from app.agents.models import Agent, Wallet, Loan
 from app.agents.wallet import WalletService
+from app.utils.validators import require_kyc_verified
+from app.utils.audit import log_financial_event
 from app.auth.owner import owner_auth
 from app.auth.agent_auth import register_agent, authenticate_agent
 from app.exchange.fees import FeeEngine
@@ -173,8 +175,26 @@ governance_service = GovernanceService()
 currency_service = CurrencyService()
 financial_governance = FinancialGovernance()
 # AUD-01 fix: wire revenue recorder AFTER financial_governance is defined
+# T-003 fix: also record to revenue_transactions for audit trail
+from app.revenue.service import RevenueEngineService as _RevEngine
+_revenue_engine = _RevEngine()
+
 async def _record_revenue(db, source, amount, currency, desc):
+    # Write to platform_revenue (financial governance)
     await financial_governance.record_revenue(db, source, amount, currency, desc)
+    # T-003: Also write to revenue_transactions (detailed audit)
+    try:
+        await _revenue_engine.record_revenue(
+            db, stream=source, source_type="wallet_transfer",
+            gross_zar=amount if currency == "ZAR" else amount * 18.50,
+            description=desc, source_id=None, agent_id=None,
+        )
+    except Exception as _rev_err:
+        import logging
+        logging.getLogger("revenue.pipeline").error(
+            f"revenue_transactions recording failed (non-fatal): {_rev_err}"
+        )
+
 wallet_service.set_revenue_recorder(_record_revenue)
 # Issue #7: charity allocation conditional on profitability
 async def _update_profitability(db):
@@ -303,6 +323,96 @@ async def lifespan(app: FastAPI):
     print(f"  Phase 4: Crypto, Conversion, Security ACTIVE")
     print(f"  Phase 5: Optimization, Discovery, Investing, Compliance ACTIVE")
     print(f"{'='*60}\n")
+
+    # -- T-002: Token supply reconciliation check ---------------------
+    import logging as _recon_log
+    _recon_logger = _recon_log.getLogger("token.reconciliation")
+    try:
+        async with async_session() as _recon_db:
+            from sqlalchemy import text as _rt
+            _wr = await _recon_db.execute(
+                _rt("SELECT COALESCE(SUM(balance), 0) FROM wallets WHERE currency = 'AGENTIS'")
+            )
+            _wallet_total = float(_wr.scalar())
+            _lr = await _recon_db.execute(
+                _rt("SELECT COALESCE(SUM(balance), 0) FROM liquidity_pools WHERE currency = 'AGENTIS'")
+            )
+            _pool_total = float(_lr.scalar())
+            _mr = await _recon_db.execute(
+                _rt("SELECT COALESCE(SUM(amount), 0) FROM token_mint_ledger")
+            )
+            _minted_total = float(_mr.scalar())
+            _circulating = _wallet_total + _pool_total
+            if _minted_total > 0 and abs(_circulating - _minted_total) > 1.0:
+                _recon_logger.critical(
+                    f"TOKEN SUPPLY MISMATCH: minted={_minted_total:,.2f}, "
+                    f"circulating={_circulating:,.2f} "
+                    f"(wallets={_wallet_total:,.2f} + pools={_pool_total:,.2f}), "
+                    f"discrepancy={abs(_circulating - _minted_total):,.2f}"
+                )
+            else:
+                _recon_logger.info(
+                    f"Token reconciliation OK: wallets={_wallet_total:,.2f}, pools={_pool_total:,.2f}"
+                )
+    except Exception as _recon_e:
+        _recon_logger.warning(f"Token reconciliation check failed: {_recon_e}")
+
+    # -- T-003: Revenue recording pipeline check ----------------------
+    try:
+        async with async_session() as _rev_db:
+            from sqlalchemy import text as _rt2
+            _trades_r = await _rev_db.execute(_rt2("SELECT count(*) FROM orders"))
+            _trades_count = _trades_r.scalar()
+            _rev_r = await _rev_db.execute(_rt2("SELECT count(*) FROM revenue_transactions"))
+            _rev_count = _rev_r.scalar()
+            _plat_rev_r = await _rev_db.execute(_rt2("SELECT count(*) FROM platform_revenue"))
+            _plat_rev_count = _plat_rev_r.scalar()
+            if _trades_count > 0 and _rev_count == 0 and _plat_rev_count == 0:
+                _recon_logger.critical(
+                    f"REVENUE PIPELINE GAP: {_trades_count} orders exist but "
+                    f"0 revenue_transactions and 0 platform_revenue recorded. "
+                    f"Commission may not be tracked."
+                )
+            else:
+                _recon_logger.info(
+                    f"Revenue pipeline: {_rev_count} revenue_transactions, "
+                    f"{_plat_rev_count} platform_revenue entries"
+                )
+    except Exception as _rev_e:
+        _recon_logger.warning(f"Revenue pipeline check failed: {_rev_e}")
+
+    # -- T-007: Exchange rate staleness check --------------------------
+    try:
+        async with async_session() as _fx_db:
+            from sqlalchemy import text as _rt3
+            from datetime import datetime as _dt3, timezone as _tz3
+            _fx_r = await _fx_db.execute(_rt3("SELECT MAX(timestamp) FROM exchange_rates"))
+            _last_rate_ts = _fx_r.scalar()
+            if _last_rate_ts:
+                _now_utc = _dt3.now(_tz3.utc)
+                _last_aware = _last_rate_ts.replace(tzinfo=_tz3.utc) if _last_rate_ts.tzinfo is None else _last_rate_ts
+                _age_hours = (_now_utc - _last_aware).total_seconds() / 3600
+                if _age_hours > 6:
+                    _recon_logger.warning(
+                        f"STALE EXCHANGE RATES: Last updated {_age_hours:.1f}h ago. "
+                        f"Triggering refresh..."
+                    )
+                    try:
+                        _fx_result = await forex_service.update_platform_rates(_fx_db)
+                        await _fx_db.commit()
+                        _recon_logger.info(
+                            f"Forex refresh: {_fx_result.get('status', '?')}, "
+                            f"pairs: {_fx_result.get('pairs_updated', 0)}"
+                        )
+                    except Exception as _fx_re:
+                        _recon_logger.error(f"Forex refresh failed: {_fx_re}")
+                else:
+                    _recon_logger.info(f"Exchange rates OK: last updated {_age_hours:.1f}h ago")
+            else:
+                _recon_logger.warning("No exchange rates found in database")
+    except Exception as _fx_e:
+        _recon_logger.warning(f"Exchange rate staleness check failed: {_fx_e}")
+
     # Seed Agentis Roadmap if empty
     try:
         from app.agentis_roadmap.service import RoadmapService
@@ -1185,11 +1295,15 @@ async def api_deposit(
     """Deposit funds into your wallet."""
     InputValidator.validate_amount(req.amount)
     InputValidator.validate_currency(req.currency)
+    await require_kyc_verified(db, agent.id)
     if idempotency_key:
         cached = await idempotency_service.check_and_store(db, idempotency_key, "deposit", agent.id)
         if cached:
             return JSONResponse(content=json.loads(cached))
     tx = await wallet_service.deposit(db, agent.id, req.amount, req.currency, req.description)
+    await log_financial_event(db, "DEPOSIT_CONFIRMED", actor_id=agent.id, actor_type="agent",
+                              target_id=tx.id, target_type="transaction",
+                              amount=req.amount, currency=req.currency)
     result = {"transaction_id": tx.id, "amount": req.amount, "currency": req.currency}
     result = enrich_transaction_response(result)
     # Deliver webhooks for trade event
@@ -1211,11 +1325,15 @@ async def api_withdraw(
     """Withdraw funds from your wallet."""
     InputValidator.validate_amount(req.amount)
     InputValidator.validate_currency(req.currency)
+    await require_kyc_verified(db, agent.id)
     if idempotency_key:
         cached = await idempotency_service.check_and_store(db, idempotency_key, "withdraw", agent.id)
         if cached:
             return JSONResponse(content=json.loads(cached))
     tx = await wallet_service.withdraw(db, agent.id, req.amount, req.currency, req.description)
+    await log_financial_event(db, "WITHDRAWAL_INITIATED", actor_id=agent.id, actor_type="agent",
+                              target_id=tx.id, target_type="transaction",
+                              amount=req.amount, currency=req.currency)
     result = {"transaction_id": tx.id, "amount": req.amount, "currency": req.currency}
     if idempotency_key:
         await idempotency_service.store_response(db, idempotency_key, "withdraw", agent.id, json.dumps(result, default=str))
@@ -1259,6 +1377,7 @@ async def api_transfer(
     InputValidator.validate_amount(req.amount)
     InputValidator.validate_currency(req.currency)
     InputValidator.validate_uuid(req.receiver_id, "receiver_id")
+    await require_kyc_verified(db, agent.id)
     if idempotency_key:
         cached = await idempotency_service.check_and_store(db, idempotency_key, "transfer", agent.id)
         if cached:
@@ -1282,6 +1401,9 @@ async def api_transfer(
     tx = await wallet_service.transfer(
         db, agent.id, req.receiver_id, req.amount, req.currency, req.description
     )
+    await log_financial_event(db, "BALANCE_TRANSFER", actor_id=agent.id, actor_type="agent",
+                              target_id=req.receiver_id, target_type="agent",
+                              amount=req.amount, currency=req.currency)
     fee_info = fee_engine.calculate_fees(req.amount, transaction_type="resource_exchange")
     result = {
         "transaction_id": tx.id, "gross_amount": req.amount,
@@ -1308,6 +1430,7 @@ async def api_place_order(
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
 ):
     """Place a buy or sell order on the exchange."""
+    await require_kyc_verified(db, agent.id)
     if idempotency_key:
         cached = await idempotency_service.check_and_store(db, idempotency_key, "order", agent.id)
         if cached:
@@ -1316,6 +1439,10 @@ async def api_place_order(
         db, agent.id, req.side, req.base_currency, req.quote_currency,
         req.price, req.quantity,
     )
+    await log_financial_event(db, "ORDER_PLACED", actor_id=agent.id, actor_type="agent",
+                              target_id=result.get("order_id"), target_type="order",
+                              amount=req.price * req.quantity, currency=req.quote_currency,
+                              after_state={"side": req.side, "trades": result.get("trades_executed", 0)})
     if result["trades_executed"] > 0:
         await pricing_engine.update_rates_from_trade(
             db, req.base_currency, req.quote_currency
@@ -5333,6 +5460,9 @@ async def api_create_escrow(
         db, req.transaction_ref, agent.id, req.amount, req.currency,
         req.beneficiary_id, req.reason, req.expires_hours,
     )
+    await log_financial_event(db, "ESCROW_LOCKED", actor_id=agent.id, actor_type="agent",
+                              target_id=escrow.id, target_type="escrow",
+                              amount=escrow.amount, currency=req.currency)
     return {"escrow_id": escrow.id, "amount": escrow.amount, "status": escrow.status}
 
 
@@ -5341,13 +5471,30 @@ async def api_release_escrow(
     escrow_id: str, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
 ):
-    """Release escrowed funds to beneficiary. AUD-03: verify party ownership."""
+    """Release escrowed funds to beneficiary. AUD-03: verify party ownership. J-004: block if dispute active."""
     escrow_record = await escrow_service.get_escrow(db, escrow_id)
     if not escrow_record:
         raise HTTPException(status_code=404, detail="Escrow not found")
     if escrow_record.get("beneficiary") and escrow_record["beneficiary"] != agent.id:
         raise HTTPException(status_code=403, detail="Only the beneficiary can release this escrow")
+    # J-004: Check for active disputes on related engagement
+    try:
+        from sqlalchemy import text as sql_text
+        tx_ref = escrow_record.get("transaction_ref", "")
+        if tx_ref:
+            active_dispute = await db.execute(sql_text(
+                "SELECT dispute_id FROM engagement_disputes "
+                "WHERE engagement_id = :eid AND status IN ('open','evidence','arbitrating','escalated') LIMIT 1"
+            ), {"eid": tx_ref})
+            if active_dispute.fetchone():
+                raise HTTPException(status_code=423, detail="Escrow locked: active dispute on this engagement")
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Don't block on check failure
     escrow = await escrow_service.release_escrow(db, escrow_id)
+    await log_financial_event(db, "ESCROW_RELEASED", actor_id=agent.id, actor_type="agent",
+                              target_id=escrow.id, target_type="escrow")
     return {"escrow_id": escrow.id, "status": escrow.status}
 
 
@@ -5356,13 +5503,30 @@ async def api_refund_escrow(
     escrow_id: str, agent: Agent = Depends(require_agent),
     db: AsyncSession = Depends(get_db),
 ):
-    """Refund escrowed funds to depositor. AUD-03: verify party ownership."""
+    """Refund escrowed funds to depositor. AUD-03: verify party ownership. J-004: block if dispute active."""
     escrow_record = await escrow_service.get_escrow(db, escrow_id)
     if not escrow_record:
         raise HTTPException(status_code=404, detail="Escrow not found")
     if escrow_record.get("depositor") != agent.id:
         raise HTTPException(status_code=403, detail="Only the depositor can request a refund")
+    # J-004: Check for active disputes on related engagement
+    try:
+        from sqlalchemy import text as sql_text
+        tx_ref = escrow_record.get("transaction_ref", "")
+        if tx_ref:
+            active_dispute = await db.execute(sql_text(
+                "SELECT dispute_id FROM engagement_disputes "
+                "WHERE engagement_id = :eid AND status IN ('open','evidence','arbitrating','escalated') LIMIT 1"
+            ), {"eid": tx_ref})
+            if active_dispute.fetchone():
+                raise HTTPException(status_code=423, detail="Escrow locked: active dispute on this engagement")
+    except HTTPException:
+        raise
+    except Exception:
+        pass
     escrow = await escrow_service.refund_escrow(db, escrow_id)
+    await log_financial_event(db, "ESCROW_REFUNDED", actor_id=agent.id, actor_type="agent",
+                              target_id=escrow.id, target_type="escrow")
     return {"escrow_id": escrow.id, "status": escrow.status}
 
 
@@ -6386,6 +6550,27 @@ async def api_licensing_pricing():
     }
 
 
+
+
+# -- T-009: Stale Order Expiry Endpoint --------------------------------
+@app.post("/api/v1/orders/expire-stale", tags=["Orders"])
+async def api_expire_stale_orders(db: AsyncSession = Depends(get_db)):
+    """Expire orders that have been open for more than 24 hours."""
+    from sqlalchemy import text
+    import logging
+    _logger = logging.getLogger("orders.expiry")
+    result = await db.execute(text(
+        "UPDATE orders SET status = 'expired' "
+        "WHERE status = 'open' AND created_at < NOW() - INTERVAL '24 hours' "
+        "RETURNING id"
+    ))
+    expired_ids = result.fetchall()
+    count = len(expired_ids)
+    await db.commit()
+    if count > 0:
+        _logger.info(f"Expired {count} stale orders (open > 24h)")
+    return {"expired_count": count, "status": "ok"}
+
 # ══════════════════════════════════════════════════════════════════════
 #  FOREX & JURISDICTION (Issue #8 — International Expansion)
 # ══════════════════════════════════════════════════════════════════════
@@ -6393,9 +6578,13 @@ async def api_licensing_pricing():
 @app.post("/api/forex/update")
 async def api_forex_update(request: Request, db: AsyncSession = Depends(get_db)):
     """Fetch live forex rates and update platform fiat cross-rates."""
-    owner = get_current_owner(request)
-    if not owner:
-        raise HTTPException(status_code=401, detail="Owner authentication required")
+    # T-007: Allow internal calls from scheduler (localhost) without auth
+    client_host = request.client.host if request.client else ""
+    is_internal = client_host in ("127.0.0.1", "::1", "localhost")
+    if not is_internal:
+        owner = get_current_owner(request)
+        if not owner:
+            raise HTTPException(status_code=401, detail="Owner authentication required")
     return await forex_service.update_platform_rates(db)
 
 
@@ -11204,15 +11393,67 @@ async def api_create_subscription(request: Request, db: AsyncSession = Depends(g
             "payment_url": payment_url, "amount_zar": float(plan_data.price_zar),
             "payment_required": True}
 
+
+# -- T-005 FIX: PayFast ITN Signature Verification --------------------
+def _payfast_verify_signature(post_data: dict, passphrase: str) -> bool:
+    """Verify PayFast ITN signature per PayFast documentation.
+
+    Steps:
+    1. Remove 'signature' field from the data
+    2. URL-encode remaining fields in original order
+    3. Append passphrase
+    4. MD5 hash
+    5. Constant-time compare with provided signature
+    """
+    import urllib.parse, hashlib, hmac
+    received_sig = post_data.get("signature", "")
+    if not received_sig:
+        return False
+    # Build verification string from all fields except signature, in original order
+    verify_data = {k: v for k, v in post_data.items() if k != "signature"}
+    verify_string = "&".join(
+        f"{k}={urllib.parse.quote_plus(str(v))}" for k, v in verify_data.items()
+    )
+    if passphrase:
+        verify_string += f"&passphrase={urllib.parse.quote_plus(passphrase)}"
+    expected_sig = hashlib.md5(verify_string.encode()).hexdigest()
+    return hmac.compare_digest(expected_sig, received_sig)
+
+
 @app.post("/api/v1/subscription-mgmt/payfast-notify", tags=["Subscriptions"])
 async def api_payfast_notify(request: Request, db: AsyncSession = Depends(get_db)):
     """PayFast ITN (Instant Transaction Notification) callback."""
+    import logging as _pf_log
+    _pf_logger = _pf_log.getLogger("payfast.itn")
     form = await request.form()
     data = dict(form)
     from sqlalchemy import text
+    import os
+
+    # T-005: Verify PayFast signature (CRITICAL security check)
+    passphrase = os.environ.get("PAYFAST_PASSPHRASE", "")
+    if not _payfast_verify_signature(data, passphrase):
+        _pf_logger.warning(
+            "SECURITY: PayFast ITN signature mismatch -- possible forgery. "
+            f"m_payment_id={data.get('m_payment_id', '?')}"
+        )
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    # T-005: Verify amount matches expected subscription price
+    amount_gross = float(data.get("amount_gross", 0))
+    m_payment_id = data.get("m_payment_id", "")
+    r = await db.execute(text(
+        "SELECT amount_zar FROM subscriptions WHERE payment_ref = :ref AND status = 'pending_payment'"
+    ), {"ref": m_payment_id})
+    expected_row = r.fetchone()
+    if expected_row and abs(float(expected_row.amount_zar) - amount_gross) > 0.01:
+        _pf_logger.warning(
+            f"SECURITY: PayFast amount mismatch. Expected R{expected_row.amount_zar}, "
+            f"got R{amount_gross}. Ref={m_payment_id}"
+        )
+        raise HTTPException(status_code=400, detail="Amount mismatch")
 
     payment_status = data.get("payment_status", "")
-    m_payment_id = data.get("m_payment_id", "")
 
     if payment_status == "COMPLETE":
         # Activate subscription
@@ -11418,12 +11659,37 @@ async def api_cart_checkout(request: Request, db: AsyncSession = Depends(get_db)
 @app.post("/api/v1/checkout/payfast-notify", tags=["Plans"])
 async def api_checkout_payfast_notify(request: Request, db: AsyncSession = Depends(get_db)):
     """PayFast ITN callback for cart checkout payments."""
+    import logging as _pf_log2
+    _pf_logger2 = _pf_log2.getLogger("payfast.itn")
     form = await request.form()
     data = dict(form)
     from sqlalchemy import text
+    import os
+
+    # T-005: Verify PayFast signature (CRITICAL security check)
+    passphrase = os.environ.get("PAYFAST_PASSPHRASE", "")
+    if not _payfast_verify_signature(data, passphrase):
+        _pf_logger2.warning(
+            "SECURITY: PayFast checkout ITN signature mismatch -- possible forgery. "
+            f"m_payment_id={data.get('m_payment_id', '?')}"
+        )
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    # T-005: Verify amount matches expected checkout price
+    amount_gross = float(data.get("amount_gross", 0))
+    payment_ref = data.get("m_payment_id", "")
+    r = await db.execute(text(
+        "SELECT amount_zar FROM customer_subscriptions WHERE payment_ref = :ref AND status = 'pending_payment'"
+    ), {"ref": payment_ref})
+    expected_row = r.fetchone()
+    if expected_row and abs(float(expected_row.amount_zar) - amount_gross) > 0.01:
+        _pf_logger2.warning(
+            f"SECURITY: PayFast checkout amount mismatch. Expected R{expected_row.amount_zar}, "
+            f"got R{amount_gross}. Ref={payment_ref}"
+        )
+        raise HTTPException(status_code=400, detail="Amount mismatch")
 
     payment_status = data.get("payment_status", "")
-    payment_ref = data.get("m_payment_id", "")
 
     if payment_status == "COMPLETE":
         await db.execute(text(

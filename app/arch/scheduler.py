@@ -574,6 +574,21 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
                       id="arch_forex_refresh", replace_existing=True)
     log.info("[scheduler] Registered: Forex rate refresh (every 6h)")
 
+    # -- T-009: Expire stale orders every hour -------------------------
+    async def expire_stale_orders():
+        """Expire orders that have been open for more than 24 hours."""
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post("http://127.0.0.1:8000/api/v1/orders/expire-stale")
+                log.info(f"[orders] Stale order cleanup: {resp.status_code}")
+        except Exception as e:
+            log.warning(f"[orders] Stale order cleanup failed: {e}")
+
+    scheduler.add_job(expire_stale_orders, "interval", hours=1,
+                      id="arch_expire_stale_orders", replace_existing=True)
+    log.info("[scheduler] Registered: Stale order expiry (every 1h)")
+
     # ── Daily AI Agent News — 08:00 SAST ─────────────────────
     async def daily_news_generation():
         """Ambassador generates daily AI agent industry news."""

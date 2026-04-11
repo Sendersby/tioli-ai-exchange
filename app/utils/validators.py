@@ -82,3 +82,77 @@ class FiatWithdrawRequest(BaseModel):
     customer_id: str = Field(min_length=1, max_length=200)
     amount_agentis: float = Field(gt=0, le=10000000)
     kyc_tier: int = Field(default=1, ge=1, le=5)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  KYC Enforcement — L-001 remediation
+# ══════════════════════════════════════════════════════════════════════
+import os
+import logging
+from fastapi import HTTPException
+
+_kyc_log = logging.getLogger("kyc.enforcement")
+
+
+async def require_kyc_verified(db, agent_id: str):
+    """Check KYC status. Returns True if verified, raises 403 if not.
+
+    In SANDBOX_MODE, auto-passes but logs a warning for traceability.
+    """
+    from sqlalchemy import text
+
+    sandbox = os.environ.get("SANDBOX_MODE", "false").lower() == "true"
+
+    result = await db.execute(text(
+        "SELECT kyc_tier FROM kyc_verifications "
+        "WHERE entity_id = :eid ORDER BY created_at DESC LIMIT 1"
+    ), {"eid": agent_id})
+    row = result.fetchone()
+
+    if not row or row.kyc_tier < 1:
+        if sandbox:
+            _kyc_log.warning(
+                f"KYC auto-pass (sandbox): agent={agent_id} has no KYC tier >= 1"
+            )
+            # Audit the sandbox bypass
+            try:
+                from app.utils.audit import log_financial_event
+                await log_financial_event(
+                    db, "KYC_CHECK_PASSED", actor_id=agent_id,
+                    actor_type="agent",
+                    after_state={"sandbox_bypass": True, "kyc_tier": 0},
+                )
+            except Exception:
+                pass
+            return True
+        # Production: block
+        _kyc_log.warning(f"KYC block: agent={agent_id} — no valid KYC")
+        try:
+            from app.utils.audit import log_financial_event
+            await log_financial_event(
+                db, "KYC_CHECK_BLOCKED", actor_id=agent_id,
+                actor_type="agent",
+                after_state={"reason": "no_kyc_tier"},
+            )
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "KYC_REQUIRED",
+                "message": "Identity verification required before trading. Please complete KYC.",
+                "kyc_url": "/kyc/start",
+            },
+        )
+
+    # Audit successful check
+    try:
+        from app.utils.audit import log_financial_event
+        await log_financial_event(
+            db, "KYC_CHECK_PASSED", actor_id=agent_id,
+            actor_type="agent",
+            after_state={"kyc_tier": row.kyc_tier},
+        )
+    except Exception:
+        pass
+    return True

@@ -8,6 +8,11 @@ log = logging.getLogger("arch.transaction_monitor")
 RULES = {
     "STRUCTURING": {"threshold": 25000, "window_hours": 24, "min_count": 3,
                     "description": "Multiple transactions just under R25K threshold within 24h"},
+    "FICA_SINGLE": {"threshold": 49999, "description": "FICA: Single transaction > R49,999"},
+    "FICA_CUMULATIVE": {"threshold": 99999, "window_days": 30,
+                        "description": "FICA: User > R99,999 cumulative in 30 days"},
+    "FICA_STRUCTURING": {"threshold": 49999, "window_hours": 48, "min_count": 3,
+                         "description": "FICA: Multiple transactions just under R50K (structuring)"},
     "VELOCITY": {"max_per_hour": 10,
                  "description": "More than 10 transactions from same entity in 1 hour"},
     "ROUND_TRIP": {"window_hours": 4,
@@ -75,6 +80,55 @@ async def scan_transactions(db, hours=24):
         ), {"id": alert_id, "eid": row.customer_id, "amt": float(row.amount_zar),
             "narr": f"Deposit R{row.amount_zar} followed by withdrawal R{row.withdraw_zar} within 4h"})
         alerts.append({"rule": "ROUND_TRIP", "entity": row.customer_id})
+
+    # Rule 4: FICA — single transaction > R49,999
+    r = await db.execute(text(
+        f"SELECT buyer_id as entity, total_value as amount FROM trades "
+        f"WHERE executed_at > now() - interval '{hours} hours' "
+        f"AND total_value > 49999"
+    ))
+    for row in r.fetchall():
+        alert_id = str(uuid.uuid4())
+        await db.execute(text(
+            "INSERT INTO transaction_alerts (id, entity_id, alert_type, severity, rule_triggered, "
+            "narrative, amount_involved, is_sandbox) "
+            "VALUES (cast(:id as uuid), :eid, 'FICA_SINGLE', 'critical', 'FICA_SINGLE', :narr, :amt, true)"
+        ), {"id": alert_id, "eid": row.entity, "amt": float(row.amount),
+            "narr": f"FICA: Single transaction R{float(row.amount):.2f} exceeds R49,999 threshold"})
+        alerts.append({"rule": "FICA_SINGLE", "entity": row.entity, "amount": float(row.amount)})
+
+    # Rule 5: FICA — cumulative > R99,999 in 30 days
+    r = await db.execute(text(
+        "SELECT buyer_id as entity, sum(total_value) as total FROM trades "
+        "WHERE executed_at > now() - interval '30 days' "
+        "GROUP BY buyer_id HAVING sum(total_value) > 99999"
+    ))
+    for row in r.fetchall():
+        alert_id = str(uuid.uuid4())
+        await db.execute(text(
+            "INSERT INTO transaction_alerts (id, entity_id, alert_type, severity, rule_triggered, "
+            "narrative, amount_involved, is_sandbox) "
+            "VALUES (cast(:id as uuid), :eid, 'FICA_CUMULATIVE', 'critical', 'FICA_CUMULATIVE', :narr, :amt, true)"
+        ), {"id": alert_id, "eid": row.entity, "amt": float(row.total),
+            "narr": f"FICA: 30-day cumulative R{float(row.total):.2f} exceeds R99,999 threshold"})
+        alerts.append({"rule": "FICA_CUMULATIVE", "entity": row.entity, "total": float(row.total)})
+
+    # Rule 6: FICA structuring — multiple transactions R40K-R49,999 in 48h
+    r = await db.execute(text(
+        "SELECT buyer_id as entity, count(*) as cnt, sum(total_value) as total FROM trades "
+        "WHERE executed_at > now() - interval '48 hours' "
+        "AND total_value BETWEEN 40000 AND 49999 "
+        "GROUP BY buyer_id HAVING count(*) >= 3"
+    ))
+    for row in r.fetchall():
+        alert_id = str(uuid.uuid4())
+        await db.execute(text(
+            "INSERT INTO transaction_alerts (id, entity_id, alert_type, severity, rule_triggered, "
+            "narrative, amount_involved, is_sandbox) "
+            "VALUES (cast(:id as uuid), :eid, 'FICA_STRUCTURING', 'critical', 'FICA_STRUCTURING', :narr, :amt, true)"
+        ), {"id": alert_id, "eid": row.entity, "amt": float(row.total),
+            "narr": f"FICA structuring: {row.cnt} transactions R40K-R50K totalling R{float(row.total):.2f} in 48h"})
+        alerts.append({"rule": "FICA_STRUCTURING", "entity": row.entity, "count": row.cnt})
 
     await db.commit()
     return {"alerts_generated": len(alerts), "alerts": alerts, "scan_period_hours": hours, "sandbox": True}

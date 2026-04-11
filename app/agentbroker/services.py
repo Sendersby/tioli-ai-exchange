@@ -831,9 +831,57 @@ class DisputeService:
         dispute_type: str, description: str, evidence: list | None = None
     ) -> EngagementDispute:
         _check_feature_flag()
+        from fastapi import HTTPException
+
         valid_types = {"non_delivery", "partial_delivery", "quality", "payment", "scope", "terms"}
         if dispute_type not in valid_types:
             raise ValueError(f"Invalid dispute type. Must be one of: {valid_types}")
+
+        # J-002: Validate engagement exists
+        eng_result = await db.execute(
+            select(AgentEngagement).where(AgentEngagement.engagement_id == engagement_id)
+        )
+        engagement = eng_result.scalar_one_or_none()
+        if not engagement:
+            raise HTTPException(status_code=404, detail="Engagement not found")
+
+        # J-002: Verify caller is a party (buyer or seller)
+        if raised_by not in (engagement.client_agent_id, engagement.provider_agent_id):
+            raise HTTPException(status_code=403, detail="Only a party to this engagement can raise a dispute")
+
+        # J-002: Check engagement is in a disputable state
+        disputable_states = {"IN_PROGRESS", "DELIVERED", "COMPLETED"}
+        if engagement.current_state not in disputable_states:
+            # Allow COMPLETED within 30 days
+            if engagement.current_state == "COMPLETED" and engagement.completed_at:
+                days_since = (datetime.now(timezone.utc) - engagement.completed_at).days
+                if days_since > 30:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Dispute window expired. Engagement completed {days_since} days ago (max 30)."
+                    )
+            elif engagement.current_state not in disputable_states:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Engagement in state '{engagement.current_state}' is not disputable. Must be IN_PROGRESS, DELIVERED, or COMPLETED (within 30 days)."
+                )
+
+        # J-002: Prevent duplicate active disputes
+        existing = await db.execute(
+            select(EngagementDispute).where(
+                EngagementDispute.engagement_id == engagement_id,
+                EngagementDispute.status.in_(["open", "evidence", "arbitrating", "escalated"]),
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="An active dispute already exists for this engagement")
+
+        # J-002: Require minimum evidence (description > 50 chars)
+        if len(description.strip()) < 50:
+            raise HTTPException(
+                status_code=422,
+                detail="Dispute description must be at least 50 characters. Provide sufficient detail."
+            )
 
         dispute = EngagementDispute(
             engagement_id=engagement_id,
@@ -844,6 +892,34 @@ class DisputeService:
         )
         db.add(dispute)
         await db.flush()
+
+        # J-004: Lock escrow for disputed amount
+        if engagement.escrow_amount and engagement.escrow_amount > 0:
+            try:
+                from app.agents.wallet import WalletService
+                wallet_svc = WalletService(self.blockchain if hasattr(self, 'blockchain') else None,
+                                          self.fee_engine if hasattr(self, 'fee_engine') else None)
+                await wallet_svc.freeze_balance(
+                    db, engagement.provider_agent_id,
+                    engagement.escrow_amount, "AGENTIS",
+                    reference=f"dispute:{dispute.dispute_id}"
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger("disputes").warning(f"Could not lock escrow for dispute {dispute.dispute_id}: {e}")
+
+        # L-006: Audit trail
+        try:
+            from app.utils.audit import log_financial_event
+            await log_financial_event(
+                db, "DISPUTE_RAISED", actor_id=raised_by, actor_type="agent",
+                target_id=dispute.dispute_id, target_type="dispute",
+                amount=engagement.proposed_price, currency=engagement.price_currency,
+                after_state={"dispute_type": dispute_type, "engagement_id": engagement_id}
+            )
+        except Exception:
+            pass
+
         return dispute
 
     async def submit_evidence(
@@ -870,8 +946,10 @@ class DisputeService:
         self, db: AsyncSession, dispute_id: str,
         engagement_service: "EngagementService | None" = None
     ) -> dict:
-        """AI arbitration — automated resolution (Section 2.7.2 Stage 3).
+        """AI-assisted arbitration with owner review for high-value disputes.
 
+        J-001: Uses Claude (haiku) for structured analysis instead of if/else.
+        J-005: Auto-recusal if owner is a party to the engagement.
         NEW-02 fix: transitions engagement state after resolution.
         """
         _check_feature_flag()
@@ -882,28 +960,95 @@ class DisputeService:
         if not dispute:
             raise ValueError("Dispute not found")
 
-        # Simplified arbitration logic (production would use LLM analysis)
-        evidence_count = len(dispute.evidence or [])
-        if dispute.dispute_type == "non_delivery":
-            outcome = "full_refund"
-            rationale = "Provider failed to deliver within agreed terms."
-        elif dispute.dispute_type == "quality" and evidence_count >= 2:
-            outcome = "partial_payment"
-            rationale = "Deliverable partially meets acceptance criteria based on evidence."
-        elif dispute.dispute_type in ("scope", "terms"):
-            outcome = "rework"
-            rationale = "Scope ambiguity identified. Provider to revise deliverable."
-        else:
-            # Escalate ambiguous cases
+        # Load engagement for context
+        eng_result = await db.execute(
+            select(AgentEngagement).where(AgentEngagement.engagement_id == dispute.engagement_id)
+        )
+        engagement = eng_result.scalar_one_or_none()
+
+        # J-005: Recusal — if owner is a party, auto-escalate to external review
+        import os
+        owner_id = os.environ.get("OWNER_AGENT_ID", "")
+        if engagement and owner_id and owner_id in (engagement.client_agent_id, engagement.provider_agent_id):
+            dispute.escalated_to_owner = False
+            dispute.status = "external_review"
+            await db.flush()
+            try:
+                from app.utils.audit import log_financial_event
+                await log_financial_event(
+                    db, "DISPUTE_ESCALATED", actor_id="system", actor_type="system",
+                    target_id=dispute_id, target_type="dispute",
+                    after_state={"reason": "owner_recusal", "owner_is_party": True}
+                )
+            except Exception:
+                pass
+            return {"dispute_id": dispute_id, "status": "external_review",
+                    "message": "Owner is a party to this engagement. Auto-recused. Escalated to external review."}
+
+        # J-001: AI arbitration via Claude
+        outcome = None
+        rationale = None
+        confidence = 0.0
+
+        try:
+            outcome, rationale, confidence = await self._ai_arbitrate(dispute, engagement)
+        except Exception as e:
+            import logging
+            logging.getLogger("disputes").error(f"AI arbitration failed for {dispute_id}: {e}")
+
+        # Determine if escalation is needed
+        dispute_value = engagement.proposed_price if engagement else 0
+        needs_escalation = (
+            outcome is None
+            or confidence < 0.7
+            or (dispute_value and dispute_value > 5000)
+        )
+
+        if needs_escalation and outcome is not None:
+            # AI produced a result but low confidence or high value — escalate with AI recommendation
+            dispute.escalated_to_owner = True
+            dispute.status = "escalated"
+            dispute.arbitration_rationale = f"[AI recommendation, confidence={confidence:.2f}] {rationale}"
+            await db.flush()
+            try:
+                from app.utils.audit import log_financial_event
+                await log_financial_event(
+                    db, "DISPUTE_ESCALATED", actor_id="system", actor_type="ai_arbitration",
+                    target_id=dispute_id, target_type="dispute",
+                    amount=dispute_value, currency=engagement.price_currency if engagement else "AGENTIS",
+                    after_state={"ai_outcome": outcome, "confidence": confidence,
+                                 "reason": "high_value" if dispute_value > 5000 else "low_confidence"}
+                )
+            except Exception:
+                pass
+            return {"dispute_id": dispute_id, "status": "escalated",
+                    "ai_recommendation": outcome, "confidence": confidence,
+                    "message": f"Escalated to owner review (value=R{dispute_value:.2f}, confidence={confidence:.2f})"}
+
+        if outcome is None:
+            # Total fallback — escalate
             dispute.escalated_to_owner = True
             dispute.status = "escalated"
             await db.flush()
-            return {"dispute_id": dispute_id, "status": "escalated", "message": "Escalated to owner for veto decision"}
+            return {"dispute_id": dispute_id, "status": "escalated",
+                    "message": "AI arbitration unavailable. Escalated to owner for decision."}
 
         dispute.outcome = outcome
         dispute.arbitration_rationale = rationale
         dispute.status = "resolved"
         dispute.resolved_at = datetime.now(timezone.utc)
+
+        # L-006: Audit the resolution
+        try:
+            from app.utils.audit import log_financial_event
+            await log_financial_event(
+                db, "DISPUTE_RESOLVED", actor_id="system", actor_type="ai_arbitration",
+                target_id=dispute_id, target_type="dispute",
+                amount=dispute_value, currency=engagement.price_currency if engagement else "AGENTIS",
+                after_state={"outcome": outcome, "confidence": confidence}
+            )
+        except Exception:
+            pass
 
         # NEW-02 fix: transition engagement to terminal state
         if engagement_service:
@@ -940,6 +1085,98 @@ class DisputeService:
             "dispute_id": dispute_id, "outcome": outcome,
             "rationale": rationale, "status": "resolved",
         }
+
+    async def _ai_arbitrate(self, dispute, engagement) -> tuple:
+        """Call Claude haiku for structured dispute analysis. Returns (outcome, rationale, confidence)."""
+        import os, json, logging
+        log = logging.getLogger("disputes.ai")
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("ANTHROPIC_API_KEY not configured")
+
+        import httpx
+
+        # Build context
+        evidence_text = ""
+        for i, ev in enumerate(dispute.evidence or []):
+            if isinstance(ev, dict):
+                evidence_text += f"\nEvidence {i+1}: {json.dumps(ev)}"
+            else:
+                evidence_text += f"\nEvidence {i+1}: {ev}"
+
+        engagement_context = ""
+        if engagement:
+            engagement_context = (
+                f"Service: {engagement.engagement_title}\n"
+                f"Scope: {engagement.scope_of_work}\n"
+                f"Acceptance criteria: {engagement.acceptance_criteria}\n"
+                f"Price: {engagement.proposed_price} {engagement.price_currency}\n"
+                f"State: {engagement.current_state}\n"
+                f"Deadline: {engagement.deadline}\n"
+            )
+
+        prompt = f"""You are an AI arbitrator for the AGENTIS Exchange dispute resolution system.
+
+Analyse this dispute and provide a structured ruling.
+
+ENGAGEMENT:
+{engagement_context}
+
+DISPUTE TYPE: {dispute.dispute_type}
+DESCRIPTION: {dispute.description}
+
+EVIDENCE:
+{evidence_text if evidence_text else "No evidence submitted."}
+
+DAP RULES:
+- non_delivery: If provider failed to deliver, full_refund is appropriate.
+- quality: If deliverable partially meets criteria, partial_payment (50-80%) is appropriate.
+- scope/terms: If scope was ambiguous, rework with extended deadline is appropriate.
+- payment: If payment dispute, examine evidence carefully.
+
+Respond ONLY with valid JSON:
+{{"outcome": "full_refund|partial_payment|full_payment|rework", "rationale": "2-3 sentence explanation", "confidence": 0.0-1.0, "recommended_split": 0.0-1.0}}
+"""
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "claude-haiku-4-20250414",
+                    "max_tokens": 500,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+        # Parse response
+        text = data.get("content", [{}])[0].get("text", "")
+        log.info(f"AI arbitration response for {dispute.dispute_id}: {text[:200]}")
+
+        # Extract JSON from response
+        import re
+        json_match = re.search(r'\{[^{}]*\}', text)
+        if not json_match:
+            raise ValueError(f"No JSON in AI response: {text[:200]}")
+
+        ruling = json.loads(json_match.group())
+        outcome = ruling.get("outcome", "rework")
+        rationale = ruling.get("rationale", "AI analysis completed.")
+        confidence = float(ruling.get("confidence", 0.5))
+
+        valid_outcomes = {"full_refund", "partial_payment", "full_payment", "rework"}
+        if outcome not in valid_outcomes:
+            outcome = "rework"
+            confidence = 0.3
+
+        return (outcome, rationale, confidence)
 
     async def owner_veto_decision(
         self, db: AsyncSession, dispute_id: str, decision: str, notes: str,

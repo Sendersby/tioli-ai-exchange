@@ -1,7 +1,7 @@
 """Live forex rate service — fetches fiat exchange rates from Frankfurter API.
 
 Updates ZAR, USD, EUR, GBP cross-rates automatically.
-Uses European Central Bank data via frankfurter.app (free, no API key).
+Uses European Central Bank data via frankfurter.dev (free, no API key).
 Falls back to cached rates if the API is unavailable.
 """
 
@@ -15,7 +15,7 @@ from app.exchange.currencies import CurrencyService, ExchangeRate
 
 logger = logging.getLogger(__name__)
 
-FRANKFURTER_URL = "https://api.frankfurter.app/latest"
+FRANKFURTER_URL = "https://api.frankfurter.dev/v1/latest"  # T-007: Updated from .app (301 redirect)
 SUPPORTED_FIAT = ["USD", "ZAR", "EUR", "GBP"]
 
 
@@ -97,7 +97,7 @@ class ForexService:
             "status": "success",
             "pairs_updated": len(updated_pairs),
             "pairs": updated_pairs,
-            "source": "frankfurter.app (ECB data)",
+            "source": "frankfurter.dev (ECB data)",
             "rates": rates,
             "updated_at": str(self._last_updated),
         }
@@ -107,5 +107,5 @@ class ForexService:
         return {
             "rates": self._last_rates,
             "last_updated": str(self._last_updated) if self._last_updated else None,
-            "source": "frankfurter.app (ECB data)",
+            "source": "frankfurter.dev (ECB data)",
         }

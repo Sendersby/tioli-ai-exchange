@@ -57,6 +57,17 @@ async def process_deposit(db, customer_id, amount_zar, kyc_tier=1):
         "rate": rate, "spread": SPREAD_PCT})
     await db.commit()
 
+    # L-006: Audit trail
+    try:
+        from app.utils.audit import log_financial_event
+        await log_financial_event(db, "FIAT_DEPOSIT", actor_id=customer_id, actor_type="customer",
+                                  target_id=deposit_id, target_type="fiat_deposit",
+                                  amount=float(amount_zar), currency="ZAR",
+                                  after_state={"agentis_credited": agentis_amount, "rate": rate})
+        await db.commit()
+    except Exception:
+        pass
+
     return {"deposit_id": deposit_id, "amount_zar": float(amount_zar),
             "agentis_credited": agentis_amount, "rate": rate, "status": "completed",
             "sandbox": True}
@@ -82,6 +93,17 @@ async def request_withdrawal(db, customer_id, amount_agentis, kyc_tier=1):
     ), {"id": withdrawal_id, "cid": customer_id, "agentis": float(amount_agentis),
         "zar": amount_zar, "rate": rate, "tier": kyc_tier})
     await db.commit()
+
+    # L-006: Audit trail
+    try:
+        from app.utils.audit import log_financial_event
+        await log_financial_event(db, "FIAT_WITHDRAWAL", actor_id=customer_id, actor_type="customer",
+                                  target_id=withdrawal_id, target_type="fiat_withdrawal",
+                                  amount=amount_zar, currency="ZAR",
+                                  after_state={"amount_agentis": float(amount_agentis), "rate": rate})
+        await db.commit()
+    except Exception:
+        pass
 
     return {"withdrawal_id": withdrawal_id, "amount_agentis": float(amount_agentis),
             "amount_zar": amount_zar, "rate": rate, "status": "pending_approval", "sandbox": True}
