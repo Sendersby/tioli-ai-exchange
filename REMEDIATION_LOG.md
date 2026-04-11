@@ -126,3 +126,20 @@
 - Status: PASS
 - Action: Updated slowapi Limiter to use Redis storage (redis://localhost:6379/1) with in-memory fallback. Added stricter limits: registration 5/hour, fiat deposit/withdraw 60/min, withdrawal request 30/min.
 - Evidence: Limiter configured with storage_uri; app starts and serves requests
+
+### Phase 2 Summary
+- Started: 2026-04-11
+- Completed: 2026-04-11
+- Findings addressed: 7 (S-002, S-001, S-004, B-001, S-007, S-006, S-005)
+- PASS: 6 (S-002, S-001, S-004, B-001, S-007, S-005)
+- DEFERRED: 1 (S-006 - offsite backup needs Spaces bucket)
+- Test suite: 619 passed, 9 failed (all pre-existing, no regressions)
+- Services: gunicorn with 2 workers, Redis-backed rate limiting, XSS middleware, Pydantic validation
+
+#### Acceptance Evidence
+- .env permissions: 600 (was 644)
+- Backup script: no hardcoded passwords (uses .pgpass)
+- XSS: '<script>alert(99)</script>' -> 'alert(99)' (tags stripped)
+- Validation: empty/negative/missing fields -> 422 VALIDATION_ERROR
+- Workers: 1 master + 2 UvicornWorker processes
+- Rate limiter: Redis-backed with endpoint-specific limits
