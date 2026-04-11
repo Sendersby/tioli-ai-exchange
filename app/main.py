@@ -379,6 +379,9 @@ from app.middleware.paywall import check_paywall
 
 class PaywallMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
+        # Fast-path: skip paywall for health checks
+        if request.url.path == "/api/v1/health":
+            return await call_next(request)
         # Only check API endpoints
         if request.url.path.startswith("/api/v1/"):
             user_tier = 0
@@ -465,6 +468,9 @@ class XSSSanitisationMiddleware:
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security + AI agent discovery headers to every response."""
     async def dispatch(self, request: Request, call_next):
+        # Fast-path: minimal processing for health checks
+        if request.url.path == "/api/v1/health":
+            return await call_next(request)
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -510,6 +516,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._requests: dict[str, list[float]] = defaultdict(list)
 
     async def dispatch(self, request: Request, call_next):
+        # Fast-path: skip rate limiting for health checks
+        if request.url.path == "/api/v1/health":
+            return await call_next(request)
         client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
         now = time.time()
         minute_ago = now - 60
@@ -533,9 +542,27 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+
+async def _record_analytics(client_ip, method, path, status_code, duration_ms, auth_header, user_agent, agent_id):
+    """Fire-and-forget analytics recording. Never blocks request processing."""
+    try:
+        from app.agents_alive.visitor_analytics import record_event
+        async with async_session() as analytics_db:
+            await record_event(
+                analytics_db, agent_id, client_ip,
+                method, path, status_code, duration_ms, user_agent,
+            )
+            await analytics_db.commit()
+    except Exception:
+        pass  # Analytics must never break requests
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Log all requests for security auditing + visitor analytics."""
     async def dispatch(self, request: Request, call_next):
+        # Fast-path: skip heavy processing for health checks
+        if request.url.path == "/api/v1/health":
+            return await call_next(request)
         client_ip = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
         start = time.time()
         response = await call_next(request)
@@ -544,24 +571,16 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             f"{request.method} {request.url.path} {response.status_code} "
             f"{duration_ms}ms ip={client_ip}"
         )
-        # Feed visitor analytics (non-blocking, best-effort)
+        # Feed visitor analytics (fire-and-forget background task)
         if "/api/" in request.url.path and "/public/" not in request.url.path:
-            try:
-                from app.agents_alive.visitor_analytics import record_event
-                agent_id = None
-                auth = request.headers.get("Authorization", "")
-                if auth.startswith("Bearer ") and hasattr(request.state, "agent_id"):
-                    agent_id = getattr(request.state, "agent_id", None)
-                async with async_session() as analytics_db:
-                    await record_event(
-                        analytics_db, agent_id, client_ip,
-                        request.method, request.url.path,
-                        response.status_code, duration_ms,
-                        request.headers.get("User-Agent", ""),
-                    )
-                    await analytics_db.commit()
-            except Exception as exc:
-                import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")  # Never let analytics break a request
+            import asyncio
+            asyncio.create_task(_record_analytics(
+                client_ip, request.method, request.url.path,
+                response.status_code, duration_ms,
+                request.headers.get("Authorization", ""),
+                request.headers.get("User-Agent", ""),
+                getattr(request.state, "agent_id", None) if hasattr(request.state, "agent_id") else None,
+            ))
         return response
 
 

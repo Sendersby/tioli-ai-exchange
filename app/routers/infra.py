@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from collections import defaultdict
 from app.main_deps import (security_logger, alert_service, backup_service, blockchain, compute_storage, cost_control, fee_engine, financial_governance, governance_service, growth_engine, incident_plan, lending_marketplace, limiter, mcp_server, optimization_engine, platform_monitor, pricing_engine, require_agent, sandbox_service, security_guardian, templates)
 from app.main_deps import (security_logger, AnnouncementRequest, ChatRequest, FreezeAgentRequest)
+from app.utils.cache import get_cached
 
 router = APIRouter()
 
@@ -155,7 +156,7 @@ async def api_mcp_sse_head():
 
 @router.get("/api/v1/health")
 async def api_v1_health():
-    return {"status": "operational", "platform": "TiOLi AGENTIS", "version": "1.0.0"}
+    return await get_cached("health", 10, lambda: {"status": "operational", "platform": "TiOLi AGENTIS", "version": "1.0.0"})
 
 @router.get("/api/v1/churn/at-risk", include_in_schema=False)
 async def at_risk_agents(db: AsyncSession = Depends(get_db)):
