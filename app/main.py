@@ -532,33 +532,58 @@ SwaggerUIBundle({
 
 # ── Security Middleware ──────────────────────────────────────────────
 
-class XSSSanitisationMiddleware(BaseHTTPMiddleware):
-    """Sanitise all string values in JSON request bodies to prevent stored XSS."""
-    async def dispatch(self, request: Request, call_next):
-        if request.method in ("POST", "PUT", "PATCH") and            request.headers.get("content-type", "").startswith("application/json"):
-            try:
-                body_bytes = await request.body()
-                if body_bytes:
-                    import json as _json
-                    from app.utils.sanitise import sanitise_input
-                    data = _json.loads(body_bytes)
-                    if isinstance(data, dict):
-                        sanitised = {}
-                        for k, v in data.items():
-                            if isinstance(v, str):
-                                sanitised[k] = sanitise_input(v)
-                            elif isinstance(v, list):
-                                sanitised[k] = [sanitise_input(i) if isinstance(i, str) else i for i in v]
-                            else:
-                                sanitised[k] = v
-                        new_body = _json.dumps(sanitised).encode()
-                        # Override the receive to return sanitised body
-                        async def receive():
-                            return {"type": "http.request", "body": new_body}
-                        request._receive = receive
-            except Exception:
-                pass  # If parsing fails, let the endpoint handle it
-        return await call_next(request)
+class XSSSanitisationMiddleware:
+    """ASGI middleware to sanitise all string values in JSON request bodies."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope.get("method", "") not in ("POST", "PUT", "PATCH"):
+            await self.app(scope, receive, send)
+            return
+
+        # Check content type from headers
+        headers = dict((k.lower(), v) for k, v in scope.get("headers", []))
+        content_type = headers.get(b"content-type", b"").decode("utf-8", errors="ignore")
+        if not content_type.startswith("application/json"):
+            await self.app(scope, receive, send)
+            return
+
+        # Collect the request body
+        body_parts = []
+        body_complete = False
+
+        async def sanitised_receive():
+            nonlocal body_complete
+            if body_complete:
+                return await receive()
+            message = await receive()
+            if message.get("type") == "http.request":
+                body_parts.append(message.get("body", b""))
+                if not message.get("more_body", False):
+                    body_complete = True
+                    full_body = b"".join(body_parts)
+                    try:
+                        import json as _json
+                        from app.utils.sanitise import sanitise_input
+                        data = _json.loads(full_body)
+                        if isinstance(data, dict):
+                            sanitised = {}
+                            for k, v in data.items():
+                                if isinstance(v, str):
+                                    sanitised[k] = sanitise_input(v)
+                                elif isinstance(v, list):
+                                    sanitised[k] = [sanitise_input(i) if isinstance(i, str) else i for i in v]
+                                else:
+                                    sanitised[k] = v
+                            full_body = _json.dumps(sanitised).encode()
+                    except Exception:
+                        pass
+                    return {"type": "http.request", "body": full_body}
+                return message
+            return message
+
+        await self.app(scope, sanitised_receive, send)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -693,6 +718,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(RequestSizeLimitMiddleware, max_bytes=10 * 1024 * 1024)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(XSSSanitisationMiddleware)
 
 
 # ── Global Exception Handler (never expose stack traces) ────────────
@@ -3674,7 +3700,7 @@ async def embed_landing(db: AsyncSession = Depends(get_db)):
         ))
         agent_count = row.scalar() or 0
         trow = await db.execute(_eq_text(
-            "SELECT COUNT(*) as trades FROM trades"
+            "SELECT COUNT(*) as trades FROM trades WHERE trade_type = 'real'"
         ))
         trade_count = trow.scalar() or 0
     except Exception:
@@ -3893,7 +3919,7 @@ async def api_adoption_digest(request: Request, db: AsyncSession = Depends(get_d
     )).scalar() or 0
 
     try:
-        total_trades = (await db.execute(select(func.count(Trade.id)))).scalar() or 0
+        total_trades = (await db.execute(select(func.count(Trade.id)).where(Trade.trade_type == "real"))).scalar() or 0
     except Exception:
         total_trades = 0
 

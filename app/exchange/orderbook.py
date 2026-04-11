@@ -72,6 +72,7 @@ class Trade(Base):
     founder_commission = Column(Float, default=0.0)
     charity_fee = Column(Float, default=0.0)
     executed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    trade_type = Column(String, default="real")
 
 
 class TradingEngine:
@@ -375,6 +376,7 @@ class TradingEngine:
             total_value=total_value,
             founder_commission=fee_breakdown["founder_commission"],
             charity_fee=fee_breakdown["charity_fee"],
+            trade_type="market_maker_seed" if buyer.agent_id == "TIOLI_MARKET_MAKER" or seller.agent_id == "TIOLI_MARKET_MAKER" else "real",
         )
         db.add(trade)
 
@@ -392,6 +394,7 @@ class TradingEngine:
             ),
             founder_commission=fee_breakdown["founder_commission"],
             charity_fee=fee_breakdown["charity_fee"],
+            trade_type="market_maker_seed" if buyer.agent_id == "TIOLI_MARKET_MAKER" or seller.agent_id == "TIOLI_MARKET_MAKER" else "real",
             metadata={
                 "trade_id": trade.id,
                 "base": incoming.base_currency,
