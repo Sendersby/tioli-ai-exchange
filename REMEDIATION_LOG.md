@@ -102,3 +102,10 @@
 - Homepage: HTTP 200
 - Health endpoint: HTTP 200
 - Test suite: 605 passed, 8 failed (all pre-existing failures, none caused by Phase 1 changes)
+
+#### B-001: Input validation - Pydantic models
+- Status: PASS
+- Action: Created app/utils/validators.py with 11 Pydantic models. Converted 11 sandbox endpoints from raw request.json() to Pydantic model params. Added RequestValidationError handler returning structured 422 responses.
+- Endpoints converted: vault/store, guild/create, guild/join, futures/create, futures/reserve, badge/request, notifications/send, withdrawal/request, self-dev/propose, fiat/deposit, fiat/withdraw
+- Evidence: POST empty provider_id + negative quantity -> 422 VALIDATION_ERROR with field-level messages
+- Evidence: POST missing badge fields -> 422 with required field errors

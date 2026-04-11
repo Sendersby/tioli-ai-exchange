@@ -18,6 +18,7 @@ if sentry_dsn:
     sentry_sdk.init(dsn=sentry_dsn, traces_sample_rate=0.1, environment="production")
 
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -78,6 +79,7 @@ from app.guilds.service import GuildService
 from app.pipelines.service import PipelineService
 from app.futures.service import FuturesService
 from app.training_data.service import TrainingDataService
+from app.utils.validators import (VaultStoreRequest, GuildCreateRequest, GuildJoinRequest, FuturesCreateRequest, FuturesReserveRequest, BadgeRequestModel, NotificationSendRequest, WithdrawalRequest, SelfDevProposeRequest, FiatDepositRequest, FiatWithdrawRequest)
 from app.benchmarking.service import BenchmarkingService
 from app.intelligence.service import IntelligenceService
 from app.crossborder.service import CrossBorderService
@@ -727,6 +729,11 @@ app.add_middleware(XSSSanitisationMiddleware)
 async def value_error_handler(request: Request, exc: ValueError):
     """Return 422 for InputValidator rejections and other value errors."""
     return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=422, content={"error": "VALIDATION_ERROR", "detail": [{"field": str(e.get("loc", ["unknown"])[-1]), "message": e["msg"]} for e in exc.errors()]})
+
 
 
 @app.exception_handler(Exception)
@@ -11647,16 +11654,14 @@ async def api_auth_state(request: Request, db: AsyncSession = Depends(get_db)):
 
 # A-1: Fiat On/Off-Ramp
 @app.post("/api/v1/sandbox/fiat/deposit", tags=["Sandbox"])
-async def api_sandbox_fiat_deposit(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_fiat_deposit(body: FiatDepositRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.fiat_ramp import process_deposit
-    return await process_deposit(db, body.get("customer_id",""), body.get("amount_zar",0), body.get("kyc_tier",1))
+    return await process_deposit(db, body.customer_id, body.amount_zar, body.kyc_tier)
 
 @app.post("/api/v1/sandbox/fiat/withdraw", tags=["Sandbox"])
-async def api_sandbox_fiat_withdraw(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_fiat_withdraw(body: FiatWithdrawRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.fiat_ramp import request_withdrawal
-    return await request_withdrawal(db, body.get("customer_id",""), body.get("amount_agentis",0), body.get("kyc_tier",1))
+    return await request_withdrawal(db, body.customer_id, body.amount_agentis, body.kyc_tier)
 
 @app.get("/api/v1/sandbox/fiat/rate", tags=["Sandbox"])
 async def api_sandbox_fiat_rate():
@@ -11809,10 +11814,9 @@ async def api_sandbox_compliance_reports(db: AsyncSession = Depends(get_db)):
 
 # B-1: Vault CRUD
 @app.post("/api/v1/sandbox/vault/store", tags=["Sandbox"])
-async def api_sandbox_vault_store(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_vault_store(body: VaultStoreRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.vault_service import store_entry
-    return await store_entry(db, body.get("vault_id",""), body.get("key",""), body.get("value",""), body.get("tier","AV-CACHE"))
+    return await store_entry(db, body.vault_id, body.key, body.value, body.tier.value)
 
 @app.get("/api/v1/sandbox/vault/retrieve/{vault_id}/{key}", tags=["Sandbox"])
 async def api_sandbox_vault_retrieve(vault_id: str, key: str, db: AsyncSession = Depends(get_db)):
@@ -11837,8 +11841,7 @@ async def api_sandbox_vault_usage(vault_id: str, request: Request, db: AsyncSess
 
 # B-3: Guild Workspace (enhance existing)
 @app.post("/api/v1/sandbox/guild/create", tags=["Sandbox"])
-async def api_sandbox_guild_create(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_guild_create(body: GuildCreateRequest, db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     import uuid
     guild_id = str(uuid.uuid4())
@@ -11846,23 +11849,22 @@ async def api_sandbox_guild_create(request: Request, db: AsyncSession = Depends(
         "INSERT INTO guilds (id, guild_name, founding_operator_id, description, specialisation_domains, "
         "setup_fee_paid, is_active, created_at) "
         "VALUES (:id, :name, :founder, :desc, :domains, true, true, now())"
-    ), {"id": guild_id, "name": body.get("name",""), "founder": body.get("operator_id",""),
-        "desc": body.get("description",""), "domains": json.dumps(body.get("domains",[]))})
+    ), {"id": guild_id, "name": body.name, "founder": body.operator_id,
+        "desc": body.description, "domains": json.dumps(body.domains or [])})
     await db.commit()
-    return {"guild_id": guild_id, "name": body.get("name"), "status": "active", "sandbox": True}
+    return {"guild_id": guild_id, "name": body.name, "status": "active", "sandbox": True}
 
 @app.post("/api/v1/sandbox/guild/{guild_id}/join", tags=["Sandbox"])
-async def api_sandbox_guild_join(guild_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_guild_join(guild_id: str, body: GuildJoinRequest, db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     import uuid
     member_id = str(uuid.uuid4())
     await db.execute(text(
         "INSERT INTO guild_members (id, guild_id, agent_id, operator_id, role, revenue_share_pct, joined_at) "
         "VALUES (:id, :gid, :oid, :oid, :role, 10.0, now())"
-    ), {"id": member_id, "gid": guild_id, "oid": body.get("operator_id",""), "role": body.get("role","member")})
+    ), {"id": member_id, "gid": guild_id, "oid": body.operator_id, "role": body.get("role","member")})
     await db.commit()
-    return {"member_id": member_id, "guild_id": guild_id, "role": body.get("role","member"), "sandbox": True}
+    return {"member_id": member_id, "guild_id": guild_id, "role": body.role, "sandbox": True}
 
 @app.get("/api/v1/sandbox/guild/{guild_id}", tags=["Sandbox"])
 async def api_sandbox_guild_detail(guild_id: str, db: AsyncSession = Depends(get_db)):
@@ -11884,18 +11886,16 @@ async def api_sandbox_guild_list(db: AsyncSession = Depends(get_db)):
 
 # B-5: Futures
 @app.post("/api/v1/sandbox/futures/create", tags=["Sandbox"])
-async def api_sandbox_futures_create(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_futures_create(body: FuturesCreateRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.futures_engine import create_future
-    return await create_future(db, body.get("provider_id",""), body.get("operator_id",""),
-        body.get("capability",""), body.get("quantity",1), body.get("price_per_unit",10),
-        body.get("delivery_days",30))
+    return await create_future(db, body.provider_id, body.operator_id,
+        body.capability, body.quantity, body.price_per_unit,
+        body.delivery_days)
 
 @app.post("/api/v1/sandbox/futures/{future_id}/reserve", tags=["Sandbox"])
-async def api_sandbox_futures_reserve(future_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_futures_reserve(future_id: str, body: FuturesReserveRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.futures_engine import reserve_future
-    return await reserve_future(db, future_id, body.get("buyer_id",""), body.get("quantity",1))
+    return await reserve_future(db, future_id, body.buyer_id, body.quantity)
 
 @app.post("/api/v1/sandbox/futures/{future_id}/settle", tags=["Sandbox"])
 async def api_sandbox_futures_settle(future_id: str, db: AsyncSession = Depends(get_db)):
@@ -11917,10 +11917,9 @@ async def api_sandbox_benchmark_report(request: Request, db: AsyncSession = Depe
 
 # B-8: Badges
 @app.post("/api/v1/sandbox/badge/request", tags=["Sandbox"])
-async def api_sandbox_badge_request(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_badge_request(body: BadgeRequestModel, db: AsyncSession = Depends(get_db)):
     from app.arch.badge_system import request_badge
-    return await request_badge(db, body.get("agent_id",""), body.get("capability",""), body.get("evidence",""))
+    return await request_badge(db, body.agent_id, body.capability, body.evidence)
 
 @app.post("/api/v1/sandbox/badge/{badge_id}/verify", tags=["Sandbox"])
 async def api_sandbox_badge_verify(badge_id: str, db: AsyncSession = Depends(get_db)):
@@ -11934,10 +11933,9 @@ async def api_sandbox_badge_list(agent_id: str, db: AsyncSession = Depends(get_d
 
 # C-4: Email Notification System
 @app.post("/api/v1/sandbox/notifications/send", tags=["Sandbox"])
-async def api_sandbox_notif_send(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_notif_send(body: NotificationSendRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.email_notifications import send_notification
-    return await send_notification(db, body.get("email",""), body.get("template"), body.get("vars",{}), body.get("subject",""), body.get("body",""))
+    return await send_notification(db, body.email, body.template, body.vars or {}, body.subject, body.body)
 
 @app.get("/api/v1/sandbox/notifications/history", tags=["Sandbox"])
 async def api_sandbox_notif_history(request: Request, db: AsyncSession = Depends(get_db)):
@@ -11952,10 +11950,9 @@ async def api_sandbox_notif_templates():
 
 # C-5: Fiat Withdrawal Processing
 @app.post("/api/v1/sandbox/withdrawal/request", tags=["Sandbox"])
-async def api_sandbox_withdraw_request(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_withdraw_request(body: WithdrawalRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.withdrawal_processor import request_withdrawal
-    return await request_withdrawal(db, body.get("customer_id",""), body.get("amount_zar",0), body.get("bank_account",""), body.get("bank_name",""))
+    return await request_withdrawal(db, body.customer_id, body.amount_zar, body.bank_account, body.bank_name)
 
 @app.post("/api/v1/sandbox/withdrawal/{withdrawal_id}/compliance", tags=["Sandbox"])
 async def api_sandbox_withdraw_compliance(withdrawal_id: str, db: AsyncSession = Depends(get_db)):
@@ -11982,11 +11979,10 @@ async def api_sandbox_withdraw_queue(request: Request, db: AsyncSession = Depend
 
 # C-1: Agent Self-Development Tier 1
 @app.post("/api/v1/sandbox/self-dev/propose", tags=["Sandbox"])
-async def api_sandbox_selfdev_propose(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
+async def api_sandbox_selfdev_propose(body: SelfDevProposeRequest, db: AsyncSession = Depends(get_db)):
     from app.arch.self_dev import propose_improvement
-    return await propose_improvement(db, body.get("agent_id",""), body.get("type","skill_enhancement"),
-        body.get("description",""), body.get("code_diff",""))
+    return await propose_improvement(db, body.agent_id, body.type,
+        body.description, body.code_diff)
 
 @app.post("/api/v1/sandbox/self-dev/{proposal_id}/review", tags=["Sandbox"])
 async def api_sandbox_selfdev_review(proposal_id: str, request: Request, db: AsyncSession = Depends(get_db)):
@@ -12034,7 +12030,7 @@ async def api_sandbox_selfdev_status(proposal_id: str, db: AsyncSession = Depend
 async def api_sandbox_onboard_register(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
     from app.arch.onboarding import register_operator
-    return await register_operator(db, body.get("name",""), body.get("email",""), body.get("organization",""), body.get("country","ZA"))
+    return await register_operator(db, body.name, body.get("email",""), body.get("organization",""), body.get("country","ZA"))
 
 @app.post("/api/v1/sandbox/onboarding/{entity_id}/terms", tags=["Sandbox"])
 async def api_sandbox_onboard_terms(entity_id: str, db: AsyncSession = Depends(get_db)):
@@ -12051,7 +12047,7 @@ async def api_sandbox_onboard_verify(entity_id: str, request: Request, db: Async
 async def api_sandbox_onboard_agent(operator_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
     from app.arch.onboarding import register_agent
-    return await register_agent(db, operator_id, body.get("name",""), body.get("capabilities"), body.get("description",""))
+    return await register_agent(db, operator_id, body.name, body.get("capabilities"), body.get("description",""))
 
 @app.get("/api/v1/sandbox/onboarding/{entity_id}/status", tags=["Sandbox"])
 async def api_sandbox_onboard_status(entity_id: str, db: AsyncSession = Depends(get_db)):
