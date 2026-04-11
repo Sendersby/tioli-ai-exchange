@@ -202,3 +202,70 @@
 - Forex rates: 15 pairs updated via live ECB data (was 21 days stale)
 - Subscription prices: All aligned to canonical DB (operator_subscription_tiers)
 - Stale orders: 882 expired, hourly cleanup job registered
+
+## Phase 4: Compliance
+
+### L-001: KYC Enforcement on Financial Endpoints
+- Status: PASS
+- Action: Added require_kyc_verified() dependency to all financial endpoints (deposit, withdraw, transfer, place_order)
+- Sandbox mode: auto-passes with warning log for traceability
+- Production mode: blocks with 403 KYC_REQUIRED if no kyc_verifications record with tier >= 1
+- Audit: KYC_CHECK_PASSED / KYC_CHECK_BLOCKED events written to financial_audit_log
+- Evidence: Deposit with new agent -> auto-pass in sandbox, audit row written
+
+### L-006: Financial Audit Trail
+- Status: PASS
+- Action: Created financial_audit_log table (17 event types, SHA-256 integrity hash, indexed)
+- Wired log_financial_event() into: deposits, withdrawals, transfers, order placement, escrow create/release/refund, fiat deposit/withdrawal, dispute raise/resolve/escalate
+- Evidence: 2 audit rows confirmed after test deposit (KYC_CHECK_PASSED + DEPOSIT_CONFIRMED)
+
+### L-005: Sandbox Isolation
+- Status: PASS
+- Action: Added environment TEXT column (default 'production') to trades, orders, wallets tables
+- Sandbox endpoints mark records with environment='sandbox'
+
+### L-002: Production Compliance Pipeline (partial)
+- Status: PASS (sub-tasks 1-3), DEFERRED (sub-tasks 2-4)
+- Action: Added FICA threshold rules to transaction_monitor.py:
+  - FICA_SINGLE: single transaction > R49,999
+  - FICA_CUMULATIVE: user > R99,999 in 30 days
+  - FICA_STRUCTURING: 3+ transactions R40K-R50K in 48h
+- DEFERRED: OpenSanctions API, STR generation pipeline, goAML export (see DEFER_LOG.md)
+
+## Phase 5: Disputes
+
+### J-002: Dispute Validation Guards
+- Status: PASS
+- Action: Added 5 validation checks to raise_dispute():
+  1. 404: Engagement not found
+  2. 403: Caller not a party (buyer/seller)
+  3. 422: Engagement not in disputable state (IN_PROGRESS, DELIVERED, COMPLETED within 30 days)
+  4. 409: Duplicate active dispute prevention
+  5. 422: Minimum 50-char description requirement
+
+### J-004: Escrow Locking on Dispute
+- Status: PASS
+- Action: After dispute creation, freeze_balance() called on provider for escrow amount
+- Escrow release/refund endpoints return 423 Locked if active dispute exists on engagement
+
+### J-001: AI Arbitration (Claude integration)
+- Status: PASS
+- Action: Replaced if/else tree with Claude Haiku API call via httpx
+- Prompt includes: engagement context, dispute type, evidence, DAP rules
+- Returns: structured JSON with outcome, rationale, confidence score
+- Auto-escalate to owner review for: disputes > R5,000, confidence < 0.7, or AI failure
+- Updated public copy to AI-assisted arbitration with owner review for high-value disputes
+
+### J-005: Recusal Mechanism
+- Status: PASS
+- Action: If OWNER_AGENT_ID matches a party to the engagement, auto-escalate to external_review
+- Owner involvement blocked, decision logged to audit trail with reason=owner_recusal
+
+### Phase 4-5 Summary
+- Started: 2026-04-11
+- Completed: 2026-04-11
+- Findings addressed: 8 (L-001, L-006, L-005, L-002, J-002, J-004, J-001, J-005)
+- PASS: 7 (L-001, L-006, L-005, J-002, J-004, J-001, J-005)
+- PARTIAL: 1 (L-002 — FICA rules done, OpenSanctions/goAML deferred)
+- Test suite: 619 passed, 9 failed (all pre-existing, no regressions)
+- Services: app restart successful, health endpoint operational
