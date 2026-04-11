@@ -115,3 +115,9 @@
 - Action: Installed gunicorn, updated tioli-exchange.service to use gunicorn with 2 UvicornWorker processes
 - Evidence: ps shows 1 master + 2 worker processes; health endpoint returns operational
 - Config: gunicorn -w 2 -k uvicorn.workers.UvicornWorker --timeout 120
+
+#### S-006: Offsite backup
+- Status: DEFERRED
+- Reason: No DigitalOcean Spaces or S3 bucket credentials configured
+- Pre-work: boto3 is installed; backup script functional
+- Action needed: Create DO Spaces bucket, add credentials to .env, update backup.sh to upload after pg_dump
