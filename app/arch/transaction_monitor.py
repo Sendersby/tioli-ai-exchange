@@ -25,8 +25,8 @@ RULES = {
 
 async def scan_transactions(db, hours=24):
     """Scan recent transactions for suspicious patterns."""
-    if os.environ.get("SANDBOX_MODE", "false").lower() != "true":
-        return {"error": "Requires SANDBOX_MODE=true"}
+    if os.environ.get("ARCH_MONITORING_ENABLED", "true").lower() != "true":
+        return {"monitoring": "disabled", "note": "Set ARCH_MONITORING_ENABLED=true to enable"}
 
     from sqlalchemy import text
     alerts = []

@@ -1490,3 +1490,39 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
         replace_existing=True,
     )
     log.info("[scheduler] Registered: arch_memories_retention (weekly Sunday 05:00 SAST)")
+
+
+    # ── R7.1: Automated data retention — weekly Sunday 04:00 SAST (02:00 UTC) ──
+    async def data_retention_sweep():
+        """Enforce data retention policy across all configured tables."""
+        from app.utils.data_retention import enforce_retention
+        try:
+            async with db_factory() as db:
+                results = await enforce_retention(db)
+                total = sum(v for v in results.values() if isinstance(v, int))
+                if total:
+                    log.info(f"[scheduler] Data retention sweep: {total} total rows deleted")
+                    from sqlalchemy import text as _t
+                    import json as _j
+                    desc = _j.dumps({
+                        "subject": "Weekly Data Retention Sweep Complete",
+                        "detail": f"Deleted {total} expired records across {len(results)} tables",
+                        "prepared_by": "data_retention",
+                        "type": "COMPLIANCE_RETENTION",
+                        "results": {k: v for k, v in results.items() if isinstance(v, int) and v > 0},
+                    })
+                    await db.execute(_t(
+                        "INSERT INTO arch_founder_inbox (item_type, priority, description, status, created_at) "
+                        "VALUES ('EXECUTION_PROOF', 'ROUTINE', :desc, 'PENDING', now())"
+                    ), {"desc": desc})
+                    await db.commit()
+        except Exception as e:
+            log.error(f"[scheduler] Data retention sweep failed: {e}")
+
+    scheduler.add_job(
+        data_retention_sweep,
+        "cron", day_of_week="sun", hour=2, minute=0,
+        id="data_retention_sweep",
+        replace_existing=True,
+    )
+    log.info("[scheduler] Registered: data_retention_sweep (weekly Sunday 04:00 SAST)")

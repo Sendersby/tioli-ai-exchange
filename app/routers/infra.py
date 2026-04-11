@@ -18,6 +18,7 @@ from collections import defaultdict
 from app.main_deps import (security_logger, alert_service, backup_service, blockchain, compute_storage, cost_control, fee_engine, financial_governance, governance_service, growth_engine, incident_plan, lending_marketplace, limiter, mcp_server, optimization_engine, platform_monitor, pricing_engine, require_agent, sandbox_service, security_guardian, templates)
 from app.main_deps import (security_logger, AnnouncementRequest, ChatRequest, FreezeAgentRequest)
 from app.utils.cache import get_cached
+from app.dashboard.routes import get_current_owner
 
 router = APIRouter()
 
@@ -1574,3 +1575,73 @@ async def api_create_announcement(
 async def api_international_listings():
     """Placeholder: returns info about international listing capability."""
     return {"note": "International listings filter agents with international_listing=true", "status": "ready"}
+
+
+# ══════════════════════════════════════════════════════════════════════
+# R7.1 — Manual data retention trigger
+# ══════════════════════════════════════════════════════════════════════
+
+@router.post("/api/v1/compliance/retention/run")
+async def api_retention_run(request: Request, db: AsyncSession = Depends(get_db)):
+    """Manually trigger data retention sweep (owner-only)."""
+    owner = get_current_owner(request)
+    if not owner:
+        raise HTTPException(status_code=401, detail="Owner authentication required")
+    from app.utils.data_retention import enforce_retention
+    results = await enforce_retention(db)
+    total = sum(v for v in results.values() if isinstance(v, int))
+    return {"status": "completed", "total_deleted": total, "details": results}
+
+
+# ══════════════════════════════════════════════════════════════════════
+# R7.2 — POPIA Data Subject Request API (public-facing)
+# ══════════════════════════════════════════════════════════════════════
+
+@router.post("/api/v1/popia/access-request")
+async def popia_access_request(request: Request, db: AsyncSession = Depends(get_db)):
+    """POPIA: request data export for an entity."""
+    body = await request.json()
+    entity_id = body.get("entity_id", "")
+    email = body.get("email", "")
+    if not entity_id or not email:
+        raise HTTPException(422, detail={"error": "VALIDATION_ERROR", "message": "entity_id and email required"})
+
+    request_id = str(uuid.uuid4())
+    await db.execute(text(
+        "INSERT INTO agentis_popia_requests (request_id, member_id, request_type, description, status, data_compiled, received_at, deadline_at) "
+        "VALUES (:id, :eid, 'access', :desc, 'pending', false, now(), now() + interval '30 days')"
+    ), {"id": request_id, "eid": entity_id, "desc": f"Data access request from {email}"})
+    await db.commit()
+
+    # Gather all data for this entity
+    data = {}
+    for tbl in ['agents', 'wallets', 'agent_engagements', 'kyc_verifications']:
+        try:
+            result = await db.execute(text(f"SELECT * FROM {tbl} WHERE agent_id = :eid OR id = :eid LIMIT 100"), {"eid": entity_id})
+            rows = result.fetchall()
+            if rows:
+                data[tbl] = [dict(r._mapping) for r in rows]
+        except Exception:
+            pass
+
+    return {"request_id": request_id, "status": "completed", "data": data, "entity_id": entity_id}
+
+
+@router.post("/api/v1/popia/deletion-request")
+async def popia_deletion_request(request: Request, db: AsyncSession = Depends(get_db)):
+    """POPIA: request data deletion/anonymisation for an entity."""
+    body = await request.json()
+    entity_id = body.get("entity_id", "")
+    if not entity_id:
+        raise HTTPException(422, detail={"error": "VALIDATION_ERROR", "message": "entity_id required"})
+
+    request_id = str(uuid.uuid4())
+    await db.execute(text(
+        "INSERT INTO agentis_popia_requests (request_id, member_id, request_type, description, status, data_compiled, received_at, deadline_at) "
+        "VALUES (:id, :eid, 'deletion', :desc, 'pending_review', false, now(), now() + interval '30 days')"
+    ), {"id": request_id, "eid": entity_id, "desc": "POPIA deletion request"})
+    await db.commit()
+
+    return {"request_id": request_id, "status": "pending_review",
+            "message": "Deletion request received. Financial records are retained per FICA requirements. Personal data will be anonymised within 30 days.",
+            "entity_id": entity_id}

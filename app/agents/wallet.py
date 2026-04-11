@@ -55,7 +55,7 @@ class WalletService:
         """Deposit funds into an agent's wallet."""
         if amount <= 0:
             raise ValueError("Deposit amount must be positive")
-        wallet = await self.get_or_create_wallet(db, agent_id, currency)
+        wallet = await self.get_or_create_wallet(db, agent_id, currency, lock=True)
         wallet.balance += amount
 
         tx = Transaction(
@@ -310,7 +310,7 @@ class WalletService:
         self, db: AsyncSession, agent_id: str, currency: str = "AGENTIS"
     ) -> dict:
         """Get an agent's wallet balance."""
-        wallet = await self.get_or_create_wallet(db, agent_id, currency)
+        wallet = await self.get_or_create_wallet(db, agent_id, currency, lock=True)
         return {
             "agent_id": agent_id,
             "currency": currency,
@@ -327,7 +327,7 @@ class WalletService:
         currency: str = "AGENTIS", reference: str = ""
     ) -> dict:
         """Freeze funds from available balance for dispute deposit."""
-        wallet = await self.get_or_create_wallet(db, agent_id, currency)
+        wallet = await self.get_or_create_wallet(db, agent_id, currency, lock=True)
         if wallet.balance - wallet.frozen_balance < amount:
             raise ValueError(
                 f"Insufficient available balance. "
@@ -345,7 +345,7 @@ class WalletService:
         currency: str = "AGENTIS"
     ) -> dict:
         """Release frozen funds back to available balance."""
-        wallet = await self.get_or_create_wallet(db, agent_id, currency)
+        wallet = await self.get_or_create_wallet(db, agent_id, currency, lock=True)
         wallet.frozen_balance = max(0, wallet.frozen_balance - amount)
         await db.flush()
         return {
