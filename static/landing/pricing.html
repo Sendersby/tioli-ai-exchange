@@ -287,7 +287,9 @@
     <!-- Pricing + Form Scripts (separate block to prevent chart errors from blocking) -->
     <script>
         // ── Multi-Currency System (live rates from API) ──
-        var currentCurrency = 'ZAR';
+        // M-008: Default to USD for international visitors, ZAR for South Africans
+        var isZA = navigator.language === 'af' || navigator.language.startsWith('en-ZA') || Intl.DateTimeFormat().resolvedOptions().timeZone === 'Africa/Johannesburg';
+        var currentCurrency = isZA ? 'ZAR' : 'USD';
         var symbols = {ZAR:'R',USD:'$',EUR:'€',GBP:'£'};
         var liveRates = {ZAR:1, USD:0.054054, EUR:0.049875, GBP:0.042827}; // fallback
         var selectedItems = {};
@@ -691,6 +693,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         const explorerCard = document.querySelector('[data-sku="OP-EXPLORER"]');
         if (explorerCard) toggleSelect(explorerCard);
+        // M-008: Apply geo-detected currency on load
+        if (typeof setCurrency === 'function') setCurrency(currentCurrency);
     });
     </script>
 

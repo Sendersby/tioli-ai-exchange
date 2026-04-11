@@ -518,6 +518,10 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+# A-009: Prometheus metrics instrumentation
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
+
 # ── Global Error Handling ────────────────────────────────────────────
 import traceback as _tb
 import logging as _err_logging
