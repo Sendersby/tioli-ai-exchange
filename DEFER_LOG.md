@@ -12,3 +12,10 @@
 | DEFER-005 | PyPI Package | Decide: publish SDK or remove references | Pending | Awaiting owner |
 | DEFER-001 | DB Password Rotation | Rotate tioli DB password after remediation complete | .pgpass approach in place, credential no longer inline | Post-remediation |
 | DEFER-006 | Offsite Backup | Create DigitalOcean Spaces bucket + configure rclone/boto3 | Backup script ready, boto3 installed, needs bucket credentials | Awaiting owner |
+
+### M-004: PostHog Analytics
+- Status: DEFERRED
+- Reason: PostHog script scaffold present in index.html but API key (phKey) is empty
+- Action required: Owner creates PostHog account at https://app.posthog.com, gets project API key
+- Implementation: Set phKey value in static/landing/index.html line ~124
+- Impact: No product analytics, funnels, or session replay until configured
