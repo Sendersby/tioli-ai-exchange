@@ -1,0 +1,49 @@
+# CI/CD Pipeline Template - activate when GitHub repo access is available
+name: Deploy TiOLi Exchange
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: tioli_test
+          POSTGRES_USER: tioli
+          POSTGRES_PASSWORD: test
+        ports: ["5432:5432"]
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: pytest tests/ -q --tb=short
+        env:
+          DATABASE_URL: postgresql+asyncpg://tioli:test@localhost:5432/tioli_test
+          REDIS_URL: redis://localhost:6379/0
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/tioli/app
+            git pull origin master
+            ./deploy.sh
