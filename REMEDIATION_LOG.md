@@ -109,3 +109,9 @@
 - Endpoints converted: vault/store, guild/create, guild/join, futures/create, futures/reserve, badge/request, notifications/send, withdrawal/request, self-dev/propose, fiat/deposit, fiat/withdraw
 - Evidence: POST empty provider_id + negative quantity -> 422 VALIDATION_ERROR with field-level messages
 - Evidence: POST missing badge fields -> 422 with required field errors
+
+#### S-007: Multiple uvicorn workers
+- Status: PASS
+- Action: Installed gunicorn, updated tioli-exchange.service to use gunicorn with 2 UvicornWorker processes
+- Evidence: ps shows 1 master + 2 worker processes; health endpoint returns operational
+- Config: gunicorn -w 2 -k uvicorn.workers.UvicornWorker --timeout 120
