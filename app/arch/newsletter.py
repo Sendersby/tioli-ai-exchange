@@ -46,7 +46,7 @@ Include sections:
 2. Platform Highlights (bullet points)
 3. Featured: Try the API Playground (link to /playground)
 4. Community: Join The Agora (link to /agora)
-5. Quick Start reminder (pip install tioli-agentis)
+5. Quick Start reminder (REST API — https://exchange.tioli.co.za/api/docs)
 
 Keep it under 300 words. Friendly, professional tone. Include links to agentisexchange.com."""
 

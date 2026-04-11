@@ -1993,7 +1993,7 @@ async def use_case_page(slug: str):
   <p class="text-lg text-slate-400 mb-8">{use_case['desc']}</p>
   <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 rounded-lg p-6 mb-8">
     <h2 class="text-sm font-bold text-[#77d4e5] uppercase tracking-wider mb-4">Deploy in 3 Lines</h2>
-    <pre class="text-sm font-mono text-slate-300"><code>curl -X POST https://exchange.tioli.co.za/api/agents/register
+    <pre class="text-sm font-mono text-slate-300"><code>pip install tioli-agentis
 
 from tioli import TiOLi
 client = TiOLi.connect("{slug.replace('-','_')}_agent", "Python")
@@ -3633,50 +3633,6 @@ async def serve_widget():
     """Embeddable HTML widget — live stats, creates backlinks."""
     from app.agents_alive.social_proof import generate_embed_widget_html
     return HTMLResponse(content=generate_embed_widget_html())
-
-
-@app.get("/embed", response_class=HTMLResponse, include_in_schema=False)
-async def embed_landing(db: AsyncSession = Depends(get_db)):
-    """Embeddable exchange widget — live stats for third-party sites."""
-    from sqlalchemy import text as _eq_text
-    try:
-        row = await db.execute(_eq_text(
-            "SELECT COUNT(*) as agents FROM agents"
-        ))
-        agent_count = row.scalar() or 0
-        trow = await db.execute(_eq_text(
-            "SELECT COUNT(*) as trades FROM trades"
-        ))
-        trade_count = trow.scalar() or 0
-    except Exception:
-        agent_count, trade_count = 0, 0
-    html = f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AGENTIS Exchange Widget</title>
-<style>
-*{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:Inter,system-ui,sans-serif;background:#0D1B2A;color:#fff}}
-.widget{{max-width:420px;margin:0 auto;padding:24px;border:1px solid #028090;border-radius:12px;background:linear-gradient(135deg,#0D1B2A 0%,#1B2838 100%)}}
-.logo{{font-size:20px;font-weight:800;color:#028090;margin-bottom:16px}}
-.stats{{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}}
-.stat{{background:rgba(2,128,144,0.1);border:1px solid rgba(2,128,144,0.3);border-radius:8px;padding:12px;text-align:center}}
-.stat-value{{font-size:24px;font-weight:700;color:#028090}}
-.stat-label{{font-size:11px;color:#94a3b8;margin-top:4px}}
-.cta{{display:block;text-align:center;background:#028090;color:#fff;padding:10px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px}}
-.cta:hover{{background:#026d7a}}
-.powered{{text-align:center;font-size:9px;color:#64748b;margin-top:12px}}
-</style></head><body>
-<div class="widget">
-<div class="logo">AGENTIS Exchange</div>
-<div class="stats">
-<div class="stat"><div class="stat-value">{agent_count}</div><div class="stat-label">Registered Agents</div></div>
-<div class="stat"><div class="stat-value">{trade_count}</div><div class="stat-label">Trades Executed</div></div>
-</div>
-<a class="cta" href="https://exchange.tioli.co.za" target="_blank">Explore the Exchange</a>
-<div class="powered">Powered by TiOLi AGENTIS &mdash; Governed AI Agent Exchange</div>
-</div></body></html>"""
-    return HTMLResponse(content=html)
 
 
 @app.get("/api/widget/badges", include_in_schema=False)
@@ -11698,55 +11654,6 @@ async def api_sandbox_monthly_report(request: Request, db: AsyncSession = Depend
     body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
     from app.arch.transaction_monitor import generate_monthly_report
     return await generate_monthly_report(db, body.get("period"))
-
-# A-2 continued: Monitoring report retrieval
-@app.get("/api/v1/sandbox/monitoring/report/{period}", tags=["Sandbox"])
-async def api_sandbox_monitoring_report_get(period: str, db: AsyncSession = Depends(get_db)):
-    from app.arch.transaction_monitor import get_report_by_period
-    return await get_report_by_period(db, period)
-
-# A-3 continued: KYC tier lookup
-@app.get("/api/v1/sandbox/kyc/tier/{entity_id}", tags=["Sandbox"])
-async def api_sandbox_kyc_tier(entity_id: str, db: AsyncSession = Depends(get_db)):
-    from app.arch.kyc_enhanced import get_kyc_status
-    return await get_kyc_status(db, entity_id)
-
-# A-4 continued: Credit score lookup
-@app.get("/api/v1/sandbox/credit/score/{entity_id}", tags=["Sandbox"])
-async def api_sandbox_credit_score(entity_id: str, db: AsyncSession = Depends(get_db)):
-    from app.arch.credit_engine import get_credit_score
-    return await get_credit_score(db, entity_id)
-
-# A-5 continued: Lending terms, collateral seizure, restructure
-@app.get("/api/v1/sandbox/lending/terms/{loan_id}", tags=["Sandbox"])
-async def api_sandbox_lending_terms(loan_id: str, db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import text
-    r = await db.execute(text("SELECT * FROM loans WHERE id = :lid"), {"lid": loan_id})
-    row = r.fetchone()
-    if not row:
-        return {"error": "Loan not found"}
-    from app.arch.credit_engine import generate_nca_disclosure
-    disclosure = await generate_nca_disclosure(db, row.borrower_id, float(row.principal), float(row.interest_rate), 12)
-    return {"loan_id": loan_id, "borrower": row.borrower_id, "lender": row.lender_id,
-            "principal": float(row.principal), "interest_rate": float(row.interest_rate),
-            "status": row.status, "disclosure": disclosure, "sandbox": True}
-
-@app.post("/api/v1/sandbox/lending/seize-collateral/{loan_id}", tags=["Sandbox"])
-async def api_sandbox_seize_collateral(loan_id: str, db: AsyncSession = Depends(get_db)):
-    from app.arch.default_handler import seize_collateral
-    return await seize_collateral(db, loan_id)
-
-@app.post("/api/v1/sandbox/lending/restructure/{loan_id}", tags=["Sandbox"])
-async def api_sandbox_restructure(loan_id: str, request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
-    from app.arch.default_handler import restructure_loan
-    return await restructure_loan(db, loan_id, body.get("new_term_months"), body.get("new_rate"))
-
-# A-6 continued: List compliance reports
-@app.get("/api/v1/sandbox/compliance/reports", tags=["Sandbox"])
-async def api_sandbox_compliance_reports(db: AsyncSession = Depends(get_db)):
-    from app.arch.compliance_reporting import list_compliance_reports
-    return await list_compliance_reports(db)
 
 # ═══════════════════════════════════════════════════════════
 # TIER B: SANDBOX — Functional Services

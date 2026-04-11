@@ -187,7 +187,7 @@ async def generate_weekly_devto_article(agent_client):
     try:
         resp = await agent_client.messages.create(
             model="claude-haiku-4-5-20251001", max_tokens=800,
-            system=[{"type": "text", "text": "You are a technical writer for TiOLi AGENTIS. Write a DEV.to article in markdown. Include code examples with pip install tioli-agentis. Professional, educational tone. NO emojis."}],
+            system=[{"type": "text", "text": "You are a technical writer for TiOLi AGENTIS. Write a DEV.to article in markdown. Include code examples with REST API at exchange.tioli.co.za/api/docs. Professional, educational tone. NO emojis."}],
             messages=[{"role": "user", "content": f"Write an article covering these topics: {', '.join(themes[:3])}. Title it something compelling. Include a call to action: try the free playground at https://agentisexchange.com/playground"}])
         article = next((b.text for b in resp.content if b.type == "text"), "")
 

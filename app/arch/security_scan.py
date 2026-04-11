@@ -1,4 +1,4 @@
-"""Autonomous security scanning — Sentinel performs weekly security audits.
+"""Autonomous security scanning - Sentinel performs weekly security audits.
 
 Scans:
 - Dependency vulnerabilities (pip-audit)
@@ -15,18 +15,27 @@ from datetime import datetime, timezone
 log = logging.getLogger("arch.security_scan")
 
 
-async def run_security_scan():
-    """Run comprehensive security scan. Returns findings."""
-    findings = []
+async def _run_subprocess(cmd, timeout=15, **kwargs):
+    """Run a subprocess with a guaranteed timeout. Returns stdout bytes."""
+    proc = await asyncio.create_subprocess_shell(
+        cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        **kwargs,
+    )
+    stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+    return stdout
 
-    # 1. Check for outdated packages
+
+async def _check_outdated():
+    """Check for outdated critical packages."""
+    findings = []
     try:
-        proc = await asyncio.create_subprocess_shell(
+        stdout = await _run_subprocess(
             "cd /home/tioli/app && .venv/bin/pip list --outdated --format=json 2>/dev/null",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-            cwd="/home/tioli/app"
+            timeout=10,
+            cwd="/home/tioli/app",
         )
-        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=60)
         outdated = json.loads(stdout.decode())
         critical_pkgs = ["cryptography", "anthropic", "starlette", "fastapi", "sqlalchemy"]
         for pkg in outdated:
@@ -34,47 +43,65 @@ async def run_security_scan():
                 findings.append({
                     "severity": "HIGH",
                     "category": "outdated_dependency",
-                    "detail": f"{pkg['name']}: {pkg['version']} -> {pkg['latest_version']}",
+                    "detail": f'{pkg["name"]}: {pkg["version"]} -> {pkg["latest_version"]}',
                 })
     except Exception as e:
         findings.append({"severity": "LOW", "category": "scan_error", "detail": f"Outdated check failed: {e}"})
+    return findings
 
-    # 2. Check security headers
+
+async def _check_headers():
+    """Check security headers."""
+    findings = []
     try:
-        proc = await asyncio.create_subprocess_shell(
-            "curl -sI https://agentisexchange.com 2>/dev/null | grep -ci 'strict-transport\|x-content-type\|x-frame\|content-security'",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        stdout, _ = await proc.communicate()
+        header_cmd = r'curl --max-time 10 -sI https://agentisexchange.com 2>/dev/null | grep -ci "strict-transport\|x-content-type\|x-frame\|content-security"'
+        stdout = await _run_subprocess(header_cmd, timeout=15)
         header_count = int(stdout.decode().strip() or "0")
         if header_count < 3:
             findings.append({"severity": "MEDIUM", "category": "missing_headers", "detail": f"Only {header_count} security headers found"})
     except Exception:
         pass
+    return findings
 
-    # 3. Check for exposed .env or secrets
+
+async def _check_env_exposed():
+    """Check for exposed .env file."""
+    findings = []
     try:
-        proc = await asyncio.create_subprocess_shell(
-            "curl -s -o /dev/null -w '%{http_code}' https://exchange.tioli.co.za/.env 2>/dev/null",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        stdout, _ = await proc.communicate()
+        env_cmd = "curl --max-time 10 -s -o /dev/null -w '%{http_code}' https://exchange.tioli.co.za/.env 2>/dev/null"
+        stdout = await _run_subprocess(env_cmd, timeout=15)
         if stdout.decode().strip() == "200":
             findings.append({"severity": "CRITICAL", "category": "exposed_secrets", "detail": ".env file is publicly accessible!"})
     except Exception:
         pass
+    return findings
 
-    # 4. Check SSL grade
+
+async def _check_ssl():
+    """Check SSL certificate."""
+    findings = []
     try:
-        proc = await asyncio.create_subprocess_shell(
-            "echo | openssl s_client -servername agentisexchange.com -connect agentisexchange.com:443 2>/dev/null | openssl x509 -noout -dates 2>/dev/null | head -2",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        stdout, _ = await proc.communicate()
+        ssl_cmd = "echo | timeout 10 openssl s_client -servername agentisexchange.com -connect agentisexchange.com:443 2>/dev/null | openssl x509 -noout -dates 2>/dev/null | head -2"
+        stdout = await _run_subprocess(ssl_cmd, timeout=15)
         if "notAfter" in stdout.decode():
             findings.append({"severity": "INFO", "category": "ssl", "detail": "SSL certificate valid"})
     except Exception:
         pass
+    return findings
+
+
+async def run_security_scan():
+    """Run comprehensive security scan. Returns findings."""
+    # Run all checks concurrently for speed
+    results = await asyncio.gather(
+        _check_outdated(),
+        _check_headers(),
+        _check_env_exposed(),
+        _check_ssl(),
+    )
+    findings = []
+    for r in results:
+        findings.extend(r)
 
     return {
         "scan_date": datetime.now(timezone.utc).isoformat(),

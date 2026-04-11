@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Vault Management | TiOLi AGENTIS</title>
+    <meta name="description" content="Manage your AGENTIS Vault — store, retrieve, list, and monitor encrypted key-value entries."/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-family: "Material Symbols Outlined";
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            display: inline-block;
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sandbox-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 8rem;
+            font-weight: 900;
+            color: rgba(237, 192, 95, 0.04);
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: 0.2em;
+            white-space: nowrap;
+        }
+        pre.json-output {
+            background: #0a1929;
+            border: 1px solid rgba(68,71,76,0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            color: #77d4e5;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(237,192,95,0.3);
+            border-top-color: #edc05f;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body data-active="vault" class="min-h-screen" style="background:linear-gradient(135deg,#061423 0%,#0a1929 50%,#061423 100%);color:#e2e8f0;font-family:Inter,sans-serif">
+    <script src="/static/landing/public-nav.js?v=1775816653"></script>
+
+    <!-- Sandbox Watermark -->
+    <div class="sandbox-watermark">SANDBOX</div>
+
+    <div class="max-w-6xl mx-auto px-4 pt-24 pb-16 relative z-10">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[#edc05f] text-3xl">vault</span>
+                    Vault Management
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Store, retrieve, and manage encrypted key-value entries in the AGENTIS Vault</p>
+            </div>
+            <span class="px-3 py-1 bg-[#edc05f]/15 text-[#edc05f] text-xs font-bold rounded-full border border-[#edc05f]/30 uppercase tracking-wider">Sandbox Mode</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Store Entry -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#edc05f] text-2xl">add_circle</span>
+                    <h2 class="text-lg font-bold text-white">Store Entry</h2>
+                </div>
+                <form id="storeForm" class="space-y-4" onsubmit="storeEntry(event)">
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Vault ID</label>
+                        <input id="storeVaultId" type="text" required placeholder="e.g. agent-001" class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none"/>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Key</label>
+                        <input id="storeKey" type="text" required placeholder="e.g. config.api_key" class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none"/>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Value</label>
+                        <textarea id="storeValue" required rows="3" placeholder='{"setting": "value"}' class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Storage Tier</label>
+                        <select id="storeTier" class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none">
+                            <option value="AV-CACHE">AV-CACHE — Ephemeral (24h TTL)</option>
+                            <option value="AV-LOCKER">AV-LOCKER — Session-scoped</option>
+                            <option value="AV-CHAMBER" selected>AV-CHAMBER — Persistent</option>
+                            <option value="AV-CITADEL">AV-CITADEL — Immutable Archive</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="storeBtn" class="w-full py-2 bg-[#edc05f] text-[#061423] text-sm font-bold rounded-lg hover:bg-[#edc05f]/90 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">upload</span> Store Entry
+                    </button>
+                </form>
+                <div id="storeResult" class="mt-4 hidden"></div>
+            </div>
+
+            <!-- Retrieve / Delete Entry -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#77d4e5] text-2xl">search</span>
+                    <h2 class="text-lg font-bold text-white">Retrieve / Delete Entry</h2>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Vault ID</label>
+                        <input id="rdVaultId" type="text" required placeholder="e.g. agent-001" class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none"/>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Key</label>
+                        <input id="rdKey" type="text" required placeholder="e.g. config.api_key" class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none"/>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="retrieveEntry()" id="retrieveBtn" class="py-2 bg-[#77d4e5]/20 text-[#77d4e5] text-sm font-bold rounded-lg hover:bg-[#77d4e5]/30 transition-colors border border-[#77d4e5]/30 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">download</span> Retrieve
+                        </button>
+                        <button onclick="deleteEntry()" id="deleteBtn" class="py-2 bg-red-500/10 text-red-400 text-sm font-bold rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/30 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">delete</span> Delete
+                        </button>
+                    </div>
+                </div>
+                <div id="rdResult" class="mt-4 hidden"></div>
+            </div>
+
+            <!-- List Entries -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#77d4e5] text-2xl">list</span>
+                    <h2 class="text-lg font-bold text-white">List Entries</h2>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Vault ID</label>
+                        <input id="listVaultId" type="text" required placeholder="e.g. agent-001" class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none"/>
+                    </div>
+                    <button onclick="listEntries()" id="listBtn" class="w-full py-2 bg-[#77d4e5]/20 text-[#77d4e5] text-sm font-bold rounded-lg hover:bg-[#77d4e5]/30 transition-colors border border-[#77d4e5]/30 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">format_list_bulleted</span> List All Keys
+                    </button>
+                </div>
+                <div id="listResult" class="mt-4 hidden"></div>
+            </div>
+
+            <!-- Usage Meter -->
+            <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-[#edc05f] text-2xl">speed</span>
+                    <h2 class="text-lg font-bold text-white">Usage Meter</h2>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-xs mb-1">Vault ID</label>
+                        <input id="usageVaultId" type="text" required placeholder="e.g. agent-001" class="w-full bg-[#0a1929] border border-[#44474c]/30 text-white text-sm rounded-lg px-3 py-2 focus:border-[#edc05f]/50 focus:outline-none"/>
+                    </div>
+                    <button onclick="checkUsage()" id="usageBtn" class="w-full py-2 bg-[#edc05f]/20 text-[#edc05f] text-sm font-bold rounded-lg hover:bg-[#edc05f]/30 transition-colors border border-[#edc05f]/30 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">monitoring</span> Check Usage
+                    </button>
+                </div>
+                <div id="usageResult" class="mt-4 hidden">
+                    <div class="bg-[#0a1929] rounded-lg p-4 border border-[#44474c]/20">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-slate-400">Entries Used</span>
+                            <span id="usageCount" class="text-white font-bold">0 / 0</span>
+                        </div>
+                        <div class="w-full bg-[#061423] rounded-full h-3 overflow-hidden">
+                            <div id="usageBar" class="h-full rounded-full transition-all duration-500" style="width:0%; background: linear-gradient(90deg, #edc05f, #f59e0b);"></div>
+                        </div>
+                        <div class="flex justify-between text-xs mt-2">
+                            <span id="usageTier" class="text-[#edc05f]">--</span>
+                            <span id="usagePct" class="text-slate-500">0%</span>
+                        </div>
+                    </div>
+                    <div id="usageExtra" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Log (full width) -->
+        <div class="mt-6 bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[#77d4e5] text-2xl">history</span>
+                    <h2 class="text-lg font-bold text-white">Activity Log</h2>
+                </div>
+                <button onclick="clearLog()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">Clear</button>
+            </div>
+            <div id="activityLog" class="space-y-2 max-h-64 overflow-y-auto">
+                <p class="text-slate-500 text-sm text-center py-4">No operations yet. Use the forms above to interact with the Vault API.</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-16 border-t border-[#44474c]/20 pt-8 pb-4 text-center">
+            <div class="flex items-center justify-center gap-2 mb-3">
+                <span class="text-[#edc05f] font-bold text-sm">TiOLi AGENTIS</span>
+                <span class="text-slate-600 text-xs">|</span>
+                <span class="text-slate-500 text-xs">Vault Management Dashboard</span>
+            </div>
+            <p class="text-slate-600 text-xs">&copy; 2026 TiOLi Exchange. All rights reserved.</p>
+            <p class="text-slate-700 text-xs mt-1">Sandbox environment &mdash; no real data is stored.</p>
+        </footer>
+    </div>
+
+    <script>
+    /* Helpers */
+    function addLog(action, vaultId, detail, ok) {
+        var el = document.getElementById('activityLog');
+        var now = new Date().toLocaleTimeString();
+        var icon = ok ? 'check_circle' : 'error';
+        var color = ok ? 'text-emerald-400' : 'text-red-400';
+        var entry = document.createElement('div');
+        entry.className = 'flex items-start gap-3 text-sm bg-[#0a1929] rounded-lg px-3 py-2 border border-[#44474c]/10';
+        entry.innerHTML = '<span class="material-symbols-outlined ' + color + ' text-lg mt-0.5">' + icon + '</span>' +
+            '<div class="flex-1 min-w-0">' +
+                '<div class="flex items-center gap-2">' +
+                    '<span class="text-white font-semibold">' + action + '</span>' +
+                    '<span class="text-slate-600 text-xs">' + vaultId + '</span>' +
+                    '<span class="text-slate-700 text-xs ml-auto">' + now + '</span>' +
+                '</div>' +
+                '<p class="text-slate-400 text-xs truncate">' + detail + '</p>' +
+            '</div>';
+        if (el.querySelector('p.text-center')) el.innerHTML = '';
+        el.prepend(entry);
+    }
+
+    function clearLog() {
+        document.getElementById('activityLog').innerHTML = '<p class="text-slate-500 text-sm text-center py-4">Log cleared.</p>';
+    }
+
+    function showResult(id, html) {
+        var el = document.getElementById(id);
+        el.innerHTML = html;
+        el.classList.remove('hidden');
+    }
+
+    function showLoading(btnId, text) {
+        var btn = document.getElementById(btnId);
+        btn.disabled = true;
+        btn.dataset.orig = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner"></span> ' + text;
+    }
+
+    function resetBtn(btnId) {
+        var btn = document.getElementById(btnId);
+        btn.disabled = false;
+        if (btn.dataset.orig) btn.innerHTML = btn.dataset.orig;
+    }
+
+    function jsonBlock(data) {
+        return '<pre class="json-output">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    /* Store */
+    function storeEntry(e) {
+        e.preventDefault();
+        var vaultId = document.getElementById('storeVaultId').value.trim();
+        var key = document.getElementById('storeKey').value.trim();
+        var value = document.getElementById('storeValue').value.trim();
+        var tier = document.getElementById('storeTier').value;
+        if (!vaultId || !key || !value) return;
+
+        showLoading('storeBtn', 'Storing...');
+        fetch('/api/v1/sandbox/vault/store', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({vault_id: vaultId, key: key, value: value, tier: tier})
+        })
+        .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+        .then(function(res){
+            resetBtn('storeBtn');
+            if (res.ok) {
+                showResult('storeResult', '<div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-sm text-emerald-400"><span class="material-symbols-outlined text-base align-middle mr-1">check_circle</span> Entry stored successfully.</div>' + jsonBlock(res.data));
+                addLog('STORE', vaultId, 'Key: ' + key + ' | Tier: ' + tier, true);
+            } else {
+                showResult('storeResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> ' + escapeHtml(res.data.detail || res.data.error || 'Store failed') + '</div>');
+                addLog('STORE', vaultId, 'FAILED: ' + (res.data.detail || res.data.error || 'Unknown error'), false);
+            }
+        })
+        .catch(function(err){
+            resetBtn('storeBtn');
+            showResult('storeResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> Network error: ' + escapeHtml(err.message) + '</div>');
+            addLog('STORE', vaultId, 'Network error', false);
+        });
+    }
+
+    /* Retrieve */
+    function retrieveEntry() {
+        var vaultId = document.getElementById('rdVaultId').value.trim();
+        var key = document.getElementById('rdKey').value.trim();
+        if (!vaultId || !key) return alert('Please enter both Vault ID and Key.');
+
+        showLoading('retrieveBtn', 'Fetching...');
+        fetch('/api/v1/sandbox/vault/retrieve/' + encodeURIComponent(vaultId) + '/' + encodeURIComponent(key), {
+            credentials: 'include'
+        })
+        .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+        .then(function(res){
+            resetBtn('retrieveBtn');
+            if (res.ok) {
+                showResult('rdResult', '<div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-sm text-emerald-400 mb-2"><span class="material-symbols-outlined text-base align-middle mr-1">check_circle</span> Entry retrieved.</div>' + jsonBlock(res.data));
+                addLog('RETRIEVE', vaultId, 'Key: ' + key, true);
+            } else {
+                showResult('rdResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> ' + escapeHtml(res.data.detail || res.data.error || 'Not found') + '</div>');
+                addLog('RETRIEVE', vaultId, 'FAILED: ' + (res.data.detail || 'Not found'), false);
+            }
+        })
+        .catch(function(err){
+            resetBtn('retrieveBtn');
+            showResult('rdResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> Network error: ' + escapeHtml(err.message) + '</div>');
+            addLog('RETRIEVE', vaultId, 'Network error', false);
+        });
+    }
+
+    /* Delete */
+    function deleteEntry() {
+        var vaultId = document.getElementById('rdVaultId').value.trim();
+        var key = document.getElementById('rdKey').value.trim();
+        if (!vaultId || !key) return alert('Please enter both Vault ID and Key.');
+        if (!confirm('Delete key "' + key + '" from vault "' + vaultId + '"?')) return;
+
+        showLoading('deleteBtn', 'Deleting...');
+        fetch('/api/v1/sandbox/vault/remove/' + encodeURIComponent(vaultId) + '/' + encodeURIComponent(key), {
+            method: 'DELETE',
+            credentials: 'include'
+        })
+        .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+        .then(function(res){
+            resetBtn('deleteBtn');
+            if (res.ok) {
+                showResult('rdResult', '<div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-sm text-emerald-400"><span class="material-symbols-outlined text-base align-middle mr-1">check_circle</span> Entry deleted.</div>' + jsonBlock(res.data));
+                addLog('DELETE', vaultId, 'Key: ' + key, true);
+            } else {
+                showResult('rdResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> ' + escapeHtml(res.data.detail || res.data.error || 'Delete failed') + '</div>');
+                addLog('DELETE', vaultId, 'FAILED: ' + (res.data.detail || 'Unknown'), false);
+            }
+        })
+        .catch(function(err){
+            resetBtn('deleteBtn');
+            showResult('rdResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> Network error: ' + escapeHtml(err.message) + '</div>');
+            addLog('DELETE', vaultId, 'Network error', false);
+        });
+    }
+
+    /* List */
+    function listEntries() {
+        var vaultId = document.getElementById('listVaultId').value.trim();
+        if (!vaultId) return alert('Please enter a Vault ID.');
+
+        showLoading('listBtn', 'Loading...');
+        fetch('/api/v1/sandbox/vault/list/' + encodeURIComponent(vaultId), {
+            credentials: 'include'
+        })
+        .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+        .then(function(res){
+            resetBtn('listBtn');
+            if (res.ok) {
+                var keys = res.data.keys || res.data.entries || res.data;
+                var count = Array.isArray(keys) ? keys.length : Object.keys(keys).length;
+                showResult('listResult', '<div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-sm text-emerald-400 mb-2"><span class="material-symbols-outlined text-base align-middle mr-1">check_circle</span> Found ' + count + ' entries.</div>' + jsonBlock(res.data));
+                addLog('LIST', vaultId, count + ' entries found', true);
+            } else {
+                showResult('listResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> ' + escapeHtml(res.data.detail || res.data.error || 'List failed') + '</div>');
+                addLog('LIST', vaultId, 'FAILED', false);
+            }
+        })
+        .catch(function(err){
+            resetBtn('listBtn');
+            showResult('listResult', '<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400"><span class="material-symbols-outlined text-base align-middle mr-1">error</span> Network error: ' + escapeHtml(err.message) + '</div>');
+            addLog('LIST', vaultId, 'Network error', false);
+        });
+    }
+
+    /* Usage */
+    function checkUsage() {
+        var vaultId = document.getElementById('usageVaultId').value.trim();
+        if (!vaultId) return alert('Please enter a Vault ID.');
+
+        showLoading('usageBtn', 'Checking...');
+        fetch('/api/v1/sandbox/vault/usage/' + encodeURIComponent(vaultId), {
+            credentials: 'include'
+        })
+        .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
+        .then(function(res){
+            resetBtn('usageBtn');
+            if (res.ok) {
+                var d = res.data;
+                var used = d.entries_used || d.used || d.count || 0;
+                var limit = d.entries_limit || d.limit || d.max || 100;
+                var tier = d.tier || d.plan || 'Unknown';
+                var pct = limit > 0 ? Math.round((used / limit) * 100) : 0;
+                var barColor = pct > 90 ? 'background:linear-gradient(90deg,#ef4444,#dc2626)' :
+                               pct > 70 ? 'background:linear-gradient(90deg,#f59e0b,#d97706)' :
+                                          'background:linear-gradient(90deg,#edc05f,#f59e0b)';
+
+                document.getElementById('usageCount').textContent = used + ' / ' + limit;
+                document.getElementById('usageBar').style.cssText = 'width:' + pct + '%;' + barColor + ';height:100%;border-radius:9999px;transition:all 0.5s';
+                document.getElementById('usageTier').textContent = tier;
+                document.getElementById('usagePct').textContent = pct + '%';
+                document.getElementById('usageResult').classList.remove('hidden');
+                document.getElementById('usageExtra').innerHTML = jsonBlock(res.data);
+                addLog('USAGE', vaultId, used + '/' + limit + ' (' + pct + '%) - ' + tier, true);
+            } else {
+                document.getElementById('usageResult').classList.add('hidden');
+                alert(res.data.detail || res.data.error || 'Usage check failed');
+                addLog('USAGE', vaultId, 'FAILED', false);
+            }
+        })
+        .catch(function(err){
+            resetBtn('usageBtn');
+            alert('Network error: ' + err.message);
+            addLog('USAGE', vaultId, 'Network error', false);
+        });
+    }
+    </script>
+</body>
+</html>

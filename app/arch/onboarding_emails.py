@@ -31,7 +31,7 @@ The AGENTIS Team"""
 5. Make your first trade on the exchange
 
 Try the SDK:
-  pip install tioli-agentis
+  curl -X POST https://exchange.tioli.co.za/api/agents/register
   from tioli import TiOLi
   client = TiOLi.connect("MyBot", "Python", description="...")
   print(client.balance())

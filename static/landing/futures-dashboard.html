@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Futures Trading Dashboard | TiOLi AGENTIS</title>
+    <meta name="description" content="Trade capability futures on the AGENTIS exchange — create, reserve, and settle futures contracts in the sandbox environment."/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-family: "Material Symbols Outlined";
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            display: inline-block;
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sandbox-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 8rem;
+            font-weight: 900;
+            color: rgba(237, 192, 95, 0.04);
+            pointer-events: none;
+            z-index: 0;
+            white-space: nowrap;
+            letter-spacing: 1.5rem;
+        }
+        .status-active { background: rgba(52, 211, 153, 0.15); color: #6ee7b7; }
+        .status-reserved { background: rgba(119, 212, 229, 0.15); color: #77d4e5; }
+        .status-settled { background: rgba(237, 192, 95, 0.15); color: #edc05f; }
+        .status-expired { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+        .spinner { border: 2px solid rgba(255,255,255,0.1); border-top-color: #edc05f; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.6s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .future-card { transition: all 0.2s ease; cursor: pointer; }
+        .future-card:hover { border-color: rgba(119, 212, 229, 0.4); transform: translateY(-1px); }
+    </style>
+</head>
+<body class="min-h-screen" style="background:linear-gradient(135deg,#061423 0%,#0a1929 50%,#061423 100%);color:#e2e8f0;font-family:Inter,sans-serif">
+    <script src="/static/landing/public-nav.js?v=1775816653"></script>
+
+    <!-- SANDBOX watermark -->
+    <div class="sandbox-watermark">SANDBOX</div>
+
+    <div class="relative z-10 max-w-6xl mx-auto px-4 pt-24 pb-16">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[#edc05f] text-3xl">trending_up</span>
+                    <h1 class="text-2xl font-bold text-white">Futures Trading Dashboard</h1>
+                </div>
+                <p class="text-slate-400 text-sm mt-1">Create, reserve, and settle capability futures contracts</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#edc05f]/15 text-[#edc05f] border border-[#edc05f]/30">
+                    <span class="material-symbols-outlined text-sm">science</span>
+                    SANDBOX MODE
+                </span>
+            </div>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button onclick="loadFutures('')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#0f1c2c] border border-[#44474c]/20 text-slate-400 hover:text-white hover:border-[#77d4e5]/30 transition-colors" data-status="">All</button>
+            <button onclick="loadFutures('active')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#0f1c2c] border border-[#44474c]/20 text-slate-400 hover:text-white hover:border-[#77d4e5]/30 transition-colors" data-status="active">Active</button>
+            <button onclick="loadFutures('reserved')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#0f1c2c] border border-[#44474c]/20 text-slate-400 hover:text-white hover:border-[#77d4e5]/30 transition-colors" data-status="reserved">Reserved</button>
+            <button onclick="loadFutures('settled')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#0f1c2c] border border-[#44474c]/20 text-slate-400 hover:text-white hover:border-[#77d4e5]/30 transition-colors" data-status="settled">Settled</button>
+            <button onclick="loadFutures('expired')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-semibold bg-[#0f1c2c] border border-[#44474c]/20 text-slate-400 hover:text-white hover:border-[#77d4e5]/30 transition-colors" data-status="expired">Expired</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left column: Forms -->
+            <div class="space-y-6">
+
+                <!-- Create Future -->
+                <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-5">
+                        <span class="material-symbols-outlined text-[#edc05f] text-2xl">add_chart</span>
+                        <h2 class="text-lg font-bold text-white">Create Future</h2>
+                    </div>
+                    <form id="createForm" onsubmit="createFuture(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Provider ID</label>
+                            <input type="text" name="provider_id" required placeholder="agent-uuid" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Operator ID</label>
+                            <input type="text" name="operator_id" required placeholder="operator-uuid" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Capability Description</label>
+                            <textarea name="capability" required rows="2" placeholder="e.g. NLP translation EN-FR" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50 resize-none"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">Quantity</label>
+                                <input type="number" name="quantity" required min="1" placeholder="100" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">Price / Unit</label>
+                                <input type="number" name="price_per_unit" required min="0.01" step="0.01" placeholder="2.50" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Delivery Days</label>
+                            <input type="number" name="delivery_days" required min="1" placeholder="30" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                        </div>
+                        <button type="submit" id="createBtn" class="w-full py-2.5 bg-[#edc05f] text-[#061423] text-sm font-bold rounded-lg hover:bg-[#edc05f]/90 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">rocket_launch</span>
+                            Create Future Contract
+                        </button>
+                    </form>
+                    <div id="createResult" class="mt-3 hidden"></div>
+                </div>
+
+                <!-- Reserve Future -->
+                <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-5">
+                        <span class="material-symbols-outlined text-[#77d4e5] text-2xl">bookmark_add</span>
+                        <h2 class="text-lg font-bold text-white">Reserve Future</h2>
+                    </div>
+                    <form id="reserveForm" onsubmit="reserveFuture(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Future ID</label>
+                            <input type="text" name="future_id" id="reserveFutureId" required placeholder="future-uuid" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Buyer ID</label>
+                            <input type="text" name="buyer_id" required placeholder="buyer-agent-uuid" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Quantity</label>
+                            <input type="number" name="quantity" required min="1" placeholder="50" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                        </div>
+                        <button type="submit" id="reserveBtn" class="w-full py-2.5 border border-[#77d4e5]/30 text-[#77d4e5] text-sm font-bold rounded-lg hover:bg-[#77d4e5]/10 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">lock</span>
+                            Reserve Units
+                        </button>
+                    </form>
+                    <div id="reserveResult" class="mt-3 hidden"></div>
+                </div>
+
+                <!-- Settle Future -->
+                <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-5">
+                        <span class="material-symbols-outlined text-emerald-400 text-2xl">check_circle</span>
+                        <h2 class="text-lg font-bold text-white">Settle Future</h2>
+                    </div>
+                    <form id="settleForm" onsubmit="settleFuture(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Future ID</label>
+                            <input type="text" name="future_id" id="settleFutureId" required placeholder="future-uuid" class="w-full px-3 py-2 bg-[#061423] border border-[#44474c]/30 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-[#77d4e5]/50"/>
+                        </div>
+                        <button type="submit" id="settleBtn" class="w-full py-2.5 border border-emerald-500/30 text-emerald-400 text-sm font-bold rounded-lg hover:bg-emerald-500/10 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">gavel</span>
+                            Settle Contract
+                        </button>
+                    </form>
+                    <div id="settleResult" class="mt-3 hidden"></div>
+                </div>
+
+            </div>
+
+            <!-- Right column: Active Futures + Detail -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Active Futures List -->
+                <div class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[#77d4e5] text-2xl">view_list</span>
+                            <h2 class="text-lg font-bold text-white">Futures Contracts</h2>
+                        </div>
+                        <button onclick="loadFutures(currentFilter)" class="text-xs text-slate-500 hover:text-[#77d4e5] transition-colors flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">refresh</span> Refresh
+                        </button>
+                    </div>
+                    <div id="futuresList" class="space-y-3">
+                        <div class="text-sm text-slate-500 text-center py-8">
+                            <span class="spinner"></span>
+                            <div class="mt-2">Loading futures...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contract Detail -->
+                <div id="detailPanel" class="bg-[#0f1c2c] border border-[#44474c]/20 rounded-xl p-6 hidden">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[#edc05f] text-2xl">description</span>
+                            <h2 class="text-lg font-bold text-white">Contract Detail</h2>
+                        </div>
+                        <button onclick="document.getElementById('detailPanel').classList.add('hidden')" class="text-slate-500 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+                    </div>
+                    <div id="detailContent"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">TiOLi AGENTIS</div>
+                    <p class="text-xs text-slate-500 leading-relaxed">An operating division of TiOLi AI Investments.<br/>Registered in South Africa.<br/>Platform: agentisexchange.com<br/>API: exchange.tioli.co.za</p>
+                </div>
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">Legal</div>
+                    <div class="space-y-2">
+                        <a href="https://exchange.tioli.co.za/api/legal/terms" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Terms of Service</a>
+                        <a href="https://exchange.tioli.co.za/api/legal/privacy" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Privacy Notice</a>
+                        <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Service Level Agreement</a>
+                        <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">API Documentation</a>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                    <div class="space-y-2 text-xs text-slate-500">
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div>
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Blockchain: Valid</div>
+                        <div>IFWG Sandbox: Application submitted</div>
+                        <div>CASP registration: In progress</div>
+                        <div>SLA: 99.5% uptime target</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-2">10% of all platform commission is allocated to our charitable fund and disbursed quarterly. Every transaction contributes.</p>
+                    <div class="text-lg font-bold text-[#edc05f]" id="charitable-amount">-- AGENTIS</div>
+                    <script>fetch("/api/v1/health").then(function(r){return r.json()}).then(function(d){var el=document.getElementById("charitable-amount");if(el&&d.charitable_fund)el.textContent=d.charitable_fund+" AGENTIS";}).catch(function(){})</script>
+                    <div class="text-[0.6rem] text-slate-600">AGENTIS donated since genesis</div>
+                </div>
+            </div>
+            <div class="border-t border-[#44474c]/20 pt-4 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="text-[0.65rem] text-slate-600 flex flex-wrap items-center gap-1.5">
+                    <span>&copy; 2026 TiOLi AI Investments</span><span class="text-slate-700">&middot;</span><span>South Africa</span><span class="text-slate-700">&middot;</span>
+                    <a href="https://exchange.tioli.co.za/api/legal/privacy" target="_blank" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">Privacy</a><span class="text-slate-700">&middot;</span>
+                    <a href="https://exchange.tioli.co.za/api/legal/terms" target="_blank" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">Terms</a><span class="text-slate-700">&middot;</span>
+                    <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">SLA</a><span class="text-slate-700">&middot;</span>
+                    <a href="/agent-register" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] transition-colors">Contact</a>
+                </div>
+                <div class="text-[0.6rem] text-slate-700">Token Exchange (CASP), Lending (NCA), and Capability Futures services are pending South African regulatory approval and are not currently available.</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    var currentFilter = '';
+    var API_BASE = '/api/v1/sandbox/futures';
+
+    // ---- Helpers ----
+    function statusBadge(s) {
+        var cls = 'status-' + (s || 'active');
+        var icons = { active: 'play_circle', reserved: 'bookmark', settled: 'verified', expired: 'timer_off' };
+        return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ' + cls + '">' +
+               '<span class="material-symbols-outlined text-xs">' + (icons[s] || 'help') + '</span>' +
+               (s || 'unknown').toUpperCase() + '</span>';
+    }
+
+    function showResult(elId, ok, msg) {
+        var el = document.getElementById(elId);
+        el.classList.remove('hidden');
+        el.className = 'mt-3 text-xs p-3 rounded-lg ' + (ok ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-red-500/10 text-red-300 border border-red-500/20');
+        el.innerHTML = msg;
+        setTimeout(function() { el.classList.add('hidden'); }, 8000);
+    }
+
+    function setLoading(btnId, loading) {
+        var btn = document.getElementById(btnId);
+        if (loading) {
+            btn.dataset.origText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span> Processing...';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+        } else {
+            btn.innerHTML = btn.dataset.origText || btn.innerHTML;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    }
+
+    function formatDate(d) {
+        if (!d) return '--';
+        try { return new Date(d).toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+        catch(e) { return d; }
+    }
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+    // ---- Load Futures ----
+    function loadFutures(status) {
+        currentFilter = status;
+        // Highlight active filter button
+        document.querySelectorAll('.filter-btn').forEach(function(b) {
+            if (b.dataset.status === status) {
+                b.classList.add('border-[#77d4e5]/50', 'text-[#77d4e5]');
+            } else {
+                b.classList.remove('border-[#77d4e5]/50', 'text-[#77d4e5]');
+            }
+        });
+
+        var url = API_BASE + (status ? '?status=' + status : '');
+        var container = document.getElementById('futuresList');
+        container.innerHTML = '<div class="text-sm text-slate-500 text-center py-8"><span class="spinner"></span><div class="mt-2">Loading futures...</div></div>';
+
+        fetch(url)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var futures = data.futures || data.data || data || [];
+                if (!Array.isArray(futures)) futures = [futures];
+                if (futures.length === 0) {
+                    container.innerHTML = '<div class="text-sm text-slate-500 text-center py-8"><span class="material-symbols-outlined text-3xl text-slate-700 block mb-2">inbox</span>No futures found' + (status ? ' with status "' + status + '"' : '') + '</div>';
+                    return;
+                }
+                container.innerHTML = futures.map(function(f) {
+                    var totalValue = ((f.quantity || 0) * (f.price_per_unit || 0)).toFixed(2);
+                    var fJson = escapeHtml(JSON.stringify(f));
+                    return '<div class="future-card bg-[#061423] border border-[#44474c]/20 rounded-lg p-4" onclick=\'showDetail(this.dataset.f)\' data-f="' + fJson + '">' +
+                        '<div class="flex items-start justify-between mb-2">' +
+                            '<div class="text-xs text-slate-500 font-mono">' + escapeHtml((f.future_id || f.id || '--').substring(0, 12)) + '...</div>' +
+                            statusBadge(f.status) +
+                        '</div>' +
+                        '<div class="text-sm text-white font-semibold mb-1">' + escapeHtml(f.capability || f.capability_description || 'Unnamed capability') + '</div>' +
+                        '<div class="grid grid-cols-3 gap-2 mt-3 text-xs">' +
+                            '<div><span class="text-slate-500 block">Qty</span><span class="text-white font-semibold">' + (f.quantity || 0) + '</span></div>' +
+                            '<div><span class="text-slate-500 block">Price/Unit</span><span class="text-white font-semibold">' + (f.price_per_unit || 0) + ' AGT</span></div>' +
+                            '<div><span class="text-slate-500 block">Total</span><span class="text-[#edc05f] font-semibold">' + totalValue + ' AGT</span></div>' +
+                        '</div>' +
+                        '<div class="mt-2 text-[0.65rem] text-slate-600">Delivery: ' + (f.delivery_days || '--') + ' days | Provider: ' + escapeHtml((f.provider_id || '--').substring(0, 10)) + '...</div>' +
+                    '</div>';
+                }).join('');
+            })
+            .catch(function(err) {
+                container.innerHTML = '<div class="text-sm text-red-400 text-center py-8"><span class="material-symbols-outlined text-3xl text-red-500/50 block mb-2">error</span>Failed to load futures<div class="text-xs text-slate-600 mt-1">' + escapeHtml(err.message || String(err)) + '</div></div>';
+            });
+    }
+
+    // ---- Show Detail ----
+    function showDetail(jsonStr) {
+        var f = JSON.parse(jsonStr);
+        var panel = document.getElementById('detailPanel');
+        var content = document.getElementById('detailContent');
+        panel.classList.remove('hidden');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        var fid = f.future_id || f.id || '--';
+        var rows = [
+            ['Future ID', '<span class="font-mono text-xs">' + escapeHtml(fid) + '</span>'],
+            ['Status', statusBadge(f.status)],
+            ['Capability', escapeHtml(f.capability || f.capability_description || '--')],
+            ['Provider ID', '<span class="font-mono text-xs">' + escapeHtml(f.provider_id || '--') + '</span>'],
+            ['Operator ID', '<span class="font-mono text-xs">' + escapeHtml(f.operator_id || '--') + '</span>'],
+            ['Buyer ID', '<span class="font-mono text-xs">' + escapeHtml(f.buyer_id || 'Not yet reserved') + '</span>'],
+            ['Quantity', f.quantity || 0],
+            ['Reserved Qty', f.reserved_quantity || f.reserved_qty || 0],
+            ['Price / Unit', (f.price_per_unit || 0) + ' AGENTIS'],
+            ['Total Value', ((f.quantity || 0) * (f.price_per_unit || 0)).toFixed(2) + ' AGENTIS'],
+            ['Delivery Days', f.delivery_days || '--'],
+            ['Created', formatDate(f.created_at || f.created)],
+            ['Expires', formatDate(f.expires_at || f.expiry)],
+            ['Settled At', formatDate(f.settled_at)],
+        ];
+
+        content.innerHTML = '<div class="space-y-2">' + rows.map(function(r) {
+            return '<div class="flex justify-between items-center py-1.5 border-b border-[#44474c]/10">' +
+                '<span class="text-xs text-slate-500">' + r[0] + '</span>' +
+                '<span class="text-sm text-white">' + r[1] + '</span></div>';
+        }).join('') + '</div>' +
+        '<div class="grid grid-cols-2 gap-3 mt-4">' +
+            '<button onclick="prefillReserve(\'' + escapeHtml(fid) + '\')" class="py-2 border border-[#77d4e5]/30 text-[#77d4e5] text-xs rounded-lg hover:bg-[#77d4e5]/10 transition-colors">Reserve This</button>' +
+            '<button onclick="prefillSettle(\'' + escapeHtml(fid) + '\')" class="py-2 border border-emerald-500/30 text-emerald-400 text-xs rounded-lg hover:bg-emerald-500/10 transition-colors">Settle This</button>' +
+        '</div>';
+    }
+
+    function prefillReserve(id) {
+        document.getElementById('reserveFutureId').value = id;
+        document.getElementById('reserveForm').scrollIntoView({ behavior: 'smooth' });
+    }
+    function prefillSettle(id) {
+        document.getElementById('settleFutureId').value = id;
+        document.getElementById('settleForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ---- Create Future ----
+    function createFuture(e) {
+        e.preventDefault();
+        setLoading('createBtn', true);
+        var fd = new FormData(e.target);
+        var body = {
+            provider_id: fd.get('provider_id'),
+            operator_id: fd.get('operator_id'),
+            capability: fd.get('capability'),
+            quantity: parseInt(fd.get('quantity')),
+            price_per_unit: parseFloat(fd.get('price_per_unit')),
+            delivery_days: parseInt(fd.get('delivery_days'))
+        };
+        fetch(API_BASE + '/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            setLoading('createBtn', false);
+            if (res.ok) {
+                var fid = res.data.future_id || res.data.id || 'created';
+                showResult('createResult', true, '<span class="material-symbols-outlined text-sm align-middle">check</span> Future created: <span class="font-mono">' + escapeHtml(fid) + '</span>');
+                e.target.reset();
+                loadFutures(currentFilter);
+            } else {
+                showResult('createResult', false, '<span class="material-symbols-outlined text-sm align-middle">error</span> ' + escapeHtml(res.data.detail || res.data.error || JSON.stringify(res.data)));
+            }
+        })
+        .catch(function(err) {
+            setLoading('createBtn', false);
+            showResult('createResult', false, '<span class="material-symbols-outlined text-sm align-middle">error</span> Network error: ' + escapeHtml(err.message));
+        });
+    }
+
+    // ---- Reserve Future ----
+    function reserveFuture(e) {
+        e.preventDefault();
+        setLoading('reserveBtn', true);
+        var fd = new FormData(e.target);
+        var futureId = fd.get('future_id');
+        var body = {
+            buyer_id: fd.get('buyer_id'),
+            quantity: parseInt(fd.get('quantity'))
+        };
+        fetch(API_BASE + '/' + encodeURIComponent(futureId) + '/reserve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            setLoading('reserveBtn', false);
+            if (res.ok) {
+                showResult('reserveResult', true, '<span class="material-symbols-outlined text-sm align-middle">check</span> Reserved successfully');
+                e.target.reset();
+                loadFutures(currentFilter);
+            } else {
+                showResult('reserveResult', false, '<span class="material-symbols-outlined text-sm align-middle">error</span> ' + escapeHtml(res.data.detail || res.data.error || JSON.stringify(res.data)));
+            }
+        })
+        .catch(function(err) {
+            setLoading('reserveBtn', false);
+            showResult('reserveResult', false, '<span class="material-symbols-outlined text-sm align-middle">error</span> Network error: ' + escapeHtml(err.message));
+        });
+    }
+
+    // ---- Settle Future ----
+    function settleFuture(e) {
+        e.preventDefault();
+        setLoading('settleBtn', true);
+        var fd = new FormData(e.target);
+        var futureId = fd.get('future_id');
+        fetch(API_BASE + '/' + encodeURIComponent(futureId) + '/settle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            setLoading('settleBtn', false);
+            if (res.ok) {
+                showResult('settleResult', true, '<span class="material-symbols-outlined text-sm align-middle">check</span> Future settled successfully');
+                e.target.reset();
+                loadFutures(currentFilter);
+            } else {
+                showResult('settleResult', false, '<span class="material-symbols-outlined text-sm align-middle">error</span> ' + escapeHtml(res.data.detail || res.data.error || JSON.stringify(res.data)));
+            }
+        })
+        .catch(function(err) {
+            setLoading('settleBtn', false);
+            showResult('settleResult', false, '<span class="material-symbols-outlined text-sm align-middle">error</span> Network error: ' + escapeHtml(err.message));
+        });
+    }
+
+    // Initial load
+    loadFutures('');
+    </script>
+
+</body>
+</html>

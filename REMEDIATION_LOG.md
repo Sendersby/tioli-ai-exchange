@@ -1,0 +1,30 @@
+# AGENTIS Platform Remediation Log
+## Programme: Claude Code Autonomous Development Programme v1.0
+## Start Date: 2026-04-10
+## Audit Source: 58 Findings, 361-468 Estimated Hours
+
+---
+
+## Baseline State
+- Server: 165.232.37.86 (DigitalOcean, 4GB RAM)
+- App: FastAPI on Python 3.12, single uvicorn worker
+- File: main.py = 12,010 lines, 676 functions
+- Routes: 642 route decorators (382 GET, 250 POST, 2 PUT, 6 DELETE, 2 PATCH)
+- Database: 391 tables (228 empty, 163 with data)
+- .env variables: 210
+- Frontend pages: 39 static HTML + server-rendered dashboards
+- Tests: 628 total (619 passed, 9 failed)
+- Previous audit score: 3.3/10
+
+---
+
+## Phase Execution Log
+
+### Phase 0: Orientation
+- Status: COMPLETE
+- Started: 2026-04-10
+- Completed: 2026-04-10
+- Actions: Full codebase mapping, route catalogue, frontend-API mapping, .env audit, empty table census, baseline test run, server health check
+- Findings: 9 pre-existing test failures (4 arch tool counts, 2 DAP logic, 3 currency rename drift)
+- Services: All 4 services active (tioli-exchange, postgresql, redis, nginx)
+- Health endpoint: operational

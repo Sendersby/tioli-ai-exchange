@@ -41,7 +41,7 @@ async def run_health_checks():
     # 2. Check memory usage
     try:
         proc = await asyncio.create_subprocess_shell(
-            "free | grep Mem | awk '{printf "%.0f", $3/$2 * 100}'",
+            "free | grep Mem | awk '{print int($3/$2 * 100)}'",
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         stdout, _ = await proc.communicate()

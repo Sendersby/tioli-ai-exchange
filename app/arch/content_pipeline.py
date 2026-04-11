@@ -36,7 +36,7 @@ Requirements:
 - 800-1200 words
 - Include working Python code examples using tioli-agentis SDK
 - Start with the problem, then show the solution
-- Include pip install tioli-agentis
+- Include REST API at https://exchange.tioli.co.za/api/docs
 - End with a link to https://agentisexchange.com/sdk
 - Technical but accessible tone
 - Use markdown formatting

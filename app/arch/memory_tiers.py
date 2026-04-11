@@ -141,7 +141,7 @@ async def save_to_db(db, mem: TieredMemory):
         for key, value in mem.core.items():
             await db.execute(text(
                 "INSERT INTO arch_memory_outbox (agent_id, content, source_type, importance) "
-                "VALUES (:aid, :content, 'core_identity', 9.99)"
+                "VALUES (:aid, :content, 'core_identity', 0.99)"
             ), {"aid": agent_id, "content": f"{key}: {value}"})
         await db.commit()
     except Exception as e:

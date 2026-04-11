@@ -268,7 +268,7 @@ async def flush_memory_outbox(db_factory):
                         "metadata": row.metadata if isinstance(row.metadata, str)
                                     else json.dumps(row.metadata),
                         "source_type": row.source_type,
-                        "importance": float(row.importance),
+                        "importance": min(max(float(row.importance), 0.0), 1.0),
                     },
                 )
                 await db.execute(

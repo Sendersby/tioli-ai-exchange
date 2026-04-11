@@ -685,7 +685,7 @@ CREATE TABLE IF NOT EXISTS arch_memories (
     embedding        vector(1536) NOT NULL,
     metadata         JSONB       NOT NULL DEFAULT '{}',
     source_type      VARCHAR(50) CHECK (source_type IN
-                     ('interaction','research','decision','outcome','bootstrap')),
+                     ('interaction','research','decision','outcome','bootstrap','core_identity')),
     importance       NUMERIC(3,2) NOT NULL DEFAULT 0.5
                      CHECK (importance BETWEEN 0 AND 1),
     access_count     INTEGER NOT NULL DEFAULT 0,

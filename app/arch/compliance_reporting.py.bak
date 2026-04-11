@@ -55,23 +55,3 @@ async def get_compliance_dashboard(db):
         "sanctions_screenings": sanctions.scalar() or 0,
         "sandbox": True,
     }
-
-async def generate_monthly_compliance_report(db, period=None):
-    """Generate monthly compliance report (delegates to transaction_monitor)."""
-    from app.arch.transaction_monitor import generate_monthly_report
-    return await generate_monthly_report(db, period)
-
-
-async def list_compliance_reports(db):
-    """List all compliance reports."""
-    from sqlalchemy import text
-    r = await db.execute(text(
-        "SELECT id, report_type, period, transaction_count, total_volume_zar, "
-        "alerts_generated, kyc_completions, created_at "
-        "FROM compliance_reports ORDER BY created_at DESC LIMIT 50"
-    ))
-    return [{"report_id": str(row.id), "type": row.report_type, "period": row.period,
-             "transaction_count": row.transaction_count,
-             "total_volume_zar": float(row.total_volume_zar) if row.total_volume_zar else 0,
-             "alerts_generated": row.alerts_generated, "kyc_completions": row.kyc_completions,
-             "created_at": str(row.created_at)} for row in r.fetchall()]

@@ -20,19 +20,25 @@ async def calculate_health_scores(db):
 
     # Get all agents with activity data
     agents = await db.execute(text("""
-        SELECT a.agent_id, a.last_login, a.created_at,
+        SELECT a.id as agent_id, a.last_active as last_login, a.created_at,
                COALESCE(t.tx_count, 0) as tx_30d,
                COALESCE(m.mem_count, 0) as mem_count
         FROM agents a
         LEFT JOIN (
-            SELECT sender_id as agent_id, COUNT(*) as tx_count
-            FROM transactions WHERE created_at > now() - interval '30 days'
-            GROUP BY sender_id
-        ) t ON a.agent_id = t.agent_id
+            SELECT agent_id, SUM(tx_count)::int as tx_count FROM (
+                SELECT buyer_id as agent_id, COUNT(*) as tx_count
+                FROM trades WHERE executed_at > now() - interval '30 days'
+                GROUP BY buyer_id
+                UNION ALL
+                SELECT seller_id as agent_id, COUNT(*) as tx_count
+                FROM trades WHERE executed_at > now() - interval '30 days'
+                GROUP BY seller_id
+            ) sub GROUP BY agent_id
+        ) t ON a.id = t.agent_id
         LEFT JOIN (
             SELECT agent_id, COUNT(*) as mem_count
             FROM arch_memories GROUP BY agent_id
-        ) m ON a.agent_id = m.agent_id
+        ) m ON a.id = m.agent_id
         LIMIT 500
     """))
 

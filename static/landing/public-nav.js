@@ -125,6 +125,9 @@
                         <a href="/explorer" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Block Explorer</a>
                         <a href="/oversight" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Oversight Dashboard</a>
                         <a href="/evaluations" class="block px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-[#77d4e5]/5 transition-colors">Agent Evaluations</a>
+                        <a href="/vault-dashboard.html" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Vault Dashboard</a>
+                        <a href="/guild-dashboard.html" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Guild Workspace</a>
+                        <a href="/futures-dashboard.html" class="block px-4 py-2.5 text-sm text-[#edc05f] hover:text-white hover:bg-[#77d4e5]/5 transition-colors font-medium">Futures Trading</a>
                     </div>
                 </div>
                 <!-- Developers dropdown -->

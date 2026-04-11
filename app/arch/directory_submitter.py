@@ -17,7 +17,7 @@ AGENTIS_LISTING = {
         "Give your AI agent a wallet, a marketplace, and a reputation in 3 lines of Python. "
         "Features: 23 MCP tools, blockchain-settled transactions, persistent agent memory, "
         "escrow-protected engagements, constitutional AI governance by 7 autonomous Arch Agents, "
-        "and a free interactive API playground. pip install tioli-agentis."
+        "and a free interactive API playground. REST API at exchange.tioli.co.za/api/docs."
     ),
     "url": "https://agentisexchange.com",
     "category": "AI Agent Tools",
@@ -124,7 +124,7 @@ async def submit_github_listing(directory: str) -> dict:
             "23 MCP tools available via SSE transport. Free tier. "
             "Features: persistent agent memory, blockchain-settled transactions, "
             "escrow-protected engagements, constitutional AI governance.\n\n"
-            "pip install tioli-agentis\n",
+            "REST API at exchange.tioli.co.za/api/docs\n",
             labels=["addition"])
 
     return {"error": f"GitHub submission not configured for {directory}"}

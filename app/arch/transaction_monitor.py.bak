@@ -27,13 +27,12 @@ async def scan_transactions(db, hours=24):
     alerts = []
 
     # Rule 1: Structuring — multiple transactions just under R25K
-    hours = int(hours)
     r = await db.execute(text(
-        f"SELECT buyer_id as entity, count(*) as cnt, sum(total_value) as total "
-        f"FROM trades WHERE executed_at > now() - interval '{hours} hours' "
-        f"AND total_value BETWEEN 20000 AND 24999 "
-        f"GROUP BY buyer_id HAVING count(*) >= 3"
-    ))
+        "SELECT buyer_id as entity, count(*) as cnt, sum(total_value) as total "
+        "FROM trades WHERE executed_at > now() - interval :hours "
+        "AND total_value BETWEEN 20000 AND 24999 "
+        "GROUP BY buyer_id HAVING count(*) >= 3"
+    ), {"hours": f"{hours} hours"})
     for row in r.fetchall():
         alert_id = str(uuid.uuid4())
         await db.execute(text(
@@ -41,7 +40,7 @@ async def scan_transactions(db, hours=24):
             "narrative, amount_involved, is_sandbox) "
             "VALUES (cast(:id as uuid), :eid, 'STRUCTURING', 'high', 'STRUCTURING', :narr, :amt, true)"
         ), {"id": alert_id, "eid": row.entity, "amt": float(row.total),
-            "narr": f"{row.cnt} transactions totalling R{float(row.total):.2f} just under R25K threshold in {hours}h"})
+            "narr": f"{row.cnt} transactions totalling R{row.total:.2f} just under R25K threshold in {hours}h"})
         alerts.append({"rule": "STRUCTURING", "entity": row.entity, "count": row.cnt})
 
     # Rule 2: Velocity
@@ -124,27 +123,7 @@ async def generate_monthly_report(db, period=None):
         "total_volume_zar, alerts_generated, kyc_completions, is_sandbox) "
         "VALUES (cast(:id as uuid), 'monthly', :period, :data, :tc, :vol, :alerts, :kyc, true)"
     ), {"id": report_id, "period": period, "data": json.dumps(report),
-        "tc": t[0], "vol": float(t[1]) + float(d[1]), "alerts": a, "kyc": k})
+        "tc": t[0], "vol": float(t[1] + d[1]), "alerts": a, "kyc": k})
     await db.commit()
 
     return {"report_id": report_id, **report, "sandbox": True}
-
-async def get_report_by_period(db, period):
-    """Retrieve a monitoring/compliance report by period."""
-    from sqlalchemy import text
-    r = await db.execute(text(
-        "SELECT id, report_type, period, data, transaction_count, total_volume_zar, "
-        "alerts_generated, kyc_completions, created_at "
-        "FROM compliance_reports WHERE period = :p ORDER BY created_at DESC LIMIT 1"
-    ), {"p": period})
-    row = r.fetchone()
-    if not row:
-        return {"error": "No report found for period", "period": period}
-    import json as _json
-    data = row.data if isinstance(row.data, dict) else _json.loads(row.data) if row.data else {}
-    return {"report_id": str(row.id), "type": row.report_type, "period": row.period,
-            "data": data,
-            "transaction_count": row.transaction_count,
-            "total_volume_zar": float(row.total_volume_zar) if row.total_volume_zar else 0,
-            "alerts_generated": row.alerts_generated, "kyc_completions": row.kyc_completions,
-            "created_at": str(row.created_at), "sandbox": True}
