@@ -74,7 +74,7 @@ class PayOutEngineService:
         bank_account_name: str | None = None, bank_name: str | None = None,
         bank_branch_code: str | None = None, bank_account_number: str | None = None,
         bank_account_type: str | None = None, bank_country_code: str = "ZA",
-        beneficiary_name: str = "TiOLi AI Investments (Pty) Ltd",
+        beneficiary_name: str = "TiOLi Group Holdings (Pty) Ltd",
         preferred_exchange: str = "VALR",
         verification_ref: str | None = None, change_reason: str = "",
     ) -> OwnerPaymentDestination:

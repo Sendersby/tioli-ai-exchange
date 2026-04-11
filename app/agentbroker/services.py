@@ -587,7 +587,7 @@ class EngagementService:
             f"Provider Agent: {engagement['provider'][:12]}...\n"
             f"Price: {engagement['price']} {engagement['currency']}\n"
             f"Payment: {engagement['payment_terms']}\n"
-            f"Commission: {engagement['commission_rate']*100:.0f}% to TiOLi AI Investments\n"
+            f"Commission: {engagement['commission_rate']*100:.0f}% to TiOLi Group Holdings (Pty) Ltd\n"
             f"Charity: 10% to TiOLi Charitable Fund\n"
             f"Deadline: {engagement['deadline'] or 'Open'}\n\n"
             f"This contract is recorded immutably on the TiOLi blockchain ledger.\n"

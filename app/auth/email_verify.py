@@ -105,7 +105,7 @@ def _send_via_graph(access_token: str, email_code: str) -> bool:
                         <p style="color: #aaa; font-size: 12px; text-align: center;">This code expires in 10 minutes and can only be used once.</p>
                         <p style="color: #aaa; font-size: 12px; text-align: center;">If you did not initiate this login, please ignore this email.</p>
                     </div>
-                    <p style="color: #aaa; font-size: 11px; text-align: center; margin-top: 15px;">TiOLi AI Investments — For the ultimate good of Humanity and Agents</p>
+                    <p style="color: #aaa; font-size: 11px; text-align: center; margin-top: 15px;">TiOLi Group Holdings (Pty) Ltd — For the ultimate good of Humanity and Agents</p>
                 </div>
                 """,
             },
@@ -163,7 +163,7 @@ This code expires in 10 minutes and can only be used once.
 If you did not initiate this login, please ignore this email.
 
 ---
-TiOLi AI Investments
+TiOLi Group Holdings (Pty) Ltd
 For the ultimate good of Humanity and Agents
 """
 

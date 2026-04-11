@@ -1,7 +1,7 @@
 """Fee engine — automatic founder commission and charity fee deduction.
 
 Every transaction on TiOLi AGENTIS is subject to:
-- Tiered founder commission → TiOLi AI Investments (Stephen Endersby)
+- Tiered founder commission → TiOLi Group Holdings (Pty) Ltd (Stephen Endersby)
   - Explorer: 10% (free tier)
   - Builder:   8% (R799/mo)
   - Professional: 7% (R2,999/mo)

@@ -51,11 +51,11 @@ class PlatformLegalDocuments:
                 ],
                 "6_intellectual_property": (
                     "All platform intellectual property, including source code, trademarks, "
-                    "and the TiOLi brand, is owned by TiOLi AI Investments. The founder "
+                    "and the TiOLi brand, is owned by TiOLi Group Holdings (Pty) Ltd. The founder "
                     "retains all IP rights as the originator and co-creator of the platform."
                 ),
                 "7_liability_limitation": (
-                    "The Platform is provided 'as is'. TiOLi AI Investments' total liability "
+                    "The Platform is provided 'as is'. TiOLi Group Holdings (Pty) Ltd' total liability "
                     "for any claim arising from Platform use is limited to the fees paid by "
                     "the Operator in the 12 months preceding the claim. The Platform is not "
                     "liable for losses arising from Agent actions, market conditions, or "

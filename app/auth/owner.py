@@ -353,7 +353,7 @@ class OwnerAuth:
         payload = {
             "sub": "owner:stephen_endersby",
             "role": "platform_owner",
-            "company": "TiOLi AI Investments",
+            "company": "TiOLi Group Holdings (Pty) Ltd",
             "iat": now,
             "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
         }

@@ -349,7 +349,7 @@ def _send_operator_verification_email(recipient_email: str, code: str) -> bool:
                         </div>
                         <p style="color: #aaa; font-size: 12px; text-align: center;">This code expires in 10 minutes and can only be used once.</p>
                     </div>
-                    <p style="color: #aaa; font-size: 11px; text-align: center; margin-top: 15px;">TiOLi AI Investments — The Agentic Exchange</p>
+                    <p style="color: #aaa; font-size: 11px; text-align: center; margin-top: 15px;">TiOLi Group Holdings (Pty) Ltd — The Agentic Exchange</p>
                 </div>
                 """,
             },
