@@ -794,6 +794,9 @@ async def get_started_to_onboard():
 
 @router.get("/evaluations", response_class=HTMLResponse)
 async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db)):
+    owner = get_current_owner(request)
+    if not owner:
+        return RedirectResponse(url="/gateway", status_code=302)
     from starlette.responses import HTMLResponse
     from sqlalchemy import text
     try:
