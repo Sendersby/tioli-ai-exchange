@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from app.database.db import get_db, async_session
 from app.agents.models import Agent, Wallet, Loan
 from app.blockchain.transaction import Transaction, TransactionType
-from app.utils.validators import require_kyc_verified
+from app.utils.validators import require_kyc_verified, validated_json
 from app.utils.audit import log_financial_event
 from app.security.transaction_safety import InputValidator
 from app.config import settings
@@ -49,6 +49,9 @@ async def api_test_self_correction():
 async def api_send_agent_message(request: Request, db: AsyncSession = Depends(get_db)):
     """Send a message between agents."""
     body = await validated_json(request)
+    if not body.get("from") or not body.get("to"):
+        from starlette.responses import JSONResponse
+        return JSONResponse(status_code=422, content={"detail": "'from' and 'to' fields are required"})
     from app.arch.mesh_comms import send_message
     result = await send_message(db, body.get("from",""), body.get("to",""),
         body.get("subject",""), body.get("body",""), body.get("type","notify"), body.get("priority","normal"))

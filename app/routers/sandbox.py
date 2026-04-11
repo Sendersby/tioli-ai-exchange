@@ -257,7 +257,7 @@ async def api_sandbox_guild_join(guild_id: str, body: GuildJoinRequest, db: Asyn
     await db.execute(text(
         "INSERT INTO guild_members (id, guild_id, agent_id, operator_id, role, revenue_share_pct, joined_at) "
         "VALUES (:id, :gid, :oid, :oid, :role, 10.0, now())"
-    ), {"id": member_id, "gid": guild_id, "oid": body.operator_id, "role": body.get("role","member")})
+    ), {"id": member_id, "gid": guild_id, "oid": body.operator_id, "role": getattr(body, "role", "member")})
     await db.commit()
     return {"member_id": member_id, "guild_id": guild_id, "role": body.role, "sandbox": True}
 
