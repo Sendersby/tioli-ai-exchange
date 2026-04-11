@@ -164,7 +164,7 @@ from app.agentis.routes import router as agentis_router
 import app.agentis.routes as agentis_routes
 
 # ── Globals ──────────────────────────────────────────────────────────
-blockchain = Blockchain(storage_path="tioli_exchange_chain.json")
+blockchain = Blockchain(storage_path="/home/tioli/app/tioli_exchange_chain.json")
 fee_engine = FeeEngine()
 wallet_service = WalletService(blockchain=blockchain, fee_engine=fee_engine)
 governance_service = GovernanceService()
@@ -531,6 +531,35 @@ SwaggerUIBundle({
     return HTMLResponse(content=html)
 
 # ── Security Middleware ──────────────────────────────────────────────
+
+class XSSSanitisationMiddleware(BaseHTTPMiddleware):
+    """Sanitise all string values in JSON request bodies to prevent stored XSS."""
+    async def dispatch(self, request: Request, call_next):
+        if request.method in ("POST", "PUT", "PATCH") and            request.headers.get("content-type", "").startswith("application/json"):
+            try:
+                body_bytes = await request.body()
+                if body_bytes:
+                    import json as _json
+                    from app.utils.sanitise import sanitise_input
+                    data = _json.loads(body_bytes)
+                    if isinstance(data, dict):
+                        sanitised = {}
+                        for k, v in data.items():
+                            if isinstance(v, str):
+                                sanitised[k] = sanitise_input(v)
+                            elif isinstance(v, list):
+                                sanitised[k] = [sanitise_input(i) if isinstance(i, str) else i for i in v]
+                            else:
+                                sanitised[k] = v
+                        new_body = _json.dumps(sanitised).encode()
+                        # Override the receive to return sanitised body
+                        async def receive():
+                            return {"type": "http.request", "body": new_body}
+                        request._receive = receive
+            except Exception:
+                pass  # If parsing fails, let the endpoint handle it
+        return await call_next(request)
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security + AI agent discovery headers to every response."""

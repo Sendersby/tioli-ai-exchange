@@ -25,10 +25,24 @@ class Blockchain:
         self.chain: list[Block] = []
         self.pending_transactions: list[dict[str, Any]] = []
 
+        # Ensure parent directory exists
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+
         if self.storage_path.exists():
             self._load_chain()
+            # Startup verification: validate chain integrity
+            if not self.validate_chain():
+                import logging
+                logging.getLogger(__name__).error(
+                    "Blockchain integrity check FAILED on startup"
+                )
         else:
             self._create_genesis_block()
+            # Verify genesis was persisted
+            if not self.storage_path.exists():
+                raise RuntimeError(
+                    f"Failed to create blockchain file at {self.storage_path}"
+                )
 
     def _create_genesis_block(self) -> None:
         """Create the first block in the chain — the foundation."""
@@ -39,7 +53,7 @@ class Blockchain:
                 "description": "TiOLi AGENTIS — Genesis Block. "
                 "For the ultimate good of Humanity, Agents, and Agentic operators.",
                 "founder": "Stephen Endersby",
-                "company": "TiOLi AI Investments",
+                "company": "TiOLi Group Holdings (Pty) Ltd",
             }],
             previous_hash="0" * 64,
         )
@@ -192,6 +206,9 @@ class Blockchain:
             # Atomic rename (POSIX guarantees this is atomic on same filesystem)
             import shutil
             shutil.move(tmp_path, str(self.storage_path))
+            # Verify write succeeded (file size grew or stayed consistent)
+            if not self.storage_path.exists():
+                raise RuntimeError("Blockchain file missing after save")
         except Exception:
             # Clean up temp file on failure
             import os

@@ -234,7 +234,7 @@ async def job_optimization_analysis():
     from app.blockchain.chain import Blockchain
 
     try:
-        bc = Blockchain(storage_path="tioli_exchange_chain.json")
+        bc = Blockchain(storage_path="/home/tioli/app/tioli_exchange_chain.json")
         engine = SelfOptimizationEngine(blockchain=bc)
         async with async_session() as db:
             result = await engine.analyze_and_recommend(db)
@@ -327,7 +327,7 @@ async def job_market_maker_refresh():
     from app.blockchain.chain import Blockchain
 
     try:
-        bc = Blockchain(storage_path="tioli_exchange_chain.json")
+        bc = Blockchain(storage_path="/home/tioli/app/tioli_exchange_chain.json")
         fe = FeeEngine()
         te = TradingEngine(blockchain=bc, fee_engine=fe)
         cs = CurrencyService()
