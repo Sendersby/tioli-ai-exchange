@@ -522,6 +522,28 @@ app = FastAPI(
 from prometheus_fastapi_instrumentator import Instrumentator
 Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
+# A-008: Response time optimisation - Redis caching for hot endpoints
+import redis.asyncio as _cache_redis
+_cache_client = _cache_redis.from_url("redis://localhost:6379/2")
+
+async def _cached_response(key: str, ttl: int, fetch_fn):
+    """Check Redis cache first, fall back to fetch_fn."""
+    try:
+        cached = await _cache_client.get(key)
+        if cached:
+            import json
+            return json.loads(cached)
+    except Exception:
+        pass
+    result = await fetch_fn()
+    try:
+        import json
+        await _cache_client.setex(key, ttl, json.dumps(result, default=str))
+    except Exception:
+        pass
+    return result
+
+
 # ── Global Error Handling ────────────────────────────────────────────
 import traceback as _tb
 import logging as _err_logging
