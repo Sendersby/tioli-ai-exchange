@@ -179,20 +179,32 @@ financial_governance = FinancialGovernance()
 from app.revenue.service import RevenueEngineService as _RevEngine
 _revenue_engine = _RevEngine()
 
+# T-003-b: map wallet fee sources to canonical revenue streams
+_STREAM_MAP = {
+    "founder_commission": "agentbroker_commission",
+    "charity_fee": "agentbroker_commission",
+    "operator_commission": "operator_subscriptions",
+    "platform_fee": "premium_addons",
+}
+
 async def _record_revenue(db, source, amount, currency, desc):
     # Write to platform_revenue (financial governance)
     await financial_governance.record_revenue(db, source, amount, currency, desc)
     # T-003: Also write to revenue_transactions (detailed audit)
+    import logging as _logging
+    _rev_log = _logging.getLogger("revenue.pipeline")
     try:
+        stream = _STREAM_MAP.get(source, source)
         await _revenue_engine.record_revenue(
-            db, stream=source, source_type="wallet_transfer",
+            db, stream=stream, source_type=source,
             gross_zar=amount if currency == "ZAR" else amount * 18.50,
             description=desc, source_id=None, agent_id=None,
         )
+        _rev_log.info(f"revenue_transactions: recorded {amount} {currency} via {source}")
     except Exception as _rev_err:
-        import logging
-        logging.getLogger("revenue.pipeline").error(
-            f"revenue_transactions recording failed (non-fatal): {_rev_err}"
+        _rev_log.error(
+            f"revenue_transactions recording failed (non-fatal): {_rev_err}",
+            exc_info=True,
         )
 
 wallet_service.set_revenue_recorder(_record_revenue)
