@@ -663,3 +663,22 @@ Date: 2026-04-11
 2. main.py could be further reduced by extracting middleware and helpers to separate modules
 3. Backup files (.bak) contain old false claims — consider deleting
 
+
+## D4.4: Phantom/Orphan Tables (2026-04-11)
+
+Empty tables with zero code references — candidates for future removal:
+- arch_agent_versions
+- arch_board_deliberations
+- arch_external_accounts
+- arch_risk_register
+- arch_security_scans
+- arch_strategic_objectives
+- arch_treasury_positions
+- boardroom_agent_terminations
+- boardroom_regulatory_activations
+- boardroom_sessions_extended
+- boardroom_vision_history
+- kyc_documents
+- regulatory_documents
+
+Total: 13 orphan tables. Do NOT drop — review before Phase 3 migration.
