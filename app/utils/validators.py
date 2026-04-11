@@ -190,7 +190,7 @@ async def validated_json(
     """
     try:
         body = await request.json()
-    except Exception:
+    except Exception as e:
         raise _ValHTTPException(
             status_code=422,
             detail={"error": "VALIDATION_ERROR", "message": "Invalid JSON body"},
