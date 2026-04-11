@@ -36,3 +36,9 @@
 - Action: chmod 600 /home/tioli/app/.env
 - Evidence: stat returns 600
 - Risk: Previously world-readable (644), exposing DB credentials, API keys
+
+#### S-001: Hardcoded password in backup script
+- Status: PASS
+- Action: Removed inline PGPASSWORD from backup.sh, created /home/tioli/.pgpass (600 perms)
+- Evidence: grep -i password backup.sh returns no password strings; pg_dump works via .pgpass
+- DEFER: Password rotation deferred (DEFER-001) — too risky mid-remediation
