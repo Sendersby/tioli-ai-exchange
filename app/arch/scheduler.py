@@ -1465,3 +1465,28 @@ def register_arch_jobs(scheduler, agents: dict, db_factory=None):
             pass
 
     scheduler.add_job(blackboard_cleanup, "interval", minutes=15, id="blackboard_cleanup", replace_existing=True)
+
+
+    # ── D-011: arch_memories retention — weekly cleanup of entries > 90 days ──
+    async def cleanup_arch_memories():
+        """Delete arch_memories entries older than 90 days to prevent unbounded growth."""
+        from sqlalchemy import text as sa_text
+        try:
+            async with db_factory() as db:
+                result = await db.execute(sa_text(
+                    "DELETE FROM arch_memories WHERE created_at < NOW() - INTERVAL '90 days'"
+                ))
+                deleted = result.rowcount
+                if deleted:
+                    log.info(f"[scheduler] arch_memories retention: deleted {deleted} entries > 90 days")
+                await db.commit()
+        except Exception as e:
+            log.warning(f"[scheduler] arch_memories cleanup failed: {e}")
+
+    scheduler.add_job(
+        cleanup_arch_memories,
+        "cron", day_of_week="sun", hour=3, minute=0,
+        id="arch_memories_retention",
+        replace_existing=True,
+    )
+    log.info("[scheduler] Registered: arch_memories_retention (weekly Sunday 05:00 SAST)")
