@@ -6,6 +6,7 @@ import os
 import json
 import logging
 from datetime import datetime, timezone
+from app.utils.db_connect import get_raw_connection
 
 log = logging.getLogger("arch.content_engine")
 
@@ -160,7 +161,6 @@ def _parse_platform_versions(text: str) -> dict:
 async def generate_and_publish_all(agent_client, topic: str = None) -> dict:
     """Full pipeline: generate via 7 prompts, then publish to all platforms.
     This replaces the old campaign.generate_and_publish_daily."""
-    import asyncpg
 
     if not topic:
         from app.arch.campaign import get_today_theme
@@ -221,8 +221,7 @@ async def generate_and_publish_all(agent_client, topic: str = None) -> dict:
 
     # Store to content library + job log + founder inbox
     try:
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
         # Content library
         for platform, content in versions.items():
             await conn.execute(

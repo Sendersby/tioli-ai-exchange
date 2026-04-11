@@ -5,6 +5,7 @@ import json
 import logging
 import httpx
 from datetime import datetime, timezone
+from app.utils.db_connect import get_raw_connection
 
 log = logging.getLogger("arch.devto_monitor")
 
@@ -129,9 +130,7 @@ async def run_devto_scan(db) -> dict:
 
     # 4. Store and report
     try:
-        import asyncpg
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
         await conn.execute(
             "INSERT INTO job_execution_log (job_id, status, tokens_consumed, duration_ms, executed_at) "
             "VALUES ($1, $2, $3, $4, now())",

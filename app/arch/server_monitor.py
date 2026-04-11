@@ -4,6 +4,7 @@ import os
 import logging
 import json
 from datetime import datetime, timezone
+from app.utils.db_connect import get_raw_connection, get_db_password
 
 log = logging.getLogger("arch.server_monitor")
 
@@ -102,7 +103,7 @@ async def get_system_metrics() -> dict:
              "SELECT pg_database_size('tioli_exchange'), "
              "(SELECT count(*) FROM pg_stat_activity WHERE datname='tioli_exchange'), "
              "(SELECT count(*) FROM pg_stat_activity WHERE datname='tioli_exchange' AND state='active')"],
-            capture_output=True, text=True, timeout=5, env={**os.environ, "PGPASSWORD": "DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#"})
+            capture_output=True, text=True, timeout=5, env={**os.environ, "PGPASSWORD": get_db_password()})
         if result.returncode == 0:
             parts = result.stdout.strip().split("|")
             metrics["postgresql"] = {
@@ -119,7 +120,7 @@ async def get_system_metrics() -> dict:
     try:
         result = subprocess.run(
             ["redis-cli", "info", "memory"],
-            capture_output=True, text=True, timeout=5, env={**os.environ, "PGPASSWORD": "DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#"})
+            capture_output=True, text=True, timeout=5, env={**os.environ, "PGPASSWORD": get_db_password()})
         for line in result.stdout.split("\n"):
             if line.startswith("used_memory_human:"):
                 redis_mem = line.split(":")[1].strip()

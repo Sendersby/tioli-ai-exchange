@@ -8,20 +8,13 @@ from datetime import datetime, timezone
 
 logger = logging.getLogger("arch.inbox_executor")
 
-# DB connection params
-DB_CONFIG = {
-    "user": "tioli",
-    "password": "DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-    "database": "tioli_exchange",
-    "host": "127.0.0.1",
-    "port": 5432,
-}
+# DB connection — reads from environment
+from app.utils.db_connect import get_raw_connection
 
 
 async def _db_execute(query, *args):
     """Execute a query with a fresh connection."""
-    import asyncpg
-    conn = await asyncpg.connect(**DB_CONFIG)
+    conn = await get_raw_connection()
     try:
         result = await conn.execute(query, *args)
         return result

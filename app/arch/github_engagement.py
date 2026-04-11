@@ -6,6 +6,7 @@ import json
 import logging
 import httpx
 from datetime import datetime, timezone, timedelta
+from app.utils.db_connect import get_raw_connection
 
 log = logging.getLogger("arch.github_engagement")
 
@@ -306,9 +307,7 @@ async def run_full_engagement_cycle(db, agent_client=None) -> dict:
     # 6. Store results and proof
     try:
         from sqlalchemy import text
-        import asyncpg
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
 
         # Log to job_execution_log
         await conn.execute(

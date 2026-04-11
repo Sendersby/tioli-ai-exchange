@@ -3,6 +3,7 @@ import logging
 import os
 import json
 from datetime import datetime, timezone
+from app.utils.db_connect import get_raw_connection
 
 log = logging.getLogger("arch.campaign")
 
@@ -126,9 +127,7 @@ async def generate_and_publish_daily(agent_client):
 
     # ── Store to content library ──
     try:
-        import asyncpg
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
         import uuid
         for platform, result in results.items():
             if result.get("success") or result.get("tweet_id") or result.get("url"):
@@ -143,9 +142,7 @@ async def generate_and_publish_daily(agent_client):
 
     # ── Log to job_execution_log ──
     try:
-        import asyncpg
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
         success_count = len([r for r in results.values() if r.get("success") or r.get("tweet_id")])
         status = "EXECUTED" if success_count > 0 else "FAILED"
         await conn.execute(
@@ -159,8 +156,7 @@ async def generate_and_publish_daily(agent_client):
     # ── Deliver proof to founder inbox ──
     try:
         import asyncpg, json
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
         proof = {
             "subject": f"Campaign Daily: {theme[:80]}",
             "situation": f"Published to {len(results)} platforms. "

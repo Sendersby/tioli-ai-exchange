@@ -5,6 +5,7 @@ import os
 import logging
 import json
 from datetime import datetime, timezone
+from app.utils.db_connect import get_raw_connection
 
 log = logging.getLogger("arch.reddit_poster")
 
@@ -60,9 +61,7 @@ async def post_to_reddit(subreddit_name: str, title: str, body: str) -> dict:
 
     try:
         # Check rate limit — query our own post history
-        import asyncpg
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
         recent = await conn.fetchval(
             "SELECT count(*) FROM arch_content_library "
             "WHERE channel = 'reddit' AND title LIKE $1 AND published_at > now() - interval '7 days'",

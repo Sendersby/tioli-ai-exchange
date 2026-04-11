@@ -4,6 +4,7 @@ import os
 import json
 import logging
 from datetime import datetime, timezone
+from app.utils.db_connect import get_raw_connection
 
 log = logging.getLogger("arch.linkedin_scheduler")
 
@@ -79,9 +80,7 @@ async def publish_thought_leadership(agent_client=None) -> dict:
 
     # Store proof
     try:
-        import asyncpg
-        conn = await asyncpg.connect(user="tioli", password="DhQHhP6rsYdUL*2DLWJ2Neu#2xqhM0z#",
-                                      database="tioli_exchange", host="127.0.0.1", port=5432)
+        conn = await get_raw_connection()
 
         await conn.execute(
             "INSERT INTO arch_content_library (content_type, title, body_ref, channel, published_at) "
