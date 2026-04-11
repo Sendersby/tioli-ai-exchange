@@ -42,3 +42,11 @@
 - Action: Removed inline PGPASSWORD from backup.sh, created /home/tioli/.pgpass (600 perms)
 - Evidence: grep -i password backup.sh returns no password strings; pg_dump works via .pgpass
 - DEFER: Password rotation deferred (DEFER-001) — too risky mid-remediation
+
+#### S-004: Stored XSS sanitisation
+- Status: PASS
+- Action: Created app/utils/sanitise.py module + ASGI XSSSanitisationMiddleware in main.py
+- Middleware strips HTML tags and escapes special chars from ALL JSON POST/PUT/PATCH bodies
+- Evidence: POST '<script>alert(2)</script>' to guild/create -> stored as 'alert(2)' (tags stripped)
+- Evidence: '<img onerror=alert(1) src=x>' -> stored as '' (tags stripped)
+- Also cleaned 1 existing XSS row in guilds table
