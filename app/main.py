@@ -2088,7 +2088,7 @@ async def list_quests(db: AsyncSession = Depends(get_db)):
     """List all available quests with rewards."""
     result = await db.execute(_quest_text(
         "SELECT id::text, quest_name, description, reward_credits, xp_reward, badge_name "
-        "FROM agentis_quests WHERE active = true ORDER BY reward_credits ASC"
+        "FROM agentis_quests WHERE active = true ORDER BY reward_credits ASC LIMIT 100"
     ))
     return {"quests": [
         {"id": r.id, "name": r.quest_name, "description": r.description,
@@ -9465,7 +9465,7 @@ async def _deliver_webhooks(db, event_type: str, payload: dict):
     _wh_log = logging.getLogger("webhooks")
     try:
         hooks = await db.execute(text(
-            "SELECT id, url, events FROM webhook_registrations WHERE is_active = true"
+            "SELECT id, url, events FROM webhook_registrations WHERE is_active = true LIMIT 200"
         ))
         for hook in hooks.fetchall():
             events = hook.events if isinstance(hook.events, list) else []
@@ -9546,7 +9546,7 @@ async def submit_nps(request: Request, db: AsyncSession = Depends(get_db)):
 async def nps_summary(db: AsyncSession = Depends(get_db)):
     """Get NPS score summary."""
     from sqlalchemy import text
-    result = await db.execute(text("SELECT score, count(*) FROM nps_responses GROUP BY score ORDER BY score"))
+    result = await db.execute(text("SELECT score, count(*) FROM nps_responses GROUP BY score ORDER BY score LIMIT 100"))
     rows = result.fetchall()
     total = sum(r[1] for r in rows)
     if total == 0:
@@ -9882,7 +9882,7 @@ async def api_cache_metrics(db: AsyncSession = Depends(get_db)):
     result = await db.execute(text(
         "SELECT job_id, status, count(*) FROM job_execution_log "
         "WHERE job_id LIKE 'cache_%' AND executed_at > now() - interval '1 hour' "
-        "GROUP BY job_id, status ORDER BY job_id"
+        "GROUP BY job_id, status ORDER BY job_id LIMIT 100"
     ))
     metrics = {}
     for row in result.fetchall():
@@ -9924,7 +9924,7 @@ async def api_list_goals(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     result = await db.execute(text(
         "SELECT goal_id, agent_id, title, status, priority, progress_pct, last_actioned, created_at "
-        "FROM agent_goals ORDER BY priority ASC, created_at DESC"
+        "FROM agent_goals ORDER BY priority ASC, created_at DESC LIMIT 100"
     ))
     return [{"goal_id": str(r.goal_id), "agent_id": r.agent_id, "title": r.title,
              "status": r.status, "priority": r.priority, "progress_pct": r.progress_pct or 0,
@@ -9937,7 +9937,7 @@ async def api_goal_actions(goal_id: str, db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
     result = await db.execute(text(
         "SELECT action_id, agent_id, action_taken, outcome, tokens_used, executed_at "
-        "FROM goal_actions WHERE goal_id = :gid ORDER BY executed_at DESC"
+        "FROM goal_actions WHERE goal_id = :gid ORDER BY executed_at DESC LIMIT 100"
     ), {"gid": goal_id})
     return [{"action_id": str(r.action_id), "agent": r.agent_id, "action": r.action_taken,
              "outcome": r.outcome, "tokens": r.tokens_used, "executed_at": str(r.executed_at)}
@@ -10036,7 +10036,7 @@ async def api_rba_assess(agent_id: str, db: AsyncSession = Depends(get_db)):
 @app.get("/api/v1/owner/risk-profiles", include_in_schema=False)
 async def api_risk_profiles(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
-    result = await db.execute(text("SELECT agent_id, risk_tier, risk_score, edd_required FROM agent_risk_profiles ORDER BY risk_score DESC"))
+    result = await db.execute(text("SELECT agent_id, risk_tier, risk_score, edd_required FROM agent_risk_profiles ORDER BY risk_score DESC LIMIT 100"))
     return [{"agent_id": r.agent_id, "risk_tier": r.risk_tier, "risk_score": r.risk_score, "edd_required": r.edd_required} for r in result.fetchall()]
 
 @app.post("/api/v1/anomaly/post", include_in_schema=False)
@@ -10287,7 +10287,7 @@ async def api_generate_case_law(request: Request, db: AsyncSession = Depends(get
 @app.get("/api/v1/arch/case-law", include_in_schema=False)
 async def api_list_case_law(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import text
-    r = await db.execute(text("SELECT * FROM dispute_archetypes ORDER BY archetype_id"))
+    r = await db.execute(text("SELECT * FROM dispute_archetypes ORDER BY archetype_id LIMIT 100"))
     rows = r.fetchall()
     return {"count": len(rows), "archetypes": [{"id": row.archetype_id, "type": row.name, "description": row.description[:100]} for row in rows]}
 
@@ -10337,7 +10337,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
         r = await db.execute(text(
             "SELECT job_id, SUM(cache_hits) as hits, SUM(cache_misses) as misses "
             "FROM job_execution_log WHERE job_id LIKE 'cache_%' "
-            "GROUP BY job_id"
+            "GROUP BY job_id LIMIT 50"
         ))
         cache = {}
         for row in r.fetchall():
@@ -10375,7 +10375,7 @@ async def api_dashboard_widgets(db: AsyncSession = Depends(get_db)):
     try:
         r = await db.execute(text(
             "SELECT agent_id, title, priority, status, progress_pct, last_actioned "
-            "FROM agent_goals ORDER BY priority ASC"
+            "FROM agent_goals ORDER BY priority ASC LIMIT 100"
         ))
         goals = [{"agent": row.agent_id, "title": row.title, "priority": row.priority,
                   "status": row.status, "progress": row.progress_pct or 0,
@@ -10671,7 +10671,7 @@ async def evaluations_page(request: Request, db: AsyncSession = Depends(get_db))
         result = await db.execute(text(
             "SELECT agent_id, eval_period, m1_production, m2_benchmark, m3_gap, m4_cost, "
             "m5_governance, m6_multi_agent, m7_proactivity, aggregate_score, band, ecr_level, evaluated_at "
-            "FROM agent_evaluation_scores ORDER BY aggregate_score DESC"
+            "FROM agent_evaluation_scores ORDER BY aggregate_score DESC LIMIT 100"
         ))
         rows = result.fetchall()
 
@@ -11310,7 +11310,7 @@ async def learn_redirect_commerce():
 async def api_subscription_plans(db: AsyncSession = Depends(get_db)):
     """List all available subscription plans."""
     from sqlalchemy import text
-    r = await db.execute(text("SELECT * FROM subscription_plans ORDER BY price_zar ASC"))
+    r = await db.execute(text("SELECT * FROM subscription_plans ORDER BY price_zar ASC LIMIT 50"))
     return [{"plan_id": row.plan_id, "name": row.name, "price_zar": float(row.price_zar),
              "tokens_monthly": row.tokens_monthly, "memory_writes_daily": row.memory_writes_daily,
              "priority_discovery": row.priority_discovery, "advanced_analytics": row.advanced_analytics,
@@ -11533,7 +11533,7 @@ async def check_subscription_limit(db, agent_id: str, feature: str) -> dict:
 async def api_list_plans(db: AsyncSession = Depends(get_db)):
     """List all available plans and add-ons with pricing."""
     from sqlalchemy import text
-    r = await db.execute(text("SELECT * FROM plan_configurations ORDER BY price_zar ASC"))
+    r = await db.execute(text("SELECT * FROM plan_configurations ORDER BY price_zar ASC LIMIT 50"))
     return [{"sku": row.sku, "name": row.name, "type": row.plan_type,
              "price_zar": float(row.price_zar), "price_usd": float(row.price_usd) if row.price_usd else 0,
              "billing": row.billing, "api_calls": row.api_calls_monthly,
