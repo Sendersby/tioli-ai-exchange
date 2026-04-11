@@ -12,18 +12,18 @@ class TestCurrencies:
     def test_system_currencies_defined(self):
         assert len(SYSTEM_CURRENCIES) >= 4
         symbols = [c["symbol"] for c in SYSTEM_CURRENCIES]
-        assert "TIOLI" in symbols
+        assert "AGENTIS" in symbols
         assert "BTC" in symbols
         assert "ETH" in symbols
         assert "COMPUTE" in symbols
 
     def test_initial_rates_defined(self):
-        assert ("TIOLI", "BTC") in INITIAL_RATES
-        assert ("TIOLI", "ETH") in INITIAL_RATES
-        assert INITIAL_RATES[("TIOLI", "BTC")] > 0
+        assert ("AGENTIS", "BTC") in INITIAL_RATES
+        assert ("AGENTIS", "ETH") in INITIAL_RATES
+        assert INITIAL_RATES[("AGENTIS", "BTC")] > 0
 
     def test_tioli_supply(self):
-        tioli = next(c for c in SYSTEM_CURRENCIES if c["symbol"] == "TIOLI")
+        tioli = next(c for c in SYSTEM_CURRENCIES if c["symbol"] == "AGENTIS")
         assert tioli["total_supply"] == 1_000_000_000
         assert tioli["max_supply"] == 10_000_000_000
 
@@ -56,11 +56,11 @@ class TestBlockchainTradeRecording:
             sender_id="seller-agent",
             receiver_id="buyer-agent",
             amount=100.0,
-            currency="TIOLI",
+            currency="AGENTIS",
             description="Trade: 100 TIOLI @ 0.000001 BTC",
             founder_commission=12.0,
             charity_fee=10.0,
-            metadata={"base": "TIOLI", "quote": "BTC", "price": 0.000001},
+            metadata={"base": "AGENTIS", "quote": "BTC", "price": 0.000001},
         )
         tx_id = self.blockchain.add_transaction(tx)
         assert tx_id is not None
@@ -69,14 +69,14 @@ class TestBlockchainTradeRecording:
         all_tx = self.blockchain.get_all_transactions()
         trade_txs = [t for t in all_tx if t.get("type") == "trade"]
         assert len(trade_txs) == 1
-        assert trade_txs[0]["metadata"]["base"] == "TIOLI"
+        assert trade_txs[0]["metadata"]["base"] == "AGENTIS"
 
     def test_commission_transparency(self):
         """Verify all fees are recorded transparently on-chain."""
         tx = Transaction(
             type=TransactionType.TRADE,
             sender_id="s1", receiver_id="b1",
-            amount=200.0, currency="TIOLI",
+            amount=200.0, currency="AGENTIS",
             founder_commission=24.0, charity_fee=20.0,
         )
         self.blockchain.add_transaction(tx)

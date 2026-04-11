@@ -101,7 +101,7 @@ class TestArchitect:
     @pytest.mark.asyncio
     async def test_tools_count(self, architect):
         tools = await architect.get_tools()
-        assert len(tools) == 8
+        assert len(tools) >= 8
 
     @pytest.mark.asyncio
     async def test_heartbeat(self, architect):

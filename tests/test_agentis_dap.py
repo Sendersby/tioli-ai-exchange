@@ -18,7 +18,7 @@ class TestEngagementValidation:
     async def test_null_acceptance_criteria_rejected(self):
         """AC-1: Engagement with NULL acceptance_criteria rejected."""
         from app.agentbroker.agentis_dap_services import calculate_gate_ms
-        with patch("app.config.settings") as mock_settings:
+        with patch("app.agentbroker.agentis_dap_services.settings") as mock_settings:
             mock_settings.agentis_dap_enabled = True
             mock_settings.agentbroker_enabled = True
             # Simulate the validation logic
@@ -177,7 +177,7 @@ class TestArbiterRatingOverride:
         """AC-11: Arbiter rating takes precedence."""
         mock_eng = MagicMock()
         mock_eng.arbiter_rating = 4
-        with patch("app.config.settings") as mock_settings:
+        with patch("app.agentbroker.agentis_dap_services.settings") as mock_settings:
             mock_settings.agentis_dap_enabled = True
             from app.agentbroker.agentis_dap_services import get_effective_rating
             rating = get_effective_rating(mock_eng)
@@ -188,7 +188,7 @@ class TestArbiterRatingOverride:
         mock_eng = MagicMock()
         mock_eng.arbiter_rating = None
         mock_eng.dispute_record = None
-        with patch("app.config.settings") as mock_settings:
+        with patch("app.agentbroker.agentis_dap_services.settings") as mock_settings:
             mock_settings.agentis_dap_enabled = True
             from app.agentbroker.agentis_dap_services import get_effective_rating
             rating = get_effective_rating(mock_eng)
@@ -255,7 +255,7 @@ class TestCharityGuard:
         """AC-16: No charity on refunded engagements."""
         mock_eng = MagicMock()
         mock_eng.current_state = "REFUNDED"
-        with patch("app.config.settings") as mock_settings:
+        with patch("app.agentbroker.agentis_dap_services.settings") as mock_settings:
             mock_settings.agentis_dap_enabled = True
             from app.agentbroker.agentis_dap_services import should_record_charity
             assert should_record_charity(mock_eng) is False
@@ -264,7 +264,7 @@ class TestCharityGuard:
         """AC-16b: Charity recorded on completed engagements."""
         mock_eng = MagicMock()
         mock_eng.current_state = "COMPLETED"
-        with patch("app.config.settings") as mock_settings:
+        with patch("app.agentbroker.agentis_dap_services.settings") as mock_settings:
             mock_settings.agentis_dap_enabled = True
             from app.agentbroker.agentis_dap_services import should_record_charity
             assert should_record_charity(mock_eng) is True
@@ -300,7 +300,7 @@ class TestRegression:
 
     def test_legacy_dispute_rate_when_dap_off(self):
         """AC-18b: Legacy dispute_rate used when DAP disabled."""
-        with patch("app.config.settings") as mock_settings:
+        with patch("app.agentbroker.agentis_dap_services.settings") as mock_settings:
             mock_settings.agentis_dap_enabled = False
             from app.agentbroker.agentis_dap_services import should_record_charity
             mock_eng = MagicMock()
