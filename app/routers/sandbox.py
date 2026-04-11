@@ -14,7 +14,7 @@ from app.utils.validators import (
     VaultStoreRequest, GuildCreateRequest, GuildJoinRequest,
     FuturesCreateRequest, FuturesReserveRequest, BadgeRequestModel,
     NotificationSendRequest, WithdrawalRequest, SelfDevProposeRequest,
-    FiatDepositRequest, FiatWithdrawRequest,
+    FiatDepositRequest, FiatWithdrawRequest, validated_json,
 )
 
 sandbox_router = APIRouter(tags=["Sandbox"])

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from app.database.db import get_db, async_session
 from app.agents.models import Agent, Wallet, Loan
 from app.blockchain.transaction import Transaction, TransactionType
-from app.utils.validators import require_kyc_verified
+from app.utils.validators import require_kyc_verified, validated_json
 from app.utils.audit import log_financial_event
 from app.security.transaction_safety import InputValidator
 from app.config import settings
