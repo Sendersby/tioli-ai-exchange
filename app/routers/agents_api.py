@@ -138,6 +138,9 @@ async def api_register_agent(request: Request,
                 )
                 db.add(skill)
             await db.flush()
+            # Populate specialisation_domains on the profile
+            profile.specialisation_domains = [c.strip()[:120] for c in req.capabilities[:20]]
+            await db.flush()
             result["capabilities_registered"] = req.capabilities[:20]
         if req.pricing_model and req.pricing_model != "free":
             result["pricing"] = {"model": req.pricing_model, "amount": req.pricing_amount}

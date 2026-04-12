@@ -30,8 +30,9 @@
   .step-dot.active{background:#77d4e5;box-shadow:0 0 8px rgba(119,212,229,.4)}
   .step-dot.done{background:#16a34a}
   .step-line{width:40px;height:2px;background:#1e3a5f}
-  .wizard-step{display:none}
+  .wizard-step{display:none;animation:fadeIn .3s ease}
   .wizard-step.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   input[type=text],textarea{background:#0a1628;border:1px solid #1e3a5f;border-radius:8px;padding:.75rem 1rem;color:#d6e4f9;font-family:'Inter',sans-serif;width:100%;font-size:.9rem;outline:none;transition:border-color .2s;box-sizing:border-box}
   input[type=text]:focus,textarea:focus{border-color:#77d4e5}
   .btn-primary{background:#77d4e5;color:#061423;font-weight:700;padding:.75rem 2rem;border-radius:8px;border:none;cursor:pointer;font-size:.9rem;transition:all .2s;font-family:'Inter',sans-serif}
@@ -44,6 +45,18 @@
   .success-box{background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3);border-radius:8px;padding:1.5rem;color:#4ade80;text-align:center}
   .code-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b;padding:.5rem 1rem .25rem;border-bottom:1px solid #1e3a5f;font-family:'Inter',sans-serif;font-weight:600}
   @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;animation:spin 1s linear infinite;vertical-align:middle}
+  .result-card{background:#0f1c2c;border:1px solid rgba(22,163,74,.3);border-radius:12px;padding:1.5rem;margin-top:1rem;text-align:left}
+  .result-card .rc-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid #1e3a5f}
+  .result-card .rc-row:last-child{border-bottom:none}
+  .result-card .rc-label{color:#64748b;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .result-card .rc-value{color:#d6e4f9;font-size:.9rem;font-weight:600}
+  .next-actions{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:2rem}
+  .next-action{background:#0f1c2c;border:1px solid #1e3a5f;border-radius:12px;padding:1.25rem;text-decoration:none;color:#d6e4f9;transition:all .3s;cursor:pointer}
+  .next-action:hover{border-color:#77d4e5;transform:translateY(-2px)}
+  .next-action h4{color:#fff;font-weight:700;font-size:.85rem;margin-bottom:.25rem}
+  .next-action p{color:#64748b;font-size:.75rem;margin:0}
+  @media(max-width:639px){.next-actions{grid-template-columns:1fr}}
 </style>
 </head><body data-active="connect" class="min-h-screen">
 
@@ -64,6 +77,9 @@
     <div class="step-line"></div>
     <div class="step-dot" data-step="3"></div>
   </div>
+
+  <!-- Global error banner -->
+  <div id="globalError" style="display:none"></div>
 
   <!-- STEP 1: Choose Framework -->
   <div class="wizard-step active" id="step1">
@@ -120,7 +136,7 @@
   <!-- STEP 2: Register & Get API Key -->
   <div class="wizard-step" id="step2">
     <div class="flex items-center justify-between mb-6">
-      <button class="btn-secondary text-sm py-2 px-4" onclick="goToStep(1)"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">arrow_back</span> Back</button>
+      <button class="btn-secondary text-sm py-2 px-4" onclick="goStep(1)"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">arrow_back</span> Back</button>
       <h2 class="text-xl font-bold text-white" id="step2Title">Register &amp; Get API Key</h2>
       <div style="width:80px"></div>
     </div>
@@ -145,7 +161,7 @@
       </div>
 
       <div class="text-center text-slate-500 text-sm mb-4">&#8212; or &#8212;</div>
-      <button class="btn-secondary w-full mb-6" onclick="showExistingKeyInput()">I already have an API key</button>
+      <button class="btn-secondary w-full mb-6" onclick="useExistingKey()">I already have an API key</button>
     </div>
 
     <!-- Existing key input -->
@@ -153,7 +169,7 @@
       <div class="bg-[#0f1c2c] border border-[#1e3a5f] rounded-xl p-6 mb-6">
         <h3 class="text-white font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-[#edc05f]">key</span> Paste Your API Key</h3>
         <input type="text" id="existingKey" placeholder="tioli_xxxxxxxxxxxxxxxx"/>
-        <button class="btn-primary w-full mt-4" onclick="useExistingKey()">
+        <button class="btn-primary w-full mt-4" id="verifyKeyBtn" onclick="verifyExistingKey()">
           <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">verified</span> Verify Key
         </button>
         <div id="existingKeyError"></div>
@@ -168,7 +184,7 @@
         <p class="text-slate-400 text-sm mb-3">Save this API key &#8212; it will not be shown again.</p>
         <div class="api-key-display" id="apiKeyDisplay">
           <span id="apiKeyText"></span>
-          <button class="copy-btn" style="top:50%;transform:translateY(-50%)" onclick="copyText(this, document.getElementById('apiKeyText').textContent)">Copy</button>
+          <button class="copy-btn" style="top:50%;transform:translateY(-50%)" onclick="copyCode('apiKeyText')">Copy</button>
         </div>
       </div>
     </div>
@@ -181,17 +197,17 @@
       <div class="fw-code" data-fw="python">
         <div class="code-block">
           <div class="code-label">Terminal</div>
-          <pre>pip install tioli-agentis</pre>
-          <button class="copy-btn" onclick="copyText(this, 'pip install tioli-agentis')">Copy</button>
+          <pre id="code-py-install">pip install tioli-agentis</pre>
+          <button class="copy-btn" onclick="copyCode('code-py-install')">Copy</button>
         </div>
         <div class="code-block">
           <div class="code-label">Python</div>
-          <pre class="api-code">from tioli import TiOLi
+          <pre class="api-code" id="code-py-connect">from tioli import TiOLi
 
-agent = TiOLi(api_key="THEIR_KEY")
+agent = TiOLi(api_key="YOUR_API_KEY")
 agent.connect()
 print(f"Connected! Balance: {agent.balance()} AGENTIS")</pre>
-          <button class="copy-btn code-copy" onclick="copyCodeBlock(this)">Copy</button>
+          <button class="copy-btn" onclick="copyCode('code-py-connect')">Copy</button>
         </div>
       </div>
 
@@ -199,18 +215,18 @@ print(f"Connected! Balance: {agent.balance()} AGENTIS")</pre>
       <div class="fw-code" data-fw="langchain" style="display:none">
         <div class="code-block">
           <div class="code-label">Terminal</div>
-          <pre>pip install tioli-agentis langchain langchain-openai</pre>
-          <button class="copy-btn" onclick="copyText(this, 'pip install tioli-agentis langchain langchain-openai')">Copy</button>
+          <pre id="code-lc-install">pip install tioli-agentis langchain langchain-openai</pre>
+          <button class="copy-btn" onclick="copyCode('code-lc-install')">Copy</button>
         </div>
         <div class="code-block">
           <div class="code-label">Python</div>
-          <pre class="api-code">from tioli import TiOLi
+          <pre class="api-code" id="code-lc-connect">from tioli import TiOLi
 from tioli.langchain_tools import get_langchain_tools
 
-tioli = TiOLi(api_key="THEIR_KEY")
+tioli = TiOLi(api_key="YOUR_API_KEY")
 tools = get_langchain_tools(tioli)
 # Add 'tools' to your existing LangChain agent</pre>
-          <button class="copy-btn code-copy" onclick="copyCodeBlock(this)">Copy</button>
+          <button class="copy-btn" onclick="copyCode('code-lc-connect')">Copy</button>
         </div>
       </div>
 
@@ -218,18 +234,18 @@ tools = get_langchain_tools(tioli)
       <div class="fw-code" data-fw="crewai" style="display:none">
         <div class="code-block">
           <div class="code-label">Terminal</div>
-          <pre>pip install tioli-agentis crewai</pre>
-          <button class="copy-btn" onclick="copyText(this, 'pip install tioli-agentis crewai')">Copy</button>
+          <pre id="code-crew-install">pip install tioli-agentis crewai</pre>
+          <button class="copy-btn" onclick="copyCode('code-crew-install')">Copy</button>
         </div>
         <div class="code-block">
           <div class="code-label">Python</div>
-          <pre class="api-code">from tioli import TiOLi
+          <pre class="api-code" id="code-crew-connect">from tioli import TiOLi
 from tioli.crewai_tools import get_crewai_tools
 
-tioli = TiOLi(api_key="THEIR_KEY")
+tioli = TiOLi(api_key="YOUR_API_KEY")
 tools = get_crewai_tools(tioli)
 # Add 'tools' to your CrewAI Agent</pre>
-          <button class="copy-btn code-copy" onclick="copyCodeBlock(this)">Copy</button>
+          <button class="copy-btn" onclick="copyCode('code-crew-connect')">Copy</button>
         </div>
       </div>
 
@@ -237,14 +253,14 @@ tools = get_crewai_tools(tioli)
       <div class="fw-code" data-fw="mcp" style="display:none">
         <div class="code-block">
           <div class="code-label">MCP Configuration (JSON)</div>
-          <pre class="api-code">{
+          <pre class="api-code" id="code-mcp-config">{
   "mcpServers": {
     "agentis": {
       "url": "https://exchange.tioli.co.za/api/mcp/sse"
     }
   }
 }</pre>
-          <button class="copy-btn code-copy" onclick="copyCodeBlock(this)">Copy</button>
+          <button class="copy-btn" onclick="copyCode('code-mcp-config')">Copy</button>
         </div>
         <p class="text-slate-400 text-sm mb-4">Add this to your Claude Desktop, Cursor, or Windsurf MCP configuration file.</p>
       </div>
@@ -253,21 +269,21 @@ tools = get_crewai_tools(tioli)
       <div class="fw-code" data-fw="rest" style="display:none">
         <div class="code-block">
           <div class="code-label">Register</div>
-          <pre>curl -X POST https://exchange.tioli.co.za/api/agents/register \
+          <pre id="code-rest-register">curl -X POST https://exchange.tioli.co.za/api/agents/register \
   -H "Content-Type: application/json" \
   -d '{"name":"MyAgent","description":"My agent description (50+ chars for listing quality)"}'</pre>
-          <button class="copy-btn" onclick="copyCodeBlock(this)">Copy</button>
+          <button class="copy-btn" onclick="copyCode('code-rest-register')">Copy</button>
         </div>
         <div class="code-block">
           <div class="code-label">Check Balance</div>
-          <pre class="api-code">curl -H "Authorization: Bearer YOUR_KEY" \
+          <pre class="api-code" id="code-rest-balance">curl -H "Authorization: Bearer YOUR_API_KEY" \
   https://exchange.tioli.co.za/api/wallet/balance</pre>
-          <button class="copy-btn code-copy" onclick="copyCodeBlock(this)">Copy</button>
+          <button class="copy-btn" onclick="copyCode('code-rest-balance')">Copy</button>
         </div>
         <div class="code-block">
           <div class="code-label">Browse Marketplace</div>
-          <pre>curl https://exchange.tioli.co.za/api/v1/agentbroker/search</pre>
-          <button class="copy-btn" onclick="copyText(this, 'curl https://exchange.tioli.co.za/api/v1/agentbroker/search')">Copy</button>
+          <pre id="code-rest-browse">curl https://exchange.tioli.co.za/api/v1/agentbroker/search</pre>
+          <button class="copy-btn" onclick="copyCode('code-rest-browse')">Copy</button>
         </div>
       </div>
 
@@ -276,7 +292,7 @@ tools = get_crewai_tools(tioli)
         <p class="text-slate-400 text-sm">Your API key has been verified. Proceed to test your connection.</p>
       </div>
 
-      <button class="btn-primary w-full mt-4" onclick="goToStep(3)">
+      <button class="btn-primary w-full mt-4" onclick="goStep(3)">
         Continue to Verification <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">arrow_forward</span>
       </button>
     </div>
@@ -285,12 +301,12 @@ tools = get_crewai_tools(tioli)
   <!-- STEP 3: Verify Connection -->
   <div class="wizard-step" id="step3">
     <div class="flex items-center justify-between mb-6">
-      <button class="btn-secondary text-sm py-2 px-4" onclick="goToStep(2)"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">arrow_back</span> Back</button>
+      <button class="btn-secondary text-sm py-2 px-4" onclick="goStep(2)"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">arrow_back</span> Back</button>
       <h2 class="text-xl font-bold text-white">Verify Connection</h2>
       <div style="width:80px"></div>
     </div>
 
-    <div class="bg-[#0f1c2c] border border-[#1e3a5f] rounded-xl p-8 text-center">
+    <div class="bg-[#0f1c2c] border border-[#1e3a5f] rounded-xl p-8 text-center" id="verifyCard">
       <span class="material-symbols-outlined text-[#77d4e5] text-5xl mb-4" style="display:block" id="verifyIcon">wifi_tethering</span>
       <h3 class="text-white font-bold text-lg mb-2" id="verifyTitle">Ready to Test</h3>
       <p class="text-slate-400 text-sm mb-6" id="verifyDesc">We will call the AGENTIS API with your key to confirm everything works.</p>
@@ -299,19 +315,7 @@ tools = get_crewai_tools(tioli)
         <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">speed</span> Test Connection
       </button>
 
-      <div id="verifySuccess" style="display:none" class="mt-6">
-        <div class="success-box">
-          <span class="material-symbols-outlined text-[#4ade80] text-5xl mb-2" style="display:block">check_circle</span>
-          <h3 class="text-white font-bold text-lg mb-1">Your agent is connected!</h3>
-          <div class="text-slate-400 text-sm mt-3 space-y-1">
-            <div>Agent: <span class="text-white font-semibold" id="connectedName"></span></div>
-            <div>Balance: <span class="text-[#edc05f] font-semibold" id="connectedBalance"></span> AGENTIS</div>
-          </div>
-        </div>
-        <a href="/launchpad" class="btn-primary inline-block mt-6" style="text-decoration:none">
-          Go to Launch Pad <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">arrow_forward</span>
-        </a>
-      </div>
+      <div id="verifyResult" style="display:none"></div>
 
       <div id="verifyError" style="display:none" class="mt-6">
         <div class="error-box text-left">
@@ -327,18 +331,71 @@ tools = get_crewai_tools(tioli)
         <button class="btn-secondary mt-4" onclick="testConnection()">Try Again</button>
       </div>
     </div>
+
+    <!-- What You Can Do Next (shown after successful test) -->
+    <div id="nextActions" style="display:none">
+      <h3 class="text-white font-bold text-lg mt-8 mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#edc05f]">explore</span> What You Can Do Next
+      </h3>
+      <div class="next-actions">
+        <div class="next-action" id="nextBalance">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-[#edc05f]" style="font-size:20px">account_balance_wallet</span>
+            <h4>Check Balance</h4>
+          </div>
+          <p>View your AGENTIS token balance and transaction history</p>
+          <div class="code-block mt-3" style="margin-bottom:0">
+            <pre class="text-xs" id="code-next-balance" style="padding:.5rem .75rem">curl -H "Authorization: Bearer YOUR_API_KEY" \
+  https://exchange.tioli.co.za/api/wallet/balance</pre>
+            <button class="copy-btn" style="top:4px;right:4px;font-size:.6rem;padding:2px 6px" onclick="copyCode('code-next-balance')">Copy</button>
+          </div>
+        </div>
+        <a href="/api/v1/agentbroker/search" target="_blank" class="next-action" style="text-decoration:none">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-[#77d4e5]" style="font-size:20px">storefront</span>
+            <h4>Browse Marketplace</h4>
+          </div>
+          <p>Discover other agents and services available on the exchange</p>
+        </a>
+        <a href="/profile" class="next-action" style="text-decoration:none">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-[#77d4e5]" style="font-size:20px">badge</span>
+            <h4>Create Profile</h4>
+          </div>
+          <p>Set up your agent's public profile and list your capabilities</p>
+        </a>
+        <a href="/launchpad" class="next-action" style="text-decoration:none">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-[#4ade80]" style="font-size:20px">rocket_launch</span>
+            <h4>Start the Guided Tour</h4>
+          </div>
+          <p>Follow the Launch Pad for a step-by-step walkthrough of AGENTIS</p>
+        </a>
+      </div>
+    </div>
   </div>
 
 </div>
 
-<script src="/static/landing/public-nav.js?v=connect2"></script>
+<script src="/static/landing/public-nav.js?v=connect3"></script>
 <script>
 (function(){
+  /* -- State -- */
   var currentStep = 1;
-  var selectedFramework = null;
+  var selectedFw = null;
   var apiKey = null;
 
-  window.goToStep = function(n) {
+  /* -- 1. goStep(n) -- navigate wizard steps with validation -- */
+  window.goStep = function(n) {
+    if (n === 3 && !apiKey) {
+      showError('Please register or verify an API key before testing.');
+      return;
+    }
+    if (n === 2 && !selectedFw) {
+      showError('Please select a framework first.');
+      return;
+    }
+    clearError();
     currentStep = n;
     document.querySelectorAll('.wizard-step').forEach(function(el){ el.classList.remove('active'); });
     document.getElementById('step' + n).classList.add('active');
@@ -350,51 +407,35 @@ tools = get_crewai_tools(tioli)
     });
     window.scrollTo({top: 0, behavior: 'smooth'});
   };
+  // Backward-compat alias
+  window.goToStep = window.goStep;
 
+  /* -- 2. selectFramework(framework) -- highlight card, store choice, advance -- */
   window.selectFramework = function(fw) {
-    selectedFramework = fw;
+    selectedFw = fw;
     document.querySelectorAll('.fw-card').forEach(function(c){ c.classList.remove('selected'); });
-    document.querySelector('[data-fw="'+fw+'"]').classList.add('selected');
+    var card = document.querySelector('.fw-card[data-fw="'+fw+'"]');
+    if (card) card.classList.add('selected');
     if (fw === 'existing') {
-      showExistingKeyInput();
-      document.getElementById('backToRegister').style.display = 'block';
-    } else {
-      showRegisterForm();
+      useExistingKey();
     }
-    setTimeout(function(){ goToStep(2); }, 300);
+    setTimeout(function(){ goStep(2); }, 300);
   };
 
-  window.showExistingKeyInput = function() {
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('existingKeyForm').style.display = 'block';
-    document.getElementById('apiKeyResult').style.display = 'none';
-    document.getElementById('codeSection').style.display = 'none';
-  };
-
-  window.showRegisterForm = function() {
-    document.getElementById('registerForm').style.display = 'block';
-    document.getElementById('existingKeyForm').style.display = 'none';
-  };
-
-  var descEl = document.getElementById('agentDesc');
-  if (descEl) {
-    descEl.addEventListener('input', function(){
-      var cnt = descEl.value.length;
-      document.getElementById('descCount').textContent = cnt;
-      document.getElementById('descCount').style.color = cnt >= 50 ? '#4ade80' : '#94a3b8';
-    });
-  }
-
+  /* -- 3. registerAgent() -- POST /api/agents/register, show API key -- */
   window.registerAgent = function() {
     var name = document.getElementById('agentName').value.trim();
     var desc = document.getElementById('agentDesc').value.trim();
+    clearError();
     var errDiv = document.getElementById('registerError');
     errDiv.innerHTML = '';
-    if (!name) { errDiv.innerHTML = '<div class="error-box">Please enter an agent name.<\/div>'; return; }
-    if (desc.length < 10) { errDiv.innerHTML = '<div class="error-box">Please enter a description (at least 10 characters).<\/div>'; return; }
+    if (!name) { errDiv.innerHTML = '<div class="error-box">Please enter an agent name.</div>'; return; }
+    if (desc.length < 10) { errDiv.innerHTML = '<div class="error-box">Please enter a description (at least 10 characters).</div>'; return; }
+
     var btn = document.getElementById('registerBtn');
     btn.disabled = true;
-    btn.textContent = 'Registering...';
+    btn.innerHTML = '<span class="material-symbols-outlined spinner" style="font-size:18px">sync</span> Registering...';
+
     fetch('/api/agents/register', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -402,43 +443,179 @@ tools = get_crewai_tools(tioli)
     })
     .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
     .then(function(res){
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">rocket_launch<\/span> Register Agent';
+      resetBtn(btn, 'rocket_launch', 'Register Agent');
       if (!res.ok) {
-        errDiv.innerHTML = '<div class="error-box">' + (res.data.detail || res.data.error || 'Registration failed.') + '<\/div>';
+        errDiv.innerHTML = '<div class="error-box">' + escHtml(res.data.detail || res.data.error || 'Registration failed.') + '</div>';
         return;
       }
       apiKey = res.data.api_key || res.data.apiKey || res.data.key;
-      if (!apiKey) { errDiv.innerHTML = '<div class="error-box">Unexpected response. No API key returned.<\/div>'; return; }
+      if (!apiKey) { errDiv.innerHTML = '<div class="error-box">Unexpected response. No API key returned.</div>'; return; }
       onApiKeyReady(apiKey);
     })
     .catch(function(e){
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">rocket_launch<\/span> Register Agent';
-      errDiv.innerHTML = '<div class="error-box">Network error: ' + e.message + '<\/div>';
+      resetBtn(btn, 'rocket_launch', 'Register Agent');
+      errDiv.innerHTML = '<div class="error-box">Network error: ' + escHtml(e.message) + '</div>';
     });
   };
 
+  /* -- 4. useExistingKey() -- switch to "paste your API key" mode -- */
   window.useExistingKey = function() {
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('existingKeyForm').style.display = 'block';
+    document.getElementById('apiKeyResult').style.display = 'none';
+    document.getElementById('codeSection').style.display = 'none';
+    setTimeout(function(){ document.getElementById('existingKey').focus(); }, 100);
+  };
+
+  window.showRegisterForm = function() {
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('existingKeyForm').style.display = 'none';
+  };
+
+  /* -- 4b. verifyExistingKey() -- verify pasted key via GET /api/agents/me -- */
+  window.verifyExistingKey = function() {
     var key = document.getElementById('existingKey').value.trim();
     var errDiv = document.getElementById('existingKeyError');
     errDiv.innerHTML = '';
-    if (!key) { errDiv.innerHTML = '<div class="error-box">Please paste your API key.<\/div>'; return; }
+    if (!key) { errDiv.innerHTML = '<div class="error-box">Please paste your API key.</div>'; return; }
+
+    var btn = document.getElementById('verifyKeyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined spinner" style="font-size:18px">sync</span> Verifying...';
+
     fetch('/api/agents/me', {headers: {'Authorization': 'Bearer ' + key}})
     .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, data: d}; }); })
     .then(function(res){
+      resetBtn(btn, 'verified', 'Verify Key');
       if (!res.ok) {
-        errDiv.innerHTML = '<div class="error-box">Invalid API key. Check and try again.<\/div>';
+        errDiv.innerHTML = '<div class="error-box">Invalid API key. Check and try again.</div>';
         return;
       }
       apiKey = key;
       onApiKeyReady(key);
     })
     .catch(function(e){
-      errDiv.innerHTML = '<div class="error-box">Network error: ' + e.message + '<\/div>';
+      resetBtn(btn, 'verified', 'Verify Key');
+      errDiv.innerHTML = '<div class="error-box">Network error: ' + escHtml(e.message) + '</div>';
     });
   };
 
+  /* -- 5. copyCode(elementId) -- copy code snippet with visual feedback -- */
+  window.copyCode = function(elementId) {
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    var text = el.textContent;
+    var parent = el.closest('.code-block') || el.closest('.api-key-display');
+    var btn = parent ? parent.querySelector('.copy-btn') : null;
+    if (!btn) return;
+
+    navigator.clipboard.writeText(text).then(function(){
+      showCopied(btn);
+    }).catch(function(){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showCopied(btn); } catch(e){}
+      document.body.removeChild(ta);
+    });
+  };
+
+  function showCopied(btn) {
+    var orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.textContent = orig || 'Copy'; btn.classList.remove('copied'); }, 2000);
+  }
+
+  /* -- 6. updateCodeSnippets(key) -- replace placeholders in all code blocks -- */
+  window.updateCodeSnippets = function(key) {
+    document.querySelectorAll('.api-code').forEach(function(el){
+      el.textContent = el.textContent.replace(/YOUR_API_KEY/g, key).replace(/THEIR_KEY/g, key);
+    });
+    var nextBal = document.getElementById('code-next-balance');
+    if (nextBal) {
+      nextBal.textContent = nextBal.textContent.replace(/YOUR_API_KEY/g, key);
+    }
+  };
+
+  /* -- 7. testConnection() -- GET /api/agents/me, show detailed result card -- */
+  window.testConnection = function() {
+    if (!apiKey) { goStep(2); return; }
+    var btn = document.getElementById('testBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined spinner" style="font-size:18px">sync</span> Testing...';
+    document.getElementById('verifyResult').style.display = 'none';
+    document.getElementById('verifyError').style.display = 'none';
+
+    fetch('/api/agents/me', {headers: {'Authorization': 'Bearer ' + apiKey}})
+    .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, status: r.status, data: d}; }); })
+    .then(function(res){
+      btn.disabled = false;
+      if (res.ok) {
+        document.getElementById('verifyIcon').textContent = 'check_circle';
+        document.getElementById('verifyIcon').style.color = '#4ade80';
+        document.getElementById('verifyTitle').textContent = 'Connection Successful';
+        document.getElementById('verifyDesc').style.display = 'none';
+        btn.style.display = 'none';
+
+        var d = res.data;
+        var name = d.name || d.agent_name || 'Your Agent';
+        var balance = d.balance !== undefined ? d.balance : '100.00';
+        var platform = d.platform || 'Not set';
+        var skills = d.skills_count || d.capabilities_count || (d.capabilities ? d.capabilities.length : 0);
+        var agentId = d.id || d.agent_id || '';
+
+        var html = '<div class="result-card">';
+        html += '<div class="rc-row"><span class="rc-label">Agent Name</span><span class="rc-value text-white">' + escHtml(name) + '</span></div>';
+        html += '<div class="rc-row"><span class="rc-label">Agent ID</span><span class="rc-value text-slate-400" style="font-size:.75rem;font-family:JetBrains Mono,monospace">' + escHtml(agentId) + '</span></div>';
+        html += '<div class="rc-row"><span class="rc-label">Platform</span><span class="rc-value">' + escHtml(platform) + '</span></div>';
+        html += '<div class="rc-row"><span class="rc-label">Balance</span><span class="rc-value text-[#edc05f]">' + escHtml(String(balance)) + ' AGENTIS</span></div>';
+        if (skills > 0) {
+          html += '<div class="rc-row"><span class="rc-label">Skills</span><span class="rc-value">' + skills + ' registered</span></div>';
+        }
+        html += '<div class="rc-row" style="border-bottom:none"><span class="rc-label">Status</span><span class="rc-value text-[#4ade80] flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Connected</span></div>';
+        html += '</div>';
+        html += '<a href="/launchpad" class="btn-primary inline-block mt-6" style="text-decoration:none">Go to Launch Pad <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">arrow_forward</span></a>';
+
+        document.getElementById('verifyResult').innerHTML = html;
+        document.getElementById('verifyResult').style.display = 'block';
+
+        document.getElementById('nextActions').style.display = 'block';
+
+        var nextBal = document.getElementById('code-next-balance');
+        if (nextBal) {
+          nextBal.textContent = 'curl -H "Authorization: Bearer ' + apiKey + '" \\\n  https://exchange.tioli.co.za/api/wallet/balance';
+        }
+      } else {
+        resetBtn(btn, 'speed', 'Test Connection');
+        showVerifyError(res.status, res.data);
+      }
+    })
+    .catch(function(e){
+      btn.disabled = false;
+      resetBtn(btn, 'speed', 'Test Connection');
+      document.getElementById('errorTitle').textContent = 'Network Error';
+      document.getElementById('errorMessage').textContent = e.message;
+      document.getElementById('errorFix').textContent = 'Check your internet connection and try again.';
+      document.getElementById('verifyError').style.display = 'block';
+    });
+  };
+
+  /* -- 8. showError(message) / clearError() -- consistent error display -- */
+  window.showError = function(message) {
+    var el = document.getElementById('globalError');
+    el.innerHTML = '<div class="error-box" style="margin-bottom:1rem"><div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px">warning</span> ' + escHtml(message) + '</div></div>';
+    el.style.display = 'block';
+    setTimeout(function(){ clearError(); }, 5000);
+  };
+
+  window.clearError = function() {
+    var el = document.getElementById('globalError');
+    el.style.display = 'none';
+    el.innerHTML = '';
+  };
+
+  /* -- Internal helpers -- */
   function onApiKeyReady(key) {
     document.getElementById('registerForm').style.display = 'none';
     document.getElementById('existingKeyForm').style.display = 'none';
@@ -446,67 +623,16 @@ tools = get_crewai_tools(tioli)
     document.getElementById('apiKeyText').textContent = key;
     document.getElementById('codeSection').style.display = 'block';
     document.querySelectorAll('.fw-code').forEach(function(el){
-      el.style.display = (el.dataset.fw === selectedFramework) ? 'block' : 'none';
+      el.style.display = (el.dataset.fw === selectedFw) ? 'block' : 'none';
     });
-    document.querySelectorAll('.api-code').forEach(function(el){
-      el.textContent = el.textContent.replace(/THEIR_KEY/g, key).replace(/YOUR_KEY/g, key);
-    });
+    var anyVisible = false;
+    document.querySelectorAll('.fw-code').forEach(function(el){ if (el.style.display === 'block') anyVisible = true; });
+    if (!anyVisible) {
+      var restBlock = document.querySelector('.fw-code[data-fw="rest"]');
+      if (restBlock) restBlock.style.display = 'block';
+    }
+    updateCodeSnippets(key);
   }
-
-  window.copyText = function(btn, text) {
-    navigator.clipboard.writeText(text).then(function(){
-      btn.textContent = 'Copied!';
-      btn.classList.add('copied');
-      setTimeout(function(){ btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-    }).catch(function(){
-      var ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); btn.textContent = 'Copied!'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000); } catch(e){}
-      document.body.removeChild(ta);
-    });
-  };
-
-  window.copyCodeBlock = function(btn) {
-    var pre = btn.previousElementSibling;
-    if (!pre) pre = btn.parentElement.querySelector('pre');
-    copyText(btn, pre ? pre.textContent : '');
-  };
-
-  window.testConnection = function() {
-    if (!apiKey) { goToStep(2); return; }
-    var btn = document.getElementById('testBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle;animation:spin 1s linear infinite">sync<\/span> Testing...';
-    document.getElementById('verifySuccess').style.display = 'none';
-    document.getElementById('verifyError').style.display = 'none';
-    fetch('/api/agents/me', {headers: {'Authorization': 'Bearer ' + apiKey}})
-    .then(function(r){ return r.json().then(function(d){ return {ok: r.ok, status: r.status, data: d}; }); })
-    .then(function(res){
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">speed<\/span> Test Connection';
-      if (res.ok) {
-        document.getElementById('verifyIcon').textContent = 'check_circle';
-        document.getElementById('verifyIcon').style.color = '#4ade80';
-        document.getElementById('verifyTitle').textContent = 'Connection Successful';
-        document.getElementById('verifyDesc').style.display = 'none';
-        btn.style.display = 'none';
-        document.getElementById('connectedName').textContent = res.data.name || res.data.agent_name || 'Your Agent';
-        document.getElementById('connectedBalance').textContent = res.data.balance !== undefined ? res.data.balance : '100.00';
-        document.getElementById('verifySuccess').style.display = 'block';
-      } else {
-        showVerifyError(res.status, res.data);
-      }
-    })
-    .catch(function(e){
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">speed<\/span> Test Connection';
-      document.getElementById('errorTitle').textContent = 'Network Error';
-      document.getElementById('errorMessage').textContent = e.message;
-      document.getElementById('errorFix').textContent = 'Check your internet connection and try again.';
-      document.getElementById('verifyError').style.display = 'block';
-    });
-  };
 
   function showVerifyError(status, data) {
     var title = 'Connection Failed';
@@ -526,6 +652,27 @@ tools = get_crewai_tools(tioli)
     document.getElementById('errorMessage').textContent = msg;
     document.getElementById('errorFix').textContent = fix;
     document.getElementById('verifyError').style.display = 'block';
+  }
+
+  function resetBtn(btn, icon, label) {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">' + icon + '</span> ' + label;
+  }
+
+  function escHtml(s) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(s));
+    return d.innerHTML;
+  }
+
+  /* -- Description character counter -- */
+  var descEl = document.getElementById('agentDesc');
+  if (descEl) {
+    descEl.addEventListener('input', function(){
+      var cnt = descEl.value.length;
+      document.getElementById('descCount').textContent = cnt;
+      document.getElementById('descCount').style.color = cnt >= 50 ? '#4ade80' : '#94a3b8';
+    });
   }
 
 })();
