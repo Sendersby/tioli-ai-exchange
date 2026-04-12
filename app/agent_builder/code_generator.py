@@ -468,6 +468,7 @@ Run:
 Requires: pip install tioli-agentis {extra_pip}
 """
 import os
+import sys
 import time
 
 from tioli import TiOLi
@@ -475,7 +476,11 @@ from tioli import TiOLi
 AGENT_NAME = "{name}"
 
 # Initialize AGENTIS connection
-agent = TiOLi(api_key="{api_key}")
+agent = TiOLi(api_key=os.environ.get("AGENTIS_API_KEY", ""))
+if not os.environ.get("AGENTIS_API_KEY"):
+    print("\u26a0 Set AGENTIS_API_KEY environment variable")
+    print("  export AGENTIS_API_KEY=your_key_here")
+    sys.exit(1)
 agent.connect()
 {llm_init}
 
@@ -567,6 +572,7 @@ Run:
 Requires: pip install tioli-agentis langchain langchain-openai langchain-anthropic {extra_pip}
 """
 import os
+import sys
 import time
 
 from tioli import TiOLi
@@ -574,7 +580,11 @@ from tioli import TiOLi
 AGENT_NAME = "{name}"
 
 # Initialize AGENTIS connection
-agent = TiOLi(api_key="{api_key}")
+agent = TiOLi(api_key=os.environ.get("AGENTIS_API_KEY", ""))
+if not os.environ.get("AGENTIS_API_KEY"):
+    print("\u26a0 Set AGENTIS_API_KEY environment variable")
+    print("  export AGENTIS_API_KEY=your_key_here")
+    sys.exit(1)
 agent.connect()
 {llm_init}
 
@@ -679,13 +689,18 @@ Run:
 Requires: pip install tioli-agentis crewai crewai-tools {extra_pip}
 """
 import os
+import sys
 
 from tioli import TiOLi
 
 AGENT_NAME = "{name}"
 
 # Initialize AGENTIS connection
-agent = TiOLi(api_key="{api_key}")
+agent = TiOLi(api_key=os.environ.get("AGENTIS_API_KEY", ""))
+if not os.environ.get("AGENTIS_API_KEY"):
+    print("\u26a0 Set AGENTIS_API_KEY environment variable")
+    print("  export AGENTIS_API_KEY=your_key_here")
+    sys.exit(1)
 agent.connect()
 {llm_init}
 
@@ -737,7 +752,7 @@ REST_BASE = '''#!/bin/bash
 # No SDK required -- pure curl commands
 # Run: bash {filename}
 
-API_KEY="{api_key}"
+API_KEY="${AGENTIS_API_KEY:?Set AGENTIS_API_KEY environment variable}"
 BASE="https://exchange.tioli.co.za"
 
 echo "=== Agent Status ==="
@@ -770,7 +785,7 @@ echo "  3. GET  $BASE/api/agents/discover?capability=research to find collaborat
 LLM_DEFAULTS = {
     "anthropic": {"model": "claude-sonnet-4-20250514", "env_key": "ANTHROPIC_API_KEY", "pip": "anthropic"},
     "openai": {"model": "gpt-4o-mini", "env_key": "OPENAI_API_KEY", "pip": "openai"},
-    "none": {"model": "none", "env_key": "NONE", "pip": ""},
+    "none": {"model": "none", "env_key": "LLM_PROVIDER", "pip": ""},
 }
 
 
@@ -820,7 +835,18 @@ def generate_agent_code(
 
     # Build LLM init block
     if provider == "none" or is_shell:
-        llm_init = "\n# LLM: disabled (SDK-only mode)\nLLM_PROVIDER = 'none'\nLLM_MODEL = 'none'\nllm_client = None\n\ndef llm_complete(prompt, system_prompt='', max_tokens=1024):\n    return 'LLM disabled. Set LLM_PROVIDER and API key to enable AI features.'\n"
+        llm_init = (
+            "\n# LLM: disabled (SDK-only mode)\n"
+            "LLM_PROVIDER = \"none\"\n"
+            "LLM_MODEL = \"none\"\n"
+            "llm_client = None\n"
+            "print(\"Running in SDK-only mode. Set LLM_PROVIDER=anthropic and ANTHROPIC_API_KEY to enable AI features.\")\n"
+            "\n"
+            "\n"
+            "def llm_complete(prompt, system_prompt=\"\", max_tokens=1024):\n"
+            "    # LLM not configured -- this agent uses SDK tools only\n"
+            "    return \"LLM not configured -- this agent uses SDK tools only\"\n"
+        )
     else:
         llm_init = LLM_INIT_TEMPLATE.format(llm_provider=provider, llm_model=model)
 
@@ -862,7 +888,6 @@ def hello() -> str:
         name=name,
         description=desc,
         filename=filename,
-        api_key=api_key,
         llm_init=llm_init,
         tool_code=tool_code,
         cap_list=cap_list,
@@ -876,7 +901,7 @@ def hello() -> str:
             ast.parse(code)
         except SyntaxError as e:
             logger.error("Generated code syntax error: %s -- using fallback template", e)
-            code = _fallback_template(name, api_key, provider, model, env_key, cap_list, desc, filename)
+            code = _fallback_template(name, provider, model, env_key, cap_list, desc, filename)
 
     # Requirements
     reqs_map = {
@@ -898,7 +923,7 @@ def hello() -> str:
     }
 
 
-def _fallback_template(name, api_key, provider, model, env_key, cap_list, desc, filename):
+def _fallback_template(name, provider, model, env_key, cap_list, desc, filename):
     """Minimal fallback template guaranteed to parse."""
     return (
         '#!/usr/bin/env python3\n'
@@ -911,6 +936,7 @@ def _fallback_template(name, api_key, provider, model, env_key, cap_list, desc, 
         f'  python {filename}\n'
         '"""\n'
         'import os\n'
+        'import sys\n'
         'import time\n'
         'from tioli import TiOLi\n'
         '\n'
@@ -962,7 +988,10 @@ def _fallback_template(name, api_key, provider, model, env_key, cap_list, desc, 
         '    return "Unsupported provider."\n'
         '\n'
         '\n'
-        f'agent = TiOLi(api_key="{api_key}")\n'
+        f'agent = TiOLi(api_key=os.environ.get("AGENTIS_API_KEY", ""))\n'
+        'if not os.environ.get("AGENTIS_API_KEY"):\n'
+        '    print("Set AGENTIS_API_KEY environment variable")\n'
+        '    sys.exit(1)\n'
         'agent.connect()\n'
         '\n'
         '\n'
