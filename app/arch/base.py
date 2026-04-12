@@ -399,6 +399,20 @@ class ArchAgentBase(ABC):
             if tool_name in MEMORY_TOOL_HANDLERS:
                 return await MEMORY_TOOL_HANDLERS[tool_name](self, tool_input)
 
+            # Architect-specific Tier 1 tools
+            if tool_name == "run_test_suite":
+                from app.arch.tools.architect_tools import run_test_suite
+                return await run_test_suite(
+                    test_path=tool_input.get("test_path", "tests/"),
+                    verbose=tool_input.get("verbose", False),
+                )
+            elif tool_name == "get_endpoint_performance":
+                from app.arch.tools.architect_tools import get_endpoint_performance
+                return await get_endpoint_performance()
+            elif tool_name == "check_database_health":
+                from app.arch.tools.architect_tools import check_database_health
+                return await check_database_health(self.db)
+
             # Social verification tools
             if tool_name == "verify_tweet":
                 from app.arch.tools.social_verification import verify_tweet
@@ -424,6 +438,35 @@ class ArchAgentBase(ABC):
                     body=tool_input.get("body", ""),
                     action_required=tool_input.get("action_required", False),
                 )
+
+            # ── Ambassador Tier 1 tools ──
+            elif tool_name == "get_content_analytics":
+                from app.arch.tools.ambassador_tools import get_content_analytics
+                return await get_content_analytics(self.db)
+            elif tool_name == "schedule_content":
+                from app.arch.tools.ambassador_tools import schedule_content
+                return await schedule_content(
+                    self.db,
+                    platform=tool_input.get("platform", ""),
+                    content=tool_input.get("content", ""),
+                    scheduled_for=tool_input.get("scheduled_for", ""),
+                )
+
+            # ── Sentinel Tier 1 tools ──
+            elif tool_name == "search_logs":
+                from app.arch.tools.sentinel_tools import search_logs
+                return await search_logs(
+                    keyword=tool_input.get("keyword", ""),
+                    since_minutes=tool_input.get("since_minutes", 60),
+                    severity=tool_input.get("severity", ""),
+                    max_lines=tool_input.get("max_lines", 50),
+                )
+            elif tool_name == "check_ssl_certificates":
+                from app.arch.tools.sentinel_tools import check_ssl_certificates
+                return await check_ssl_certificates()
+            elif tool_name == "get_rate_limit_status":
+                from app.arch.tools.sentinel_tools import get_rate_limit_status
+                return await get_rate_limit_status()
 
             handler = executor_handlers.get(tool_name)
             if not handler:
