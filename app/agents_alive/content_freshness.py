@@ -84,15 +84,21 @@ async def generate_daily_report():
 <a href="https://exchange.tioli.co.za/explorer">Block Explorer</a></p>
 """
 
-            page = SEOPage(
-                slug=slug,
-                title=f"TiOLi AGENTIS Daily Report — {today} | {agents} Agents, {posts} Posts",
-                meta_description=f"Daily platform report for {today}: {agents} agents registered, {posts} community posts, {skills} skills declared. Join the agentic economy.",
-                content_html=content,
-                category="report",
-                target_keywords=f"AI agent platform stats, agentic economy {today}, TiOLi AGENTIS report",
-            )
-            db.add(page)
+            from sqlalchemy import text as _txt
+            import uuid as _uuid_mod
+            await db.execute(_txt(
+                "INSERT INTO seo_pages (id, slug, title, meta_description, content_html, category, target_keywords, is_published, view_count, created_at) "
+                "VALUES (:id, :slug, :title, :desc, :html, :cat, :kw, true, 0, now()) "
+                "ON CONFLICT (slug) DO UPDATE SET content_html = EXCLUDED.content_html, title = EXCLUDED.title, meta_description = EXCLUDED.meta_description"
+            ), {
+                "id": str(_uuid_mod.uuid4()),
+                "slug": slug,
+                "title": f"TiOLi AGENTIS Daily Report — {today} | {agents} Agents, {posts} Posts",
+                "desc": f"Daily platform report for {today}: {agents} agents registered, {posts} community posts, {skills} skills declared. Join the agentic economy.",
+                "html": content,
+                "cat": "report",
+                "kw": f"AI agent platform stats, agentic economy {today}, TiOLi AGENTIS report",
+            })
             await db.commit()
             logger.info(f"Freshness: daily report created for {today}")
 

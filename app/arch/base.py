@@ -124,6 +124,10 @@ class ArchAgentBase(ABC):
         # Append social verification tools (verify_tweet, verify_linkedin_post, get_recent_tweets)
         from app.arch.tools.social_verification import SOCIAL_VERIFICATION_TOOLS
         tools += SOCIAL_VERIFICATION_TOOLS
+        from app.arch.tools.platform_query import PLATFORM_QUERY_TOOLS
+        tools += PLATFORM_QUERY_TOOLS
+        from app.arch.tools.founder_notification import FOUNDER_NOTIFICATION_TOOLS
+        tools += FOUNDER_NOTIFICATION_TOOLS
         return tools
 
     # ── Memory helpers ─────────────────────────────────────────
@@ -408,6 +412,18 @@ class ArchAgentBase(ABC):
             elif tool_name == "get_recent_tweets":
                 from app.arch.tools.social_verification import get_recent_tweets
                 return await get_recent_tweets(count=tool_input.get("count", 10))
+            elif tool_name == "query_platform_data":
+                from app.arch.tools.platform_query import query_platform_data
+                return await query_platform_data(self.db, tool_input.get("sql", ""))
+            elif tool_name == "send_founder_notification":
+                from app.arch.tools.founder_notification import send_founder_notification
+                return await send_founder_notification(
+                    self.db, agent_name=self.agent_id,
+                    priority=tool_input.get("priority", "info"),
+                    subject=tool_input.get("subject", ""),
+                    body=tool_input.get("body", ""),
+                    action_required=tool_input.get("action_required", False),
+                )
 
             handler = executor_handlers.get(tool_name)
             if not handler:

@@ -41,17 +41,21 @@ class AuditorAgent(ArchAgentBase):
         entity_type = params["entity_type"]
         kyc_tier = params["kyc_tier"]
 
-        await self.db.execute(
-            text("""
-                INSERT INTO arch_compliance_events
-                    (event_type, entity_id, entity_type, severity, detail)
-                VALUES ('KYC_SCREENING', :eid, :etype, 'MEDIUM',
-                        :detail)
-            """),
-            {"eid": entity_id, "etype": entity_type,
-             "detail": json.dumps({"kyc_tier": kyc_tier, "status": "SCREENED"})},
-        )
-        await self.db.commit()
+        try:
+            await self.db.execute(
+                text("""
+                    INSERT INTO arch_compliance_events
+                        (event_type, entity_id, entity_type, severity, detail)
+                    VALUES ('KYC_SCREENING', :eid, :etype, 'MEDIUM',
+                            :detail)
+                """),
+                {"eid": entity_id, "etype": entity_type,
+                 "detail": json.dumps({"kyc_tier": kyc_tier, "status": "SCREENED"})},
+            )
+            await self.db.commit()
+        except Exception as e:
+            await self.db.rollback()
+            log.warning(f"[auditor] KYC screening DB write failed: {e}")
         log.info(f"[auditor] KYC screening: {entity_type} {entity_id} tier {kyc_tier}")
         
         # ARCH-001: Real KYC screening (feature-flagged)
@@ -91,17 +95,22 @@ class AuditorAgent(ArchAgentBase):
         transaction_id = params["transaction_id"]
         reason = params["reason"]
 
-        result = await self.db.execute(
-            text("""
-                INSERT INTO arch_str_log
-                    (transaction_id, reason, submitted_to_fic)
-                VALUES (:txn, :reason, false)
-                RETURNING id::text
-            """),
-            {"txn": transaction_id, "reason": reason},
-        )
-        str_id = result.scalar()
-        await self.db.commit()
+        try:
+            result = await self.db.execute(
+                text("""
+                    INSERT INTO arch_str_log
+                        (transaction_id, reason, submitted_to_fic)
+                    VALUES (:txn, :reason, false)
+                    RETURNING id::text
+                """),
+                {"txn": transaction_id, "reason": reason},
+            )
+            str_id = result.scalar()
+            await self.db.commit()
+        except Exception as e:
+            await self.db.rollback()
+            log.error(f"[auditor] STR filing DB write failed: {e}")
+            return {"error": f"STR filing failed: {e}"}
         log.warning(f"[auditor] STR filed: {str_id} for transaction {transaction_id}")
         
         # ARCH-007: Generate FIC-compatible STR XML (feature-flagged)
@@ -145,22 +154,26 @@ class AuditorAgent(ArchAgentBase):
         within_limit = new_total <= SDA_ANNUAL_LIMIT_ZAR
 
         # Record this check
-        await self.db.execute(
-            text("""
-                INSERT INTO arch_compliance_events
-                    (event_type, entity_id, entity_type, severity, detail)
-                VALUES ('CROSS_BORDER', :op, 'operator', :sev, :detail)
-            """),
-            {
-                "op": operator_id,
-                "sev": "LOW" if within_limit else "HIGH",
-                "detail": json.dumps({
-                    "amount_zar": float(amount), "destination": destination,
-                    "ytd_total": float(new_total), "within_sda_limit": within_limit,
-                }),
-            },
-        )
-        await self.db.commit()
+        try:
+            await self.db.execute(
+                text("""
+                    INSERT INTO arch_compliance_events
+                        (event_type, entity_id, entity_type, severity, detail)
+                    VALUES ('CROSS_BORDER', :op, 'operator', :sev, :detail)
+                """),
+                {
+                    "op": operator_id,
+                    "sev": "LOW" if within_limit else "HIGH",
+                    "detail": json.dumps({
+                        "amount_zar": float(amount), "destination": destination,
+                        "ytd_total": float(new_total), "within_sda_limit": within_limit,
+                    }),
+                },
+            )
+            await self.db.commit()
+        except Exception as e:
+            await self.db.rollback()
+            log.warning(f"[auditor] SARB compliance DB write failed: {e}")
 
         return {
             "operator_id": operator_id,
@@ -203,14 +216,18 @@ class AuditorAgent(ArchAgentBase):
         flag_type = params.get("flag_type", "GENERAL")
         severity = params.get("severity", "MEDIUM")
 
-        await self.db.execute(
-            text("""
-                INSERT INTO arch_compliance_events
-                    (event_type, entity_id, entity_type, severity, detail)
-                VALUES (:flag, :eid, :etype, :sev, :detail)
-            """),
-            {"flag": flag_type, "eid": entity_id, "etype": entity_type,
-             "sev": severity, "detail": json.dumps({"flagged_by": "auditor"})},
-        )
-        await self.db.commit()
+        try:
+            await self.db.execute(
+                text("""
+                    INSERT INTO arch_compliance_events
+                        (event_type, entity_id, entity_type, severity, detail)
+                    VALUES (:flag, :eid, :etype, :sev, :detail)
+                """),
+                {"flag": flag_type, "eid": entity_id, "etype": entity_type,
+                 "sev": severity, "detail": json.dumps({"flagged_by": "auditor"})},
+            )
+            await self.db.commit()
+        except Exception as e:
+            await self.db.rollback()
+            log.warning(f"[auditor] Compliance flag DB write failed: {e}")
         return {"entity_id": entity_id, "flag_type": flag_type, "severity": severity, "flagged": True}

@@ -17,7 +17,7 @@ import random
 import logging
 from datetime import datetime, timezone, timedelta
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.models import Agent, Wallet
@@ -323,7 +323,10 @@ async def action_post_in_agora(db: AsyncSession):
             content=content, post_type="STATUS",
         )
         db.add(post)
-        channel.post_count = (channel.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": channel.id},
+        )
         await db.flush()
         logger.info(f"Activity bot: {name} posted in Agora #{slug}")
     except Exception as e:
@@ -392,7 +395,10 @@ async def action_create_collab_match(db: AsyncSession):
             post_type="UPDATE",
         )
         db.add(post)
-        channel.post_count = (channel.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": channel.id},
+        )
         await db.flush()
         match.channel_post_id = post.id
 
@@ -421,7 +427,10 @@ async def action_market_pulse_update(db: AsyncSession):
             content=content, post_type="STATUS",
         )
         db.add(post)
-        channel.post_count = (channel.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": channel.id},
+        )
         logger.info(f"Activity bot: {name} posted market pulse update")
     except Exception as e:
         logger.debug(f"Market pulse failed: {e}")
@@ -445,7 +454,10 @@ async def action_challenge_update(db: AsyncSession):
             content=content, post_type="STATUS",
         )
         db.add(post)
-        channel.post_count = (channel.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": channel.id},
+        )
         logger.info(f"Activity bot: {name} posted challenge update")
     except Exception as e:
         logger.debug(f"Challenge update failed: {e}")
@@ -469,7 +481,10 @@ async def action_leaderboard_update(db: AsyncSession):
             content=content, post_type="STATUS",
         )
         db.add(post)
-        channel.post_count = (channel.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": channel.id},
+        )
         logger.info(f"Activity bot: {name} posted leaderboard update")
     except Exception as e:
         logger.debug(f"Leaderboard update failed: {e}")
@@ -493,7 +508,10 @@ async def action_gig_post(db: AsyncSession):
             content=content, post_type="STATUS",
         )
         db.add(post)
-        channel.post_count = (channel.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": channel.id},
+        )
         logger.info(f"Activity bot: {name} posted on gig board")
     except Exception as e:
         logger.debug(f"Gig post failed: {e}")

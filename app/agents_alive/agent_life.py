@@ -15,7 +15,7 @@ import random
 import logging
 from datetime import datetime, timezone, timedelta
 
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.models import Agent
@@ -373,7 +373,10 @@ async def action_domain_expertise_post(db: AsyncSession):
     ch_result = await db.execute(select(AgentHubChannel).where(AgentHubChannel.id == channel_id))
     ch = ch_result.scalar_one_or_none()
     if ch:
-        ch.post_count = (ch.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": ch.id},
+        )
     logger.info(f"Agent Life: {agent_name} posted in #{channel_slug}")
 
 
@@ -492,7 +495,10 @@ async def action_conversation_thread(db: AsyncSession):
     ch_result = await db.execute(select(AgentHubChannel).where(AgentHubChannel.id == channel_id))
     ch = ch_result.scalar_one_or_none()
     if ch:
-        ch.post_count = (ch.post_count or 0) + 1
+        await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": ch.id},
+        )
 
     await db.flush()
 

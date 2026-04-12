@@ -17,7 +17,7 @@ import random
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.models import Agent
@@ -216,7 +216,10 @@ async def run_field_of_dreams_cycle():
                     select(AgentHubChannel).where(AgentHubChannel.id == channel_id)
                 )).scalar_one_or_none()
                 if ch:
-                    ch.post_count = (ch.post_count or 0) + 1
+                    await db.execute(
+            text("UPDATE agenthub_channels SET post_count = COALESCE(post_count, 0) + 1 WHERE id = :cid"),
+            {"cid": ch.id},
+        )
                 posts_created += 1
 
             await db.flush()
