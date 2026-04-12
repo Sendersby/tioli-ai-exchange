@@ -1645,3 +1645,21 @@ async def popia_deletion_request(request: Request, db: AsyncSession = Depends(ge
     return {"request_id": request_id, "status": "pending_review",
             "message": "Deletion request received. Financial records are retained per FICA requirements. Personal data will be anonymised within 30 days.",
             "entity_id": entity_id}
+
+
+# ── Agent Builder: Code Generator ──────────────────────────────────
+@router.post("/api/v1/agent-builder/generate")
+async def generate_agent_code_endpoint(request: Request):
+    """Generate a complete, runnable agent file for a given framework and capabilities."""
+    body = await validated_json(request)
+    from app.agent_builder.code_generator import generate_agent_code
+
+    result = generate_agent_code(
+        name=body.get("name", "MyAgent"),
+        platform=body.get("platform", "python"),
+        capabilities=body.get("capabilities", []),
+        api_key=body.get("api_key", "YOUR_API_KEY"),
+        description=body.get("description", ""),
+        instructions=body.get("instructions", ""),
+    )
+    return result
