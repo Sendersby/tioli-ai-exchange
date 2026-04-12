@@ -784,3 +784,10 @@ Total: 13 orphan tables. Do NOT drop — review before Phase 3 migration.
 - API Docs: 938 endpoints, 100% coverage
 - DR: Backup valid, RTO ~15min, RPO 24hr
 - All 8 phases complete
+
+---
+## STANDING RULE: Canonical Footer
+**Date:** 2026-04-11
+**Rule:** Every HTML page in /static/landing/ must include the full canonical footer from index.html. 
+The footer includes: platform links, developer links, resource links, legal links, regulatory status disclosure, company registration, and charitable commitment.
+No page may use a shortened or different footer. When creating new pages, copy the footer from index.html.

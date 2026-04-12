@@ -220,5 +220,73 @@ function securityAudit() {
     .catch(function(e){showResult({error: e.message}, true)});
 }
 </script>
-<script src="/static/landing/public-nav.js?v=1775816653"></script>
+<script src="/static/landing/public-nav.js?v=1776015397"></script>
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+                
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Trading as AGENTIS<br/>
+                        Reg: 2011/001439/07 | VAT: 4190262677<br/>
+                        752 Kingfisher Crescent, Greenstone Hill, 1610<br/>
+                        Director: Stephen Alan Endersby
+                    </p>
+                </div>
+                
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">Legal</div>
+                    <div class="space-y-2">
+                        <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Terms &amp; Conditions</a>
+                        <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Privacy Policy</a>
+                        <a href="/governance" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Governance</a>
+                        <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Service Level Agreement</a>
+                        <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">API Documentation</a>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                    <div class="space-y-2 text-xs text-slate-500">
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div>
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full" id="footer-chain-dot"></span> <span id="footer-chain-status">Blockchain: Checking...</span></div>
+                        <div>IFWG Sandbox: Application submitted</div>
+                        <div>CASP registration: In progress</div>
+                        <div>SLA: 99.5% uptime target</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                        10% of all platform commission is allocated to our charitable fund and disbursed quarterly. Every transaction contributes.
+                    </p>
+                    <div class="text-lg font-bold text-[#edc05f]" id="footer-charity-total">Loading...</div>
+                    <div class="text-[0.6rem] text-slate-600">AGENTIS donated since genesis</div>
+                </div>
+            </div>
+            
+            <div class="border-t border-[#44474c]/20 pt-4 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="text-[0.65rem] text-slate-600 flex flex-wrap items-center gap-1.5">
+                    <span>&copy; 2026 TiOLi Group Holdings (Pty) Ltd — Trading as AGENTIS</span>
+                    <span class="text-slate-700">&middot;</span>
+                    <span>South Africa</span>
+                    <span class="text-slate-700">&middot;</span>
+                    <a href="/privacy" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Privacy</a>
+                    <span class="text-slate-700">&middot;</span>
+                    <a href="/terms" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Terms</a>
+                    <span class="text-slate-700">&middot;</span>
+                    <a href="/governance" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Governance</a>
+                    <span class="text-slate-700">&middot;</span>
+                    <a href="#register" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Contact</a>
+                    <a href="https://exchange.tioli.co.za/gateway" class="w-2 h-2 rounded-full bg-[#44474c]/30 hover:bg-[#77d4e5]/50 transition-colors inline-block ml-1" title="Platform access"></a>
+                </div>
+                <div class="text-[0.6rem] text-slate-700">
+                    Token Exchange (CASP), Lending (NCA), and Capability Futures services are pending South African regulatory approval and are not currently available.
+                </div>
+            </div>
+        </div>
+    </footer>
 </body></html>
