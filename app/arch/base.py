@@ -81,8 +81,8 @@ class ArchAgentBase(ABC):
         return []
 
     def get_common_tools(self) -> list:
-        """Common tools for ALL agents — self-improvement governance."""
-        return [
+        """Common tools for ALL agents — governance, memory, social verification."""
+        tools = [
             {
                 "name": "propose_self_improvement",
                 "description": "Propose an improvement to yourself or other agents. Triggers a board vote. Constitutional Prime Directives cannot be modified.",
@@ -118,6 +118,13 @@ class ArchAgentBase(ABC):
                 "input_schema": {"type": "object", "properties": {}},
             },
         ]
+        # Append memory tools (retain, recall, reflect)
+        from app.arch.memory_tools import MEMORY_TOOLS
+        tools += MEMORY_TOOLS
+        # Append social verification tools (verify_tweet, verify_linkedin_post, get_recent_tweets)
+        from app.arch.tools.social_verification import SOCIAL_VERIFICATION_TOOLS
+        tools += SOCIAL_VERIFICATION_TOOLS
+        return tools
 
     # ── Memory helpers ─────────────────────────────────────────
 
@@ -387,6 +394,20 @@ class ArchAgentBase(ABC):
             from app.arch.memory_tools import MEMORY_TOOL_HANDLERS
             if tool_name in MEMORY_TOOL_HANDLERS:
                 return await MEMORY_TOOL_HANDLERS[tool_name](self, tool_input)
+
+            # Social verification tools
+            if tool_name == "verify_tweet":
+                from app.arch.tools.social_verification import verify_tweet
+                return await verify_tweet(tool_input.get("tweet_id", ""))
+            elif tool_name == "verify_linkedin_post":
+                from app.arch.tools.social_verification import verify_linkedin_post
+                return await verify_linkedin_post(
+                    post_urn=tool_input.get("post_urn", ""),
+                    search_text=tool_input.get("search_text", "")
+                )
+            elif tool_name == "get_recent_tweets":
+                from app.arch.tools.social_verification import get_recent_tweets
+                return await get_recent_tweets(count=tool_input.get("count", 10))
 
             handler = executor_handlers.get(tool_name)
             if not handler:
