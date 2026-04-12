@@ -779,6 +779,12 @@ async def serve_connect_page():
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/connect.html", media_type="text/html")
 
+@router.get("/launchpad", include_in_schema=False)
+async def serve_launchpad_page():
+    """Post-registration guided onboarding dashboard."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/launchpad.html", media_type="text/html")
+
 @router.get("/sdk", include_in_schema=False)
 async def serve_sdk_page():
     from fastapi.responses import FileResponse
