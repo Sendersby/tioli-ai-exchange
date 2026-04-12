@@ -65,4 +65,92 @@ TREASURER_TOOLS = [
             "required": ["vendor_name", "monthly_cost_zar"],
         },
     },
+    {'name': 'get_wallet_summary', 'description': 'Aggregate wallet balances by currency, total agents with wallets, revenue totals, charitable fund, and platform revenue. Use for financial overviews.', 'input_schema': {'type': 'object', 'properties': {}, 'required': []}},
+    {'name': 'check_exchange_rates', 'description': 'Check all exchange rate pairs for freshness. Flags stale rates (>6h old). Returns status: ok/warning/critical.', 'input_schema': {'type': 'object', 'properties': {}, 'required': []}},
 ]
+
+
+# ── Tier 2 tools ─────────────────────────────────────────────────────
+
+
+async def get_wallet_summary(db) -> dict:
+    """Aggregate wallet balances by currency with revenue and fund totals."""
+    from sqlalchemy import text
+
+    summary = {}
+
+    # Balances by currency
+    r = await db.execute(text(
+        "SELECT currency, count(*) as wallets, SUM(balance) as total, "
+        "AVG(balance) as avg, MAX(balance) as max_bal "
+        "FROM wallets GROUP BY currency ORDER BY total DESC"
+    ))
+    summary["by_currency"] = [
+        {
+            "currency": row.currency,
+            "wallets": row.wallets,
+            "total": float(row.total or 0),
+            "avg": round(float(row.avg or 0), 2),
+            "max": float(row.max_bal or 0),
+        }
+        for row in r.fetchall()
+    ]
+
+    # Total unique agents with wallets
+    r = await db.execute(text("SELECT count(DISTINCT agent_id) FROM wallets"))
+    summary["total_agents_with_wallets"] = r.scalar() or 0
+
+    # Revenue summary
+    r = await db.execute(text(
+        "SELECT count(*) as entries, COALESCE(SUM(gross_amount_zar), 0) as total_zar "
+        "FROM revenue_transactions"
+    ))
+    row = r.fetchone()
+    summary["revenue"] = {"entries": row.entries, "total_zar": float(row.total_zar)}
+
+    # Charitable fund
+    r = await db.execute(text(
+        "SELECT COALESCE(SUM(accumulated_zar), 0) as total FROM arch_charitable_fund"
+    ))
+    summary["charitable_fund"] = float(r.scalar() or 0)
+
+    # Platform revenue
+    r = await db.execute(text(
+        "SELECT count(*) as entries, COALESCE(SUM(amount), 0) as total FROM platform_revenue"
+    ))
+    row = r.fetchone()
+    summary["platform_revenue"] = {"entries": row.entries, "total": float(row.total)}
+
+    return summary
+
+
+async def check_exchange_rates(db) -> dict:
+    """Check exchange rate freshness and flag stale pairs."""
+    from sqlalchemy import text
+    from datetime import datetime, timezone
+
+    r = await db.execute(text(
+        "SELECT base_currency || \'/\' || quote_currency as currency_pair, "
+        "rate, timestamp FROM exchange_rates ORDER BY timestamp DESC LIMIT 20"
+    ))
+    rates = []
+    for row in r.fetchall():
+        age_hours = None
+        if row.timestamp:
+            ts = row.timestamp.replace(tzinfo=timezone.utc) if row.timestamp.tzinfo is None else row.timestamp
+            age_hours = (datetime.now(timezone.utc) - ts).total_seconds() / 3600
+        rates.append({
+            "pair": row.currency_pair,
+            "rate": float(row.rate),
+            "updated": row.timestamp.isoformat() if row.timestamp else None,
+            "age_hours": round(age_hours, 1) if age_hours is not None else None,
+            "stale": age_hours > 6 if age_hours is not None else True,
+        })
+
+    stale_count = sum(1 for r in rates if r.get("stale"))
+    return {
+        "rates": rates,
+        "total_pairs": len(rates),
+        "stale_count": stale_count,
+        "status": "ok" if stale_count == 0 else "warning" if stale_count < 3 else "critical",
+    }

@@ -452,6 +452,41 @@ class ArchAgentBase(ABC):
                     scheduled_for=tool_input.get("scheduled_for", ""),
                 )
 
+
+            # ── Treasurer Tier 2 tools ──
+            elif tool_name == "get_wallet_summary":
+                from app.arch.tools.treasurer_tools import get_wallet_summary
+                return await get_wallet_summary(self.db)
+            elif tool_name == "check_exchange_rates":
+                from app.arch.tools.treasurer_tools import check_exchange_rates
+                return await check_exchange_rates(self.db)
+
+            # ── Auditor Tier 2 tools ──
+            elif tool_name == "run_compliance_scan":
+                from app.arch.tools.auditor_tools import run_compliance_scan
+                return await run_compliance_scan(self.db)
+            elif tool_name == "get_kyc_status":
+                from app.arch.tools.auditor_tools import get_kyc_status
+                return await get_kyc_status(self.db, entity_id=tool_input.get("entity_id", ""))
+
+            # ── Arbiter Tier 2 tools ──
+            elif tool_name == "get_engagement_history":
+                from app.arch.tools.arbiter_tools import get_engagement_history
+                return await get_engagement_history(self.db, engagement_id=tool_input.get("engagement_id", ""))
+            elif tool_name == "notify_parties":
+                from app.arch.tools.arbiter_tools import notify_parties
+                return await notify_parties(
+                    self.db,
+                    engagement_id=tool_input.get("engagement_id", ""),
+                    subject=tool_input.get("subject", ""),
+                    message=tool_input.get("message", ""),
+                )
+
+            # ── Sovereign Tier 2 tools ──
+            elif tool_name == "get_platform_dashboard":
+                from app.arch.tools.sovereign_tools import get_platform_dashboard
+                return await get_platform_dashboard(self.db)
+
             # ── Sentinel Tier 1 tools ──
             elif tool_name == "search_logs":
                 from app.arch.tools.sentinel_tools import search_logs
