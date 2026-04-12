@@ -232,53 +232,79 @@ async def process_chat_message(
             except Exception as e:
                 tool_results.append({"tool": block.name, "error": str(e)})
 
-    # If tools were called, make a follow-up call with the results
-    if tool_results and not text_parts:
+    # If tools were called, make a follow-up LLM call with the tool results
+    # so the agent can reason about the data and formulate a proper answer.
+    if tool_results:
         try:
-            # Build tool result messages for the follow-up
-            tool_messages = [
-                {"role": "user", "content": message},
-                {"role": "assistant", "content": response.content},
-            ]
-            for tr in tool_results:
-                tool_messages.append({
-                    "role": "user",
-                    "content": [{"type": "tool_result",
-                                 "tool_use_id": block.id if hasattr(block, 'id') else "tool",
-                                 "content": json.dumps(tr.get("result", tr.get("error", "")))}]
+            # Build tool_result content blocks matched to the original tool_use blocks
+            tool_result_blocks = []
+            tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
+            for i, tool_block in enumerate(tool_use_blocks):
+                tr = tool_results[i] if i < len(tool_results) else {}
+                result_content = tr.get("result", tr.get("error", "No result"))
+                tool_result_blocks.append({
+                    "type": "tool_result",
+                    "tool_use_id": tool_block.id,
+                    "content": json.dumps(result_content, default=str)[:4000],
                 })
 
-            # Simpler approach: just format the tool results into the response
+            # Second LLM call with full conversation history including tool results
+            follow_up_messages = [
+                {"role": "user", "content": message},
+                {"role": "assistant", "content": response.content},
+                {"role": "user", "content": tool_result_blocks},
+            ]
+
+            async with ARCH_LLM_SEMAPHORE:
+                follow_up = await agent.client.messages.create(
+                    model=agent.model,
+                    max_tokens=4096,
+                    system=system_blocks,
+                    messages=follow_up_messages,
+                    tools=tools if tools else [],
+                )
+
+            # Extract text from follow-up response
+            text_parts = []
+            for block in follow_up.content:
+                if block.type == "text":
+                    text_parts.append(block.text)
+
+            # Track tokens for the follow-up call too
+            try:
+                await agent._track_tokens(follow_up.usage)
+            except Exception:
+                pass
+
+            if not text_parts:
+                # Follow-up returned no text - fall back to formatted results
+                raise ValueError("Follow-up LLM call returned no text")
+
+            log.info(f"[{agent_id}] Tool follow-up succeeded with {len(tool_use_blocks)} tool results")
+
+        except Exception as e:
+            log.warning(f"[{agent_id}] Tool follow-up LLM call failed: {e} - formatting raw results")
+            # Fall back: format tool results as readable text
+            text_parts = []
             for tr in tool_results:
                 data = tr.get("result", tr.get("error", {}))
                 tool_name = tr["tool"].replace("_", " ").title()
                 if isinstance(data, dict):
-                    lines = [f"**{tool_name}:**"]
+                    lines_out = [f"**{tool_name}:**"]
                     for k, v in data.items():
                         clean_key = k.replace("_", " ").title()
                         if isinstance(v, dict):
                             for sk, sv in v.items():
-                                lines.append(f"  {sk}: {sv}")
+                                lines_out.append(f"  {sk}: {sv}")
                         elif isinstance(v, (int, float)) and "zar" in k.lower():
-                            lines.append(f"  {clean_key}: R{v:,.2f}")
+                            lines_out.append(f"  {clean_key}: R{v:,.2f}")
                         elif isinstance(v, bool):
-                            lines.append(f"  {clean_key}: {'Yes' if v else 'No'}")
+                            lines_out.append(f"  {clean_key}: {'Yes' if v else 'No'}")
                         else:
-                            lines.append(f"  {clean_key}: {v}")
-                    text_parts.append("\n".join(lines))
+                            lines_out.append(f"  {clean_key}: {v}")
+                    text_parts.append("\n".join(lines_out))
                 else:
                     text_parts.append(f"**{tool_name}:** {str(data)[:500]}")
-
-        except Exception as e:
-            text_parts.append(f"[Tool results: {json.dumps(tool_results, default=str)[:500]}]")
-
-    elif tool_results and text_parts:
-        # Agent provided text AND called tools — append tool results
-        result_summary = "\n\n".join([
-            f"**{tr['tool']}**: {json.dumps(tr.get('result', {}), default=str)[:400]}"
-            for tr in tool_results
-        ])
-        text_parts.append(f"\n\n---\n**Data retrieved:**\n{result_summary}")
 
     # Track tokens
     try:

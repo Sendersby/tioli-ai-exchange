@@ -292,9 +292,32 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Roadmap seed: {e}")
 
-    # Start scheduled jobs
+    # Start scheduled jobs — use Redis lock so only ONE gunicorn worker runs them
     from app.scheduler.jobs import start_scheduler, stop_scheduler
-    start_scheduler()
+    import redis as _sched_redis
+    try:
+        _sched_lock_client = _sched_redis.from_url(
+            os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        )
+        _got_sched_lock = _sched_lock_client.set(
+            "platform_scheduler_lock", os.getpid(), nx=True, ex=300
+        )
+        if _got_sched_lock:
+            start_scheduler()
+            # Refresh lock periodically inside the scheduler
+            from app.scheduler.jobs import scheduler as _platform_scheduler
+            _platform_scheduler.add_job(
+                lambda: _sched_lock_client.set(
+                    "platform_scheduler_lock", os.getpid(), xx=True, ex=300
+                ),
+                trigger="interval", minutes=4, id="platform_sched_lock_refresh",
+            )
+            print(f"  Platform Scheduler: started (worker {os.getpid()} won lock)")
+        else:
+            print(f"  Platform Scheduler: skipped in worker {os.getpid()} — another worker holds lock")
+    except Exception as _sl_e:
+        print(f"  Platform Scheduler: lock failed ({_sl_e}) — starting anyway")
+        start_scheduler()
     # ── Arch Agent Initiative — Startup ──────────────────────
     # Additive only. Conditional on ARCH_AGENTS_ENABLED.
     import os as _arch_os
@@ -315,15 +338,40 @@ async def lifespan(app: FastAPI):
             print(f"  Arch Agents: {len(_arch_agents)} activated")
 
             # ── Register APScheduler jobs (heartbeats, reserves, board sessions, etc.)
+            # Use Redis lock so only ONE gunicorn worker starts the scheduler
             try:
                 from apscheduler.schedulers.asyncio import AsyncIOScheduler
                 from app.arch.scheduler import register_arch_jobs
-                _arch_scheduler = AsyncIOScheduler(timezone="Africa/Johannesburg")
-                register_arch_jobs(_arch_scheduler, _arch_agents, db_factory=async_session)
-                _arch_scheduler.start()
-                print(f"  Arch Scheduler: {len(_arch_scheduler.get_jobs())} jobs registered")
+                import redis as _sync_redis
+
+                _redis_lock_client = _sync_redis.from_url(
+                    _arch_os.getenv("REDIS_URL", "redis://localhost:6379/0")
+                )
+                _got_sched_lock = _redis_lock_client.set(
+                    "arch_scheduler_lock", _arch_os.getpid(), nx=True, ex=300
+                )
+                if _got_sched_lock:
+                    _arch_scheduler = AsyncIOScheduler(timezone="Africa/Johannesburg")
+                    register_arch_jobs(_arch_scheduler, _arch_agents, db_factory=async_session)
+                    _arch_scheduler.start()
+                    # Refresh lock every 4 minutes so it never expires while running
+                    _arch_scheduler.add_job(
+                        lambda: _redis_lock_client.set(
+                            "arch_scheduler_lock", _arch_os.getpid(), xx=True, ex=300
+                        ),
+                        trigger="interval", minutes=4, id="scheduler_lock_refresh",
+                    )
+                    print(f"  Arch Scheduler: {len(_arch_scheduler.get_jobs())} jobs registered (worker {_arch_os.getpid()} won lock)")
+                else:
+                    print(f"  Arch Scheduler: skipped in worker {_arch_os.getpid()} — another worker holds the lock")
             except Exception as _sched_e:
-                print(f"  Arch Scheduler: failed — {_sched_e}")
+                print(f"  Arch Scheduler: lock failed ({_sched_e}) — starting anyway as fallback")
+                try:
+                    _arch_scheduler = AsyncIOScheduler(timezone="Africa/Johannesburg")
+                    register_arch_jobs(_arch_scheduler, _arch_agents, db_factory=async_session)
+                    _arch_scheduler.start()
+                except Exception:
+                    pass
 
             # ── Start autonomous event loops for each agent
             try:
@@ -369,7 +417,15 @@ async def lifespan(app: FastAPI):
         except Exception as _arch_e:
             print(f"  Arch Agents: startup failed — {_arch_e}")
     yield
-    # Shutdown
+    # Shutdown — release Redis scheduler locks
+    try:
+        _sched_lock_client.delete("platform_scheduler_lock")
+    except Exception:
+        pass
+    try:
+        _redis_lock_client.delete("arch_scheduler_lock")
+    except Exception:
+        pass
     for _name, _loop, _task in _arch_event_loops:
         _loop.stop()
         _task.cancel()
