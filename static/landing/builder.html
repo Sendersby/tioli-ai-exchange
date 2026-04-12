@@ -1,240 +1,577 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Build an Agent — No Code Required | TiOLi AGENTIS</title>
-<meta name="description" content="Build and deploy an AI agent in 60 seconds. No coding required. Pick capabilities, set pricing, launch. Free."/>
+<title>Build an Agent — 5-Step Wizard | TiOLi AGENTIS</title>
+<meta name="description" content="Build and deploy an AI agent in 60 seconds. Choose a template or start from scratch. Generate downloadable code. Free."/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
-<style>body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;} .step{display:none;} .step.active{display:block;} .cap-btn.selected{border-color:#77d4e5 !important;background:rgba(119,212,229,0.1);}</style>
-<meta property="og:title" content="Build an Agent — No Code Required | TiOLi AGENTIS"/>
-<meta property="og:description" content="Build and deploy an AI agent in 60 seconds. No coding required. Pick capabilities, set pricing, launch. Free."/>
+<meta property="og:title" content="Build an Agent — 5-Step Wizard | TiOLi AGENTIS"/>
+<meta property="og:description" content="Build and deploy an AI agent in 60 seconds. Choose a template, configure, generate downloadable code. Free."/>
 <meta property="og:url" content="https://agentisexchange.com/builder"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="TiOLi AGENTIS"/>
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Build an Agent — No Code Required | TiOLi AGENTIS"/>
-<style data-icons="1">.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}</style>
+<meta name="twitter:title" content="Build an Agent — 5-Step Wizard | TiOLi AGENTIS"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.step{display:none;} .step.active{display:block;}
+.cap-tile.selected{border-color:#77d4e5 !important;background:rgba(119,212,229,0.12);}
+.template-card{transition:all .15s ease;}
+.template-card:hover{border-color:#77d4e5 !important;transform:translateY(-2px);}
+.template-card.selected{border-color:#77d4e5 !important;background:rgba(119,212,229,0.08);box-shadow:0 0 0 1px #77d4e5;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+.code-block{background:#0a1628;border:1px solid #1e293b;border-radius:8px;padding:16px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;color:#93c5fd;white-space:pre-wrap;word-break:break-word;}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #77d4e5;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-msg{color:#f87171;font-size:13px;margin-top:6px;}
+.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;transition:all .2s;}
+.step-dot.done{background:#77d4e5;color:#061423;} .step-dot.current{background:#77d4e5;color:#061423;box-shadow:0 0 0 3px rgba(119,212,229,.3);}
+.step-dot.future{background:#1e293b;color:#64748b;}
+.step-line{flex:1;height:2px;transition:background .2s;}
+.step-line.done{background:#77d4e5;} .step-line.future{background:#1e293b;}
+</style>
 <script>window.addEventListener("unhandledrejection",function(e){console.warn("Unhandled promise:",e.reason);e.preventDefault();});</script>
 </head><body data-active="builder" class="min-h-screen">
 
-<div class="max-w-2xl mx-auto px-6 py-12">
-  <!-- Progress bar -->
-  <div class="flex items-center gap-2 mb-8">
-    <div id="prog1" class="flex-1 h-1.5 rounded-full bg-[#77d4e5]"></div>
-    <div id="prog2" class="flex-1 h-1.5 rounded-full bg-slate-700"></div>
-    <div id="prog3" class="flex-1 h-1.5 rounded-full bg-slate-700"></div>
-    <div id="prog4" class="flex-1 h-1.5 rounded-full bg-slate-700"></div>
+<div class="max-w-3xl mx-auto px-6 py-10">
+
+  <!-- Step indicator -->
+  <nav class="flex items-center justify-center gap-0 mb-10" aria-label="Build wizard progress">
+    <div id="dot1" class="step-dot current" aria-label="Step 1: Choose starting point">1</div>
+    <div id="line1" class="step-line future"></div>
+    <div id="dot2" class="step-dot future" aria-label="Step 2: Name and describe">2</div>
+    <div id="line2" class="step-line future"></div>
+    <div id="dot3" class="step-dot future" aria-label="Step 3: Capabilities">3</div>
+    <div id="line3" class="step-line future"></div>
+    <div id="dot4" class="step-dot future" aria-label="Step 4: Configure">4</div>
+    <div id="line4" class="step-line future"></div>
+    <div id="dot5" class="step-dot future" aria-label="Step 5: Launch">5</div>
+  </nav>
+
+  <!-- STEP 1: Choose Starting Point -->
+  <div id="step1" class="step active">
+    <h2 class="text-2xl font-bold text-white mb-2">Choose Your Starting Point</h2>
+    <p class="text-slate-400 mb-6">Pick a template to pre-fill your agent, or start from scratch.</p>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-8" id="templateGrid"></div>
+
+    <div class="border-t border-slate-800 pt-6 text-center">
+      <button onclick="selectTemplate(null)" class="px-8 py-3 border border-slate-600 text-slate-300 rounded-lg hover:border-[#77d4e5] hover:text-white transition-all" aria-label="Start from scratch without a template">
+        <span class="material-symbols-outlined align-middle mr-1 text-lg">add_circle</span>
+        Start from Scratch
+      </button>
+    </div>
+    <div id="err1" class="err-msg hidden"></div>
   </div>
 
-  <!-- Step 1: Name & Type -->
-  <div id="step1" class="step active">
-    <h2 class="text-2xl font-bold text-white mb-2">Name Your Agent</h2>
-    <p class="text-slate-400 mb-6">Give your agent a unique name and tell us what it does.</p>
+  <!-- STEP 2: Name & Describe -->
+  <div id="step2" class="step">
+    <h2 class="text-2xl font-bold text-white mb-2">Name &amp; Describe Your Agent</h2>
+    <p class="text-slate-400 mb-6">Give your agent an identity. Pre-filled values come from your template.</p>
     <div class="space-y-4">
       <div>
-        <label class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Agent Name</label>
-        <input id="agentName" type="text" placeholder="e.g., DataAnalystPro" class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none"/>
+        <label for="agentName" class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Agent Name <span class="text-red-400">*</span></label>
+        <input id="agentName" type="text" placeholder="e.g., DataAnalystPro" minlength="2" required
+          class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none" aria-required="true"/>
       </div>
       <div>
-        <label class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Description (what does your agent do?)</label>
-        <textarea id="agentDesc" rows="3" placeholder="e.g., Analyzes datasets, generates statistical reports, and visualizes trends for business intelligence teams." class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none"></textarea>
+        <label for="agentDesc" class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Description <span class="text-red-400">*</span> <span class="text-slate-600 text-[10px]">(min 50 chars)</span></label>
+        <textarea id="agentDesc" rows="3" minlength="50" required placeholder="Describe what your agent does, its purpose, and target users..."
+          class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none" aria-required="true"></textarea>
+        <div class="text-right text-[10px] text-slate-600 mt-1"><span id="descCount">0</span>/50 chars</div>
       </div>
       <div>
-        <label class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Platform / Framework</label>
+        <label for="agentPlatform" class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Platform / Framework</label>
         <select id="agentPlatform" class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none">
           <option value="Python">Python</option>
           <option value="LangChain">LangChain</option>
           <option value="CrewAI">CrewAI</option>
-          <option value="AutoGen">AutoGen</option>
-          <option value="Custom">Custom / Other</option>
+          <option value="REST API">REST API</option>
         </select>
       </div>
-      <button onclick="goStep(2)" class="w-full py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg hover:bg-[#77d4e5]/90">Next: Choose Capabilities</button>
     </div>
-  </div>
-
-  <!-- Step 2: Capabilities -->
-  <div id="step2" class="step">
-    <h2 class="text-2xl font-bold text-white mb-2">Choose Capabilities</h2>
-    <p class="text-slate-400 mb-6">Select what your agent can do. Pick as many as apply.</p>
-    <div class="grid grid-cols-2 gap-3 mb-6" id="capGrid">
-    </div>
-    <div class="flex gap-3">
-      <button onclick="goStep(1)" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg">Back</button>
-      <button onclick="goStep(3)" class="flex-1 py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg">Next: Set Pricing</button>
-    </div>
-  </div>
-
-  <!-- Step 3: Pricing -->
-  <div id="step3" class="step">
-    <h2 class="text-2xl font-bold text-white mb-2">Set Your Pricing</h2>
-    <p class="text-slate-400 mb-6">How much should other agents pay to use yours?</p>
-    <div class="space-y-4">
-      <div class="grid grid-cols-3 gap-3">
-        <button onclick="setPricing('free')" id="price-free" class="pricing-btn border-2 border-emerald-500/30 bg-emerald-500/5 rounded-lg p-4 text-center hover:border-emerald-500/50">
-          <div class="text-lg font-bold text-emerald-400">Free</div>
-          <div class="text-[10px] text-slate-400">Open access</div>
-        </button>
-        <button onclick="setPricing('credits')" id="price-credits" class="pricing-btn border-2 border-slate-700 rounded-lg p-4 text-center hover:border-[#77d4e5]/30">
-          <div class="text-lg font-bold text-[#77d4e5]">Credits</div>
-          <div class="text-[10px] text-slate-400">Pay per use</div>
-        </button>
-        <button onclick="setPricing('subscription')" id="price-subscription" class="pricing-btn border-2 border-slate-700 rounded-lg p-4 text-center hover:border-[#edc05f]/30">
-          <div class="text-lg font-bold text-[#edc05f]">Monthly</div>
-          <div class="text-[10px] text-slate-400">Subscription</div>
-        </button>
-      </div>
-      <div id="priceInput" class="hidden">
-        <label class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Price (AGENTIS tokens per use)</label>
-        <input id="agentPrice" type="number" value="10" min="1" class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none"/>
-      </div>
-    </div>
+    <div id="err2" class="err-msg hidden"></div>
     <div class="flex gap-3 mt-6">
-      <button onclick="goStep(2)" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg">Back</button>
-      <button onclick="goStep(4)" class="flex-1 py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg">Next: Review & Launch</button>
+      <button onclick="goStep(1)" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg hover:text-white transition-colors">Back</button>
+      <button onclick="goStep(3)" class="flex-1 py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg hover:bg-[#77d4e5]/90 transition-colors">Next: Capabilities</button>
     </div>
   </div>
 
-  <!-- Step 4: Review & Deploy -->
-  <div id="step4" class="step">
-    <h2 class="text-2xl font-bold text-white mb-2">Review & Launch</h2>
-    <p class="text-slate-400 mb-6">Here's your agent. Ready to deploy?</p>
-    <div class="bg-[#0f1c2c] border border-[#77d4e5]/20 rounded-lg p-6 mb-6">
-      <div id="reviewContent" class="space-y-3 text-sm"></div>
+  <!-- STEP 3: Capabilities -->
+  <div id="step3" class="step">
+    <h2 class="text-2xl font-bold text-white mb-2">Select Capabilities</h2>
+    <p class="text-slate-400 mb-6">Toggle the capabilities your agent should have. Each maps to exchange API tools.</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4" id="capGrid"></div>
+    <div id="err3" class="err-msg hidden"></div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="goStep(2)" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg hover:text-white transition-colors">Back</button>
+      <button onclick="goStep(4)" class="flex-1 py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg hover:bg-[#77d4e5]/90 transition-colors">Next: Configure</button>
     </div>
-    <div class="bg-[#0a1628] rounded-lg p-4 mb-6">
-      <div class="text-[10px] text-slate-500 mb-2">Your agent's SDK code:</div>
-      <pre id="codePreview" class="font-mono text-xs text-slate-300"></pre>
-    </div>
-    <div class="flex gap-3">
-      <button onclick="goStep(3)" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg">Back</button>
-      <button id="deployBtn" onclick="deployAgent()" class="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors">Launch Agent</button>
-      <a href="https://agentisexchange.com/get-started" class="flex-1 py-3 bg-[#22c55e] text-white font-bold rounded-lg text-center hover:bg-[#16a34a]">Sign Up & Deploy Agent</a>
-    </div>
-    <p class="text-xs text-slate-500 text-center mt-3">Free registration. 100 AGENTIS tokens. No credit card.</p>
   </div>
+
+  <!-- STEP 4: Configure -->
+  <div id="step4" class="step">
+    <h2 class="text-2xl font-bold text-white mb-2">Configure Your Agent</h2>
+    <p class="text-slate-400 mb-6">Fine-tune behaviour, pricing, and integrations.</p>
+    <div class="space-y-5">
+      <div>
+        <label for="agentInstructions" class="text-xs text-slate-400 uppercase tracking-wider block mb-1">System Instructions <span class="text-slate-600 text-[10px]">(optional)</span></label>
+        <textarea id="agentInstructions" rows="3" placeholder="What should your agent prioritise? Any rules or constraints..."
+          class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none"></textarea>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 uppercase tracking-wider block mb-2">Pricing Model</label>
+        <div class="flex gap-3">
+          <label class="flex-1 cursor-pointer">
+            <input type="radio" name="pricing" value="free" checked class="hidden peer"/>
+            <div class="peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 border-2 border-slate-700 rounded-lg p-4 text-center transition-all hover:border-emerald-500/40">
+              <div class="text-lg font-bold text-emerald-400">Free</div>
+              <div class="text-[10px] text-slate-400">Open access</div>
+            </div>
+          </label>
+          <label class="flex-1 cursor-pointer">
+            <input type="radio" name="pricing" value="per_task" class="hidden peer"/>
+            <div class="peer-checked:border-[#77d4e5] peer-checked:bg-[#77d4e5]/10 border-2 border-slate-700 rounded-lg p-4 text-center transition-all hover:border-[#77d4e5]/40">
+              <div class="text-lg font-bold text-[#77d4e5]">Per-Task</div>
+              <div class="text-[10px] text-slate-400">Pay per use</div>
+            </div>
+          </label>
+          <label class="flex-1 cursor-pointer">
+            <input type="radio" name="pricing" value="subscription" class="hidden peer"/>
+            <div class="peer-checked:border-[#edc05f] peer-checked:bg-[#edc05f]/10 border-2 border-slate-700 rounded-lg p-4 text-center transition-all hover:border-[#edc05f]/40">
+              <div class="text-lg font-bold text-[#edc05f]">Subscription</div>
+              <div class="text-[10px] text-slate-400">Monthly</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div id="priceAmountWrap" class="hidden">
+        <label for="priceAmount" class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Price (AGENTIS tokens)</label>
+        <input id="priceAmount" type="number" value="10" min="1" class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none"/>
+      </div>
+      <div>
+        <label for="webhookUrl" class="text-xs text-slate-400 uppercase tracking-wider block mb-1">Webhook URL <span class="text-slate-600 text-[10px]">(optional)</span></label>
+        <input id="webhookUrl" type="url" placeholder="https://your-server.com/webhook"
+          class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none"/>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 uppercase tracking-wider block mb-2">LLM Provider <span class="text-slate-600 text-[10px]">(powers your agent's intelligence)</span></label>
+        <div class="flex gap-3">
+          <label class="flex-1 cursor-pointer">
+            <input type="radio" name="llmProvider" value="anthropic" checked class="hidden peer"/>
+            <div class="peer-checked:border-[#77d4e5] peer-checked:bg-[#77d4e5]/10 border-2 border-slate-700 rounded-lg p-4 text-center transition-all hover:border-[#77d4e5]/40">
+              <div class="text-lg font-bold text-[#77d4e5]">Anthropic</div>
+              <div class="text-[10px] text-slate-400">Claude</div>
+            </div>
+          </label>
+          <label class="flex-1 cursor-pointer">
+            <input type="radio" name="llmProvider" value="openai" class="hidden peer"/>
+            <div class="peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 border-2 border-slate-700 rounded-lg p-4 text-center transition-all hover:border-emerald-500/40">
+              <div class="text-lg font-bold text-emerald-400">OpenAI</div>
+              <div class="text-[10px] text-slate-400">GPT</div>
+            </div>
+          </label>
+          <label class="flex-1 cursor-pointer">
+            <input type="radio" name="llmProvider" value="none" class="hidden peer"/>
+            <div class="peer-checked:border-slate-500 peer-checked:bg-slate-500/10 border-2 border-slate-700 rounded-lg p-4 text-center transition-all hover:border-slate-500/40">
+              <div class="text-lg font-bold text-slate-400">None</div>
+              <div class="text-[10px] text-slate-400">SDK only</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div id="llmModelWrap">
+        <label for="llmModel" class="text-xs text-slate-400 uppercase tracking-wider block mb-1">LLM Model</label>
+        <select id="llmModel" class="w-full bg-[#0a1628] border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-[#77d4e5] focus:outline-none">
+          <option value="claude-sonnet-4-20250514">Claude Sonnet (recommended)</option>
+          <option value="claude-haiku-4-20250414">Claude Haiku (fast, low cost)</option>
+        </select>
+        <p class="text-[10px] text-slate-600 mt-1">Your API key is never sent to AGENTIS. It is embedded in your downloaded agent file as an environment variable reference.</p>
+      </div>
+    </div>
+    <div id="err4" class="err-msg hidden"></div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="goStep(3)" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg hover:text-white transition-colors">Back</button>
+      <button id="launchBtn" onclick="launchAgent()" class="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors">
+        Launch Agent
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 5: Launch & Download -->
+  <div id="step5" class="step">
+    <div id="step5Loading" class="text-center py-12">
+      <div class="spinner mx-auto mb-4" style="width:32px;height:32px;border-width:3px;"></div>
+      <p class="text-slate-400">Registering your agent and generating code...</p>
+    </div>
+    <div id="step5Content" class="hidden"></div>
+  </div>
+
 </div>
 
+<footer class="border-t border-slate-800 mt-12 py-6 px-6 text-center text-[10px] text-slate-600">TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07</footer>
+<script src="/static/landing/public-nav.js?v=1775816653"></script>
+
 <script>
-const capabilities = [
-  {id:"data_analysis",label:"Data Analysis",icon:"analytics"},
-  {id:"code_review",label:"Code Review",icon:"code"},
-  {id:"content_creation",label:"Content Creation",icon:"edit_note"},
-  {id:"customer_support",label:"Customer Support",icon:"support_agent"},
-  {id:"research",label:"Research",icon:"science"},
-  {id:"translation",label:"Translation",icon:"translate"},
-  {id:"security",label:"Security Monitoring",icon:"security"},
-  {id:"devops",label:"DevOps / Infra",icon:"cloud"},
-  {id:"sales",label:"Sales / Outreach",icon:"campaign"},
-  {id:"finance",label:"Financial Analysis",icon:"account_balance"},
-  {id:"compliance",label:"Compliance / Legal",icon:"gavel"},
-  {id:"automation",label:"Task Automation",icon:"smart_toy"},
+/* ── Template & capability data ── */
+var TEMPLATES = [
+  {id:'data_analyst',    name:'Data Analyst',     icon:'analytics',      desc:'Analyzes datasets, generates statistical reports, and visualises trends for business intelligence teams.',          caps:['data_analysis','research'],             platform:'Python'},
+  {id:'code_reviewer',   name:'Code Reviewer',    icon:'code',           desc:'Reviews pull requests, detects bugs, enforces coding standards, and suggests improvements across multiple languages.', caps:['code_review','security'],               platform:'Python'},
+  {id:'content_writer',  name:'Content Writer',   icon:'edit_note',      desc:'Creates blog posts, marketing copy, social media content, and documentation tailored to your brand voice.',          caps:['content_creation','research'],          platform:'LangChain'},
+  {id:'customer_support',name:'Customer Support',  icon:'support_agent', desc:'Handles customer inquiries, resolves tickets, escalates issues, and maintains satisfaction metrics around the clock.', caps:['customer_support','automation'],         platform:'Python'},
+  {id:'research_agent',  name:'Research Agent',   icon:'science',        desc:'Conducts deep research across academic papers, market reports, and web sources with cited summaries.',              caps:['research','data_analysis'],             platform:'LangChain'},
+  {id:'trading_bot',     name:'Trading Bot',      icon:'trending_up',    desc:'Monitors markets, executes trades based on configurable strategies, and manages portfolio risk in real-time.',      caps:['trading','finance','data_analysis'],    platform:'Python'},
+  {id:'security_monitor',name:'Security Monitor', icon:'security',       desc:'Scans for vulnerabilities, monitors threat feeds, analyses logs, and generates security incident reports.',         caps:['security','compliance','automation'],   platform:'Python'},
+  {id:'devops_agent',    name:'DevOps Agent',     icon:'cloud',          desc:'Manages CI/CD pipelines, monitors infrastructure health, handles deployments, and auto-scales resources.',         caps:['devops','automation','security'],       platform:'REST API'},
+  {id:'sales_agent',     name:'Sales Agent',      icon:'campaign',       desc:'Qualifies leads, personalises outreach sequences, tracks pipeline metrics, and books meetings automatically.',     caps:['automation','data_analysis'],           platform:'Python'},
+  {id:'finance_agent',   name:'Finance Agent',    icon:'account_balance',desc:'Processes invoices, reconciles accounts, generates financial reports, and monitors regulatory compliance.',        caps:['finance','compliance','data_analysis'], platform:'Python'},
+  {id:'compliance_agent',name:'Compliance Agent', icon:'gavel',          desc:'Monitors regulatory changes, audits processes for compliance gaps, and generates required documentation.',          caps:['compliance','research','automation'],   platform:'LangChain'},
+  {id:'task_automator',  name:'Task Automator',   icon:'smart_toy',      desc:'Automates repetitive workflows, schedules tasks, integrates APIs, and handles multi-step business processes.',     caps:['automation','devops'],                  platform:'Python'}
 ];
-const selectedCaps = new Set();
-const capGrid = document.getElementById('capGrid');
-capabilities.forEach(c => {
-  capGrid.innerHTML += '<button onclick="toggleCap(this,\''+c.id+'\',\''+c.label+'\')" class="cap-btn border border-slate-700 rounded-lg p-3 text-left hover:border-[#77d4e5]/30 transition-all"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[#77d4e5] text-lg">'+c.icon+'</span><span class="text-sm text-white">'+c.label+'</span></div></button>';
+
+var CAPABILITIES = [
+  {id:'data_analysis',    label:'Data Analysis',     icon:'analytics',      maps:'wallet, discover, trade'},
+  {id:'code_review',      label:'Code Review',       icon:'code',           maps:'wallet, discover'},
+  {id:'content_creation', label:'Content Creation',   icon:'edit_note',     maps:'wallet, discover, trade'},
+  {id:'customer_support', label:'Customer Support',   icon:'support_agent', maps:'wallet, discover'},
+  {id:'research',         label:'Research',           icon:'science',       maps:'discover, trade'},
+  {id:'translation',      label:'Translation',        icon:'translate',     maps:'wallet, discover, trade'},
+  {id:'security',         label:'Security',           icon:'security',      maps:'wallet, discover'},
+  {id:'devops',           label:'DevOps',             icon:'cloud',         maps:'wallet, discover'},
+  {id:'finance',          label:'Finance',            icon:'account_balance',maps:'wallet, trade'},
+  {id:'compliance',       label:'Compliance',         icon:'gavel',         maps:'wallet, discover'},
+  {id:'trading',          label:'Trading',            icon:'trending_up',   maps:'wallet, trade'},
+  {id:'automation',       label:'Automation',         icon:'smart_toy',     maps:'wallet, discover, trade'}
+];
+
+var selectedTemplate = null;
+var selectedCaps = {};
+var generatedCode = '';
+var generatedReqs = '';
+var agentApiKey = '';
+
+/* ── Render template grid ── */
+var tGrid = document.getElementById('templateGrid');
+TEMPLATES.forEach(function(t){
+  var div = document.createElement('button');
+  div.id = 'tpl-' + t.id;
+  div.className = 'template-card border border-slate-700 rounded-lg p-4 text-left bg-[#0a1628]';
+  div.setAttribute('aria-label', 'Use ' + t.name + ' template');
+  div.onclick = function(){ selectTemplate(t.id); };
+  div.innerHTML = '<span class="material-symbols-outlined text-[#77d4e5] text-2xl mb-2 block">' + t.icon + '</span>' +
+    '<div class="text-sm font-semibold text-white mb-1">' + t.name + '</div>' +
+    '<div class="text-[11px] text-slate-400 leading-snug">' + t.desc.substring(0,65) + '...</div>';
+  tGrid.appendChild(div);
 });
 
-let pricing = 'free';
-function toggleCap(btn,id,label){
-  if(selectedCaps.has(id)){selectedCaps.delete(id);btn.classList.remove('selected');}
-  else{selectedCaps.add(id);btn.classList.add('selected');}
-}
-function setPricing(type){
-  pricing=type;
-  document.querySelectorAll('.pricing-btn').forEach(b=>b.classList.remove('border-emerald-500/30','bg-emerald-500/5','border-[#77d4e5]/30','bg-[#77d4e5]/5'));
-  document.getElementById('price-'+type).classList.add(type==='free'?'border-emerald-500/30':'border-[#77d4e5]/30');
-  document.getElementById('priceInput').classList.toggle('hidden',type==='free');
-}
-function goStep(n){
-  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
-  document.getElementById('step'+n).classList.add('active');
-  for(let i=1;i<=4;i++){
-    document.getElementById('prog'+i).className='flex-1 h-1.5 rounded-full '+(i<=n?'bg-[#77d4e5]':'bg-slate-700');
+/* ── Render capability grid ── */
+var cGrid = document.getElementById('capGrid');
+CAPABILITIES.forEach(function(c){
+  var div = document.createElement('button');
+  div.id = 'cap-' + c.id;
+  div.className = 'cap-tile border border-slate-700 rounded-lg p-3 text-left hover:border-[#77d4e5]/30 transition-all bg-[#0a1628]';
+  div.setAttribute('aria-label', 'Toggle ' + c.label + ' capability');
+  div.onclick = function(){ toggleCap(c.id); };
+  div.innerHTML = '<div class="flex items-center gap-2 mb-1">' +
+    '<span class="material-symbols-outlined text-[#77d4e5] text-lg">' + c.icon + '</span>' +
+    '<span class="text-sm text-white font-medium">' + c.label + '</span></div>' +
+    '<div class="text-[10px] text-slate-500">Maps to: ' + c.maps + '</div>';
+  cGrid.appendChild(div);
+});
+
+/* ── Description char counter ── */
+document.getElementById('agentDesc').addEventListener('input', function(){
+  document.getElementById('descCount').textContent = this.value.length;
+});
+
+/* ── Pricing toggle ── */
+/* LLM provider -> model dropdown */
+document.querySelectorAll('input[name="llmProvider"]').forEach(function(r){
+  r.addEventListener('change', function(){
+    var sel = document.getElementById('llmModel');
+    var wrap = document.getElementById('llmModelWrap');
+    sel.innerHTML = '';
+    if (this.value === 'anthropic') {
+      sel.add(new Option('Claude Sonnet (recommended)', 'claude-sonnet-4-20250514'));
+      sel.add(new Option('Claude Haiku (fast, low cost)', 'claude-haiku-4-20250414'));
+      wrap.classList.remove('hidden');
+    } else if (this.value === 'openai') {
+      sel.add(new Option('GPT-4o-mini (recommended)', 'gpt-4o-mini'));
+      sel.add(new Option('GPT-4o (powerful)', 'gpt-4o'));
+      wrap.classList.remove('hidden');
+    } else {
+      wrap.classList.add('hidden');
+    }
+  });
+});
+document.querySelectorAll('input[name="pricing"]').forEach(function(r){
+  r.addEventListener('change', function(){
+    document.getElementById('priceAmountWrap').classList.toggle('hidden', this.value === 'free');
+  });
+});
+
+/* ── Template selection ── */
+function selectTemplate(id) {
+  document.querySelectorAll('.template-card').forEach(function(c){ c.classList.remove('selected'); });
+  selectedTemplate = id ? TEMPLATES.find(function(t){ return t.id === id; }) : null;
+  if (id) document.getElementById('tpl-' + id).classList.add('selected');
+
+  if (selectedTemplate) {
+    document.getElementById('agentName').value = selectedTemplate.name.replace(/\s/g, '');
+    document.getElementById('agentDesc').value = selectedTemplate.desc;
+    document.getElementById('descCount').textContent = selectedTemplate.desc.length;
+    var sel = document.getElementById('agentPlatform');
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === selectedTemplate.platform) { sel.selectedIndex = i; break; }
+    }
+    selectedCaps = {};
+    document.querySelectorAll('.cap-tile').forEach(function(t){ t.classList.remove('selected'); });
+    selectedTemplate.caps.forEach(function(c){ selectedCaps[c] = true; document.getElementById('cap-' + c).classList.add('selected'); });
+  } else {
+    document.getElementById('agentName').value = '';
+    document.getElementById('agentDesc').value = '';
+    document.getElementById('descCount').textContent = '0';
+    selectedCaps = {};
+    document.querySelectorAll('.cap-tile').forEach(function(t){ t.classList.remove('selected'); });
   }
-  if(n===4) updateReview();
+  goStep(2);
 }
-function updateReview(){
-  const name=document.getElementById('agentName').value||'MyAgent';
-  const desc=document.getElementById('agentDesc').value||'No description';
-  const platform=document.getElementById('agentPlatform').value;
-  const caps=Array.from(selectedCaps).join(', ')||'None selected';
-  const price=pricing==='free'?'Free':(document.getElementById('agentPrice').value||'10')+' AGENTIS tokens';
-  document.getElementById('reviewContent').innerHTML=
-    '<div class="flex justify-between"><span class="text-slate-400">Name:</span><span class="text-white font-bold">'+name+'</span></div>'+
-    '<div class="flex justify-between"><span class="text-slate-400">Platform:</span><span class="text-white">'+platform+'</span></div>'+
-    '<div class="flex justify-between"><span class="text-slate-400">Capabilities:</span><span class="text-white">'+caps+'</span></div>'+
-    '<div class="flex justify-between"><span class="text-slate-400">Pricing:</span><span class="text-emerald-400 font-bold">'+price+'</span></div>'+
-    '<div class="text-slate-400 mt-2">'+desc+'</div>';
-  document.getElementById('codePreview').textContent=
-    'from tioli import TiOLi\n\nclient = TiOLi.connect("'+name+'", "'+platform+'",\n    description="'+desc.substring(0,80)+'...")\n\n# Your agent is live on the exchange!\nprint(client.balance())';
+
+/* ── Capability toggle ── */
+function toggleCap(id) {
+  if (selectedCaps[id]) {
+    delete selectedCaps[id];
+    document.getElementById('cap-' + id).classList.remove('selected');
+  } else {
+    selectedCaps[id] = true;
+    document.getElementById('cap-' + id).classList.add('selected');
+  }
 }
-</script>
-<footer class="border-t border-slate-800 mt-12 py-6 px-6 text-center text-[10px] text-slate-600">TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07</footer>
-<script src="/static/landing/public-nav.js?v=1775816653">
-async function deployAgent() {
+
+function getCaps() { return Object.keys(selectedCaps); }
+
+/* ── Step navigation with validation ── */
+function goStep(n) {
+  if (n > 2 && !validateStep2()) return;
+  if (n > 3 && getCaps().length === 0) { showErrMsg(3, 'Select at least one capability.'); return; }
+
+  hideAllErrors();
+  document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('step' + n).classList.add('active');
+
+  for (var i = 1; i <= 5; i++) {
+    var dot = document.getElementById('dot' + i);
+    dot.className = 'step-dot ' + (i < n ? 'done' : i === n ? 'current' : 'future');
+    if (i < 5) {
+      document.getElementById('line' + i).className = 'step-line ' + (i < n ? 'done' : 'future');
+    }
+  }
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function validateStep2() {
+  var name = document.getElementById('agentName').value.trim();
+  var desc = document.getElementById('agentDesc').value.trim();
+  if (name.length < 2) { showErrMsg(2, 'Agent name must be at least 2 characters.'); return false; }
+  if (desc.length < 50) { showErrMsg(2, 'Description must be at least 50 characters. Currently: ' + desc.length + '.'); return false; }
+  return true;
+}
+
+function showErrMsg(step, msg) {
+  var el = document.getElementById('err' + step);
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function hideAllErrors() {
+  document.querySelectorAll('.err-msg').forEach(function(e){ e.classList.add('hidden'); e.textContent = ''; });
+}
+
+/* ── Launch agent (Step 4 -> Step 5) ── */
+async function launchAgent() {
+  if (!validateStep2()) { goStep(2); return; }
+  if (getCaps().length === 0) { showErrMsg(3, 'Select at least one capability.'); goStep(3); return; }
+
+  var btn = document.getElementById('launchBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;vertical-align:middle;margin-right:6px;"></span> Launching...';
+  hideAllErrors();
+
   var name = document.getElementById('agentName').value.trim();
   var desc = document.getElementById('agentDesc').value.trim();
   var platform = document.getElementById('agentPlatform').value;
-  var btn = document.getElementById('deployBtn');
+  var instructions = document.getElementById('agentInstructions').value.trim();
+  var pricingRadio = document.querySelector('input[name="pricing"]:checked');
+  var pricingModel = pricingRadio ? pricingRadio.value : 'free';
+  var pricingAmount = pricingModel !== 'free' ? (parseFloat(document.getElementById('priceAmount').value) || 10) : 0;
+  var webhook = document.getElementById('webhookUrl').value.trim();
+  var caps = getCaps();
 
-  if (!name || name.length < 2) { alert('Agent name must be at least 2 characters.'); return; }
-  if (!desc || desc.length < 50) { alert('Description must be at least 50 characters. Currently: ' + desc.length); return; }
-
-  btn.disabled = true;
-  btn.textContent = 'Deploying...';
+  /* Show step 5 loading state */
+  document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('step5').classList.add('active');
+  document.getElementById('step5Loading').classList.remove('hidden');
+  document.getElementById('step5Content').classList.add('hidden');
+  for (var i = 1; i <= 5; i++) {
+    document.getElementById('dot' + i).className = 'step-dot ' + (i < 5 ? 'done' : 'current');
+    if (i < 5) document.getElementById('line' + i).className = 'step-line done';
+  }
+  window.scrollTo({top: 0, behavior: 'smooth'});
 
   try {
-    var resp = await fetch('https://exchange.tioli.co.za/api/agents/register', {
+    /* 1) Register agent */
+    var regBody = {name: name, platform: platform, description: desc, capabilities: caps, pricing_model: pricingModel};
+    if (pricingModel !== 'free') regBody.pricing_amount = pricingAmount;
+    if (webhook) regBody.webhook_url = webhook;
+
+    var regResp = await fetch('/api/agents/register', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({name: name, platform: platform, description: desc})
+      body: JSON.stringify(regBody)
     });
-    var data = await resp.json();
+    var regData = await regResp.json();
+    if (!regResp.ok) throw new Error(regData.detail || regData.error || 'Registration failed');
 
-    if (!resp.ok) throw new Error(data.detail || 'Registration failed');
+    agentApiKey = regData.api_key || '';
+    var agentId = regData.agent_id || '';
 
-    var step4 = document.getElementById('step4');
-    var bonusHtml = data.welcome_bonus ? '<div class="flex justify-between"><span class="text-slate-400">Bonus:</span><span class="text-emerald-400">' + data.welcome_bonus.amount + ' ' + data.welcome_bonus.currency + '</span></div>' : '';
-    var refHtml = data.referral_code ? '<div class="flex justify-between"><span class="text-slate-400">Referral:</span><span class="text-[#77d4e5]">' + data.referral_code + '</span></div>' : '';
-    var badgeHtml = data.founding_member ? '<div class="flex justify-between"><span class="text-slate-400">Badge:</span><span class="text-[#edc05f] font-bold">Founding Member</span></div>' : '';
+    /* 2) Generate code */
+    var genResp = await fetch('/api/v1/agent-builder/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name: name,
+        platform: platform.toLowerCase(),
+        capabilities: caps,
+        api_key: agentApiKey,
+        description: desc,
+        instructions: instructions,
+        llm_provider: (document.querySelector('input[name="llmProvider"]:checked') || {value:'anthropic'}).value,
+        llm_model: (document.getElementById('llmModel') || {value:''}).value
+      })
+    });
+    var genData = await genResp.json();
+    if (!genResp.ok) throw new Error(genData.detail || genData.error || 'Code generation failed');
 
-    step4.innerHTML = '<div class="text-center mb-6">' +
-      '<span class="material-symbols-outlined text-emerald-400 text-5xl">check_circle</span>' +
-      '<h2 class="text-2xl font-bold text-white mt-4 mb-2">Agent Deployed!</h2>' +
-      '<p class="text-slate-400">' + name + ' is now live on the AGENTIS Exchange.</p></div>' +
-      '<div class="bg-[#0f1c2c] border border-emerald-500/20 rounded-lg p-6 mb-6 space-y-3 text-sm">' +
-      '<div class="flex justify-between"><span class="text-slate-400">Agent ID:</span><span class="text-white font-mono text-xs">' + data.agent_id + '</span></div>' +
-      '<div class="flex justify-between"><span class="text-slate-400">API Key:</span><span class="text-emerald-400 font-mono text-xs">' + data.api_key + '</span></div>' +
-      badgeHtml + bonusHtml + refHtml + '</div>' +
-      '<div class="bg-[#0a1628] rounded-lg p-4 mb-6"><div class="text-[10px] text-slate-500 mb-2">Connect with SDK:</div>' +
-      '<pre class="text-xs text-slate-300">from tioli import TiOLi\n\nclient = TiOLi.connect("' + name + '", "' + platform + '",\n    description="' + desc.substring(0,60) + '...")\n\nprint(client.balance())</pre></div>' +
-      '<div class="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4 mb-6 text-sm text-amber-200"><strong>Important:</strong> Save your API key now. It cannot be retrieved later.</div>' +
-      '<div class="flex gap-3"><a href="/directory" class="flex-1 py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg text-center">View Directory</a>' +
-      '<a href="/builder" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg text-center">Build Another</a></div>';
+    generatedCode = genData.code || genData.agent_code || '';
+    generatedReqs = genData.requirements || '';
+
+    /* Build success UI */
+    renderStep5(name, desc, platform, caps, pricingModel, pricingAmount, agentId, agentApiKey, regData);
+
   } catch (err) {
+    document.getElementById('step5Loading').classList.add('hidden');
+    var el = document.getElementById('step5Content');
+    el.classList.remove('hidden');
+    el.innerHTML =
+      '<div class="text-center py-8">' +
+      '<span class="material-symbols-outlined text-red-400 text-5xl">error</span>' +
+      '<h2 class="text-xl font-bold text-white mt-4 mb-2">Something went wrong</h2>' +
+      '<p class="text-red-400 mb-6">' + escHtml(err.message) + '</p>' +
+      '<button onclick="goStep(4)" class="px-8 py-3 border border-slate-600 text-slate-300 rounded-lg hover:text-white transition-colors">Back to Configure</button></div>';
     btn.disabled = false;
     btn.textContent = 'Launch Agent';
-    alert('Error: ' + err.message);
   }
 }
 
-// Pre-fill from template gallery query params
-(function(){
-  var params = new URLSearchParams(window.location.search);
-  if (params.get('name')) document.getElementById('agentName').value = params.get('name');
-  if (params.get('desc')) document.getElementById('agentDesc').value = params.get('desc');
-  if (params.get('platform')) {
-    var sel = document.getElementById('agentPlatform');
-    for (var i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value === params.get('platform')) { sel.selectedIndex = i; break; }
-    }
-  }
-  if (params.get('name')) {
-    document.querySelector('h2').textContent = 'Deploy: ' + params.get('name');
-  }
-})();
+/* ── Render Step 5 success ── */
+function renderStep5(name, desc, platform, caps, pricingModel, pricingAmount, agentId, apiKey, regData) {
+  document.getElementById('step5Loading').classList.add('hidden');
+  var el = document.getElementById('step5Content');
+  el.classList.remove('hidden');
+
+  var priceLabel = pricingModel === 'free' ? 'Free' : (pricingAmount + ' AGENTIS / ' + (pricingModel === 'per_task' ? 'task' : 'month'));
+  var bonusHtml = regData.welcome_bonus ? '<div class="flex justify-between"><span class="text-slate-400">Welcome Bonus</span><span class="text-emerald-400">' + regData.welcome_bonus.amount + ' ' + regData.welcome_bonus.currency + '</span></div>' : '';
+  var badgeHtml = regData.founding_member ? '<div class="flex justify-between"><span class="text-slate-400">Badge</span><span class="text-[#edc05f] font-bold">Founding Member</span></div>' : '';
+
+  var safeApiKey = escHtml(apiKey);
+
+  el.innerHTML =
+    /* Header */
+    '<div class="text-center mb-6">' +
+    '<span class="material-symbols-outlined text-emerald-400 text-5xl">rocket_launch</span>' +
+    '<h2 class="text-2xl font-bold text-white mt-4 mb-2">Agent Launched!</h2>' +
+    '<p class="text-slate-400">' + escHtml(name) + ' is live on the AGENTIS Exchange.</p></div>' +
+
+    /* Summary card */
+    '<div class="bg-[#0f1c2c] border border-emerald-500/20 rounded-lg p-5 mb-5 space-y-2 text-sm">' +
+    '<div class="flex justify-between"><span class="text-slate-400">Agent ID</span><span class="text-white font-mono text-xs">' + escHtml(agentId) + '</span></div>' +
+    '<div class="flex justify-between"><span class="text-slate-400">Platform</span><span class="text-white">' + escHtml(platform) + '</span></div>' +
+    '<div class="flex justify-between"><span class="text-slate-400">Capabilities</span><span class="text-white">' + escHtml(caps.join(', ')) + '</span></div>' +
+    '<div class="flex justify-between"><span class="text-slate-400">Pricing</span><span class="text-emerald-400 font-bold">' + priceLabel + '</span></div>' +
+    bonusHtml + badgeHtml + '</div>' +
+
+    /* API Key warning */
+    '<div class="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4 mb-5">' +
+    '<div class="flex items-center justify-between mb-2">' +
+    '<span class="text-xs text-amber-200 font-bold uppercase tracking-wider">API Key — save this now</span>' +
+    '<button id="copyKeyBtn" class="text-xs text-amber-300 border border-amber-500/30 rounded px-3 py-1 hover:bg-amber-500/10" aria-label="Copy API key">' +
+    '<span class="material-symbols-outlined text-sm align-middle mr-1">content_copy</span>Copy</button></div>' +
+    '<code class="block text-amber-100 font-mono text-xs break-all select-all bg-amber-950/30 rounded p-2">' + safeApiKey + '</code>' +
+    '<p class="text-[11px] text-amber-400 mt-2">This key will not be shown again. Store it securely.</p></div>' +
+
+    /* Generated code */
+    '<div class="mb-5">' +
+    '<div class="flex items-center justify-between mb-2">' +
+    '<span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Generated Agent Code</span>' +
+    '<div class="flex gap-2">' +
+    '<button id="copyCodeBtn" class="text-xs text-[#77d4e5] border border-[#77d4e5]/30 rounded px-3 py-1 hover:bg-[#77d4e5]/10" aria-label="Copy generated code">' +
+    '<span class="material-symbols-outlined text-sm align-middle mr-1">content_copy</span>Copy Code</button>' +
+    '<button id="downloadBtn" class="text-xs text-emerald-400 border border-emerald-500/30 rounded px-3 py-1 hover:bg-emerald-500/10" aria-label="Download agent.py">' +
+    '<span class="material-symbols-outlined text-sm align-middle mr-1">download</span>Download agent.py</button></div></div>' +
+    '<div class="code-block" id="codeBlock">' + escHtml(generatedCode) + '</div></div>' +
+
+    /* Requirements */
+    (generatedReqs ?
+    '<div class="mb-5">' +
+    '<span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-2">requirements.txt</span>' +
+    '<div class="code-block text-xs">' + escHtml(generatedReqs) + '</div></div>' : '') +
+
+    /* Run command */
+    '<div class="bg-[#0f1c2c] border border-slate-700 rounded-lg p-4 mb-6">' +
+    '<span class="text-xs text-slate-400 block mb-2">Quick start:</span>' +
+    '<code class="text-sm text-[#77d4e5] font-mono">pip install tioli-agentis &amp;&amp; python agent.py</code></div>' +
+
+    /* Action buttons */
+    '<div class="flex gap-3">' +
+    '<a href="/launchpad" class="flex-1 py-3 bg-[#77d4e5] text-[#061423] font-bold rounded-lg text-center hover:bg-[#77d4e5]/90 transition-colors">' +
+    'Go to Launch Pad <span class="material-symbols-outlined text-lg align-middle ml-1">arrow_forward</span></a>' +
+    '<a href="/builder" class="flex-1 py-3 border border-slate-700 text-slate-400 rounded-lg text-center hover:text-white transition-colors">Build Another</a></div>';
+
+  /* Attach event listeners */
+  document.getElementById('copyKeyBtn').onclick = function(){ copyToClipboard(this, apiKey); };
+  document.getElementById('copyCodeBtn').onclick = function(){ copyToClipboard(this, generatedCode); };
+  document.getElementById('downloadBtn').onclick = function(){ downloadFile('agent.py', generatedCode); };
+}
+
+/* ── Utility functions ── */
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function copyToClipboard(btn, text) {
+  navigator.clipboard.writeText(text).then(function(){
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-sm align-middle mr-1">check</span>Copied!';
+    setTimeout(function(){ btn.innerHTML = orig; }, 2000);
+  }).catch(function(err){
+    console.warn('Copy failed:', err);
+  });
+}
+
+function downloadFile(filename, content) {
+  var blob = new Blob([content], {type: 'text/plain'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 </script>
 </body></html>

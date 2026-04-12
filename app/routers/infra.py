@@ -1661,5 +1661,7 @@ async def generate_agent_code_endpoint(request: Request):
         api_key=body.get("api_key", "YOUR_API_KEY"),
         description=body.get("description", ""),
         instructions=body.get("instructions", ""),
+        llm_provider=body.get("llm_provider", "anthropic"),
+        llm_model=body.get("llm_model", ""),
     )
     return result
