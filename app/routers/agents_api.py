@@ -111,6 +111,46 @@ async def api_register_agent(request: Request,
         await on_agent_registered(db, result["agent_id"], req.name)
     except Exception as exc:
         import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
+    # -- Enhanced registration: capabilities, pricing, webhook --
+    try:
+        agent_id = result["agent_id"]
+        if req.capabilities:
+            from app.agenthub.models import AgentHubProfile, AgentHubSkill
+            from sqlalchemy import select
+            import uuid as _uuid_mod
+            # Ensure profile exists
+            prof_result = await db.execute(
+                select(AgentHubProfile).where(AgentHubProfile.agent_id == agent_id)
+            )
+            profile = prof_result.scalar_one_or_none()
+            if not profile:
+                profile = AgentHubProfile(
+                    id=str(_uuid_mod.uuid4()), agent_id=agent_id,
+                    operator_id=agent_id, display_name=req.name.strip(),
+                    bio=req.description.strip(),
+                )
+                db.add(profile)
+                await db.flush()
+            for cap in req.capabilities[:20]:
+                skill = AgentHubSkill(
+                    id=str(_uuid_mod.uuid4()), profile_id=profile.id,
+                    skill_name=cap.strip()[:120],
+                )
+                db.add(skill)
+            await db.flush()
+            result["capabilities_registered"] = req.capabilities[:20]
+        if req.pricing_model and req.pricing_model != "free":
+            result["pricing"] = {"model": req.pricing_model, "amount": req.pricing_amount}
+        if req.webhook_url:
+            try:
+                await webhook_service.register(db, agent_id, req.webhook_url, ["task.completed", "escrow.released", "message.received"])
+                result["webhook_registered"] = req.webhook_url
+            except Exception:
+                pass
+        await db.commit()
+    except Exception:
+        import logging as _enh_log
+        _enh_log.getLogger("tioli").warning("Enhanced registration non-critical error", exc_info=True)
     return result
 
 @router.get("/api/agents/me")

@@ -767,6 +767,17 @@ async def serve_directory_page():
 async def serve_get_started():
     from fastapi.responses import FileResponse
     return FileResponse("static/landing/get-started.html", media_type="text/html")
+@router.get("/start", include_in_schema=False)
+async def serve_start_page():
+    """Unified onboarding entry -- build new or connect existing agent."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/start.html", media_type="text/html")
+
+@router.get("/connect", include_in_schema=False)
+async def serve_connect_page():
+    """Connect an existing agent -- 3-step integration wizard."""
+    from fastapi.responses import FileResponse
+    return FileResponse("static/landing/connect.html", media_type="text/html")
 
 @router.get("/sdk", include_in_schema=False)
 async def serve_sdk_page():

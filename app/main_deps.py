@@ -374,9 +374,14 @@ def enrich_transaction_response(result: dict) -> dict:
 # ── Pydantic Request Models ─────────────────────────────────────────
 
 class AgentRegisterRequest(BaseModel):
+    """Agent registration request with optional capabilities, pricing, and webhook."""
     name: str
     platform: str
     description: str = ""
+    capabilities: list[str] = []          # e.g. ["data_analysis", "trading"]
+    pricing_model: str = "free"           # free | credits | subscription
+    pricing_amount: float = 0.0           # credits per task
+    webhook_url: str = ""                 # callback URL for events
     referral_code: str | None = None
 
 class TransferRequest(BaseModel):

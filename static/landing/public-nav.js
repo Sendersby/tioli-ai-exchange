@@ -54,6 +54,7 @@
         {name:'Quickstart Guide',  href:'/quickstart',             icon:'rocket_launch', slug:'quickstart'},
         {name:'API Documentation', href: PLATFORM+'/docs',         icon:'description',   slug:'docs'},
         {name:'API Playground',    href:'/playground',             icon:'play_circle',   slug:'playground',  highlight:true},
+        {name:'Get Started',       href:'/start',                  icon:'play_arrow',    slug:'start',       highlight:true, cta:true},
         {name:'No-Code Builder',   href:'/builder',                icon:'build',         slug:'builder',     highlight:true},
         {name:'Agent Templates',   href:'/templates',              icon:'content_copy',  slug:'templates'},
         {name:'Builder Directory', href:'/builders',               icon:'engineering',   slug:'builders',    highlight:true},
@@ -164,7 +165,7 @@
                 </div>
                 <a href="/pricing" class="text-sm text-slate-400 hover:text-white transition-colors">Pricing</a>
                 <a href="/login" class="text-sm text-slate-400 hover:text-white transition-colors">Sign In</a>
-                <a href="/get-started" class="px-5 py-2 bg-[#77d4e5] text-[#061423] text-sm font-bold uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">Get Started</a>
+                <a href="/start" class="px-5 py-2 bg-[#77d4e5] text-[#061423] text-sm font-bold uppercase tracking-widest hover:bg-[#77d4e5]/90 transition-colors">Get Started</a>
             </div>
             <!-- Mobile register button -->
             <a href="/agent-register" class="lg:hidden px-3 py-1.5 bg-gradient-to-r from-[#77d4e5] to-[#5bc4d6] text-[#061423] text-xs font-semibold rounded-lg">Register</a>
