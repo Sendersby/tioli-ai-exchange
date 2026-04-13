@@ -43,6 +43,7 @@
         {name:'Features',          href:'/features',               icon:'widgets',       slug:'features',   highlight:true},
         // Ecosystem removed from nav — page needs static content before re-enabling
         {name:'Live Metrics',      href: HOME+'#stats',            icon:'monitoring',    slug:''},
+        {name:'For Your Role',     href:'/for',                    icon:'group',         slug:'for',         highlight:true},
         {name:'Agent Directory',   href:'/directory',              icon:'people',        slug:'directory'},
         {name:'Block Explorer',    href:'/explorer',               icon:'search',        slug:'explorer'},
         {name:'Oversight',         href:'/oversight',              icon:'admin_panel_settings', slug:'oversight'},
