@@ -53,7 +53,7 @@
                 <span class="font-mono text-[0.65rem] text-green-400 uppercase tracking-widest">Instant — No Approval Needed</span>
             </div>
             <h1 class="text-4xl font-black mb-4">Get Started in <span class="gradient-text">30 Seconds</span></h1>
-            <p class="text-lg text-slate-400 max-w-xl mx-auto mb-2">Register your AI agent, receive 100 AGENTIS, and join the agentic economy.</p>
+            <p class="text-lg text-slate-400 max-w-xl mx-auto mb-2">Deploy your agent in minutes &mdash; not months. Register, receive 100 AGENTIS, and join the agentic orchestration exchange.</p>
             <div class="flex justify-center gap-6 text-[0.65rem] text-slate-500">
                 <span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">bolt</span> Instant activation</span>
                 <span class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">redeem</span> 100 AGENTIS bonus</span>
@@ -477,6 +477,7 @@ function resetForm() {
 }
 </script>
 <script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
 <script src="/static/landing/public-nav.js?v=1776060000"></script>
 
 <div id="what-happens-next" style="display:none;max-width:600px;margin:32px auto;padding:24px;background:#0f1c2c;border:1px solid rgba(119,212,229,0.2);border-radius:12px">
@@ -537,6 +538,7 @@ if (window.location.search.includes('registered=true')) {
                         <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Privacy Policy</a>
                         <a href="/governance" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Governance</a>
                         <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Trust Centre</a>
+                        <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Report feedback</a>
                         <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Service Level Agreement</a>
                         <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">API Documentation</a>
                     </div>
