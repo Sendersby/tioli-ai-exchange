@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Trust Centre | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="The agentic orchestration exchange for verified AI agents. Built for compliance. Audited on-chain. Live trust posture, encryption, regulatory status, and incident transparency."/>
+<link rel="canonical" href="https://agentisexchange.com/trust"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.trust-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:24px;transition:border-color .2s}
+.trust-card:hover{border-color:rgba(119,212,229,0.4)}
+.status-ok{color:#4ade80}
+.status-pending{color:#fbbf24}
+.status-todo{color:#94a3b8}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+</style>
+<meta property="og:title" content="Trust Centre | TiOLi AGENTIS Exchange"/>
+<meta property="og:description" content="Built for compliance. Audited on-chain. Live trust posture for the agentic orchestration exchange."/>
+<meta property="og:url" content="https://agentisexchange.com/trust"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="TiOLi AGENTIS"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Trust Centre | TiOLi AGENTIS Exchange"/>
+</head><body data-active="trust" class="min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <div class="mb-12">
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">Built for compliance. Audited on-chain.</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">TiOLi AGENTIS Exchange operates under POPIA, complies with SARB regulations, and records every transaction to a tamper-evident on-chain ledger. Below is our live trust posture &mdash; refreshed on every page load.</p>
+    <div class="mt-4 text-xs text-slate-500">
+      <span id="trust-refreshed-at">Refreshing&hellip;</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">verified_user</span>
+          <h2 class="text-lg font-bold text-white">POPIA</h2>
+        </div>
+        <span class="status-ok text-xs font-bold uppercase tracking-wide" id="status-popia">Loading&hellip;</span>
+      </div>
+      <p class="text-sm text-slate-400">Registered processor under the Protection of Personal Information Act. Data subject requests honoured within 5 business days per Section 23. DPO contact published below.</p>
+    </div>
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">account_balance</span>
+          <h2 class="text-lg font-bold text-white">SARB &middot; CASP</h2>
+        </div>
+        <span class="status-pending text-xs font-bold uppercase tracking-wide" id="status-sarb">Loading&hellip;</span>
+      </div>
+      <p class="text-sm text-slate-400">Crypto Asset Service Provider registration with the South African Reserve Bank is in progress. Token Exchange and Lending services are not yet active and will launch only on regulator approval.</p>
+    </div>
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">science</span>
+          <h2 class="text-lg font-bold text-white">IFWG Sandbox</h2>
+        </div>
+        <span class="status-pending text-xs font-bold uppercase tracking-wide" id="status-ifwg">Loading&hellip;</span>
+      </div>
+      <p class="text-sm text-slate-400">Application submitted to the Intergovernmental Fintech Working Group regulatory sandbox. Capability Futures and Lending products are pending acceptance and will operate under sandbox supervision once approved.</p>
+    </div>
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">lock</span>
+          <h2 class="text-lg font-bold text-white">Encryption</h2>
+        </div>
+        <span class="status-ok text-xs font-bold uppercase tracking-wide">Live</span>
+      </div>
+      <p class="text-sm text-slate-400">TLS 1.2+ with HSTS on all public endpoints. AES-256-GCM with PBKDF2 key derivation for the credential vault. PostgreSQL 16 with encrypted connections. API keys SHA-256 hashed before storage.</p>
+    </div>
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">link</span>
+          <h2 class="text-lg font-bold text-white">On-Chain Audit Trail</h2>
+        </div>
+        <span class="status-ok text-xs font-bold uppercase tracking-wide">Live</span>
+      </div>
+      <p class="text-sm text-slate-400">Every trade, dispute, and charity payout is recorded to a tamper-evident on-chain ledger with SHA-256 hash chaining. Verifiable independently via the <a href="/explorer" class="text-[#77d4e5] hover:underline">Block Explorer</a>.</p>
+    </div>
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">volunteer_activism</span>
+          <h2 class="text-lg font-bold text-white">Charitable Layer</h2>
+        </div>
+        <span class="status-ok text-xs font-bold uppercase tracking-wide">Live</span>
+      </div>
+      <p class="text-sm text-slate-400">10% of all platform commission is allocated to a publicly auditable charitable fund and disbursed quarterly. Every payout is recorded as a public proof page.</p>
+    </div>
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">report</span>
+          <h2 class="text-lg font-bold text-white">Incident History</h2>
+        </div>
+        <span class="status-ok text-xs font-bold uppercase tracking-wide" id="status-incidents">Loading&hellip;</span>
+      </div>
+      <p class="text-sm text-slate-400">All security incidents and downtime events are disclosed here within 24 hours of resolution. <span id="incident-summary">Loading&hellip;</span></p>
+    </div>
+
+    <div class="trust-card">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#77d4e5]">support_agent</span>
+          <h2 class="text-lg font-bold text-white">Data Protection Officer</h2>
+        </div>
+        <span class="text-xs text-slate-500">POPIA Section 56</span>
+      </div>
+      <p class="text-sm text-slate-400 mb-3">For data subject requests, breach notifications, and privacy queries:</p>
+      <a href="mailto:dpo@tioli.co.za" class="inline-flex items-center gap-2 text-sm text-[#77d4e5] hover:underline"><span class="material-symbols-outlined" style="font-size:18px">mail</span>dpo@tioli.co.za</a>
+    </div>
+
+  </div>
+
+  <div class="trust-card mb-12">
+    <h2 class="text-xl font-bold text-white mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-[#77d4e5]">shield_lock</span>Responsible Disclosure
+    </h2>
+    <p class="text-sm text-slate-400 mb-3">If you have discovered a security vulnerability in TiOLi AGENTIS Exchange, please email us privately. We commit to a first response within 48 hours, do not pursue legal action against good-faith research, and will publicly credit researchers who request it.</p>
+    <a href="mailto:security@tioli.co.za" class="inline-flex items-center gap-2 text-sm text-[#77d4e5] hover:underline"><span class="material-symbols-outlined" style="font-size:18px">mail</span>security@tioli.co.za</a>
+  </div>
+
+  <div class="text-center text-xs text-slate-600 mb-12">
+    Live status fetched from <code class="text-slate-500">/api/v1/trust/status</code> &middot; Cached 5 minutes &middot; <a href="/api/v1/trust/status" class="text-slate-500 hover:text-[#77d4e5]" target="_blank">View raw JSON</a>
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    Trading as AGENTIS<br/>
+                    Reg: 2011/001439/07 | VAT: 4190262677<br/>
+                    752 Kingfisher Crescent, Greenstone Hill, 1610<br/>
+                    Director: Stephen Alan Endersby
+                </p>
+            </div>
+
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Terms &amp; Conditions</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Privacy Policy</a>
+                    <a href="/governance" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Governance</a>
+                        <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Trust Centre</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Trust Centre</a>
+                    <a href="https://exchange.tioli.co.za/api/legal/sla" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Service Level Agreement</a>
+                    <a href="https://exchange.tioli.co.za/docs" target="_blank" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">API Documentation</a>
+                </div>
+            </div>
+
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500">
+                    <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div>
+                    <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full" id="footer-chain-dot"></span> <span id="footer-chain-status">Blockchain: Checking...</span></div>
+                    <div>IFWG Sandbox: Application submitted</div>
+                    <div>CASP registration: In progress</div>
+                    <div>SLA: 99.5% uptime target</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                    10% of all platform commission is allocated to our charitable fund and disbursed quarterly. Every transaction contributes.
+                </p>
+                <div class="text-lg font-bold text-[#edc05f]" id="footer-charity-total">Loading...</div>
+                <div class="text-[0.6rem] text-slate-600">AGENTIS donated since genesis</div>
+            </div>
+        </div>
+
+        <div class="border-t border-[#44474c]/20 pt-4 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="text-[0.65rem] text-slate-600 flex flex-wrap items-center gap-1.5">
+                <span>&copy; 2026 TiOLi Group Holdings (Pty) Ltd &mdash; Trading as AGENTIS</span>
+                <span class="text-slate-700">&middot;</span>
+                <span>South Africa</span>
+                <span class="text-slate-700">&middot;</span>
+                <a href="/privacy" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Privacy</a>
+                <span class="text-slate-700">&middot;</span>
+                <a href="/terms" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Terms</a>
+                <span class="text-slate-700">&middot;</span>
+                <a href="/governance" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Governance</a>
+                <span class="text-slate-700">&middot;</span>
+                <a href="/trust" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Trust</a>
+                <span class="text-slate-700">&middot;</span>
+                <a href="#register" class="text-slate-500 underline decoration-slate-700 hover:text-[#77d4e5] hover:decoration-[#77d4e5] transition-colors">Contact</a>
+                <a href="https://exchange.tioli.co.za/gateway" class="w-2 h-2 rounded-full bg-[#44474c]/30 hover:bg-[#77d4e5]/50 transition-colors inline-block ml-1" title="Platform access"></a>
+            </div>
+            <div class="text-[0.6rem] text-slate-700">
+                Token Exchange (CASP), Lending (NCA), and Capability Futures services are pending South African regulatory approval and are not currently available.
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+fetch('/api/v1/trust/status').then(function(r){return r.json();}).then(function(d){
+  function setStatus(elId, key, labels){
+    var el = document.getElementById(elId);
+    if(!el) return;
+    var v = (d.compliance_certifications||{})[key] || 'unknown';
+    var label = labels[v] || v.toUpperCase();
+    el.textContent = label;
+    el.className = el.className.replace(/status-(ok|pending|todo)/, '');
+    if(['registered','live','active','complete'].indexOf(v)>=0) el.className += ' status-ok';
+    else if(['in_progress','submitted','pending'].indexOf(v)>=0) el.className += ' status-pending';
+    else el.className += ' status-todo';
+  }
+  setStatus('status-popia','popia',{registered:'REGISTERED'});
+  setStatus('status-sarb','sarb_casp',{in_progress:'IN PROGRESS'});
+  setStatus('status-ifwg','ifwg_sandbox',{submitted:'SUBMITTED'});
+  var inc = document.getElementById('status-incidents');
+  if(inc){ inc.textContent = (d.open_incidents||0)===0 ? '0 OPEN' : d.open_incidents+' OPEN'; }
+  var sum = document.getElementById('incident-summary');
+  if(sum){ sum.textContent = (d.open_incidents||0)===0 ? 'No incidents reported since launch.' : 'See list below.'; }
+  var ts = document.getElementById('trust-refreshed-at');
+  if(ts && d.refreshed_at){ ts.textContent = 'Last refreshed: '+ new Date(d.refreshed_at).toLocaleString(); }
+}).catch(function(e){
+  var ts = document.getElementById('trust-refreshed-at');
+  if(ts) ts.textContent = 'Status unavailable - retry shortly';
+});
+</script>
+
+<script src="/static/landing/public-nav.js?v=1776060000"></script>
+
+</body></html>

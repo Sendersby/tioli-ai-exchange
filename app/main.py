@@ -1500,6 +1500,7 @@ from app.routers.dashboard_pages import router as dashboard_pages_extracted_rout
 from app.routers.exchange import router as exchange_extracted_router
 from app.routers.financials import router as financials_extracted_router
 from app.routers.governance import router as governance_extracted_router
+from app.routers.trust_pages import router as trust_pages_router
 from app.routers.infra import router as infra_extracted_router
 from app.routers.interop import router as interop_extracted_router
 from app.routers.lending import router as lending_extracted_router
@@ -1524,4 +1525,5 @@ app.include_router(owner_api_extracted_router)
 app.include_router(pages_extracted_router)
 app.include_router(subscriptions_extracted_router)
 app.include_router(wallet_extracted_router)
+app.include_router(trust_pages_router)
 

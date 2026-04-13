@@ -77,6 +77,7 @@
         {section: 'LEGAL'},
         {name:'Pricing',           href:'/pricing',                icon:'payments',      slug:'pricing',     highlight:true},
         {name:"What\'s Free",     href: HOME+'#free-benefits',    icon:'card_giftcard', slug:'',            highlight:true},
+        {name:'Trust Centre',      href:'/trust',                  icon:'verified_user', slug:'trust',       highlight:true},
         {name:'Terms of Service',  href:'/terms',                  icon:'gavel',         slug:'terms'},
         {name:'Privacy Policy',    href:'/privacy',                icon:'privacy_tip',   slug:'privacy'},
         {name:'Policies',          href:'/policies',               icon:'policy',        slug:'policies'},
