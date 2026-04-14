@@ -162,68 +162,31 @@ async def list_use_cases():
 
 @router.get("/compare/{competitor}", include_in_schema=False)
 async def comparison_page(competitor: str, request: Request = None):
-    """SEO-optimized comparison pages: AGENTIS vs [Competitor]."""
-    comp = COMPARISONS.get(competitor)
-    if not comp:
-        return JSONResponse(status_code=404, content={"error": "Comparison not found", "available": list(COMPARISONS.keys())})
+    """Redirect legacy /compare/{slug} to the new /vs/{slug} surface.
 
-    wins_html = "".join(f'<li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-emerald-400">&#10003;</span>{w}</li>' for w in comp["agentis_wins"])
-    lacks_html = "".join(f'<li class="flex items-center gap-2 text-sm text-slate-400"><span class="text-red-400">&#10007;</span>{l}</li>' for l in comp["they_lack"])
-
-    html = f"""<!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>AGENTIS vs {comp['name']} — Comparison | TiOLi AGENTIS</title>
-<meta name="description" content="Compare TiOLi AGENTIS vs {comp['name']}. See which AI agent platform offers more features, better pricing, and stronger governance."/>
-<link rel="canonical" href="https://agentisexchange.com/compare/{competitor}"/>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
-</head>
-<body data-active="blog" style="background:#061423;color:#d6e4f9;font-family:Inter,sans-serif;">
-<nav class="border-b border-[#77d4e5]/15 px-6 py-4">
-  <div class="max-w-4xl mx-auto flex justify-between items-center">
-    <a href="/" class="text-xl font-light text-white">T<span class="text-[#edc05f]">i</span>OL<span class="text-[#edc05f]">i</span> <span class="font-bold" style="background:linear-gradient(135deg,#77d4e5,#edc05f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AGENTIS</span></a>
-    <a href="/get-started" class="px-4 py-2 bg-[#22c55e] text-white text-sm font-bold rounded-lg">Try Free</a>
-  </div>
-</nav>
-<div class="max-w-4xl mx-auto px-6 py-16">
-  <h1 class="text-4xl font-bold text-white mb-2">AGENTIS vs {comp['name']}</h1>
-  <p class="text-lg text-slate-400 mb-8">{comp['name']}: {comp['tagline']}</p>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-    <div class="bg-[#0f1c2c] border border-emerald-500/20 rounded-lg p-6">
-      <h2 class="text-emerald-400 font-bold text-sm uppercase tracking-wider mb-4">What AGENTIS Offers That {comp['name']} Doesn't</h2>
-      <ul class="space-y-2">{wins_html}</ul>
-    </div>
-    <div class="bg-[#0f1c2c] border border-slate-700/50 rounded-lg p-6">
-      <h2 class="text-slate-400 font-bold text-sm uppercase tracking-wider mb-4">{comp['name']}'s Strength</h2>
-      <p class="text-sm text-slate-300 mb-4">{comp['their_strength']}</p>
-      <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2 mt-6">What {comp['name']} Lacks</h3>
-      <ul class="space-y-2">{lacks_html}</ul>
-    </div>
-  </div>
-
-  <div class="bg-[#0f1c2c] border border-[#77d4e5]/15 rounded-lg p-6 mb-8">
-    <h2 class="text-[#77d4e5] font-bold text-sm uppercase tracking-wider mb-4">The Bottom Line</h2>
-    <p class="text-sm text-slate-300">
-      {comp['name']} is a strong platform for {comp['tagline'].lower()}. AGENTIS goes further by providing a complete
-      economic infrastructure: multi-currency wallets, escrow, dispute arbitration, constitutional governance,
-      and a community hub — all in one platform. AGENTIS is free to start with 100 tokens and pricing starts
-      at just $1.99/month for premium features.
-    </p>
-  </div>
-
-  <div class="text-center">
-    <a href="/get-started" class="inline-block px-8 py-4 bg-[#22c55e] text-white font-bold rounded-lg">Try AGENTIS Free — 30 Seconds</a>
-    <p class="text-xs text-slate-500 mt-3">No credit card. 100 AGENTIS tokens on signup.</p>
-    <p class="text-xs text-slate-600 mt-6">Also compare: {' | '.join(f'<a href="/compare/{k}" class="text-[#77d4e5] hover:underline">vs {v["name"]}</a>' for k, v in COMPARISONS.items() if k != competitor)}</p>
-  </div>
-</div>
-<footer class="border-t border-slate-800 py-6 px-6 text-center text-[10px] text-slate-600">TiOLi Group Holdings (Pty) Ltd — Reg 2011/001439/07</footer>
-<script src="/static/landing/public-nav.js"></script></body></html>"""
-
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse(content=html)
+    The old module-level COMPARISONS dict is no longer shipped - Workstream F
+    (2026-04) moved competitor comparisons into app/data/vs_data.py served by
+    /vs/{slug}. For unknown slugs return 404 with the available list so the
+    caller can pick a real one.
+    """
+    from fastapi.responses import RedirectResponse
+    try:
+        from app.data.vs_data import VS_ENTRIES
+    except Exception:
+        VS_ENTRIES = {}
+    if competitor in VS_ENTRIES:
+        return RedirectResponse(url=f"/vs/{competitor}", status_code=301)
+    legacy_map = {"chatgpt": "chatgpt-store", "huggingface": "huggingface-spaces"}
+    if competitor in legacy_map and legacy_map[competitor] in VS_ENTRIES:
+        return RedirectResponse(url=f"/vs/{legacy_map[competitor]}", status_code=301)
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Comparison not found",
+            "available": list(VS_ENTRIES.keys()),
+            "hint": "Comparisons have moved to /vs/{slug}. See /vs for the index.",
+        },
+    )
 
 @router.get("/comparisons", include_in_schema=False)
 async def list_comparisons():
@@ -663,37 +626,70 @@ async def _premium_cancel():
 async def linkedin_callback(code: str = None, state: str = None, error: str = None):
     if error:
         return {"error": error}
-    if code:
-        import requests
-        resp = requests.post('https://www.linkedin.com/oauth/v2/accessToken', data={
+    if not code:
+        return {"error": "no code received"}
+    import requests
+    client_id = os.getenv("LINKEDIN_CLIENT_ID", "")
+    client_secret = os.getenv("LINKEDIN_CLIENT_SECRET", "")
+    redirect_uri = os.getenv("LINKEDIN_REDIRECT_URI", "https://agentisexchange.com/linkedin/callback")
+    if not client_id or not client_secret:
+        return {"error": "LinkedIn credentials missing from env"}
+    resp = requests.post(
+        'https://www.linkedin.com/oauth/v2/accessToken',
+        data={
             'grant_type': 'authorization_code',
             'code': code,
-            'client_id': '77sb9fcs4y3ya5',
-            'client_secret': 'REDACTED_LINKEDIN_SECRET',
-            'redirect_uri': 'https://agentisexchange.com/linkedin/callback',
-        })
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+        },
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+    )
+    try:
         data = resp.json()
-        token = data.get('access_token', 'FAILED')
-        id_token = data.get('id_token', '')
-        # Extract sub (person ID) from id_token JWT
-        sub = ''
-        if id_token:
-            import base64, json as _li_json
-            try:
-                payload = id_token.split('.')[1]
-                payload += '=' * (4 - len(payload) % 4)
-                claims = _li_json.loads(base64.urlsafe_b64decode(payload))
-                sub = claims.get('sub', '')
-            except Exception as exc:
-                import logging; logging.getLogger("tioli").warning(f"Non-critical error: {exc}")
-        # Save token and sub
-        with open('/home/tioli/app/.linkedin_token', 'w') as f:
-            f.write(token)
-        if sub:
-            with open('/home/tioli/app/.linkedin_sub', 'w') as f:
-                f.write(sub)
-        return {"status": "authorized", "token_saved": True, "sub": sub or "not_in_response", "token_preview": token[:20] + '...'}
-    return {"error": "no code received"}
+    except Exception:
+        return {"error": "linkedin returned non-json", "status": resp.status_code}
+    token = data.get('access_token')
+    if not token:
+        err_code = data.get('error', 'unknown')
+        err_desc = data.get('error_description', '')
+        logging.getLogger("tioli").error(f"linkedin token exchange failed: {err_code} — {err_desc}")
+        return {"error": "token exchange failed", "status": resp.status_code, "linkedin_error": err_code, "linkedin_error_description": err_desc}
+    id_token = data.get('id_token', '')
+    sub = ''
+    if id_token:
+        import base64, json as _li_json
+        try:
+            payload = id_token.split('.')[1]
+            payload += '=' * (4 - len(payload) % 4)
+            claims = _li_json.loads(base64.urlsafe_b64decode(payload))
+            sub = claims.get('sub', '')
+        except Exception as exc:
+            logging.getLogger("tioli").warning(f"id_token parse failed: {exc}")
+    with open('/home/tioli/app/.linkedin_token', 'w') as f:
+        f.write(token)
+    if sub:
+        with open('/home/tioli/app/.linkedin_sub', 'w') as f:
+            f.write(sub)
+    env_updated = False
+    try:
+        env_path = '/home/tioli/app/.env'
+        with open(env_path, 'r') as f:
+            lines = f.readlines()
+        for i, line in enumerate(lines):
+            if line.startswith('LINKEDIN_ACCESS_TOKEN='):
+                lines[i] = f'LINKEDIN_ACCESS_TOKEN={token}\n'
+                env_updated = True
+                break
+        if not env_updated:
+            lines.append(f'LINKEDIN_ACCESS_TOKEN={token}\n')
+            env_updated = True
+        with open(env_path, 'w') as f:
+            f.writelines(lines)
+    except Exception as exc:
+        logging.getLogger("tioli").error(f"failed to update .env LINKEDIN_ACCESS_TOKEN: {exc}")
+    os.environ['LINKEDIN_ACCESS_TOKEN'] = token
+    return {"status": "authorized", "token_saved": True, "env_updated": env_updated, "sub": sub or "not_in_response", "token_preview": token[:20] + '...'}
 
 @router.get("/compare", include_in_schema=False)
 async def serve_compare_page():

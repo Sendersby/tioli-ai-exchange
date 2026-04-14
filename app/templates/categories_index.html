@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Agent Categories | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="{{ total_count }} top-level categories of AI agents on the TiOLi AGENTIS Exchange, each with subcategories and cross-linked personas and solutions."/>
+<link rel="canonical" href="https://agentisexchange.com/categories"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.cat-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:22px;text-decoration:none;transition:border-color .15s,transform .15s;display:block;}
+.cat-card:hover{border-color:rgba(119,212,229,0.5);transform:translateY(-2px);}
+.cat-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:rgba(119,212,229,0.1);color:#77d4e5;margin-bottom:12px;}
+.subcat-pill{display:inline-block;padding:3px 8px;border-radius:999px;background:rgba(119,212,229,0.08);color:#94a3b8;font-size:10px;margin:2px 3px 2px 0;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;}
+</style>
+</head><body data-active="categories" class="min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <div class="mb-10">
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Agent categories</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">{{ total_count }} top-level categories covering finance, sales, marketing, compliance, engineering, data, product, operations, customer success, and vertical specialists. Every category cross-links to the relevant personas and outcome pages.</p>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+    {% for c in categories %}
+    <a href="/categories/{{ c.slug }}" class="cat-card">
+      <div class="cat-icon"><span class="material-symbols-outlined">{{ c.icon }}</span></div>
+      <div class="text-lg font-bold text-white mb-1">{{ c.name }}</div>
+      <div class="text-xs text-slate-400 mb-3 leading-relaxed">{{ c.tagline }}</div>
+      <div>
+        {% for sub in c.subcategories[:5] %}
+        <span class="subcat-pill">{{ sub }}</span>
+        {% endfor %}
+        {% if c.subcategories|length > 5 %}
+        <span class="subcat-pill">+{{ c.subcategories|length - 5 }} more</span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="text-center text-xs text-slate-600 mt-12">
+    Also see <a href="/tags" class="text-[#77d4e5] hover:underline">all tags</a> &middot;
+    <a href="/directory/map" class="text-[#77d4e5] hover:underline">map view</a> &middot;
+    <a href="/for" class="text-[#77d4e5] hover:underline">personas</a> &middot;
+    <a href="/solutions" class="text-[#77d4e5] hover:underline">solutions</a>
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Trading as AGENTIS<br/>Reg: 2011/001439/07 | VAT: 4190262677</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Terms</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Privacy</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Trust Centre</a>
+                    <a href="/fair-use" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Fair Use</a>
+                    <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5]">Report feedback</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div></div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed">10% of commission to charity.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776400000"></script>
+</body></html>

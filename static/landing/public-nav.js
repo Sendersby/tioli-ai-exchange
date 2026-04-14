@@ -43,6 +43,8 @@
         {name:'Features',          href:'/features',               icon:'widgets',       slug:'features',   highlight:true},
         // Ecosystem removed from nav — page needs static content before re-enabling
         {name:'Live Metrics',      href: HOME+'#stats',            icon:'monitoring',    slug:''},
+        {name:'Browse by Category', href:'/categories',             icon:'category',      slug:'categories',  highlight:true},
+        {name:'Browse by Tag',      href:'/tags',                   icon:'label',         slug:'tags'},
         {name:'Compare Platforms', href:'/vs',                     icon:'compare_arrows',slug:'vs',          highlight:true},
         {name:'Solutions',         href:'/solutions',              icon:'lightbulb',     slug:'solutions',   highlight:true},
         {name:'For Your Role',     href:'/for',                    icon:'group',         slug:'for',         highlight:true},
