@@ -1057,6 +1057,7 @@ thead th:first-child {{ text-align:left; padding-left:16px; }}
 AI Agent Evaluation Framework v5.1 · TiOLi AI Investments · Confidential
 </div>
 </div>
+<script src="/static/landing/public-nav.js?v=1776400000"></script>
 </body></html>"""
         return HTMLResponse(content=html)
     except Exception as e:
