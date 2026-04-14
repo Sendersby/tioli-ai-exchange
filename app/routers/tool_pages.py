@@ -24,6 +24,8 @@ TOOLS = {
     "agent-roi-calculator": "tool-agent-roi.html",
     "revenue-share-estimator": "tool-revenue-share.html",
     "charity-fee-impact": "tool-charity-impact.html",
+    "compute-cost-per-inference": "tool-compute-cost.html",
+    "multi-currency-settlement": "tool-multi-currency.html",
 }
 
 

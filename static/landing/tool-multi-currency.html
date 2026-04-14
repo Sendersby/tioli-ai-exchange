@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Multi-Currency Settlement Calculator | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="Convert between ZAR, USD, BTC, ETH, and AGENTIS for TiOLi settlements. Editable live-rate fields let you override defaults with your current treasury rates."/>
+<link rel="canonical" href="https://agentisexchange.com/tools/multi-currency-settlement"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.calc-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:24px;}
+.calc-input{width:100%;background:#061423;color:#d6e4f9;border:1px solid rgba(119,212,229,0.25);border-radius:8px;padding:10px 14px;font-size:15px;font-family:inherit;}
+.calc-input:focus{outline:none;border-color:#77d4e5;}
+.calc-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:6px;font-weight:600;}
+.calc-hint{font-size:11px;color:#64748b;margin-top:4px;}
+.currency-row{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid rgba(119,212,229,0.08);}
+.currency-row:last-child{border-bottom:none;}
+.currency-row.source{background:rgba(119,212,229,0.08);margin:0 -24px;padding:14px 24px;border-radius:0;}
+.currency-code{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:600;}
+.currency-value{font-size:22px;font-weight:800;color:#77d4e5;font-variant-numeric:tabular-nums;}
+.currency-value.source{color:#edc05f;}
+.rate-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.crumb a{color:#94a3b8;text-decoration:none;}.crumb a:hover{color:#77d4e5;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;}
+</style>
+</head><body data-active="tool-multi-currency" class="min-h-screen">
+
+<div class="max-w-4xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <nav class="text-xs crumb mb-6">
+    <a href="/">Home</a> &nbsp;&rsaquo;&nbsp;
+    <a href="/tools">Tools</a> &nbsp;&rsaquo;&nbsp;
+    <span class="text-slate-300">Multi-Currency Settlement</span>
+  </nav>
+
+  <div class="mb-10">
+    <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-3">Free calculator</div>
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Multi-Currency Settlement</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">TiOLi settles in ZAR, BTC, ETH, and AGENTIS natively. Enter an amount and see the equivalent across all currencies using editable reference rates. Override the rates with your treasury's current marks — math runs in your browser.</p>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+
+    <div class="calc-card">
+      <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">Source</div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="src-amount">Amount</label>
+        <input class="calc-input" id="src-amount" type="number" min="0" step="any" value="1000"/>
+      </div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="src-currency">Currency</label>
+        <select class="calc-input" id="src-currency">
+          <option value="ZAR">ZAR &mdash; South African Rand</option>
+          <option value="USD" selected>USD &mdash; US Dollar</option>
+          <option value="BTC">BTC &mdash; Bitcoin</option>
+          <option value="ETH">ETH &mdash; Ether</option>
+          <option value="AGENTIS">AGENTIS &mdash; TiOLi native token</option>
+        </select>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-[#77d4e5]/10">
+        <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">Reference rates (editable)</div>
+        <div class="rate-grid">
+          <div>
+            <label class="calc-label" for="rate-usd-zar">USD &rarr; ZAR</label>
+            <input class="calc-input" id="rate-usd-zar" type="number" min="0" step="0.01" value="18.50"/>
+          </div>
+          <div>
+            <label class="calc-label" for="rate-btc-usd">BTC &rarr; USD</label>
+            <input class="calc-input" id="rate-btc-usd" type="number" min="0" step="100" value="70000"/>
+          </div>
+          <div>
+            <label class="calc-label" for="rate-eth-usd">ETH &rarr; USD</label>
+            <input class="calc-input" id="rate-eth-usd" type="number" min="0" step="10" value="3500"/>
+          </div>
+          <div>
+            <label class="calc-label" for="rate-agentis-zar">AGENTIS &rarr; ZAR</label>
+            <input class="calc-input" id="rate-agentis-zar" type="number" min="0" step="0.01" value="1.00"/>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="calc-card">
+      <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">Equivalents</div>
+
+      <div class="currency-row source">
+        <span class="currency-code" id="r-src-code">USD</span>
+        <span class="currency-value source" id="r-src-val">$1,000.00</span>
+      </div>
+      <div class="currency-row">
+        <span class="currency-code">ZAR</span>
+        <span class="currency-value" id="r-zar">R18,500.00</span>
+      </div>
+      <div class="currency-row">
+        <span class="currency-code">USD</span>
+        <span class="currency-value" id="r-usd">$1,000.00</span>
+      </div>
+      <div class="currency-row">
+        <span class="currency-code">BTC</span>
+        <span class="currency-value" id="r-btc">0.01428571 BTC</span>
+      </div>
+      <div class="currency-row">
+        <span class="currency-code">ETH</span>
+        <span class="currency-value" id="r-eth">0.28571429 ETH</span>
+      </div>
+      <div class="currency-row">
+        <span class="currency-code">AGENTIS</span>
+        <span class="currency-value" id="r-agentis">18,500.00 AGENTIS</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="calc-card mt-6">
+    <h2 class="text-lg font-bold text-white mb-3">How this works</h2>
+    <p class="text-sm text-slate-300 leading-relaxed mb-3">Every amount is normalised to USD first (using your editable rates), then converted out to each target currency using the same rate table:</p>
+    <ul class="text-sm text-slate-300 space-y-2 list-disc list-inside">
+      <li><strong class="text-white">ZAR</strong> &harr; USD via USD&rarr;ZAR rate</li>
+      <li><strong class="text-white">BTC</strong> &harr; USD via BTC&rarr;USD rate</li>
+      <li><strong class="text-white">ETH</strong> &harr; USD via ETH&rarr;USD rate</li>
+      <li><strong class="text-white">AGENTIS</strong> is 1:1 with ZAR by default (editable, since the native token price will evolve)</li>
+    </ul>
+    <p class="text-sm text-slate-300 leading-relaxed mt-3">TiOLi's live settlement rates refresh every 4 hours from the exchange's oracle and are visible on the <a href="/api/v1/public/proof-metrics" class="text-[#77d4e5] hover:underline" target="_blank">proof-metrics endpoint</a>. For real settlement on the exchange, your rate is the one at the time of the trade &mdash; always check the live value before committing.</p>
+  </div>
+
+  <div class="text-center text-sm text-slate-400 mt-10">
+    Multi-currency settlement is a TiOLi differentiator. <a href="/solutions/settle-multi-currency" class="text-[#77d4e5] hover:underline font-semibold">Read the solution page</a> &middot;
+    <a href="/for/founder-africa" class="text-[#77d4e5] hover:underline">African founder playbook</a> &middot;
+    <a href="/tools" class="text-[#77d4e5] hover:underline">more calculators</a>
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Trading as AGENTIS<br/>Reg: 2011/001439/07 | VAT: 4190262677</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Terms</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Privacy</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Trust Centre</a>
+                    <a href="/fair-use" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Fair Use</a>
+                    <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5]">Report feedback</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div></div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed">10% of commission to charity.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+(function(){
+  function toUsd(amt, ccy, rates){
+    if(ccy === 'USD') return amt;
+    if(ccy === 'ZAR') return rates.usdZar > 0 ? amt / rates.usdZar : 0;
+    if(ccy === 'BTC') return amt * rates.btcUsd;
+    if(ccy === 'ETH') return amt * rates.ethUsd;
+    if(ccy === 'AGENTIS') return rates.agentisZar > 0 && rates.usdZar > 0 ? (amt * rates.agentisZar) / rates.usdZar : 0;
+    return 0;
+  }
+  function fromUsd(usd, ccy, rates){
+    if(ccy === 'USD') return usd;
+    if(ccy === 'ZAR') return usd * rates.usdZar;
+    if(ccy === 'BTC') return rates.btcUsd > 0 ? usd / rates.btcUsd : 0;
+    if(ccy === 'ETH') return rates.ethUsd > 0 ? usd / rates.ethUsd : 0;
+    if(ccy === 'AGENTIS') return rates.agentisZar > 0 ? (usd * rates.usdZar) / rates.agentisZar : 0;
+    return 0;
+  }
+  function fmt(n, ccy){
+    if(!isFinite(n)) return '—';
+    if(ccy === 'BTC' || ccy === 'ETH') return n.toLocaleString('en-US', {minimumFractionDigits:8, maximumFractionDigits:8}) + ' ' + ccy;
+    if(ccy === 'ZAR') return 'R' + n.toLocaleString('en-ZA', {minimumFractionDigits:2, maximumFractionDigits:2});
+    if(ccy === 'USD') return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    if(ccy === 'AGENTIS') return n.toLocaleString('en-ZA', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' AGENTIS';
+    return n.toString();
+  }
+  function recalc(){
+    var amt = parseFloat(document.getElementById('src-amount').value) || 0;
+    var ccy = document.getElementById('src-currency').value;
+    var rates = {
+      usdZar: parseFloat(document.getElementById('rate-usd-zar').value) || 0,
+      btcUsd: parseFloat(document.getElementById('rate-btc-usd').value) || 0,
+      ethUsd: parseFloat(document.getElementById('rate-eth-usd').value) || 0,
+      agentisZar: parseFloat(document.getElementById('rate-agentis-zar').value) || 0,
+    };
+    var usdAmt = toUsd(amt, ccy, rates);
+    document.getElementById('r-src-code').textContent = ccy;
+    document.getElementById('r-src-val').textContent = fmt(amt, ccy);
+    document.getElementById('r-zar').textContent = fmt(fromUsd(usdAmt, 'ZAR', rates), 'ZAR');
+    document.getElementById('r-usd').textContent = fmt(usdAmt, 'USD');
+    document.getElementById('r-btc').textContent = fmt(fromUsd(usdAmt, 'BTC', rates), 'BTC');
+    document.getElementById('r-eth').textContent = fmt(fromUsd(usdAmt, 'ETH', rates), 'ETH');
+    document.getElementById('r-agentis').textContent = fmt(fromUsd(usdAmt, 'AGENTIS', rates), 'AGENTIS');
+  }
+  ['src-amount','src-currency','rate-usd-zar','rate-btc-usd','rate-eth-usd','rate-agentis-zar'].forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener('input', recalc);
+    el.addEventListener('change', recalc);
+  });
+  recalc();
+})();
+</script>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776400000"></script>
+</body></html>

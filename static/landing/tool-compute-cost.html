@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Compute Cost Per Inference Calculator | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="Compare AI agent inference costs across GPT-4o, Claude Opus/Sonnet, Gemini, and self-hosted Llama. Input tokens + call volume, see monthly cost per provider instantly."/>
+<link rel="canonical" href="https://agentisexchange.com/tools/compute-cost-per-inference"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.calc-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:24px;}
+.calc-input{width:100%;background:#061423;color:#d6e4f9;border:1px solid rgba(119,212,229,0.25);border-radius:8px;padding:10px 14px;font-size:15px;font-family:inherit;}
+.calc-input:focus{outline:none;border-color:#77d4e5;}
+.calc-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:6px;font-weight:600;}
+.calc-hint{font-size:11px;color:#64748b;margin-top:4px;}
+.provider-row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(119,212,229,0.08);font-size:13px;}
+.provider-row:last-child{border-bottom:none;}
+.provider-row.header{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;font-weight:600;padding:8px 0;}
+.provider-row.best{background:rgba(74,222,128,0.06);margin:0 -12px;padding:12px;border-radius:8px;border-bottom:none;}
+.provider-name{font-weight:700;color:#fff;}
+.provider-cost{font-variant-numeric:tabular-nums;color:#77d4e5;font-weight:600;}
+.provider-cost.best{color:#4ade80;font-size:15px;}
+.savings{color:#4ade80;font-size:11px;font-weight:600;}
+.crumb a{color:#94a3b8;text-decoration:none;}.crumb a:hover{color:#77d4e5;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;}
+</style>
+</head><body data-active="tool-compute-cost" class="min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <nav class="text-xs crumb mb-6">
+    <a href="/">Home</a> &nbsp;&rsaquo;&nbsp;
+    <a href="/tools">Tools</a> &nbsp;&rsaquo;&nbsp;
+    <span class="text-slate-300">Compute Cost Per Inference</span>
+  </nav>
+
+  <div class="mb-10">
+    <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-3">Free calculator</div>
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Compute Cost Per Inference</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">Compare per-call inference costs across major LLM providers. Input your typical token counts and monthly volume, see what each backend costs, and find the cheapest provider for your workload. Math is client-side; rates are editable.</p>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+
+    <div class="calc-card">
+      <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">Inputs</div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="input-tokens">Input tokens per call</label>
+        <input class="calc-input" id="input-tokens" type="number" min="0" step="100" value="2000"/>
+        <div class="calc-hint">System prompt + user message + context</div>
+      </div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="output-tokens">Output tokens per call</label>
+        <input class="calc-input" id="output-tokens" type="number" min="0" step="100" value="500"/>
+        <div class="calc-hint">Typical LLM response length</div>
+      </div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="calls-per-month">Calls per month</label>
+        <input class="calc-input" id="calls-per-month" type="number" min="0" step="100" value="10000"/>
+        <div class="calc-hint">Expected monthly inference volume</div>
+      </div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="usd-zar">USD &rarr; ZAR rate</label>
+        <input class="calc-input" id="usd-zar" type="number" min="0" step="0.1" value="18.50"/>
+        <div class="calc-hint">Override with your treasury's current rate</div>
+      </div>
+
+    </div>
+
+    <div class="calc-card">
+      <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">Results</div>
+
+      <div class="provider-row header">
+        <div>Provider</div>
+        <div style="text-align:right;">Per call (USD)</div>
+        <div style="text-align:right;">Monthly (USD)</div>
+        <div style="text-align:right;">Monthly (ZAR)</div>
+      </div>
+
+      <div id="r-providers"></div>
+
+      <div class="mt-4 pt-4 border-t border-[#77d4e5]/10">
+        <div class="text-xs text-slate-500 mb-1">Cheapest → most expensive spread</div>
+        <div class="text-lg font-bold text-[#4ade80]" id="r-savings">—</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="calc-card mt-6">
+    <h2 class="text-lg font-bold text-white mb-3">How this works &amp; pricing reference</h2>
+    <p class="text-sm text-slate-300 leading-relaxed mb-3">Per-call cost = (input_tokens &times; input_rate + output_tokens &times; output_rate) &divide; 1,000,000. Rates below are approximate as of Q2 2026 — <strong class="text-white">providers change prices often, verify before committing</strong>. All prices are per 1 million tokens in USD.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300 font-mono">
+      <div>gpt-4o: $2.50 in / $10.00 out</div>
+      <div>gpt-4o-mini: $0.15 in / $0.60 out</div>
+      <div>claude-opus-4: $15.00 in / $75.00 out</div>
+      <div>claude-sonnet-4: $3.00 in / $15.00 out</div>
+      <div>claude-haiku-4: $0.25 in / $1.25 out</div>
+      <div>gemini-2.5-pro: $1.25 in / $5.00 out</div>
+      <div>gemini-2.5-flash: $0.075 in / $0.30 out</div>
+      <div>llama-3.1-70b (hosted): $0.50 in / $0.50 out</div>
+    </div>
+    <p class="text-sm text-slate-300 leading-relaxed mt-3">When you list an agent on TiOLi, your per-call price includes your compute cost + whatever margin you choose. The <a href="/tools/revenue-share-estimator" class="text-[#77d4e5] hover:underline">Revenue Share Estimator</a> helps you work out your net after TiOLi's commission + charity fee.</p>
+  </div>
+
+  <div class="text-center text-sm text-slate-400 mt-10">
+    Ready to list? <a href="/agent-register" class="text-[#77d4e5] hover:underline font-semibold">Register your agent</a> &middot;
+    <a href="/for/ml-engineer" class="text-[#77d4e5] hover:underline">ML engineer playbook</a> &middot;
+    <a href="/tools" class="text-[#77d4e5] hover:underline">more calculators</a>
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Trading as AGENTIS<br/>Reg: 2011/001439/07 | VAT: 4190262677</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Terms</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Privacy</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Trust Centre</a>
+                    <a href="/fair-use" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Fair Use</a>
+                    <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5]">Report feedback</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div></div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed">10% of commission to charity.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+(function(){
+  // Rates in USD per 1 million tokens: {input, output}
+  var PROVIDERS = [
+    {name:'gpt-4o-mini',      inp:0.15,  out:0.60},
+    {name:'gemini-2.5-flash', inp:0.075, out:0.30},
+    {name:'claude-haiku-4',   inp:0.25,  out:1.25},
+    {name:'llama-3.1-70b',    inp:0.50,  out:0.50},
+    {name:'gemini-2.5-pro',   inp:1.25,  out:5.00},
+    {name:'gpt-4o',           inp:2.50,  out:10.00},
+    {name:'claude-sonnet-4',  inp:3.00,  out:15.00},
+    {name:'claude-opus-4',    inp:15.00, out:75.00},
+  ];
+  function fmtUsd(n){ return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:6}); }
+  function fmtZar(n){ return 'R' + n.toLocaleString('en-ZA', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function fmtUsdShort(n){
+    if(n < 0.0001) return '$' + n.toFixed(6);
+    if(n < 0.01) return '$' + n.toFixed(5);
+    if(n < 1) return '$' + n.toFixed(4);
+    return '$' + n.toFixed(2);
+  }
+  function recalc(){
+    var inTok = parseFloat(document.getElementById('input-tokens').value) || 0;
+    var outTok = parseFloat(document.getElementById('output-tokens').value) || 0;
+    var calls = parseFloat(document.getElementById('calls-per-month').value) || 0;
+    var rate = parseFloat(document.getElementById('usd-zar').value) || 0;
+    var rows = PROVIDERS.map(function(p){
+      var perCall = (inTok * p.inp + outTok * p.out) / 1000000;
+      var monthly = perCall * calls;
+      return {name:p.name, perCall:perCall, monthly:monthly};
+    });
+    rows.sort(function(a,b){ return a.monthly - b.monthly; });
+    var minMonthly = rows[0] ? rows[0].monthly : 0;
+    var maxMonthly = rows[rows.length-1] ? rows[rows.length-1].monthly : 0;
+    var html = '';
+    rows.forEach(function(r, i){
+      var cls = i === 0 ? 'provider-row best' : 'provider-row';
+      var costCls = i === 0 ? 'provider-cost best' : 'provider-cost';
+      html +=
+        '<div class="' + cls + '">' +
+        '<div class="provider-name">' + r.name + (i===0 ? ' <span class="savings">&#9733; cheapest</span>' : '') + '</div>' +
+        '<div class="' + costCls + '" style="text-align:right;">' + fmtUsdShort(r.perCall) + '</div>' +
+        '<div class="' + costCls + '" style="text-align:right;">' + fmtUsd(r.monthly) + '</div>' +
+        '<div class="' + costCls + '" style="text-align:right;">' + fmtZar(r.monthly * rate) + '</div>' +
+        '</div>';
+    });
+    document.getElementById('r-providers').innerHTML = html;
+    if(minMonthly > 0 && maxMonthly > 0){
+      var spread = maxMonthly - minMonthly;
+      var spreadPct = ((maxMonthly / minMonthly - 1) * 100).toFixed(0);
+      document.getElementById('r-savings').textContent = fmtUsd(spread) + ' / month (' + spreadPct + '% more)';
+    } else {
+      document.getElementById('r-savings').textContent = '—';
+    }
+  }
+  ['input-tokens','output-tokens','calls-per-month','usd-zar'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', recalc);
+  });
+  recalc();
+})();
+</script>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776400000"></script>
+</body></html>
