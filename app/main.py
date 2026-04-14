@@ -1511,6 +1511,7 @@ from app.routers.directory_views import router as directory_views_router
 from app.routers.categories_pages import router as categories_pages_router
 from app.routers.tool_pages import router as tool_pages_router
 from app.routers.whitepaper import router as whitepaper_router
+from app.routers.newsletter import router as newsletter_router_v2
 from app.routers.infra import router as infra_extracted_router
 from app.routers.interop import router as interop_extracted_router
 from app.routers.lending import router as lending_extracted_router
@@ -1546,4 +1547,5 @@ app.include_router(directory_views_router)
 app.include_router(categories_pages_router)
 app.include_router(tool_pages_router)
 app.include_router(whitepaper_router)
+app.include_router(newsletter_router_v2)
 

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sponsor the Exchange Newsletter | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="Sponsor slots in the weekly TiOLi newsletter. Top Spotlight R4,500, Inline Feature R3,300, Footer Boost R2,250. Auto-UTM-tagged links, 3-day advance booking."/>
+<link rel="canonical" href="https://agentisexchange.com/newsletter/sponsor"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.sp-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:24px;}
+.sp-input{width:100%;background:#061423;color:#d6e4f9;border:1px solid rgba(119,212,229,0.25);border-radius:8px;padding:11px 14px;font-size:14px;font-family:inherit;box-sizing:border-box;}
+.sp-input:focus{outline:none;border-color:#77d4e5;}
+.sp-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:6px;font-weight:600;}
+.sp-slot{background:#0f1c2c;border:1px solid rgba(119,212,229,0.2);border-radius:12px;padding:22px;cursor:pointer;transition:all .15s;}
+.sp-slot:hover{border-color:rgba(119,212,229,0.5);}
+.sp-slot.selected{background:rgba(119,212,229,0.08);border-color:#77d4e5;}
+.sp-slot input{display:none;}
+.sp-submit{background:#77d4e5;color:#061423;border:none;border-radius:10px;font-weight:700;font-size:15px;padding:13px 28px;cursor:pointer;width:100%;margin-top:16px;}
+.sp-submit:disabled{opacity:0.5;cursor:not-allowed;}
+.sp-success{background:#0f1c2c;border:1px solid rgba(74,222,128,0.4);border-radius:10px;padding:18px;color:#4ade80;font-size:14px;margin-top:14px;}
+.sp-error{background:#0f1c2c;border:1px solid rgba(248,113,113,0.4);border-radius:10px;padding:14px;color:#f87171;font-size:13px;margin-top:14px;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;}
+</style>
+</head><body data-active="newsletter-sponsor" class="min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <div class="mb-10">
+    <div class="text-xs uppercase tracking-widest text-[#edc05f] mb-3">Sponsorship &middot; Weekly issue only</div>
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Sponsor the weekly newsletter</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">Three sponsor slots per weekly issue, clearly labelled, auto-UTM-tagged, and limited so your placement gets real attention. Submit first, pay when placement is confirmed.</p>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4 mt-10">Choose a slot</div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+
+    <label class="sp-slot selected" data-value="top">
+      <input type="radio" name="slot_type" value="top" checked/>
+      <div class="text-xs uppercase tracking-widest text-[#edc05f] mb-2">Top Spotlight</div>
+      <div class="text-3xl font-bold text-white mb-1">R4,500</div>
+      <div class="text-xs text-slate-500 mb-4">per weekly send</div>
+      <div class="text-xs text-slate-300 leading-relaxed">Right after the opening greeting. Highest click-through, first thing every subscriber sees. Max 1 per issue.</div>
+    </label>
+
+    <label class="sp-slot" data-value="inline">
+      <input type="radio" name="slot_type" value="inline"/>
+      <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-2">Inline Feature</div>
+      <div class="text-3xl font-bold text-white mb-1">R3,300</div>
+      <div class="text-xs text-slate-500 mb-4">per weekly send</div>
+      <div class="text-xs text-slate-300 leading-relaxed">After the main news section. Good for product launches, case studies, or event promotions. Max 1 per issue.</div>
+    </label>
+
+    <label class="sp-slot" data-value="footer">
+      <input type="radio" name="slot_type" value="footer"/>
+      <div class="text-xs uppercase tracking-widest text-slate-400 mb-2">Footer Boost</div>
+      <div class="text-3xl font-bold text-white mb-1">R2,250</div>
+      <div class="text-xs text-slate-500 mb-4">per weekly send</div>
+      <div class="text-xs text-slate-300 leading-relaxed">Before the unsubscribe CTA. Good for retention, low-frequency reminders, or niche offers. Max 1 per issue.</div>
+    </label>
+
+  </div>
+
+  <div class="sp-card">
+    <h2 class="text-lg font-bold text-white mb-5">Your booking</h2>
+
+    <form id="sp-form" novalidate>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="sp-label" for="sp-brand">Brand name *</label>
+          <input class="sp-input" id="sp-brand" required maxlength="200"/>
+        </div>
+        <div>
+          <label class="sp-label" for="sp-email">Contact email *</label>
+          <input class="sp-input" id="sp-email" type="email" required maxlength="320"/>
+        </div>
+        <div class="md:col-span-2">
+          <label class="sp-label" for="sp-tagline">Tagline (optional)</label>
+          <input class="sp-input" id="sp-tagline" maxlength="200" placeholder="Short 1-line hook that appears above ad copy"/>
+        </div>
+        <div class="md:col-span-2">
+          <label class="sp-label" for="sp-ad-copy">Ad copy * <span class="text-slate-500">(10-600 chars)</span></label>
+          <textarea class="sp-input" id="sp-ad-copy" rows="4" required minlength="10" maxlength="600"></textarea>
+        </div>
+        <div>
+          <label class="sp-label" for="sp-cta-text">CTA button text *</label>
+          <input class="sp-input" id="sp-cta-text" required maxlength="50" placeholder="Try it free"/>
+        </div>
+        <div>
+          <label class="sp-label" for="sp-cta-url">CTA URL *</label>
+          <input class="sp-input" id="sp-cta-url" type="url" required maxlength="500" placeholder="https://yourbrand.com/landing"/>
+        </div>
+        <div>
+          <label class="sp-label" for="sp-date">Preferred send date</label>
+          <input class="sp-input" id="sp-date" type="date" maxlength="20"/>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-500 mt-4">
+        <strong class="text-[#77d4e5]">Standard flow:</strong> submit now, pay nothing today. Stephen reviews and emails to confirm slot + invoice. Content rules: adult or explicit content is not allowed. Auto-UTM-tagged links generated automatically.
+      </div>
+
+      <button type="submit" class="sp-submit" id="sp-submit">Submit booking</button>
+
+      <div id="sp-result"></div>
+    </form>
+  </div>
+
+  <div class="text-center text-xs text-slate-600 mt-10">
+    Not a sponsor? <a href="/newsletter" class="text-[#77d4e5] hover:underline">Subscribe to the newsletter instead</a>
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Trading as AGENTIS<br/>Reg: 2011/001439/07 | VAT: 4190262677</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Terms</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Privacy</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Trust Centre</a>
+                    <a href="/fair-use" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Fair Use</a>
+                    <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5]">Report feedback</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div></div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed">10% of commission to charity.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+(function(){
+  var slots = document.querySelectorAll('.sp-slot');
+  slots.forEach(function(s){
+    s.addEventListener('click', function(){
+      slots.forEach(function(x){ x.classList.remove('selected'); });
+      s.classList.add('selected');
+      var input = s.querySelector('input');
+      if(input) input.checked = true;
+    });
+  });
+  function show(html, err){
+    var r = document.getElementById('sp-result');
+    r.innerHTML = '<div class="' + (err ? 'sp-error' : 'sp-success') + '">' + html + '</div>';
+  }
+  document.getElementById('sp-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var brand = document.getElementById('sp-brand').value.trim();
+    var email = document.getElementById('sp-email').value.trim();
+    var tagline = document.getElementById('sp-tagline').value.trim();
+    var ad = document.getElementById('sp-ad-copy').value.trim();
+    var ctaText = document.getElementById('sp-cta-text').value.trim();
+    var ctaUrl = document.getElementById('sp-cta-url').value.trim();
+    var date = document.getElementById('sp-date').value;
+    var slot = document.querySelector('input[name=\"slot_type\"]:checked').value;
+    if(!brand || !email || !ad || !ctaText || !ctaUrl){ show('Please fill the required fields.', true); return; }
+    if(ad.length < 10){ show('Ad copy must be at least 10 characters.', true); return; }
+    var btn = document.getElementById('sp-submit');
+    btn.disabled = true; btn.textContent = 'Submitting...';
+    fetch('/api/v1/newsletter/sponsor', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        brand: brand, email: email, tagline: tagline || null, ad_copy: ad,
+        cta_text: ctaText, cta_url: ctaUrl,
+        slot_type: slot, scheduled_send_date: date || null
+      })
+    }).then(function(r){ return r.json().then(function(j){ return {ok: r.ok, body: j}; }); })
+      .then(function(res){
+        if(res.ok && res.body && res.body.ok){
+          show('<strong>Booking received.</strong><br/>Slot: ' + res.body.slot + ' (R' + res.body.amount_zar + ' ZAR)<br/>Stephen will review and email you to confirm placement and invoice.', false);
+          btn.textContent = 'Submitted';
+        } else {
+          var err = (res.body && res.body.detail) || 'Could not submit booking.';
+          show(typeof err === 'string' ? err : 'Validation error — check your inputs.', true);
+          btn.disabled = false; btn.textContent = 'Submit booking';
+        }
+      }).catch(function(err){
+        show('Network error: ' + err.message, true);
+        btn.disabled = false; btn.textContent = 'Submit booking';
+      });
+  });
+})();
+</script>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776400000"></script>
+</body></html>
