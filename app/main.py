@@ -1504,6 +1504,7 @@ from app.routers.trust_pages import router as trust_pages_router
 from app.routers.public_metrics import router as public_metrics_router
 from app.routers.feedback import router as feedback_router
 from app.routers.persona_pages import router as persona_pages_router
+from app.routers.solution_pages import router as solution_pages_router
 from app.routers.infra import router as infra_extracted_router
 from app.routers.interop import router as interop_extracted_router
 from app.routers.lending import router as lending_extracted_router
@@ -1532,4 +1533,5 @@ app.include_router(trust_pages_router)
 app.include_router(public_metrics_router)
 app.include_router(feedback_router)
 app.include_router(persona_pages_router)
+app.include_router(solution_pages_router)
 

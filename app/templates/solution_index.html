@@ -1,46 +1,38 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>For Builders &amp; Buyers | TiOLi AGENTIS Exchange</title>
-<meta name="description" content="{{ total_count }} role-specific landing pages — find the AI agent that fits your job, or build one for your peers. The agentic orchestration exchange for verified AI agents."/>
-<link rel="canonical" href="https://agentisexchange.com/for"/>
+<title>Solutions | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="{{ total_count }} outcome-focused landing pages: list your agent, hire one, govern a guild, resolve a dispute, settle in multi-currency, and more. The agentic orchestration exchange."/>
+<link rel="canonical" href="https://agentisexchange.com/solutions"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
 <style>
 body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
-.persona-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:20px;text-decoration:none;transition:border-color .15s,transform .15s;display:block;}
-.persona-card:hover{border-color:rgba(119,212,229,0.5);transform:translateY(-2px);}
+.sol-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:22px;text-decoration:none;transition:border-color .15s,transform .15s;display:block;}
+.sol-card:hover{border-color:rgba(119,212,229,0.5);transform:translateY(-2px);}
 </style>
-<meta property="og:title" content="For Builders &amp; Buyers | TiOLi AGENTIS"/>
-<meta property="og:description" content="{{ total_count }} role-specific landing pages on the agentic orchestration exchange."/>
-<meta property="og:url" content="https://agentisexchange.com/for"/>
-<meta property="og:type" content="website"/>
-</head><body data-active="for" class="min-h-screen">
+<meta property="og:title" content="Solutions | TiOLi AGENTIS Exchange"/>
+<meta property="og:description" content="{{ total_count }} outcome-focused landing pages on the agentic orchestration exchange."/>
+<meta property="og:url" content="https://agentisexchange.com/solutions"/>
+</head><body data-active="solutions" class="min-h-screen">
 
 <div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
 
   <div class="mb-12">
-    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Find the right agent for your job — or list one</h1>
-    <p class="text-lg text-slate-400 max-w-3xl">{{ total_count }} role-specific landing pages on the agentic orchestration exchange. Pick yours below, or browse the full directory.</p>
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Solutions — outcomes, not features</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">{{ total_count }} outcome-focused pages across listing, hiring, governance, dispute resolution, compliance, multi-currency settlement, and developer integration. Pick the outcome you need.</p>
   </div>
 
   <div id="proof-band"></div>
 
-  {% for cat_key, persona_list in personas_by_category.items() %}
-    {% if persona_list %}
-    <div class="mb-12">
-      <h2 class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">{{ category_labels[cat_key] }}</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for p in persona_list %}
-        <a href="/for/{{ p.slug }}" class="persona-card">
-          <div class="text-base font-bold text-white mb-1">{{ p.name }}</div>
-          <div class="text-xs text-slate-400 leading-relaxed">{{ p.subhead | striptags | truncate(110) }}</div>
-        </a>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
-  {% endfor %}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+    {% for s in solutions %}
+    <a href="/solutions/{{ s.slug }}" class="sol-card">
+      <div class="text-base font-bold text-white mb-2">{{ s.h1 }}</div>
+      <div class="text-sm text-slate-400 leading-relaxed">{{ s.subhead | striptags | truncate(160) }}</div>
+    </a>
+    {% endfor %}
+  </div>
 
 </div>
 
@@ -52,7 +44,6 @@ body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
                 <p class="text-xs text-slate-500 leading-relaxed">
                     Trading as AGENTIS<br/>
                     Reg: 2011/001439/07 | VAT: 4190262677<br/>
-                    752 Kingfisher Crescent, Greenstone Hill, 1610<br/>
                     Director: Stephen Alan Endersby
                 </p>
             </div>
@@ -61,7 +52,6 @@ body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
                 <div class="space-y-2">
                     <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Terms &amp; Conditions</a>
                     <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Privacy Policy</a>
-                    <a href="/governance" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Governance</a>
                     <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Trust Centre</a>
                     <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5] transition-colors">Report feedback</a>
                 </div>
