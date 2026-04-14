@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Best AI Alternatives Guides | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="{{ total_count }} honest alternatives guides — ChatGPT, Claude, Gemini, Copilot, and more. Not sponsored, not paid-for."/>
+<link rel="canonical" href="https://agentisexchange.com/best"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.alt-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:22px;text-decoration:none;transition:border-color .15s,transform .15s;display:block;}
+.alt-card:hover{border-color:rgba(119,212,229,0.5);transform:translateY(-2px);}
+</style>
+</head><body data-active="best" class="min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <div class="mb-12">
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Best AI alternatives guides</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">{{ total_count }} honest guides for choosing an alternative to the major AI products. Not sponsored, not paid-for — just our read of where TiOLi fits versus the incumbents.</p>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+    {% for a in alternatives %}
+    <a href="/best/{{ a.slug }}-alternatives" class="alt-card">
+      <div class="text-base font-bold text-white mb-1">Best {{ a.product_name }} Alternatives</div>
+      <div class="text-xs text-[#77d4e5] mb-2">{{ a.product_category }}</div>
+      <div class="text-sm text-slate-400 leading-relaxed">{{ a.subhead | striptags | truncate(140) }}</div>
+    </a>
+    {% endfor %}
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto text-center text-xs text-slate-600">
+        &copy; 2026 TiOLi Group Holdings (Pty) Ltd &mdash; Trading as AGENTIS &middot;
+        <a href="/trust" class="text-[#77d4e5] hover:underline">Trust</a> &middot;
+        <a href="/fair-use" class="text-[#77d4e5] hover:underline">Fair Use</a> &middot;
+        <a href="/terms" class="text-[#77d4e5] hover:underline">Terms</a>
+    </div>
+</footer>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776300000"></script>
+
+</body></html>
