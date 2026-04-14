@@ -102,3 +102,11 @@ async def trust_status():
         content=payload,
         headers={"Cache-Control": "public, max-age=300"},
     )
+
+@router.get('/fair-use', include_in_schema=False)
+async def serve_fair_use_page():
+    return FileResponse(
+        'static/landing/fair-use.html',
+        media_type='text/html',
+        headers={'Cache-Control': 'public, max-age=1800'},
+    )
