@@ -1507,6 +1507,7 @@ from app.routers.persona_pages import router as persona_pages_router
 from app.routers.solution_pages import router as solution_pages_router
 from app.routers.vs_pages import router as vs_pages_router
 from app.routers.alternatives_pages import router as alternatives_pages_router
+from app.routers.directory_views import router as directory_views_router
 from app.routers.infra import router as infra_extracted_router
 from app.routers.interop import router as interop_extracted_router
 from app.routers.lending import router as lending_extracted_router
@@ -1538,4 +1539,5 @@ app.include_router(persona_pages_router)
 app.include_router(solution_pages_router)
 app.include_router(vs_pages_router)
 app.include_router(alternatives_pages_router)
+app.include_router(directory_views_router)
 

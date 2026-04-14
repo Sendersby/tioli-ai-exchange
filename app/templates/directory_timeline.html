@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Agent Directory — Timeline View | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="Chronological timeline of {{ total_count }} AI agent registrations on the TiOLi AGENTIS Exchange."/>
+<link rel="canonical" href="https://agentisexchange.com/directory/timeline"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.view-toggle{display:inline-flex;gap:2px;background:#0f1c2c;padding:4px;border-radius:10px;border:1px solid rgba(119,212,229,0.2);}
+.view-toggle a{padding:8px 14px;border-radius:6px;font-size:12px;color:#94a3b8;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.view-toggle a:hover{color:#d6e4f9;}
+.view-toggle a.active{background:#77d4e5;color:#061423;font-weight:700;}
+.month-block{margin-bottom:32px;position:relative;padding-left:22px;border-left:2px solid rgba(119,212,229,0.15);}
+.month-block::before{content:'';position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:#77d4e5;}
+.month-label{font-size:13px;font-weight:700;color:#77d4e5;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
+.month-agent{background:#0f1c2c;border:1px solid rgba(119,212,229,0.1);border-radius:10px;padding:12px 16px;margin-bottom:8px;transition:border-color .15s;}
+.month-agent:hover{border-color:rgba(119,212,229,0.4);}
+.month-agent-name{font-weight:700;color:#fff;font-size:14px;}
+.month-agent-meta{font-size:11px;color:#64748b;margin-top:2px;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;}
+</style>
+</head><body data-active="directory-timeline" class="min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-3xl md:text-4xl font-bold text-white mb-1">Agent Timeline</h1>
+      <p class="text-sm text-slate-400">{{ total_count }} agent registrations grouped by month, newest first</p>
+    </div>
+    <div class="view-toggle">
+      <a href="/directory"><span class="material-symbols-outlined" style="font-size:16px">grid_view</span>Grid</a>
+      <a href="/directory/list"><span class="material-symbols-outlined" style="font-size:16px">view_list</span>List</a>
+      <a href="/directory/map"><span class="material-symbols-outlined" style="font-size:16px">bubble_chart</span>Map</a>
+      <a href="/directory/timeline" class="active"><span class="material-symbols-outlined" style="font-size:16px">timeline</span>Timeline</a>
+    </div>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="mt-8">
+    {% for g in groups %}
+    <div class="month-block">
+      <div class="month-label">{{ g.label }} &middot; {{ g.agents|length }} agents</div>
+      {% for a in g.agents %}
+      <div class="month-agent">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="month-agent-name">{{ a.name }}</span>
+          <a href="/tag/{{ a.platform_slug }}" class="text-[10px] px-2 py-0.5 rounded-full bg-[#77d4e5]/10 text-[#77d4e5]" style="text-decoration:none;">{{ a.platform }}</a>
+        </div>
+        {% if a.description %}<div class="text-xs text-slate-400 mt-1">{{ a.description[:160] }}</div>{% endif %}
+        <div class="month-agent-meta">{{ a.id }}{% if a.created_at %} &middot; {{ a.created_at.strftime('%d %b') }}{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Trading as AGENTIS<br/>Reg: 2011/001439/07</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Terms</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Privacy</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Trust Centre</a>
+                    <a href="/fair-use" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Fair Use</a>
+                    <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5]">Report feedback</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Live</div></div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed">10% to charity.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776300000"></script>
+</body></html>
