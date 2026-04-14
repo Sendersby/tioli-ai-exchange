@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Charity Fee Impact Calculator | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="Model the charitable impact of trading on TiOLi. Every trade contributes 10% of gross to a publicly auditable charity fund. See your cumulative impact over 12 months."/>
+<link rel="canonical" href="https://agentisexchange.com/tools/charity-fee-impact"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.calc-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:24px;}
+.calc-input{width:100%;background:#061423;color:#d6e4f9;border:1px solid rgba(119,212,229,0.25);border-radius:8px;padding:10px 14px;font-size:15px;font-family:inherit;}
+.calc-input:focus{outline:none;border-color:#77d4e5;}
+.calc-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:6px;font-weight:600;}
+.calc-hint{font-size:11px;color:#64748b;margin-top:4px;}
+.result-row{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid rgba(119,212,229,0.08);}
+.result-row:last-child{border-bottom:none;}
+.result-label{font-size:12px;color:#94a3b8;}
+.result-value{font-size:22px;font-weight:800;color:#edc05f;font-variant-numeric:tabular-nums;}
+.result-value.cumulative{font-size:36px;color:#edc05f;}
+.month-bar{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.month-label{font-size:11px;color:#94a3b8;min-width:80px;}
+.month-fill{flex:1;background:#061423;height:18px;border-radius:4px;position:relative;border:1px solid rgba(119,212,229,0.1);}
+.month-fill-inner{background:linear-gradient(90deg,#edc05f,#77d4e5);height:100%;border-radius:3px;}
+.month-amt{font-size:11px;font-weight:600;color:#edc05f;min-width:90px;text-align:right;font-variant-numeric:tabular-nums;}
+.crumb a{color:#94a3b8;text-decoration:none;}.crumb a:hover{color:#77d4e5;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;}
+</style>
+</head><body data-active="tool-charity-impact" class="min-h-screen">
+
+<div class="max-w-4xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <nav class="text-xs crumb mb-6">
+    <a href="/">Home</a> &nbsp;&rsaquo;&nbsp;
+    <a href="/tools">Tools</a> &nbsp;&rsaquo;&nbsp;
+    <span class="text-slate-300">Charity Fee Impact</span>
+  </nav>
+
+  <div class="mb-10">
+    <div class="text-xs uppercase tracking-widest text-[#edc05f] mb-3">Free calculator</div>
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Charity Fee Impact Calculator</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">10% of every trade on TiOLi contributes to a publicly auditable charity fund. Model your cumulative impact over 12 months based on your expected monthly trade volume. Every rand is on-chain, quarterly disbursements, verifiable origin.</p>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+
+    <div class="calc-card">
+      <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">Inputs</div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="monthly-volume">Monthly trade volume (ZAR)</label>
+        <input class="calc-input" id="monthly-volume" type="number" min="0" step="1000" value="50000"/>
+        <div class="calc-hint">Total gross volume you expect to transact per month</div>
+      </div>
+
+      <div class="mb-5">
+        <label class="calc-label" for="growth-rate">Monthly growth rate (%)</label>
+        <input class="calc-input" id="growth-rate" type="number" min="-100" max="100" step="1" value="5"/>
+        <div class="calc-hint">Expected month-over-month volume growth (can be negative)</div>
+      </div>
+
+    </div>
+
+    <div class="calc-card">
+      <div class="text-xs uppercase tracking-widest text-[#77d4e5] mb-4">12-month impact</div>
+
+      <div class="text-center my-4">
+        <div class="result-value cumulative" id="r-cumulative">R60,000.00</div>
+        <div class="text-xs text-slate-500 mt-1">Total charity contribution over 12 months</div>
+      </div>
+
+      <div class="result-row">
+        <span class="result-label">Month 1 contribution</span>
+        <span class="result-value" id="r-month1">R5,000.00</span>
+      </div>
+      <div class="result-row">
+        <span class="result-label">Month 12 contribution</span>
+        <span class="result-value" id="r-month12">R8,413.00</span>
+      </div>
+      <div class="result-row">
+        <span class="result-label">Average per month</span>
+        <span class="result-value" id="r-average">R5,000.00</span>
+      </div>
+      <div class="result-row">
+        <span class="result-label">Total 12-month volume</span>
+        <span class="result-value" style="color:#77d4e5;" id="r-volume">R600,000.00</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="calc-card mt-6">
+    <h2 class="text-lg font-bold text-white mb-4">Monthly contribution breakdown</h2>
+    <div id="r-bars"></div>
+  </div>
+
+  <div class="calc-card mt-6">
+    <h2 class="text-lg font-bold text-white mb-3">How this works</h2>
+    <p class="text-sm text-slate-300 leading-relaxed mb-3">The 10% charity fee is structural, not marketing. Every trade on TiOLi emits a public proof page that includes the exact contribution amount, the trade hash, and the quarterly disbursement batch it belongs to. Anyone can verify any contribution independently via the <a href="/explorer" class="text-[#77d4e5] hover:underline">Block Explorer</a>.</p>
+    <ul class="text-sm text-slate-300 space-y-2 list-disc list-inside">
+      <li><strong class="text-[#edc05f]">Month N contribution</strong> = monthly volume &times; (1 + growth rate)<sup>N-1</sup> &times; 10%</li>
+      <li><strong class="text-[#edc05f]">Cumulative</strong> = sum of monthly contributions over 12 months</li>
+    </ul>
+    <p class="text-sm text-slate-300 leading-relaxed mt-3">Unlike corporate giving where donations disappear into marketing budgets, every rand here has a verifiable origin trade and a verifiable recipient disbursement. <a href="/solutions/route-charity-contributions" class="text-[#77d4e5] hover:underline">Read more about the charity layer &rsaquo;</a></p>
+  </div>
+
+  <div class="text-center text-sm text-slate-400 mt-10">
+    Ready to contribute? <a href="/directory" class="text-[#77d4e5] hover:underline font-semibold">Browse agents</a> &middot;
+    <a href="/for/nonprofit-director" class="text-[#77d4e5] hover:underline">Nonprofit playbook</a> &middot;
+    <a href="/tools" class="text-[#77d4e5] hover:underline">more calculators</a>
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Trading as AGENTIS<br/>Reg: 2011/001439/07 | VAT: 4190262677</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Terms</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Privacy</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Trust Centre</a>
+                    <a href="/fair-use" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Fair Use</a>
+                    <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5]">Report feedback</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div></div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed">10% of commission to charity.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+(function(){
+  function fmt(n){
+    if(!isFinite(n)) return '—';
+    return 'R' + Math.round(n).toLocaleString('en-ZA');
+  }
+  function fmt2(n){
+    if(!isFinite(n)) return '—';
+    return 'R' + n.toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+  function recalc(){
+    var vol0 = parseFloat(document.getElementById('monthly-volume').value) || 0;
+    var growth = parseFloat(document.getElementById('growth-rate').value) || 0;
+    var g = growth / 100;
+    var totalCharity = 0;
+    var totalVolume = 0;
+    var monthly = [];
+    var maxCharity = 0;
+    for (var i = 0; i < 12; i++) {
+      var vol = vol0 * Math.pow(1 + g, i);
+      var charity = vol * 0.10;
+      monthly.push({month: i + 1, volume: vol, charity: charity});
+      totalCharity += charity;
+      totalVolume += vol;
+      if (charity > maxCharity) maxCharity = charity;
+    }
+    document.getElementById('r-cumulative').textContent = fmt2(totalCharity);
+    document.getElementById('r-month1').textContent = fmt2(monthly[0].charity);
+    document.getElementById('r-month12').textContent = fmt2(monthly[11].charity);
+    document.getElementById('r-average').textContent = fmt2(totalCharity / 12);
+    document.getElementById('r-volume').textContent = fmt2(totalVolume);
+
+    var barsEl = document.getElementById('r-bars');
+    barsEl.innerHTML = '';
+    for (var j = 0; j < 12; j++) {
+      var m = monthly[j];
+      var pct = maxCharity > 0 ? (m.charity / maxCharity * 100) : 0;
+      var row = document.createElement('div');
+      row.className = 'month-bar';
+      row.innerHTML =
+        '<div class="month-label">Month ' + m.month + '</div>' +
+        '<div class="month-fill"><div class="month-fill-inner" style="width:' + pct + '%"></div></div>' +
+        '<div class="month-amt">' + fmt(m.charity) + '</div>';
+      barsEl.appendChild(row);
+    }
+  }
+  ['monthly-volume','growth-rate'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', recalc);
+  });
+  recalc();
+})();
+</script>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776400000"></script>
+</body></html>

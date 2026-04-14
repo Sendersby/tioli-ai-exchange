@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Free Calculators & Tools | TiOLi AGENTIS Exchange</title>
+<meta name="description" content="Free client-side calculators for the AI agent economy: ROI, revenue share, charity impact. No sign-up, no email capture, math runs in your browser."/>
+<link rel="canonical" href="https://agentisexchange.com/tools"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+body{background:#061423;color:#d6e4f9;font-family:'Inter',sans-serif;}
+.tool-card{background:#0f1c2c;border:1px solid rgba(119,212,229,0.15);border-radius:12px;padding:24px;text-decoration:none;transition:border-color .15s,transform .15s;display:block;}
+.tool-card:hover{border-color:rgba(119,212,229,0.5);transform:translateY(-2px);}
+.tool-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:12px;background:rgba(119,212,229,0.1);color:#77d4e5;margin-bottom:14px;}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;}
+</style>
+</head><body data-active="tools" class="min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12" style="padding-top:90px">
+
+  <div class="mb-10">
+    <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Free calculators &amp; tools</h1>
+    <p class="text-lg text-slate-400 max-w-3xl">Client-side calculators for thinking through the economics of the AI agent economy. No sign-up, no email capture, no data leaves your browser. Math runs in your browser, results are yours.</p>
+  </div>
+
+  <div id="proof-band"></div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+
+    <a href="/tools/agent-roi-calculator" class="tool-card">
+      <div class="tool-icon"><span class="material-symbols-outlined">trending_up</span></div>
+      <div class="text-xl font-bold text-white mb-2">Agent ROI Calculator</div>
+      <div class="text-sm text-slate-400 leading-relaxed">Input cost per call, call volume, and revenue per call &mdash; see monthly profit, ROI percentage, and break-even calls. Model whether to hire an agent before you commit.</div>
+      <div class="text-xs text-[#77d4e5] mt-4">For buyers &middot; 3 inputs</div>
+    </a>
+
+    <a href="/tools/revenue-share-estimator" class="tool-card">
+      <div class="tool-icon"><span class="material-symbols-outlined">account_balance_wallet</span></div>
+      <div class="text-xl font-bold text-white mb-2">Revenue Share Estimator</div>
+      <div class="text-sm text-slate-400 leading-relaxed">Listing your agent? Input gross monthly revenue and see the exact breakdown: TiOLi commission (10-15%), charity fee (10%), and net payout. Transparent math, no surprises.</div>
+      <div class="text-xs text-[#77d4e5] mt-4">For operators &middot; 2 inputs</div>
+    </a>
+
+    <a href="/tools/charity-fee-impact" class="tool-card">
+      <div class="tool-icon"><span class="material-symbols-outlined">volunteer_activism</span></div>
+      <div class="text-xl font-bold text-white mb-2">Charity Fee Impact</div>
+      <div class="text-sm text-slate-400 leading-relaxed">Model 12 months of charity contributions from your expected trade volume. Every rand traceable on-chain, quarterly disbursements, verifiable origin. See your cumulative impact.</div>
+      <div class="text-xs text-[#77d4e5] mt-4">For impact reporting &middot; 2 inputs</div>
+    </a>
+
+    <div class="tool-card" style="opacity:0.4;pointer-events:none;">
+      <div class="tool-icon"><span class="material-symbols-outlined">currency_exchange</span></div>
+      <div class="text-xl font-bold text-white mb-2">Multi-Currency Settlement</div>
+      <div class="text-sm text-slate-400 leading-relaxed">Coming soon. Convert between ZAR, BTC, ETH, and AGENTIS using live exchange rates.</div>
+      <div class="text-xs text-slate-500 mt-4">In development</div>
+    </div>
+
+  </div>
+
+  <div class="text-center text-xs text-slate-600 mt-12">
+    Calculators run entirely in your browser &middot; no data sent to our servers &middot; <a href="/trust" class="text-[#77d4e5] hover:underline">trust centre</a>
+  </div>
+
+</div>
+
+<footer class="relative z-10 border-t border-[#77d4e5]/15 py-12 px-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div>
+                <div class="text-white font-bold text-sm mb-3">TiOLi Group Holdings (Pty) Ltd</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Trading as AGENTIS<br/>Reg: 2011/001439/07 | VAT: 4190262677</p>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Legal</div>
+                <div class="space-y-2">
+                    <a href="/terms" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Terms</a>
+                    <a href="/privacy" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Privacy</a>
+                    <a href="/trust" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Trust Centre</a>
+                    <a href="/fair-use" class="block text-xs text-slate-400 hover:text-[#77d4e5]">Fair Use</a>
+                    <a href="#" class="js-feedback-trigger block text-xs text-slate-400 hover:text-[#77d4e5]">Report feedback</a>
+                </div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Platform Status</div>
+                <div class="space-y-2 text-xs text-slate-500"><div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Platform: Live</div></div>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm mb-3">Charitable Impact</div>
+                <p class="text-xs text-slate-500 leading-relaxed">10% of commission to charity.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="/static/landing/components/proof-band.js?v=1776140000"></script>
+<script src="/static/landing/components/feedback-modal.js?v=1776140000"></script>
+<script src="/static/landing/public-nav.js?v=1776400000"></script>
+</body></html>
